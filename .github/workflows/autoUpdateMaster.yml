@@ -1,4 +1,4 @@
-name: autoUpdateDev
+name: autoUpdateMaster
 on:
   push:
     branches:
