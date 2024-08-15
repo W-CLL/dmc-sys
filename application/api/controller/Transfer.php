@@ -3,10 +3,8 @@ namespace app\api\controller;
 
 
 use app\common\controller\Api;
-<<<<<<< HEAD
+
 use zhaohang\Api as zh_Api;
-=======
->>>>>>> eaf8217f11087d6dd96f0705c3675cb4a500a124
 use jlqc\FundManagement;
 use think\Cache;
 use think\Db;
@@ -79,14 +77,12 @@ class Transfer extends Api
         }
         return "更新成功,本次更新".count($transfer_records_data)."条数据";
     }
-<<<<<<< HEAD
-=======
-    
+
     
     public function test(){
         $a = zh_Api::zh_NTDMAADD();
         $a = json_decode($a,TRUE);
         var_dump($a);
     }
->>>>>>> eaf8217f11087d6dd96f0705c3675cb4a500a124
+
 }

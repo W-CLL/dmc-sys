@@ -32,13 +32,10 @@
         "ext-bcmath": "*",
         "txthinking/mailer": "^2.0",
         "thiagoalessio/tesseract_ocr": "^2.12",
-      "ext-redis": "*",
-<<<<<<< HEAD
+        "ext-redis": "*",
         "tencentcloud/ocr": "^3.0",
         "lpilp/guomi": "^1.0"
-=======
-        "tencentcloud/ocr": "^3.0"
->>>>>>> eaf8217f11087d6dd96f0705c3675cb4a500a124
+
     },
     "config": {
         "preferred-install": "dist",
