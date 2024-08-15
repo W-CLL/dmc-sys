@@ -1,0 +1,30 @@
+<form id="batch_binding-form" class="form-horizontal" role="form" data-toggle="validator" method="POST" action="">
+    {:token()}
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">绑定账号:</label>
+        <div class="col-xs-12 col-sm-4">
+            {$storeList}
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">账户类型:</label>
+        <div class="col-xs-12 col-sm-4">
+
+            <select id="c-pid" data-rule="required" class="form-control selectpicker" name="account_type">
+                <option  value="1" name="account_type" >公账</option>
+                <option  value="2" name="account_type" >私账</option>
+            </select>
+
+        </div>
+    </div>
+
+
+    <div class="form-group hidden layer-footer">
+        <label class="control-label col-xs-12 col-sm-2"></label>
+        <div class="col-xs-12 col-sm-8">
+            <button type="submit" class="btn btn-primary btn-embossed disabled">{:__('OK')}</button>
+            <button type="reset" class="btn btn-default btn-embossed">{:__('Reset')}</button>
+        </div>
+    </div>
+</form>

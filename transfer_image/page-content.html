@@ -1,0 +1,1606 @@
+<!DOCTYPE html><html lang="zh"><head><meta charset="utf-8"><meta name="theme-color" content="#000000"><meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests"><link rel="shortcut icon" href="//lf3-static.bytednsdoc.com/obj/eden-cn/lupnuluhljveh7aulnh/ljhwZthlaukjlkulzlp/logo/favicon.png"><link rel="manifest" href="/manifest.json"><title>巨量引擎方舟</title><meta name="description" content="巨量引擎方舟是巨量引擎为渠道合作伙伴打造的集公司签约、客户跟进、商务流程、优化投放、智能数据BI分析等业务于一体的伙伴合作平台。巨量引擎方舟不仅适用于公司管理层与一线同学，还包括其中众多角色，比如销售、媒介、优化师与数据分析师等，合作伙伴的多种角色都能在此平台上敏捷高效开展线上工作，展现平台多元高效的价值理念。"><meta name="keywords" content="方舟,巨量方舟,字节代理商,字节一站式,巨量合作伙伴,字节合作伙伴,代理商一站式"><script crossorigin="anonymous" async="" src="https://lf3-cdn-tos.bytescm.com/obj/static/log-sdk/collect/5.0/collect.js"></script><script>window.gfdatav1={"env":"prod","ver":"1.0.0.624","canary":0,"garrModules":null,"envName":"prod","region":"cn","webServerCodeType":"DeployServerlessWebServer","runtime":"workerV2","extra":{"canaryType":null}}</script><script src="//lf3-static.bytednsdoc.com/obj/eden-cn/pldvbnups/security/secsdk/csrf-decrypt-encrypt.js"></script><script type="text/javascript" src="https://unpkg.byted-static.com/byted/uc-secure-sdk/2.1.0-alpha.22/dist/index.umd.production.js"></script><script>window.secsdk.encrypt.mergeProtectionConfig([{host:["sso.oceanengine.com","sso-boe.oceanengine.com"],path:["/account_login/v2/"],encryptQuery:["email","password","mobile","code"],encryptBody:!0}])</script><script src="https://lf1-cdn-tos.bytegoofy.com/goofy/bytecom/account-center-sdk/pc/1.0.0.580.js"></script><style type="text/css">.ace-ui-btn {
+  position: relative;
+  display: inline-block;
+  min-width: 100px;
+  padding: 5px 16px;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 22px;
+  white-space: nowrap;
+  text-align: center;
+  vertical-align: middle;
+  background-image: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+      -ms-user-select: none;
+          user-select: none;
+  -ms-touch-action: manipulation;
+      touch-action: manipulation;
+}
+.ace-ui-btn-loading {
+  display: -webkit-inline-box;
+  display: -ms-inline-flexbox;
+  display: inline-flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+}
+.ace-ui-btn .ace-ui-loading {
+  margin-right: 4px;
+}
+.ace-ui-btn .ace-ui-loading-wrapper {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+}
+.ace-ui-btn .ace-ui-loading-inner {
+  width: 14px;
+  height: 14px;
+  border-width: 1px;
+}
+.ace-ui-btn-default {
+  color: #333333;
+  background-color: #f0f0f0;
+  border-color: #f0f0f0;
+}
+.ace-ui-btn-default:hover {
+  color: #e0e0e0;
+  border-color: #e0e0e0;
+}
+.ace-ui-btn-default:active {
+  color: #e0e0e0;
+  border-color: #e0e0e0;
+}
+.ace-ui-btn-default.ace-ui-btn-plain {
+  color: #333333;
+  background-color: #fafafa;
+  border-color: #e0e0e0;
+}
+.ace-ui-btn-default.ace-ui-btn-plain:hover {
+  color: #338aff;
+  background-color: #fafafa;
+  border-color: #338aff;
+}
+.ace-ui-btn-default.ace-ui-btn-loading {
+  color: #c1c1c1;
+  background-color: #fafafa;
+  border-color: #f0f0f0;
+}
+.ace-ui-btn-default.disabled,
+.ace-ui-btn-default[disabled],
+.ace-ui-btn-default[disabled]:hover {
+  color: #c1c1c1;
+  background-color: #fafafa;
+  border-color: #f0f0f0;
+}
+.ace-ui-btn-primary {
+  color: #ffffff;
+  background: #338aff;
+  border-color: #338aff;
+}
+.ace-ui-btn-primary:focus,
+.ace-ui-btn-primary:hover {
+  background: #58a0ff;
+  border-color: #58a0ff;
+}
+.ace-ui-btn-primary:active {
+  background: #0672ff;
+  border-color: #0672ff;
+}
+.ace-ui-btn-primary.ace-ui-btn-plain {
+  color: #333333;
+  background-color: #ffffff;
+  border-color: #e0e0e0;
+}
+.ace-ui-btn-primary[disabled],
+.ace-ui-btn-primary.ace-ui-btn-loading {
+  color: #ebf3ff;
+  background-color: #a1caff;
+  border-color: #a1caff;
+}
+.ace-ui-btn.disabled,
+.ace-ui-btn[disabled] {
+  color: #c1c1c1;
+  background-color: #fafafa;
+  border-color: #f0f0f0;
+  cursor: not-allowed;
+}
+.ace-ui-btn-text {
+  color: #338aff;
+  background-color: transparent;
+  border-color: transparent;
+}
+.ace-ui-btn-text:focus,
+.ace-ui-btn-text:hover {
+  color: #58a0ff;
+}
+.ace-ui-btn-text:active {
+  color: #0672ff;
+}
+.ace-ui-btn-text.disabled,
+.ace-ui-btn-text[disabled] {
+  color: #a1caff;
+  background-color: transparent;
+  border-color: transparent;
+}
+</style><style type="text/css">.ace-ui-select {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  vertical-align: bottom;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.ace-ui-select-wrapper {
+  position: relative;
+  width: 100%;
+  cursor: pointer;
+}
+.ace-ui-select-wrapper input {
+  position: relative;
+  display: inline-block;
+  -webkit-box-sizing: border-box;
+          box-sizing: border-box;
+  width: 100%;
+  padding: 5px 32px 5px 16px;
+  color: #333;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 22px;
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+}
+.ace-ui-select-wrapper input::-webkit-input-placeholder {
+  color: #c1c1c1;
+}
+.ace-ui-select-wrapper input::-moz-placeholder {
+  color: #c1c1c1;
+}
+.ace-ui-select-wrapper input::-ms-input-placeholder {
+  color: #c1c1c1;
+}
+.ace-ui-select-wrapper input::placeholder {
+  color: #c1c1c1;
+}
+.ace-ui-select-option {
+  position: relative;
+  padding: 6px 12px;
+  color: #333;
+  font-size: 14px;
+  line-height: 22px;
+  cursor: pointer;
+}
+.ace-ui-select-option:hover {
+  background-color: #f0f0f0;
+}
+.ace-ui-select-option-selected {
+  color: #338aff;
+}
+.ace-ui-select-option-filter {
+  border-color: transparent;
+  border-style: solid;
+  border-width: 0 0 1px;
+  border-bottom-color: #e0e0e0;
+}
+.ace-ui-select-option-container {
+  z-index: 999;
+  margin-top: 4px;
+  margin-bottom: 4px;
+  overflow: auto;
+  background-color: #ffffff;
+  border-radius: 4px;
+  -webkit-box-shadow: 0 2px 6px 0 rgba(0, 0, 0, 0.14902);
+          box-shadow: 0 2px 6px 0 rgba(0, 0, 0, 0.14902);
+}
+.ace-ui-select-option-container .ace-ui-input .ace-input:hover,
+.ace-ui-select-option-container .ace-ui-input .ace-input:active,
+.ace-ui-select-option-container .ace-ui-input .ace-input:focus,
+.ace-ui-select-option-container .ace-ui-input .ace-input {
+  border-color: transparent;
+  -webkit-box-shadow: none;
+          box-shadow: none;
+}
+.ace-ui-select-option-wrapper {
+  max-height: 192px;
+  padding: 6px 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+.ace-ui-select .ace-icon-angle-down {
+  -webkit-transform: rotate(0deg);
+          transform: rotate(0deg);
+  cursor: pointer;
+  -webkit-transition: -webkit-transform 0.2s ease;
+  transition: -webkit-transform 0.2s ease;
+  transition: transform 0.2s ease;
+  transition: transform 0.2s ease, -webkit-transform 0.2s ease;
+}
+.ace-ui-select .ace-icon-angle-down.open {
+  -webkit-transform: rotate(-180deg);
+          transform: rotate(-180deg);
+}
+</style><style type="text/css">.area-select .ace-ui-select-wrapper .ace-input {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.area-select-option-container {
+  width: 300px !important;
+}
+.area-select-option-container * {
+  font-family: PingFangSC-Regular, PingFang SC, serif;
+  font-size: 12px;
+  -webkit-font-smoothing: antialiased;
+}
+.area-select-option-container .ace-ui-select-option {
+  padding: 7px 12px;
+  font-size: 14px;
+  line-height: 20px;
+  cursor: pointer;
+}
+.area-select-option-container .ace-ui-select-option:hover {
+  background: rgba(47, 136, 255, .1);
+}
+.area-select-option-container .ace-ui-select-option .short-name {
+  margin-right: 10px;
+}
+</style><style type="text/css">.ace-ui-input {
+  position: relative;
+}
+.ace-ui-input .ace-input {
+  display: inline-block;
+  -webkit-box-sizing: border-box;
+          box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  padding: 5px 12px;
+  color: #333333;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 22px;
+  list-style: none;
+  background-color: #ffffff;
+  background-image: none;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  outline: none;
+}
+.ace-ui-input .ace-input[disabled] {
+  color: #c1c1c1;
+  background-color: #fafafa;
+  border-color: #f0f0f0;
+  cursor: not-allowed;
+  opacity: 1;
+}
+.ace-ui-input .ace-input[disabled]:hover {
+  background-color: #fafafa;
+  border-color: #f0f0f0;
+  -webkit-box-shadow: none;
+          box-shadow: none;
+}
+.ace-ui-input .ace-input:hover {
+  z-index: 2;
+  background-color: #ffffff;
+  border-color: #338aff;
+}
+.ace-ui-input .ace-input:active {
+  z-index: 2;
+  background-color: #ffffff;
+  border-color: #0672ff;
+}
+.ace-ui-input .ace-input:focus {
+  z-index: 2;
+  background-color: #ffffff;
+  border-color: #338aff;
+  -webkit-box-shadow: 0 0 0 2px rgb(51, 138, 12.75%);
+          box-shadow: 0 0 0 2px rgb(51, 138, 12.75%);
+}
+.ace-ui-input-group-wrapper {
+  position: relative;
+  display: table;
+  width: 100%;
+}
+.ace-ui-input-group-addon-before .ace-ui-input-addon {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+.ace-ui-input-group-addon-after .ace-ui-input-addon {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.ace-ui-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+.ace-ui-input-addon-after {
+  display: table-cell;
+  width: 1px;
+  font-size: 0;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.ace-ui-input-addon-after .ace-ui-btn {
+  margin-left: -1px;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+.ace-ui-input-addon-before {
+  display: table-cell;
+  width: 1px;
+  font-size: 0;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.ace-ui-input-addon-before .ace-ui-btn {
+  margin-right: -1px;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.ace-ui-input-group-error .ace-input,
+.ace-ui-input-group-error .ace-input:hover:not([disabled]) {
+  background-color: #ffffff;
+  border-color: #f65656;
+}
+.ace-ui-input-group-error .ace-input:focus:not([disabled]),
+.ace-ui-input-group-error .ace-input:active:not([disabled]) {
+  background-color: #ffffff;
+  border-color: #f65656;
+  -webkit-box-shadow: 0 0 0 2px rgb(246, 86, 4.3%);
+          box-shadow: 0 0 0 2px rgb(246, 86, 4.3%);
+}
+.ace-ui-input-group-error.ace-ui-input .ace-ui-input-filled {
+  z-index: 2;
+  background-color: #feecec;
+  border-color: #feecec;
+}
+.ace-ui-input-group-error.ace-ui-input .ace-ui-input-filled:hover:not([disabled]) {
+  background-color: #fccece;
+  border-color: #fccece;
+}
+.ace-ui-input-group-error.ace-ui-input .ace-ui-input-filled:active:not([disabled]),
+.ace-ui-input-group-error.ace-ui-input .ace-ui-input-filled:focus:not([disabled]) {
+  background-color: #feecec;
+  border-color: #f65656;
+  -webkit-box-shadow: 0 0 0 2px rgb(246, 86, 4.3%);
+          box-shadow: 0 0 0 2px rgb(246, 86, 4.3%);
+}
+.ace-ui-input-group-filled .ace-ui-input-filled {
+  background-color: #f0f0f0;
+  border-color: transparent;
+}
+.ace-ui-input-group-filled .ace-ui-input-filled:hover:not([disabled]) {
+  z-index: 2;
+  background-color: #ebebeb;
+  border-color: transparent;
+}
+.ace-ui-input-group-filled .ace-ui-input-filled:active:not([disabled]) {
+  z-index: 2;
+  background-color: #e0e0e0;
+  border-color: #e0e0e0;
+}
+.ace-ui-input-group-filled .ace-ui-input-filled:focus:not([disabled]) {
+  z-index: 2;
+  background-color: #f0f0f0;
+  border-color: #338aff;
+  -webkit-box-shadow: 0 0 0 2px rgb(51, 138, 12.75%);
+          box-shadow: 0 0 0 2px rgb(51, 138, 12.75%);
+}
+.ace-ui-input-group-filled .ace-ui-input-filled[disabled] {
+  color: #c1c1c1;
+  background-color: #fafafa;
+  border-color: transparent;
+  cursor: not-allowed;
+  opacity: 1;
+}
+.ace-ui-input-group-filled .ace-ui-input-filled[disabled]:focus,
+.ace-ui-input-group-filled .ace-ui-input-filled[disabled]:hover {
+  border-color: transparent;
+  -webkit-box-shadow: none;
+          box-shadow: none;
+}
+.ace-ui-input-suffix,
+.ace-ui-input-prefix,
+.ace-ui-input .addon-after-group-wrapper,
+.ace-ui-input .addon-before-group-wrapper {
+  display: inline-block;
+}
+.ace-ui-input-suffix,
+.ace-ui-input-prefix {
+  position: absolute;
+  top: 0;
+  z-index: 3;
+  display: -webkit-inline-box;
+  display: -ms-inline-flexbox;
+  display: inline-flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  height: 100%;
+  cursor: pointer;
+}
+.ace-ui-input-suffix .ace-icon,
+.ace-ui-input-prefix .ace-icon {
+  width: 1em;
+  height: 1em;
+}
+.ace-ui-input-prefix {
+  left: 12px;
+}
+.ace-ui-input-suffix {
+  right: 12px;
+}
+</style><style type="text/css">.account-center-input-item {
+  font-family: PingFangSC-Regular;
+}
+.account-center-input-item .error-message {
+  position: absolute;
+  color: #F45858;
+  display: inline-block;
+  left: 0;
+  top: 100%;
+  line-height: 16px;
+}
+.account-center-input-item .label-text {
+  text-align: right;
+  font-size: 14px;
+  color: #333;
+  display: none;
+  float: left;
+  width: 80px;
+  left: -80px;
+  position: absolute;
+  padding: 6px 8px 6px 0;
+  line-height: 22px;
+}
+.account-center-input-item .ace-ui-input-suffix * {
+  font-size: 16px;
+}
+.account-center-input-item .icon {
+  height: 20px;
+}
+.account-center-input-item .icon svg {
+  width: 20px;
+  height: 20px;
+}
+</style><style type="text/css">.account-center-input-row {
+  margin-left: 0;
+  margin-right: 0;
+  height: auto;
+  zoom: 1;
+  margin-bottom: 16px;
+  position: relative;
+  color: #666;
+}
+.account-center-input-row.ac-input-last-item,
+.account-center-input-row:last-child {
+  margin-bottom: 0;
+}
+.account-center-input-row.ac-hide {
+  display: none;
+}
+.account-center-input-row .account-center-captcha-image,
+.account-center-input-row .account-center-code-captcha {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  min-width: 90px;
+  height: 40px;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+      -ms-user-select: none;
+          user-select: none;
+  cursor: pointer;
+}
+.account-center-input-row .account-center-code-captcha {
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: end;
+      -ms-flex-pack: end;
+          justify-content: end;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  border-radius: 4px;
+  padding-right: 16px;
+}
+.account-center-input-row .account-center-code-captcha.disable {
+  color: #C1C1C1;
+  cursor: not-allowed;
+}
+.account-center-captcha-row.sso .account-center-captcha-image {
+  width: 95px;
+  background-position: -10px 2px;
+}
+.account-center-captcha-row .account-center-captcha-image {
+  background-repeat: no-repeat;
+  background-color: #fff;
+  border-radius: 2px;
+  background-size: contain;
+}
+</style><style type="text/css">.account-center-message {
+  min-height: 22px;
+  white-space: pre-line;
+  margin: 4px 0;
+}
+.account-center-message a {
+  cursor: pointer;
+  color: #2F88FF;
+}
+.account-center-message .login-click {
+  font-weight: 600;
+  text-decoration: underline;
+}
+.account-center-message.alert-message {
+  margin: 32px 0;
+}
+.account-center-message.alert-message .content > p {
+  white-space: pre-line;
+  font-size: 14px;
+  color: #333333;
+  line-height: 20px;
+  margin: 4px;
+}
+.account-center-message.alert-message .account-center-warn-message {
+  display: table;
+}
+.account-center-message.alert-message .account-center-warn-message > div:first-child {
+  display: table-cell;
+  text-align: center;
+  vertical-align: middle;
+}
+.account-center-message .account-center-error-message,
+.account-center-message .account-center-success-message,
+.account-center-message .account-center-warn-message {
+  line-height: 22px;
+}
+.account-center-message .account-center-error-message {
+  color: #FF5454;
+}
+.account-center-message .account-center-success-message {
+  color: #00943E;
+}
+</style><style type="text/css">.ace-ui-tooltip {
+  z-index: 2041;
+  padding: 12px;
+}
+.ace-ui-tooltip-wrapper {
+  display: inline-block;
+}
+.ace-ui-tooltip-panel {
+  padding: 8px 16px;
+  color: #ffffff;
+  background-color: rgba(51, 51, 51, 0.94902);
+  border-radius: 4px;
+  -webkit-box-shadow: 0 2px 6px 0 rgba(0, 0, 0, 0.14902);
+          box-shadow: 0 2px 6px 0 rgba(0, 0, 0, 0.14902);
+}
+.ace-ui-tooltip-arrow {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: rgba(51, 51, 51, 0.94902);
+  -webkit-transform: rotate(45deg);
+          transform: rotate(45deg);
+}
+.ace-ui-tooltip[x-placement^='top'] .ace-ui-tooltip-arrow {
+  bottom: 7px;
+  left: 50%;
+  -webkit-transform: translateX(-50%) rotate(45deg);
+          transform: translateX(-50%) rotate(45deg);
+}
+.ace-ui-tooltip[x-placement^='bottom'] .ace-ui-tooltip-arrow {
+  top: 7px;
+  left: 50%;
+  -webkit-transform: translateX(-50%) rotate(45deg);
+          transform: translateX(-50%) rotate(45deg);
+}
+.ace-ui-tooltip[x-placement^='left'] .ace-ui-tooltip-arrow {
+  right: 7px;
+  bottom: 50%;
+  -webkit-transform: translateY(50%) rotate(45deg);
+          transform: translateY(50%) rotate(45deg);
+}
+.ace-ui-tooltip[x-placement^='right'] .ace-ui-tooltip-arrow {
+  bottom: 50%;
+  left: 7px;
+  -webkit-transform: translateY(50%) rotate(45deg);
+          transform: translateY(50%) rotate(45deg);
+}
+</style><style type="text/css">.account-center-agreement-check {
+  width: 14px;
+  height: 14px;
+  display: block;
+  border: 1px solid #dadfe3;
+  border-radius: 2px;
+  cursor: pointer;
+  position: relative;
+  background-color: #FFF;
+}
+.account-center-agreement-check .check-box-icon {
+  width: 14px;
+  height: 14px;
+  fill: #FFF;
+}
+.account-center-agreement-check .check-box-icon svg {
+  display: block;
+}
+.account-center-agreement-check:hover,
+.account-center-agreement-check:focus {
+  border-color: #dadfe3;
+}
+.account-center-agreement-check.checked {
+  border: 1px solid transparent;
+  -webkit-transition: border-color 0.25s cubic-bezier(0.71, -0.46, 0.29, 1.46), background-color 0.25s;
+  transition: border-color 0.25s cubic-bezier(0.71, -0.46, 0.29, 1.46), background-color 0.25s;
+}
+.account-center-agreement-check.checked span {
+  border-color: white;
+}
+.account-center-agreement-check span {
+  color: #999999;
+}
+.account-center-input-agreement {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  color: #999999;
+  line-height: 20px;
+  margin-top: 8px;
+}
+.account-center-input-agreement-text {
+  margin-left: 8px;
+}
+.account-center-input-agreement .check-box-container {
+  top: 3px;
+  position: relative;
+}
+.account-center-input-agreement a {
+  font-size: 12px;
+  color: #333;
+}
+</style><style type="text/css">.account-center-code-notice {
+  font-size: 12px;
+  line-height: 20px;
+  width: 300px;
+}
+.account-center-code-notice a {
+  color: #338AFF;
+}
+.account-center-code-help {
+  font-size: 12px;
+  color: #999999;
+}
+.account-center-code-help .verify:hover {
+  color: #333;
+}
+</style><style type="text/css">.account-center-switch-row {
+  -webkit-user-select: none;
+     -moz-user-select: none;
+      -ms-user-select: none;
+          user-select: none;
+  display: table;
+}
+.account-center-switch-row.switch-type-switch {
+  margin-bottom: 24px;
+}
+.account-center-switch-row.switch-type-panel {
+  margin-top: 4px;
+  line-height: 18px;
+}
+.account-center-switch-row .company {
+  font-size: 14px;
+  font-family: PingFangSC;
+  font-weight: 600;
+  color: #C1C1C1;
+  line-height: 22px;
+  text-align: left;
+}
+.account-center-switch-row .company.logined {
+  color: #333333;
+}
+.account-center-switch-row .subtitle {
+  clear: both;
+  font-size: 14px;
+  color: #999999;
+  line-height: 20px;
+}
+.account-center-switch-row .account-center-switch-button {
+  cursor: pointer;
+  display: inline-table;
+}
+.account-center-switch-row .account-center-switch-button.switch-panel .bar {
+  display: none;
+}
+.account-center-switch-row .account-center-switch-button.switch-switch {
+  font-size: 16px;
+  line-height: 24px;
+  color: #969AA0;
+  font-weight: 600;
+}
+.account-center-switch-row .account-center-switch-button.switch-switch .bar {
+  width: 0;
+  height: 4px;
+  border-radius: 8px;
+  display: block;
+  -webkit-transition: width 0.2s ease-in;
+  transition: width 0.2s ease-in;
+  margin: 2px auto 0 auto;
+  text-align: center;
+}
+.account-center-switch-row .account-center-switch-button.switch-switch .bar.active {
+  width: 24px;
+}
+.account-center-switch-row .account-center-switch-button.switch-switch.true {
+  color: #323335;
+}
+.account-center-switch-row .account-center-switch-button.switch-switch:first-child {
+  margin-right: 40px;
+}
+.account-center-switch-row .account-center-switch-button.switch-panel {
+  font-size: 12px;
+  color: #999;
+}
+.account-center-switch-row .account-center-switch-button.switch-panel:nth-child(2) {
+  float: right;
+}
+.account-center-switch-row .account-center-switch-button.switch-panel .login {
+  color: #2F88FF;
+  cursor: pointer;
+}
+.account-center-switch-row .account-center-switch-button > span {
+  text-align: center;
+  vertical-align: middle;
+}
+.account-center-switch-row .pui-popover {
+  top: 2px;
+}
+</style><style type="text/css">@-webkit-keyframes crescendo {
+  0% {
+    -webkit-transform: scale(1);
+            transform: scale(1);
+  }
+  100% {
+    -webkit-transform: scale(1.1);
+            transform: scale(1.1);
+  }
+}
+@keyframes crescendo {
+  0% {
+    -webkit-transform: scale(1);
+            transform: scale(1);
+  }
+  100% {
+    -webkit-transform: scale(1.1);
+            transform: scale(1.1);
+  }
+}
+.account-center-alternative button {
+  margin: 25px 0 16px;
+}
+.account-center-alternative .other {
+  line-height: 20px;
+  color: #2F88FF;
+  cursor: pointer;
+  text-align: center;
+  margin-bottom: 40px;
+}
+.account-center-conflict-content {
+  padding-top: 12px;
+}
+.account-center-conflict-content .title {
+  font-size: 14px;
+  line-height: 22px;
+  color: #666666;
+}
+.account-center-conflict-connect {
+  margin-top: 10px;
+  padding: 16px;
+  background: #EBF3FF;
+  border-radius: 8px;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+}
+.account-center-conflict-connect .avatar {
+  width: 44px;
+  margin-right: 12px;
+}
+.account-center-conflict-connect .avatar img {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+}
+.account-center-conflict-connect .account-info .name {
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 24px;
+  color: #333333;
+}
+.account-center-conflict-connect .account-info .bind-item {
+  font-size: 12px;
+  line-height: 20px;
+  margin-top: 4px;
+  color: #666666;
+}
+.account-center-oauth-confirm {
+  text-align: center;
+  margin-top: 52px;
+}
+.account-center-oauth-confirm .oauth-swap {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  margin-bottom: 20px;
+}
+.account-center-oauth-confirm .oauth-swap img {
+  height: 32px;
+}
+.account-center-oauth-confirm .oauth-title,
+.account-center-oauth-confirm .oauth-tips {
+  text-align: left;
+}
+.account-center-oauth-confirm .oauth-title {
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.account-center-oauth-confirm .oauth-tips {
+  color: #c1c1c1;
+}
+.account-center-oauth-confirm .oauth-tips p:before {
+  content: "*";
+}
+.account-center-oauth-confirm .swap {
+  margin: 0 16px;
+}
+.account-center-oauth-confirm .swap svg {
+  width: 16px;
+  fill: #C1C1C1;
+}
+.account-center-oauth-list {
+  margin-top: 21px;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+}
+.account-center-oauth-list.hidden {
+  display: none;
+}
+.account-center-oauth-list label {
+  font-size: 12px;
+  font-weight: 400;
+  color: #333;
+  margin-right: 16px;
+}
+.account-center-oauth-list .login-type {
+  display: inline-block;
+}
+.account-center-oauth-list .login-type img {
+  height: 24px;
+  vertical-align: bottom;
+  border-radius: 50%;
+}
+.account-center-oauth-list .login-type .icon {
+  display: inline-block;
+  cursor: pointer;
+}
+.account-center-oauth-list .login-type .icon:not(:last-child) {
+  margin-right: 12px;
+}
+.account-center-oauth-list .login-type .icon:hover {
+  -webkit-animation: crescendo 0.2s forwards linear;
+          animation: crescendo 0.2s forwards linear;
+}
+iframe {
+  border: none;
+}
+</style><style type="text/css">.ace-ui-modal {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1050;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  overflow: auto;
+}
+.ace-ui-modal-backdrop {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1050;
+  height: 100%;
+  background-color: rgba(0, 0, 0, .4);
+  -webkit-transition: opacity 0.18s linear;
+  transition: opacity 0.18s linear;
+}
+.ace-ui-modal-backdrop.in {
+  opacity: 1;
+}
+.ace-ui-modal-dialog {
+  position: relative;
+  z-index: 1051;
+  width: 600px;
+  margin: auto;
+  background-color: #ffffff;
+  border-radius: 4px;
+  -webkit-box-shadow: 0 2px 6px 0 rgb(0, 0, 0%);
+          box-shadow: 0 2px 6px 0 rgb(0, 0, 0%);
+}
+.ace-ui-modal-header {
+  padding: 24px;
+  color: #333333;
+}
+.ace-ui-modal-content {
+  padding: 0 24px;
+  font-size: 14px;
+}
+.ace-ui-modal-footer {
+  padding: 32px 24px 24px;
+  text-align: right;
+}
+.ace-ui-modal-footer .ace-ui-btn {
+  margin-left: 8px;
+}
+</style><style type="text/css">.account-center-sdk-container.verify-login .account-center-verify-notice {
+  line-height: 16px;
+  font-size: 12px;
+  color: #ECA20F;
+  margin-bottom: 32px;
+}
+</style><style type="text/css">.ace-ui-loading {
+  display: inline-block;
+}
+.ace-ui-loading-wapper {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+}
+.ace-ui-loading-inner {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  margin: auto;
+  border: 2px solid #338aff;
+  border-bottom-color: transparent;
+  border-radius: 50%;
+  -webkit-animation: loading-mini 0.8s linear 0s infinite;
+          animation: loading-mini 0.8s linear 0s infinite;
+}
+@-webkit-keyframes loading-mini {
+  0% {
+    -webkit-transform: rotate(0deg);
+            transform: rotate(0deg);
+  }
+  100% {
+    -webkit-transform: rotate(360deg);
+            transform: rotate(360deg);
+  }
+}
+@keyframes loading-mini {
+  0% {
+    -webkit-transform: rotate(0deg);
+            transform: rotate(0deg);
+  }
+  100% {
+    -webkit-transform: rotate(360deg);
+            transform: rotate(360deg);
+  }
+}
+</style><style type="text/css">.login-code .account-center-header-common {
+  display: table;
+}
+.login-code .account-center-header-common > div {
+  display: table-cell;
+}
+.account-center-header-sub-title.appoint:before {
+  content: "";
+  background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAAOCAMAAADHVLbdAAAAPFBMVEX/xT7/yDz/xj3/xj3/xTz/xT3/yDpHcEz/xjz/xT3/xT3/yzT/xT//xj7/xj3/xj3/xTz/xj7/xTz/xT24Qv1JAAAAE3RSTlOqPbmI4uwUAFXG1ggmbJdM+FbD4Zc4IAAAAGxJREFUCNeVzFkSxCAIBNBWUSSuSd//rtFYc4DhA3hVNNCvUndnwddbjOzp5+oZyh1lHLd57eMEIimqzVBOdki8AamqLmhuRQsmgH1JBVcqc1ukLz+e7pg5L5/5v2V9vgiJRjNiAN7MA2YPEF7hlgaXdjTRNwAAAABJRU5ErkJggg==);
+  height: 15px;
+  display: inline-block;
+  width: 15px;
+  margin-right: 4px;
+  position: relative;
+  top: 3px;
+}
+.account-center-help-link {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+}
+.account-center-help-link a {
+  width: 14px;
+  cursor: pointer;
+  margin-left: 8px;
+}
+.account-center-header-back {
+  cursor: pointer;
+  margin-right: 8px;
+}
+.account-center-header-back-icon {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+}
+.account-center-header-back svg {
+  width: 20px;
+  height: 20px;
+}
+.account-center-header {
+  color: #333333;
+}
+.account-center-header-common {
+  margin-bottom: 8px;
+}
+.account-center-header .header-close {
+  cursor: pointer;
+  right: 0;
+  position: absolute;
+  top: 100%;
+  float: right;
+  color: #C1C1C1;
+}
+.account-center-header .account-center-header-title {
+  font-size: 20px;
+  line-height: 24px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8px;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+}
+.account-center-header .account-center-header-sub-title {
+  margin-bottom: 16px;
+  color: #c1c1c1;
+  font-size: 14px;
+  line-height: 1;
+}
+.account-center-header .account-center-two-code-container {
+  display: table-cell;
+  text-align: center;
+  vertical-align: middle;
+}
+.account-center-header .account-center-two-dimensional-code {
+  width: 133px;
+  height: 28px;
+  position: relative;
+  margin-left: 40px;
+  border: 1px solid #fbe1af;
+  background: rgba(226, 176, 110, 0.12157);
+  border-radius: 3px;
+  display: table;
+}
+.account-center-header .account-center-two-dimensional-code .account-center-code-icon {
+  display: table-cell;
+  text-align: center;
+  vertical-align: middle;
+  padding-left: 10px;
+}
+.account-center-header .account-center-two-dimensional-code .account-center-code-icon svg {
+  width: 16px;
+  height: 16px;
+  color: #2F88FF;
+}
+.account-center-header .account-center-two-dimensional-code .account-center-code-icon svg #Shape {
+  fill: #FAAD15;
+}
+.account-center-header .account-center-two-dimensional-code .account-center-code-text {
+  display: table-cell;
+  text-align: center;
+  vertical-align: middle;
+  cursor: pointer;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+      -ms-user-select: none;
+          user-select: none;
+}
+.account-center-header .account-center-two-dimensional-code .account-center-switch-dimencode {
+  position: absolute;
+  top: -12px;
+  right: -70px;
+  margin-bottom: 0;
+  cursor: pointer;
+  width: 43px;
+  height: 44px;
+  z-index: 10;
+}
+.account-center-header .account-center-two-dimensional-code .account-center-switch-dimencode .right-corner-icon-stroke {
+  stroke: #2F88FF;
+}
+.account-center-header .account-center-two-dimensional-code .account-center-switch-dimencode .right-corner-icon-fill {
+  fill: #2F88FF;
+}
+.account-center-header .account-center-two-dimensional-code .account-center-switch-dimencode svg {
+  width: 100%;
+  height: 100%;
+}
+</style><style type="text/css">.account-center-sdk-container .account-center-bind-mobile-notice {
+  line-height: 16px;
+  font-size: 12px;
+  color: #969AA0;
+  margin-bottom: 24px;
+}
+.account-center-sdk-container .account-center-bind-mobile-ignore {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  -webkit-box-pack: justify;
+      -ms-flex-pack: justify;
+          justify-content: space-between;
+  margin-top: 8px;
+}
+.account-center-sdk-container .account-center-cancel-btn,
+.account-center-sdk-container .account-center-ignore-week {
+  cursor: pointer;
+  color: #333;
+}
+</style><style type="text/css">.account-center-sdk-container .account-center-oauth-header-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+}
+.account-center-sdk-container .account-center-oauth-header .oauth-header-close {
+  cursor: pointer;
+  right: 0;
+  position: absolute;
+  top: 0;
+  float: right;
+  color: #C1C1C1;
+}
+.account-center-sdk-container .account-center-oauth-header-sub-title {
+  color: #c1c1c1;
+  font-size: 14px;
+  line-height: 22px;
+}
+.account-center-sdk-container .oauth-loading {
+  min-height: 300px;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+}
+.account-center-sdk-container .oauth-loading .ace-ui-loading-inner {
+  border-width: 3px;
+  width: 32px;
+  height: 32px;
+}
+</style><style type="text/css">.account-center-sdk-container .account-center-qrcode-title {
+  font-size: 16px;
+  line-height: 28px;
+  color: #55585C;
+  margin-bottom: 16px;
+}
+.account-center-sdk-container .account-center-qrcode-container {
+  margin-top: 32px;
+  margin-bottom: 10px;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+      -ms-flex-direction: column;
+          flex-direction: column;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+}
+.account-center-sdk-container .account-center-qrcode-image-container {
+  border: 1px solid #EAEAEA;
+  height: 220px;
+  width: 220px;
+  position: relative;
+}
+.account-center-sdk-container .account-center-qrcode-image-container .account-center-image-content {
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+      -ms-user-select: none;
+          user-select: none;
+  background-size: contain;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+}
+.account-center-sdk-container .account-center-qrcode-notice {
+  width: 100%;
+  text-align: center;
+  margin-top: 16px;
+}
+.account-center-sdk-container .account-center-qrcode-appicon img {
+  width: 50px;
+  height: 50px;
+}
+.account-center-qrcode-switch-notice {
+  position: absolute;
+  display: none;
+}
+.account-center-sdk-container .account-center-qrcode-switch {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: unset;
+  display: -webkit-inline-box;
+  display: -ms-inline-flexbox;
+  display: inline-flex;
+  z-index: 1000;
+}
+.account-center-sdk-container .account-center-qrcode-switch:hover .account-center-qrcode-switch-notice {
+  display: block;
+}
+.account-center-code-expired,
+.account-center-code-scaned {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, .9);
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+      -ms-flex-direction: column;
+          flex-direction: column;
+}
+.account-center-code-scaned-title {
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 28px;
+  color: #12141A;
+}
+.account-center-code-scaned-icon {
+  width: 50px;
+  height: 50px;
+  margin-bottom: 13px;
+}
+.account-center-code-scaned-subtitle {
+  font-size: 12px;
+  line-height: 16px;
+  color: #85878C;
+  margin-top: 4px;
+}
+.account-center-code-expired {
+  background: rgba(255, 255, 255, .9);
+}
+.account-center-code-expired-refresh.btn {
+  margin-top: 12px;
+  width: 72px;
+}
+.account-center-code-notice-label {
+  position: relative;
+  display: inline-block;
+  -webkit-box-shadow: 0 2px 8px rgba(0, 0, 0, .08);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, .08);
+  border-radius: 4px;
+  padding: 8px 16px;
+  margin-top: 8px;
+  right: 100%;
+  width: 116px;
+}
+.account-center-code-text {
+  color: white;
+  font-size: 12px;
+  line-height: 20px;
+}
+.account-center-code-triangle {
+  position: absolute;
+  right: -15px;
+  top: 11px;
+  width: 0;
+  height: 0;
+  border: 8px solid;
+  -webkit-transform: rotate(-90deg);
+          transform: rotate(-90deg);
+}
+.account-center-qrcode-switch-action {
+  cursor: pointer;
+  width: 64px;
+  height: 64px;
+  z-index: 2000;
+}
+</style><style type="text/css"></style><style type="text/css">.ace-ui-tooltip-panel {
+  position: relative;
+}
+.ace-ui-tooltip-content {
+  font-size: 12px;
+}
+.agreement-notice-overlay .ace-ui-tooltip-panel {
+  left: 24px;
+}
+.verify-overlay .ace-ui-tooltip-panel {
+  left: 100px;
+}
+.account-center-sdk-container {
+  background: #ffffff;
+  -webkit-box-shadow: 0 2px 8px rgba(0, 0, 0, .08);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, .08);
+  border-radius: 8px;
+  position: relative;
+  width: 360px;
+  color: #444444;
+  padding: 24px 32px;
+  display: inline-block;
+  z-index: 1;
+  -webkit-box-sizing: border-box;
+          box-sizing: border-box;
+}
+.account-center-sdk-container.ac-register .question-container {
+  position: relative;
+  top: 4px;
+}
+.account-center-sdk-container input::-webkit-input-placeholder {
+  color: #c1c1c1;
+}
+.account-center-sdk-container .question-container {
+  margin-left: 8px;
+  width: 16px;
+  height: 16px;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+}
+.account-center-sdk-container.normal .ace-ui-btn {
+  padding: 9px 16px;
+}
+.account-center-sdk-container .ace-ui-input-group-filled .ace-input {
+  padding: 8px 10px;
+}
+.account-center-sdk-container input[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+}
+.account-center-sdk-container * {
+  font-family: PingFangSC;
+  -webkit-box-sizing: border-box;
+          box-sizing: border-box;
+  font-size: 12px;
+  -webkit-font-smoothing: antialiased;
+}
+.account-center-sdk-container a {
+  text-decoration: none;
+}
+.account-center-sdk-container > div {
+  height: auto;
+  width: 100%;
+  padding: 0;
+  position: relative;
+}
+.account-center-sdk-container button {
+  width: 100%;
+  font-weight: 500;
+  font-size: 16px;
+  border: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.account-center-sdk-container button[disabled] {
+  color: white;
+}
+.account-center-sdk-container .account-center-submit {
+  margin-top: 8px;
+}
+.account-center-sdk-container .account-center-submit > button:nth-child(2) {
+  margin-top: 16px;
+}
+.account-center-sdk-container .account-center-submit .account-center-cancel-button {
+  border: 1px solid #dadfe3;
+  background: #fff;
+  color: #333333;
+}
+.account-center-sdk-container .account-center-captcha-row .fill-design .ace-ui-input-suffix,
+.account-center-sdk-container .account-center-fetch-code-row .fill-design .ace-ui-input-suffix {
+  right: 90px;
+}
+.account-center-sdk-container.show-label .label-text {
+  display: inline-block;
+  color: #333;
+}
+.account-center-sdk-container.bootstrap {
+  overflow: unset;
+}
+.account-center-sdk-container.bootstrap input[name*='captcha'] {
+  width: calc(100% - 100px);
+}
+.account-center-sdk-container.bootstrap .group.error-item label {
+  color: #333;
+}
+.account-center-sdk-container.bootstrap .account-center-code-captcha {
+  border: 1px solid transparent;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  height: 34px;
+  padding-right: unset;
+}
+.account-center-sdk-container.bootstrap .account-center-code-captcha.disable {
+  border-color: #EDF1F5;
+}
+.slide-container {
+  display: none;
+  position: fixed;
+  z-index: 11111;
+  left: 0;
+  top: 0;
+  background-color: rgba(0, 0, 0, 0.25098);
+  width: 100%;
+  height: 100%;
+}
+.slide-container .captcha_verify_container {
+  top: 50%;
+  left: 50%;
+  -webkit-transform: translate(-50%, -50%);
+          transform: translate(-50%, -50%);
+  position: absolute;
+}
+.slide-container-ov.sliding {
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  background-color: rgba(0, 0, 0, 0.25098);
+  width: 100%;
+  height: 100%;
+}
+.slide-container-ov.sliding .slider-content {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: 0;
+  margin: auto !important;
+  -webkit-box-sizing: content-box;
+          box-sizing: content-box;
+}
+</style><script src="https://lf3-static.bytednsdoc.com/obj/eden-cn/fapybjlz_lm_zlp/ljhwZthlaukjlkulzlp/security/3rd-cookie-detect.umd.js"></script><link href="https://lf3-cdn-tos.bytegoofy.com/obj/goofy/cg/channel_portal/static/css/1.b63556ff.chunk.css" rel="stylesheet"><link href="https://lf3-cdn-tos.bytegoofy.com/obj/goofy/cg/channel_portal/static/css/main.c3bd5d6f.chunk.css" rel="stylesheet"><script src="https://lf3-short.bytegoofy.com/slardar/fe/sdk-web/browser.cn.js?bid=channel_portal&amp;globalName=Slardar"></script><script type="text/javascript" crossorigin="anonymous" src="https://lf-c-flwb.bytetos.com/obj/rc-client-security/c-webmssdk/1.0.0.20/webmssdk.es5.js" id="ac-sec"></script><script type="text/javascript" crossorigin="anonymous" src="https://lf-c-flwb.bytetos.com/obj/rc-client-security/sec_sdk_build/3.8.0/captcha/index.js" id="pc_slide_sdk"></script><script src="https://lf-rc1.yhgfb-cn-static.com/obj/rc-verifycenter/verifycenter-collect/1.0.0.7-5.1.16/collect-base.js" async=""></script><script src="https://lf3-short.ibytedapm.com/slardar/fe/sdk-web/plugins/common-monitors.1.1.2.js" crossorigin="anonymous"></script><script src="https://lf3-short.ibytedapm.com/slardar/fe/sdk-web/plugins/common-monitors.1.1.8.js" crossorigin="anonymous"></script><script src="https://lf3-short.ibytedapm.com/slardar/fe/sdk-web/plugins/blank-screen.1.1.8.js" crossorigin="anonymous"></script><script src="https://lf3-short.bytegoofy.com/slardar/fe/sdk-web/plugins/common-monitors.1.12.3.js" crossorigin="anonymous"></script></head><body><noscript>You need to enable JavaScript to run this app.</noscript><div id="root"><div class="style_loginContainer__18liC"><div class="style_header__10QeD"><div class="style_logoContainer__2RCMZ"><img src="data:image/png;base64,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" alt=""><span></span><img src="data:image/png;base64,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" alt=""></div><span class="style_joinUs__2t5hN">加入我们</span></div><div><div class="style_textWrap__2UEH_"><div class="style_title__11sJD">巨量引擎方舟</div><div class="style_msg__u_4Z_">多元营销 生态引擎 助力合作伙伴生意增长</div></div></div><div id="login-container"><div id="login-wrap" class="login-wrap"><section class="account-center-sdk-container login-wrap-container login-code normal email login"><div class="account-center-header"><div class="account-center-header-title">巨量引擎账号<div class="ace-ui-tooltip-wrapper"><div class="question-container"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><g clip-path="url(#clip0_874_57825)"><path d="M7.99992 14.6668C9.84085 14.6668 11.5075 13.9206 12.714 12.7142C13.9204 11.5078 14.6666 9.8411 14.6666 8.00016C14.6666 6.15923 13.9204 4.49256 12.714 3.28612C11.5075 2.07969 9.84085 1.3335 7.99992 1.3335C6.15899 1.3335 4.49232 2.07969 3.28587 3.28612C2.07945 4.49256 1.33325 6.15923 1.33325 8.00016C1.33325 9.8411 2.07945 11.5078 3.28587 12.7142C4.49232 13.9206 6.15899 14.6668 7.99992 14.6668Z" stroke="#969AA0" stroke-linejoin="round"></path><path d="M8 9.54183V8.2085C9.10457 8.2085 10 7.31306 10 6.2085C10 5.10393 9.10457 4.2085 8 4.2085C6.89543 4.2085 6 5.10393 6 6.2085" stroke="#969AA0" stroke-linecap="round" stroke-linejoin="round"></path><path fill-rule="evenodd" clip-rule="evenodd" d="M8.00008 12.5417C8.46031 12.5417 8.83341 12.1686 8.83341 11.7083C8.83341 11.2481 8.46031 10.875 8.00008 10.875C7.53985 10.875 7.16675 11.2481 7.16675 11.7083C7.16675 12.1686 7.53985 12.5417 8.00008 12.5417Z" fill="#969AA0"></path></g><defs><clipPath id="clip0_874_57825"><rect width="16" height="16" fill="white"></rect></clipPath></defs></svg></div></div></div></div><div class="account-center-switch-row switch-type-switch"><div class="account-center-switch-button switch-switch false mobile">手机登录<span class="bar" style="background: rgb(42, 85, 229);"></span></div><div class="account-center-switch-button switch-switch true email">邮箱登录<span class="active bar" style="background: rgb(42, 85, 229);"></span></div></div><div class="account-center-sdk-form"><div class="account-center-input-row"><div class="account-center-input-item"><div class="fill-design group"><label class="label-text">请输入邮箱</label><span class="ace-ui-input ace-ui-input-group-filled"><input class="ace-input ace-ui-input-default ace-ui-input-filled" type="text" status="" fill-type="filled" name="email" autocomplete="email" pattern="([a-zA-Z0-9_\.\-\+])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+" fieldname="item_label_email" required="" placeholder="请输入邮箱" max="128" label="" title="请输入邮箱"><div class="ace-ui-input-suffix"></div></span></div></div></div><div class="account-center-input-row ac-input-last-item"><div class="account-center-input-item"><div class="fill-design group"><label class="label-text">密码</label><span class="ace-ui-input ace-ui-input-group-wrapper ace-ui-input-group-suffix ace-ui-input-group-filled"><input class="ace-input ace-ui-input-default ace-ui-input-filled" type="password" status="" fill-type="filled" fieldname="item_label_pwd" required="" pattern="" max="20" name="password" autocomplete="password" label="" placeholder="密码" title="密码" style="padding-right: 16px;"><div class="ace-ui-input-suffix"><span class="icon"><svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M18 0H0V18H18V0Z" fill="white" fill-opacity="0.01"></path><path d="M2.25 6C2.48802 6.45724 2.84867 6.8814 3.30853 7.25828C4.59787 8.31499 6.66712 9 9 9C11.3329 9 13.4021 8.31499 14.6915 7.25828C15.1513 6.8814 15.512 6.45724 15.75 6" stroke="#333333" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M10.8672 9L11.6436 11.8978" stroke="#333333" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M14.0078 8.00781L16.1291 10.1291" stroke="#333333" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M1.875 10.1291L3.99631 8.00781" stroke="#333333" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M6.34766 11.8978L7.12413 9" stroke="#333333" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></span></div></span></div></div></div><div class="account-center-input-row account-center-captcha-row sso ac-hide"><div class="account-center-input-item"><div class="fill-design group"><label class="label-text">验证码</label><span class="ace-ui-input ace-ui-input-group-filled"><input class="ace-input ace-ui-input-default ace-ui-input-filled" type="text" status="" fill-type="filled" id="login-wrap-account-center-captcha-input" name="captcha" autocomplete="captcha" fieldname="item_label_verify_code" captchabase64="" required="" pattern="^[0-9A-Za-z]{4}$" max="4" label="" placeholder="验证码" title="验证码"><div class="ace-ui-input-suffix"></div></span><div class="account-center-captcha-image"></div></div></div></div></div><div class="account-center-message"></div><div class="account-center-input-agreement"><div class="check-box-container"><div class="account-center-agreement-check" style="background-color: rgb(255, 255, 255); border-color: rgb(204, 204, 204);"><span class="check-box-icon"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 48 48"><defs><path id="check_svg__a" d="M0 0h48v48H0z"></path></defs><g fill-rule="evenodd"><mask id="check_svg__b" fill="#fff"><use xlink:href="#check_svg__a"></use></mask><use fill="#FFF" fill-opacity=".01" xlink:href="#check_svg__a"></use><path fill-rule="nonzero" d="M10.414 22.586a2 2 0 0 0-2.828 2.828l10 10a2 2 0 0 0 2.828 0l20-20a2 2 0 0 0-2.828-2.828L19 31.172l-8.586-8.586z"></path></g></svg></span></div></div><span class="account-center-input-agreement-text">
+          <div style="width: 200px;">
+            <div style="display: flex; justify-content: space-around;">
+              <span>我已阅读并同意</span>
+              <a style="color: #2a90d7;" href="https://lf3-cdn-tos.draftstatic.com/obj/ies-hotsoon-draft/agent_web/user_protocol.html" target="_blank">用户协议</a>
+              <span>及</span>
+              <a style="color: #2a90d7;" href="https://agent.oceanengine.com/admin/feishuAgreement/secret" target="_blank">隐私政策</a>
+            </div>
+          </div>
+        </span></div><div class="account-center-submit"><button class="ace-ui-btn account-center-action-button ace-ui-btn-primary" disabled="" title="邮箱地址不能为空" style="background: rgba(42, 85, 229, 0.5);">登录</button></div><div class="account-center-switch-row switch-type-panel"><div class="account-center-switch-button switch-panel forgetPwd">忘记密码<span class="bar" style="background: rgb(42, 85, 229);"></span></div></div></section></div></div></div></div><script>!function(i){function e(e){for(var r,t,n=e[0],o=e[1],u=e[2],f=0,l=[];f<n.length;f++)t=n[f],c[t]&&l.push(c[t][0]),c[t]=0;for(r in o)Object.prototype.hasOwnProperty.call(o,r)&&(i[r]=o[r]);for(s&&s(e);l.length;)l.shift()();return p.push.apply(p,u||[]),a()}function a(){for(var e,r=0;r<p.length;r++){for(var t=p[r],n=!0,o=1;o<t.length;o++){var u=t[o];0!==c[u]&&(n=!1)}n&&(p.splice(r--,1),e=f(f.s=t[0]))}return e}var t={},c={2:0},p=[];function f(e){if(t[e])return t[e].exports;var r=t[e]={i:e,l:!1,exports:{}};return i[e].call(r.exports,r,r.exports,f),r.l=!0,r.exports}f.m=i,f.c=t,f.d=function(e,r,t){f.o(e,r)||Object.defineProperty(e,r,{enumerable:!0,get:t})},f.r=function(e){"undefined"!=typeof Symbol&&Symbol.toStringTag&&Object.defineProperty(e,Symbol.toStringTag,{value:"Module"}),Object.defineProperty(e,"__esModule",{value:!0})},f.t=function(r,e){if(1&e&&(r=f(r)),8&e)return r;if(4&e&&"object"==typeof r&&r&&r.__esModule)return r;var t=Object.create(null);if(f.r(t),Object.defineProperty(t,"default",{enumerable:!0,value:r}),2&e&&"string"!=typeof r)for(var n in r)f.d(t,n,function(e){return r[e]}.bind(null,n));return t},f.n=function(e){var r=e&&e.__esModule?function(){return e.default}:function(){return e};return f.d(r,"a",r),r},f.o=function(e,r){return Object.prototype.hasOwnProperty.call(e,r)},f.p="https://lf3-cdn-tos.bytegoofy.com/obj/goofy/cg/channel_portal/";var r=window.webpackJsonp=window.webpackJsonp||[],n=r.push.bind(r);r.push=e,r=r.slice();for(var o=0;o<r.length;o++)e(r[o]);var s=n;a()}([])</script><script src="https://lf3-cdn-tos.bytegoofy.com/obj/goofy/cg/channel_portal/static/js/1.ca12b818.chunk.js"></script><script src="https://lf3-cdn-tos.bytegoofy.com/obj/goofy/cg/channel_portal/static/js/main.6d1302ce.chunk.js"></script><script type="text/javascript">(function(w, d, u, b, n, pc, ga, ae, po, s, p, e, t, pp) {
+      pc = 'precollect';
+      ga = 'getAttribute';
+      ae = 'addEventListener';
+      po = 'PerformanceObserver';
+      s = function(m) {
+        p = [].slice.call(arguments);
+        p.push(Date.now(), location.href);
+        (m == pc ? s.p.a : s.q).push(p);
+      };
+      s.q = [];
+      s.p = { a: [] };
+      w[n] = s;
+      e = document.createElement('script');
+      e.src = u + '?bid=' + b + '&globalName=' + n;
+      e.crossorigin = u.indexOf('sdk-web') > 0 ? 'anonymous' : 'use-credentials';
+      d.getElementsByTagName('head')[0].appendChild(e);
+      if (ae in w) {
+        s.pcErr = function(e) {
+          e = e || w.event;
+          t = e.target || e.srcElement;
+          if (t instanceof Element || t instanceof HTMLElement) {
+            if (t[ga]('integrity')) {
+              w[n](pc, 'sri', t[ga]('href') || t[ga]('src'));
+            } else {
+              w[n](pc, 'st', { tagName: t.tagName, url: t[ga]('href') || t[ga]('src') });
+            }
+          } else {
+            w[n](pc, 'err', e.error);
+          }
+        };
+        s.pcRej = function(e) {
+          e = e || w.event;
+          w[n](pc, 'err', e.reason || (e.detail && e.detail.reason));
+        };
+        w[ae]('error', s.pcErr, true);
+        w[ae]('unhandledrejection', s.pcRej, true);
+      }
+      if ('PerformanceLongTaskTiming' in w) {
+        pp = s.pp = { entries: [] };
+        pp.observer = new PerformanceObserver(function(l) {
+          pp.entries = pp.entries.concat(l.getEntries);
+        });
+        pp.observer.observe({
+          entryTypes: ['longtask', 'largest-contentful-paint', 'layout-shift'],
+        });
+      }
+    })(
+      window,
+      document,
+      'https://lf3-short.bytegoofy.com/slardar/fe/sdk-web/browser.cn.js',
+      'channel_portal',
+      'Slardar',
+    );
+    try {
+      window.Slardar('init', {
+        bid: 'channel_portal',
+      });
+      window.Slardar('start');
+      window.SecurityCookieDetect &&
+        window.SecurityCookieDetect(data => {
+          // 业务方根据返回结果自行判断加引导
+          window.Slardar('context.merge', {
+            security_detect_3rd_party_cookie: data.security_detect_3rd_party_cookie,
+          });
+        });
+    } catch (e) {
+      console.error(e);
+    }</script><div class="slide-container" id="login-wrap-slide-container"></div><div class="ace-ui-tooltip" x-placement="right" style="position: absolute; left: 0px; top: 0px; transform: translate3d(1596px, 391px, 0px); display: none;"><div class="ace-ui-tooltip-arrow"></div><div class="ace-ui-tooltip-panel"><div class="ace-ui-tooltip-content"><div class="account-center-help-link">常见问题 <a target="_blank" href="https://e.oceanengine.com/account_info_help"><svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.33341 2.62484C2.33341 2.46375 2.464 2.33317 2.62508 2.33317H5.25008C5.57225 2.33317 5.83341 2.072 5.83341 1.74984C5.83341 1.42767 5.57225 1.1665 5.25008 1.1665H2.62508C1.81967 1.1665 1.16675 1.81942 1.16675 2.62484V11.3748C1.16675 12.1803 1.81967 12.8332 2.62508 12.8332H11.3751C12.1805 12.8332 12.8334 12.1803 12.8334 11.3748V8.59633C12.8334 8.27416 12.5722 8.01299 12.2501 8.01299C11.9279 8.01299 11.6667 8.27416 11.6667 8.59633V11.3748C11.6667 11.5359 11.5362 11.6665 11.3751 11.6665H2.62508C2.464 11.6665 2.33341 11.5359 2.33341 11.3748V2.62484Z" fill="white"></path><path d="M7.58341 1.1665C7.26125 1.1665 7.00008 1.42767 7.00008 1.74984C7.00008 2.072 7.26125 2.33317 7.58341 2.33317H10.842L7.11283 6.06233C6.88502 6.29014 6.88502 6.65948 7.11283 6.88729C7.34064 7.11509 7.70998 7.11509 7.93779 6.88729L11.6667 3.15833V6.4165C11.6667 6.73867 11.9279 6.99984 12.2501 6.99984C12.5722 6.99984 12.8334 6.73867 12.8334 6.4165V1.74984C12.8334 1.42767 12.5722 1.1665 12.2501 1.1665H7.58341Z" fill="white"></path></svg></a></div></div></div></div></body></html>

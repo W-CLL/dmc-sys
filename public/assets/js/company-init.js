@@ -1,0 +1,3 @@
+define(['company'], function (Company) {
+
+});

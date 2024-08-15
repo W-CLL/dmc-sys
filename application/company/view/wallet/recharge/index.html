@@ -1,0 +1,53 @@
+<form id="edit-form" class="form-horizontal form-ajax" style="margin-top: 100px;" role="form" data-toggle="validator" method="POST" action="">
+    {:token()}
+
+
+
+    <div class="form-group" >
+        <label class="control-label col-xs-12 col-sm-2">平台余额:</label>
+        <div class="col-xs-12 col-sm-8" style="padding-top: 7px">
+            {$money}
+        </div>
+    </div>
+
+    <div class="form-group" style="height: 200px">
+        <label for="c-local" class="control-label col-xs-12 col-sm-2">上传水单:</label>
+        <div class="col-xs-12 col-sm-8" >
+            <input type="text" style="display: none" name="image" id="c-local" class="form-control"/>
+            <button type="button" id="faupload-local" class="btn btn-primary faupload" data-input-id="c-local" data-maxcount="1" data-preview-id="p-local" data-url="{:url('receipt/upload')}"><i class="fa fa-upload"></i> 上传</button>
+            <ul class="row list-inline faupload-preview" id="p-local"></ul>
+        </div>
+    </div>
+
+    <div id="image_info" style="display: none">
+        <div class="form-group" >
+            <label class="control-label col-xs-12 col-sm-2">打款金额:</label>
+            <div id="money" class="col-xs-12 col-sm-8" style="padding-top: 7px">
+
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="control-label col-xs-12 col-sm-2">收款方:</label>
+            <div id="payee" class="col-xs-12 col-sm-8" style="padding-top: 7px">
+
+            </div>
+        </div>
+
+        <div class="form-group" style="display: none" >
+            <label class="control-label col-xs-12 col-sm-2"></label>
+            <div class="col-xs-12 col-sm-8">
+                <input type="text" style="width: 200px" class="form-control" id="order_num" name="order_num" value="" data-rule="required" />
+            </div>
+        </div>
+
+        <div class="form-group layer-footer">
+            <label class="control-label col-xs-12 col-sm-2"></label>
+            <div class="col-xs-12 col-sm-8">
+                <button type="submit" class="btn btn-primary btn-embossed disabled">提交</button>
+            </div>
+        </div>
+    </div>
+</form>
+
+

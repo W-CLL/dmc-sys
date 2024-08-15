@@ -1,0 +1,73 @@
+<form id="edit-form" class="form-horizontal form-ajax" style="margin-top: 100px;" role="form" data-toggle="validator" method="POST" action="">
+
+
+    <div class="form-group" >
+        <label class="control-label col-xs-12 col-sm-2">注:</label>
+        <div class="col-xs-12 col-sm-8" style="padding-top: 7px">
+            每天23:50~00:00都停止转账
+        </div>
+    </div>
+
+    <div class="form-group" >
+        <label class="control-label col-xs-12 col-sm-2">平台余额:</label>
+        <div class="col-xs-12 col-sm-8" style="padding-top: 7px">
+            {$money}
+        </div>
+    </div>
+    <div class="form-group" >
+        <label class="control-label col-xs-12 col-sm-2">千川余额:</label>
+        <div class="col-xs-12 col-sm-8" style="padding-top: 7px">
+            {$qc_money}
+        </div>
+    </div>
+
+    <div class="form-group" >
+        <label class="control-label col-xs-12 col-sm-2">类型:</label>
+        <div class="col-xs-12 col-sm-8"  style="width: 230px">
+            <select name="transaction_type" id="transaction_type" class="form-control selectpicker">
+                <option value="1" selected="selected">转入</option>
+                <option value="2">转出</option>
+            </select>
+        </div>
+    </div>
+    <div class="form-group" >
+        <label class="control-label col-xs-12 col-sm-2">金额:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input type="number" style="width: 200px" class="form-control" id="money" name="money" value="" data-rule="required" />
+        </div>
+    </div>
+
+    <div class="form-group layer-footer">
+        <label class="control-label col-xs-12 col-sm-2"></label>
+        <div class="col-xs-12 col-sm-8">
+            <button id="myButton" type="submit" class="btn btn-primary btn-embossed disabled">提交</button>
+        </div>
+    </div>
+</form>
+
+<script>
+
+    // 防抖函数
+    function debounce(func, wait) {
+        let timeout;
+        return function() {
+            const context = this;
+            const args = arguments;
+            clearTimeout(timeout); // 清除上一次的计时器
+            timeout = setTimeout(() => func.apply(context, args), wait); // 设置新的计时器
+        };
+    }
+
+    // 按钮点击处理函数
+    function handleButtonClick() {
+        console.log('按钮被点击了！');
+        // 这里可以放置你希望在按钮点击后执行的代码
+    }
+
+    // 获取按钮元素
+    const myButton = document.getElementById('myButton');
+
+    // 应用防抖函数到按钮点击事件
+    myButton.addEventListener('click', debounce(handleButtonClick, 5000));
+</script>
+

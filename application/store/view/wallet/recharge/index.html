@@ -1,0 +1,157 @@
+<form id="edit-form" class="form-horizontal form-ajax" style="margin-top: 100px;" role="form" data-toggle="validator" method="POST" action="">
+    {:token()}
+
+
+<!--    <div class="form-group" >-->
+<!--        <label class="control-label col-xs-12 col-sm-2">类型:</label>-->
+<!--        <div class="col-xs-12 col-sm-8"  style="width: 230px">-->
+<!--            <select name="type" id="type" class="form-control selectpicker">-->
+<!--                <option value="1" selected="selected">充值</option>-->
+<!--                <option value="2">授信额度</option>-->
+<!--            </select>-->
+<!--        </div>-->
+<!--    </div>-->
+
+
+    <div class="form-group" >
+        <label class="control-label col-xs-12 col-sm-2">钱包余额(公):</label>
+        <div class="col-xs-12 col-sm-8" style="padding-top: 7px">
+            {$data.public_money}
+        </div>
+    </div>
+
+    <div class="form-group" >
+        <label class="control-label col-xs-12 col-sm-2">钱包余额(私):</label>
+        <div class="col-xs-12 col-sm-8" style="padding-top: 7px">
+            {$data.private_money}
+        </div>
+    </div>
+
+    <div class="form-group" >
+        <label class="control-label col-xs-12 col-sm-2">公对公收款卡号:</label>
+        <div class="col-xs-12 col-sm-8" style="padding-top: 7px">
+            <p>开户公司：广州斑马数字科技有限公司</p>
+            <p>开户银行：广东南粤银行股份有限公司广州中山大道支行</p>
+            <p>开户账号：960101230900001591</p>
+        </div>
+    </div>
+
+    <div class="form-group" >
+        <label class="control-label col-xs-12 col-sm-2">私对私收款卡号：</label>
+        <div class="col-xs-12 col-sm-8" style="padding-top: 7px">
+            <p>账户名：罗文静</p>
+            <p>账号：6217680914510735</p>
+            <p>开户行：中信银行广州北秀支行</p>
+            <p style="color: #f73131">私对私识别建议您使用 中国银行、工商银行、建设银行、中信银行、恒丰银行、招商银行、浦发银行进行汇款充值。</p>
+        </div>
+    </div>
+
+
+    <div class="form-group" >
+        <label class="control-label col-xs-12 col-sm-2">提示:</label>
+        <div class="col-xs-12 col-sm-8" style="padding-top: 7px">
+            禁止公对私，私对公！
+        </div>
+    </div>
+
+    <div id="type1">
+        <div class="form-group" style="height: 200px">
+            <label for="c-local" class="control-label col-xs-12 col-sm-2">上传水单:</label>
+            <div class="col-xs-12 col-sm-8" >
+                <input type="text" style="display: none" name="image" id="c-local" class="form-control"/>
+                <button type="button" id="faupload-local" class="btn btn-primary faupload" data-input-id="c-local" data-maxcount="1" data-preview-id="p-local" data-url="{:url('receipt/upload')}"><i class="fa fa-upload"></i> 上传</button>
+                <a href="javascript:;" id="example" title="点击查看示例" > 点击查看水单示例</a>
+                <ul class="row list-inline faupload-preview" id="p-local"></ul>
+            </div>
+        </div>
+
+        <div id="image_info" style="display: none">
+            <div class="form-group" >
+                <label class="control-label col-xs-12 col-sm-2">打款金额:</label>
+                <div id="money" class="col-xs-12 col-sm-8" style="padding-top: 7px">
+
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="control-label col-xs-12 col-sm-2">充值类型:</label>
+                <div id="account_type" class="col-xs-12 col-sm-8" style="padding-top: 7px">
+
+                </div>
+            </div>
+
+        </div>
+
+        <div class="form-group" style="display: none">
+            <label class="control-label col-xs-12 col-sm-2">收款方:</label>
+            <div id="payee" class="col-xs-12 col-sm-8" style="padding-top: 7px">
+
+            </div>
+        </div>
+
+
+
+        <div class="form-group" style="display: none" >
+            <label class="control-label col-xs-12 col-sm-2"></label>
+            <div class="col-xs-12 col-sm-8">
+                <input type="text" style="width: 200px" class="form-control" id="order_num" name="order_num" value="" data-rule="required" />
+            </div>
+        </div>
+    </div>
+
+        <div id="type2" style="display: none">
+            <div class="form-group" >
+                <label class="control-label col-xs-12 col-sm-2">剩余授信额度(公):</label>
+                <div id="public_credit_limit" class="col-xs-12 col-sm-8" style="padding-top: 7px">
+                    {$data.public_credit_limit}
+                </div>
+            </div>
+
+            <div class="form-group" >
+                <label class="control-label col-xs-12 col-sm-2">剩余授信额度(私):</label>
+                <div id="private_credit_limit" class="col-xs-12 col-sm-8" style="padding-top: 7px">
+                    {$data.private_credit_limit}
+                </div>
+            </div>
+
+            <div class="form-group" >
+                <label class="control-label col-xs-12 col-sm-2">已使用授信额度(公):</label>
+                <div id="public_spending_credit_limit" class="col-xs-12 col-sm-8" style="padding-top: 7px">
+                    {$data.public_spending_credit_limit}
+                </div>
+            </div>
+
+            <div class="form-group" >
+                <label class="control-label col-xs-12 col-sm-2">已使用授信额度(私):</label>
+                <div id="private_spending_credit_limit" class="col-xs-12 col-sm-8" style="padding-top: 7px">
+                    {$data.private_spending_credit_limit}
+                </div>
+            </div>
+
+            <div class="form-group" >
+                <label class="control-label col-xs-12 col-sm-2">提取金额(公):</label>
+                <div class="col-xs-12 col-sm-8">
+                    <input type="number" style="width: 200px" class="form-control"  name="public_credit_limit_money" value="" data-rule="required" />
+                </div>
+            </div>
+
+            <div class="form-group" >
+                <label class="control-label col-xs-12 col-sm-2">提取金额(私):</label>
+                <div class="col-xs-12 col-sm-8">
+                    <input type="number" style="width: 200px" class="form-control"  name="private_credit_limit_money" value="" data-rule="required" />
+                </div>
+            </div>
+
+        </div>
+
+
+        <div class="form-group layer-footer">
+            <label class="control-label col-xs-12 col-sm-2"></label>
+            <div class="col-xs-12 col-sm-8">
+                <button type="submit" class="btn btn-primary btn-embossed disabled">提交</button>
+            </div>
+        </div>
+    </div>
+</form>
+
+
