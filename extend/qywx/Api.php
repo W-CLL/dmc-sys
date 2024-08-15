@@ -1,0 +1,103 @@
+<?php
+
+namespace qywx;
+
+use Requests;
+use think\Cache;
+
+Class Api{
+
+    protected static $corp_id = "ww712125b580d4a5c1";
+    protected static $corp_secret = "UPhfM_lNkgv-cc_A_mi6Uby3E-OThxc_2aK1iUtJS_c";
+    protected static $agentid = 1000026;
+
+
+    /**
+     * 获取企业微信access_token
+     */
+    public static function get_access_token(){
+        $access_token = Cache::get("qywx_access_token");
+        if (!$access_token){
+            $url = "https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=".self::$corp_id."&corpsecret=".self::$corp_secret;
+            $access_token = Requests::get($url)["access_token"];
+            Cache::set("qywx_access_token",$access_token,7200);
+        }
+        return $access_token;
+
+    }
+
+    /**
+     * 获取财务部成员
+     */
+    public static function get_finance_department_member($num = 0){
+        $access_token = self::get_access_token();
+        $url = "https://qyapi.weixin.qq.com/cgi-bin/user/simplelist?access_token=" . $access_token . "&department_id=7";
+        $result = Requests::get($url);
+        if ($result["errmsg"] != "ok"){
+            Cache::rm('qywx_access_token');
+            if ($num == 1){
+                return [];
+            }
+            self::get_finance_department_member(1);
+        }
+        return $result["userlist"];
+    }
+
+    public static function send_application_messages($touser){
+        $access_token = self::get_access_token();
+        $url = "https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token=" . $access_token;
+        $data = [
+            "touser" => $touser,
+            "toparty" => "",
+            "totag" => "",
+            "msgtype" => "text",
+            "agentid" => self::$agentid,
+            "text" => [
+                "content" => "有客户充值回单待处理。"
+            ],
+            "safe" => 0,
+            "enable_id_trans" => 0,
+            "enable_duplicate_check" => 0,
+            ];
+        Requests::post($url,json_encode($data,true));
+    }
+
+    public static function send_image_messages($touser,$media_id){
+        $access_token = self::get_access_token();
+        $url = "https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token=" . $access_token;
+        $data = [
+            "touser" => $touser,
+            "toparty" => "",
+            "totag" => "",
+            "msgtype" => "image",
+            "agentid" => self::$agentid,
+            "image" => [
+                "media_id" => $media_id
+            ],
+            "safe" => 0,
+            "enable_duplicate_check" => 0,
+            "duplicate_check_interval" => 1800,
+        ];
+        Requests::post($url,json_encode($data,true));
+    }
+
+    /**
+     * @param $file
+     * @param string $type 图片（image）、语音（voice）、视频（video），普通文件（file）
+     */
+    public static function media_upload($file,$type = "image"){
+        $access_token = self::get_access_token();
+        $url = "https://qyapi.weixin.qq.com/cgi-bin/media/upload?access_token=" . $access_token . "&type=" . $type;
+        $data = [
+            "media" => new \CURLFILE($file),
+        ];
+
+        $result = Requests::post($url,$data);
+        if ($result["errmsg"] == "ok"){
+            return $result["media_id"];
+        }
+        return "";
+    }
+
+
+}

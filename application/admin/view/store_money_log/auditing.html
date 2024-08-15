@@ -1,0 +1,114 @@
+<form id="edit-form" class="form-horizontal" role="form" data-toggle="validator" method="POST" action="">
+
+    <div class="form-group" style="width: 100px;margin-left: 40px;">
+    <a href="{:url('store_money_log/recharge_list')}" style="margin-left: 10px"  class="btn btn-success btn-block"  >返回上一页</a>
+    </div>
+    {:token()}
+    <input type="hidden" name="id" value="{$data.id}">
+
+
+    <div class="form-group">
+        <label  class="control-label col-xs-12 col-sm-2">银行单号:</label>
+        <div class="col-xs-12 col-sm-4">
+            <div class="radio">
+                {$data.order_number}
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label  class="control-label col-xs-12 col-sm-2">账号:</label>
+        <div class="col-xs-12 col-sm-4">
+            <div class="radio">
+                {$data.username}
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label  class="control-label col-xs-12 col-sm-2">充值金额:</label>
+        <div class="col-xs-12 col-sm-4">
+            <div class="radio">
+                {$data.money}
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label  class="control-label col-xs-12 col-sm-2">授信扣款:</label>
+        <div class="col-xs-12 col-sm-4">
+            <div class="radio">
+                {$data.deduction_credit_limit}
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label  class="control-label col-xs-12 col-sm-2">实际到账:</label>
+        <div class="col-xs-12 col-sm-4">
+            <div class="radio">
+                {$data.actual_money}
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label  class="control-label col-xs-12 col-sm-2">充值类型:</label>
+        <div class="col-xs-12 col-sm-4">
+            <div class="radio">
+                {if $data.account_type == 1}
+                公
+                {else/}
+                私
+                {/if}
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label  class="control-label col-xs-12 col-sm-2">银行回单:</label>
+        <div class="col-xs-12 " style="width: 80%">
+            <div class="radio">
+                <a href="{$data.receipt_image}" target="_blank" class="thumbnail">
+                    <img  src="{$data.receipt_image}" class="img-responsive">
+                </a>
+            </div>
+        </div>
+    </div>
+    {if $data.status == 0}
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Status')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <div class="radio">
+                <label>
+                    <input name="status" checked type="radio" value="1"> 通过
+                </label>
+                <label>
+                    <input  name="status" type="radio" value="2"> 不通过
+                </label>
+            </div>
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-auditing_explain" class="control-label col-xs-12 col-sm-2">审核备注:</label>
+        <div class="col-xs-12 col-sm-4">
+            <input id="c-auditing_explain"  class="form-control" name="auditing_explain" type="text" value=""  />
+        </div>
+    </div>
+    {else}
+    <div class="form-group">
+        <label  class="control-label col-xs-12 col-sm-2">{:__('Status')}:</label>
+        <div class="col-xs-12 col-sm-4">
+            <div class="radio">
+                {$data.gifts_money}
+            </div>
+        </div>
+    </div>
+    {/if}
+    <div class="form-group layer-footer">
+        <label class="control-label col-xs-12 col-sm-2"></label>
+        <div class="col-xs-12 col-sm-8">
+            <button type="submit" class="btn btn-primary btn-embossed ">{:__('OK')}</button>
+        </div>
+    </div>
+</form>

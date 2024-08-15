@@ -1,0 +1,63 @@
+<style type="text/css"> 
+    .table {table-layout:fixed;} 
+    .table td{text-overflow:ellipsis; overflow:hidden; white-space:nowrap; }
+    .follow_content{text-align: center;font-size: 16px;font-family: "微软雅黑";padding-bottom: 50px;}
+    .form{width: 800px;margin: 0 auto;}
+    .save{margin: 20px auto;width: 150px;line-height: 25px;display: block;}
+    .status{margin-top: 20px;color: #999;}
+    .follow_list{width: 90%;margin:0 auto;display: block;}
+    .follow_list h2{margin-top: 50px;margin-bottom: 20px;font-weight: bold;color: #18bc9c;}
+    .follow_list ul{border-bottom:1px solid #ccc;padding: 0px;}
+    .follow_list ul li{list-style: none;display: inline-block;width: 10%;text-align: center;padding: 10px 0px;color: #888;}
+    .follow_list_head{border-top:1px solid #ccc;}
+    .follow_list_head li{font-weight: bold;color: #000!important;}
+    .delete_cookie{cursor: pointer;width: 60px;line-height: 30px;background: #ccc;text-align: center;display: inline-block;border-radius: 5px;color: #fff;}
+    .form-group {margin-bottom: 10px;margin-top: 10px;text-align: right;display: block;height: 40px;line-height: 40px;}
+    .form-group label{    font-weight: normal;margin-top: 5px;}
+    .follow_notice{width: 800px;margin: 0 auto;}
+    .follow_notice p{color:#999;text-align: left;line-height: 25px;}
+    .get_qrcode{display: block;width: 80px;margin: 0 auto;}
+    .form input{height: 40px;line-height: 40px;margin-top: 10px;}
+    .get_code_btn{padding:0px;line-height: 40px;background: #18bc9c;color: #fff;margin-top: 10px;text-align: center;cursor: pointer;}
+</style>
+<div class="panel panel-default panel-intro">
+    {:build_heading()}
+    <form id="edit-form" class="form-horizontal form-ajax" style="margin-top: 100px;" role="form" data-toggle="validator" method="POST" action="">
+        {:token()}
+    <div class="panel-body">
+        <div id="myTabContent" class="tab-content">
+            <div class="tab-pane fade active in" id="one">
+                <div class="widget-body no-padding">
+                    <div id="toolbar" class="toolbar">
+                        <a href="javascript:;" class="btn btn-primary btn-refresh" title="{:__('Refresh')}" ><i class="fa fa-refresh"></i> </a>
+                        
+                    </div>
+                    <input type="hidden" name="token" class="token"  value="">
+                    <div class="follow_content">
+                        <div class="follow_notice">
+                            <p>获取cookie方法：<a href="https://hqjlgorob3s.feishu.cn/wiki/WMXHwJdoJihHIGkcyk9cLdngnpg?from=from_copylink" style="color:blue;" target="_blank"> 点我获取教程；</a> </p>
+
+                        </div>
+                        
+                        <div class="form">
+                            <div class="form-group">
+                                <label class="control-label col-xs-12 col-sm-2">cookie:</label>
+                                <div class="col-xs-12 col-sm-9" style="padding:0px;">
+                                    <input id="c-cookie" data-rule="required" class="form-control" name="cookie" type="text" value="" placeholder="请输入工具获取的cookie" >
+                                </div>
+                            </div>
+
+                        <div class="save">
+                            <button type="submit" class="btn btn-primary btn-embossed ">更新</button>
+                        </div>
+                            
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    </form>
+</div>
