@@ -12,58 +12,77 @@ use think\Db;
 use think\Exception;
 
 
-
-
 class RechargeRefund extends Store
 {
+
+    public function checkParam()
+    {
+        if (time() > strtotime(date('Y-m-d') . ' 23:50:00')) {
+            $this->error("今日转账已停止");
+        }
+
+        $company_advertiser_id = input("advertiser_id");
+        $transaction_type = input("transaction_type");
+        $money = input("money");
+
+        $account_info = $this->get_qc_money($company_advertiser_id);
+        $account_data = $account_info->getData();
+
+        if ($money > $account_data['data']['money'] && $transaction_type == 2) {
+            $this->error('千川账户余额不足，不能转出');
+        }
+
+        $company = Db::name("company")->where(['advertiser_id' => $company_advertiser_id, "store_id" => $this->auth->id])->field('id,account_type')->find();
+        if (empty($company)) {
+            $this->error("请选择千川账户");
+        }
+        if (!is_numeric($money) || $money < 0) {
+            $this->error("请输入正确金额");
+        }
+
+        $transfer_records_data = [
+            "store_id" => $this->auth->id,
+            "company_id" => $company['id'],
+            "account_type" => $company['account_type'],
+            "advertiser_id" => $company_advertiser_id,
+            "transfer_direction" => $transaction_type,
+            "money" => $money,
+            "create_time" => time()
+        ];
+
+
+        $store = Db::name("store")->where("id", $this->auth->id)->find();
+        if ($company['account_type'] == 1) {
+            //公账
+            $transfer_records_data['discount_percentage'] = $store['public_discount_percentage'];
+            $balance = $store["public_money"];
+            $credit_limit = $store["public_credit_limit"];
+        } else {
+            $transfer_records_data['discount_percentage'] = $store['private_discount_percentage'];
+            $balance = $store["private_money"];
+            $credit_limit = $store["private_credit_limit"];
+        }
+
+        $rebate = round($money - ($money * 100) / ($transfer_records_data['discount_percentage'] * 100), 2);
+
+        if (($money - $rebate) > ($balance + $credit_limit) && $transaction_type == 1) {
+            $this->error('钱包余额不足，不能转入！');
+        }
+
+        return [$money, $balance, $credit_limit, $company, $company_advertiser_id, $transfer_records_data];
+
+    }
+
     public function index()
     {
 
         if (request()->isAjax()) {
-            if (time() > strtotime(date('Y-m-d') . ' 23:50:00')) {
-                $this->error("今日转账已停止");
-            }
-            $company_advertiser_id = input("advertiser_id");
-            $company = Db::name("company")->where(['advertiser_id' => $company_advertiser_id, "store_id" => $this->auth->id])->field('id,account_type')->find();
-            if (empty($company)) {
-                $this->error("请选择千川账户");
-            }
-            $transaction_type = input("transaction_type");
-            $money = input("money");
-            if (!is_numeric($money) || $money < 0) {
-                $this->error("请输入正确金额");
-            }
+            list($money, $balance, $credit_limit, $company, $company_advertiser_id, $transfer_records_data) = $this->checkParam();
             $access_token = Cache::get("qc_access_token");
             $advertiser_id = Db::name("qc_config")->where("id", 1)->value("advertiser_id");
-
-
-            $transfer_records_data = [
-                "store_id" => $this->auth->id,
-                "company_id" => $company['id'],
-                "account_type" => $company['account_type'],
-                "advertiser_id" => $company_advertiser_id,
-                "transfer_direction" => $transaction_type,
-                "money" => $money,
-                "create_time" => time()
-            ];
-
-
-            $store = Db::name("store")->where("id", $this->auth->id)->find();
-            if ($company['account_type'] == 1) {
-                //公账
-                $transfer_records_data['discount_percentage'] = $store['public_discount_percentage'];
-                $balance = $store["public_money"];
-                $credit_limit = $store["public_credit_limit"];
-            } else {
-
-                $transfer_records_data['discount_percentage'] = $store['private_discount_percentage'];
-                $balance = $store["private_money"];
-                $credit_limit = $store["private_credit_limit"];
-            }
             $transfer_direction = '';
             $remark = "";
             $this->calculate_deductions($balance, $credit_limit, $transfer_records_data, $transfer_direction, $remark);
-
             $target_account_detail_list[] = [
                 'account_id' => (int)$company_advertiser_id,
                 'transfer_capital_detail_list' => [[
@@ -335,9 +354,14 @@ class RechargeRefund extends Store
         }
     }
 
-    public function get_qc_money()
+    public function get_qc_money($advertiser_id = '')
     {
-        $advertiser_id = input("advertiser_id");
+        if (empty($advertiser_id)) {
+            $advertiser_id = input("advertiser_id");
+        }
+        if(!$advertiser_id){
+            $this->error('请输入正确的ID');
+        }
         $company = Db::name("company")->where(['advertiser_id' => $advertiser_id, "store_id" => $this->auth->id])->find();
         if ($company) {
             $access_token = Cache::get("qc_access_token");
