@@ -3,8 +3,6 @@ namespace app\api\controller;
 
 
 use app\common\controller\Api;
-
-use zhaohang\Api as zh_Api;
 use jlqc\FundManagement;
 use think\Cache;
 use think\Db;
@@ -36,6 +34,9 @@ class Transfer extends Api
                             "advertiser_id" => $v['advertiser_id'],
                             "transfer_records_id" => $v['id'],
                             "money" => $v['money'],
+                            //记录到数据库
+                            "rebate" => $transfer_records_data["rebate"],
+                            "discount_percentage" => $transfer_records_data['discount_percentage'],
                             "create_time" => time()
                         ];
                         if ($v['transfer_direction'] == 1){
@@ -51,7 +52,7 @@ class Transfer extends Api
                             $money_log['type'] = 5;
                             $money_log['explain'] = "千川转出".$v['money']."元";
                         }
-                        if (!Db::name("money_log")->insert($money_log)){
+                        if (!Db::name("store_money_log")->insert($money_log)){
                             throw new \Exception('转账成功，资金记录写入失败');
                         }
                         if (!Db::name("transfer_records")->where(["id"=>$v['id']])->update(['status'=>1])){
@@ -77,12 +78,4 @@ class Transfer extends Api
         }
         return "更新成功,本次更新".count($transfer_records_data)."条数据";
     }
-
-    
-    public function test(){
-        $a = zh_Api::zh_NTDMAADD();
-        $a = json_decode($a,TRUE);
-        var_dump($a);
-    }
-
 }
