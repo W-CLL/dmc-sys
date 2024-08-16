@@ -42,6 +42,8 @@ class HandleRefund extends Frontend
 
     public function handleTransferRecordData()
     {
+        echo "禁止访问";
+        die;
         $records = Db::name('transfer_records')
             ->where('status', '=', 1)
             ->where('store_id', '>', 0)
