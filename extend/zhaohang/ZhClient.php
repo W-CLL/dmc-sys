@@ -7,15 +7,24 @@ use Mdanter\Ecc\Crypto\Signature\Signature;
 use Mdanter\Ecc\Serializer\Signature\DerSignatureSerializer;
 use Rtgm\sm\RtSm2;
 use Rtgm\sm\RtSm4;
+use think\Env;
 
-class Father
+class ZhClient
 {
-    protected static $userId = 'N002461203';
-    protected static $privateKey = "NBtl7WnuUtA2v5FaebEkU0/Jj1IodLGT6lQqwkzmd2E=";
-    protected static $publicKey = "BNsIe9U0x8IeSe4h/dxUzVEz9pie0hDSfMRINRXc7s1UIXfkExnYECF4QqJ2SnHxLv3z/99gsfDQrQ6dzN5lZj0=";
-    protected static $symmetricKey = 'VuAzSWQhsoNqzn0K';
-    protected static $reqUrl = 'http://cdctest.cmburl.cn:80/cdcserver/api/v2';
+    protected static $userId = '';
+    protected static $privateKey = "";
+    protected static $publicKey = "";
+    protected static $symmetricKey = '';
+    protected static $reqUrl = '';
 
+    protected function __construct()
+    {
+        self::$userId = Env::get('zhao_hang.user_id');
+        self::$privateKey = Env::get('zhao_hang.private_key');
+        self::$publicKey = Env::get('zhao_hang.public_key');
+        self::$symmetricKey = Env::get('zhao_hang.symmetric_key');
+        self::$reqUrl = Env::get('zhao_hang.req_url');
+    }
     /**
      * 生成请求id
      * @return string
