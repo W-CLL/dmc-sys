@@ -44,6 +44,8 @@ define(['jquery', 'bootstrap', 'company', 'table', 'form'], function ($, undefin
                                 return "转出"
                             }else if (row.type == 6){
                                 return "授信充值"
+                            }else if (row.type == 7){
+                                return "子账号充值"
                             }
 
                             }, operate: 'LIKE'},

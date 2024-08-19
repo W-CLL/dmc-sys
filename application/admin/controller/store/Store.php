@@ -11,6 +11,8 @@ use jlqc\UserInfo;
 use think\Cache;
 use think\Db;
 use think\Validate;
+use zhaohang\Api as zh_Api;
+use app\admin\model\ZhSubAccount;
 
 /**
  * 商户管理
@@ -68,7 +70,7 @@ class Store extends Backend
             $list = Db::name("store")
                 ->where($where)
                 ->order($sort, $order)
-                ->field("id,username,group_id,login_time,loginip,status,public_money,private_money,public_discount_percentage,private_discount_percentage,public_credit_limit,private_credit_limit,public_spending_credit_limit,private_spending_credit_limit")
+                ->field("id,username,group_id,login_time,loginip,status,public_money,private_money,public_discount_percentage,private_discount_percentage,public_credit_limit,private_credit_limit,public_spending_credit_limit,private_spending_credit_limit,bank")
                 ->limit($offset,$limit)
                 ->select();
 
@@ -294,6 +296,162 @@ class Store extends Backend
             $money_log[] = $data;
         }
         return true;
+    }
+
+    /**
+     * 绑定银行子账户
+     */
+    public function bind_bank_sub_account(){
+        if ($this->request->isPost()) {
+            $this->token();
+            $bank = input("bank");
+            $data = input();
+            switch ($bank){
+                case 1:
+                    $result = $this->validate($data, 'BindBankSubAccount.zhaohang');
+                    if (true !== $result) {
+                        $this->error($result);
+                    }
+                    $result1 = $this->bind_zh_sub_account($data);
+                    if (!$result1){
+                        $this->error('绑定失败');
+                    }else{
+                        Db::name('store')->where(['id' => $data['ids']])->update(['bank' => $bank]);
+                    }
+                    break;
+            }
+            $this->success('成功');
+        }
+        $res = zh_Api::zh_DCLISMOD('N36090');     // 此处为交易管家编号，要传什么去查招行文档
+        if($res){
+            $res = json_decode($res,TRUE);
+            $this->view->assign('busModList',$res['response']['body']['ntqmdlstz']);
+        }else{
+            $this->error('未知错误');
+        }
+
+        return $this->view->fetch('bind');
+    }
+
+
+    /**
+     * 绑定招行子账户
+     * @param $data
+     * @return bool
+     */
+    public function bind_zh_sub_account($data){
+        $res = zh_Api::zh_NTDMAADD($data);
+        $res = json_decode($res,TRUE);
+        if($res['response']['head']['resultcode'] == 'SUC0000'){
+            $insert['store_id'] = $data['ids'];
+            $insert['bus_mod'] = $data['busmod'];
+            $insert['branch_num'] = $data['bbknbr'];
+            $insert['settle_account'] = $data['accnbr'];
+            $insert['sub_account'] = $res['response']['body']['ntdmabadz1'][0]['dmanbr'];
+            $insert['sub_name'] = $data['dmanam'];
+            $insert['can_overdraw'] = $data['ovrctl'];
+            $insert['return_method'] = $data['bcktyp'];
+            $insert['can_off'] = $data['clstyp'];
+            $insert['whether_limit'] = $data['lmtflg'];
+            $insert['max_limit'] = $data['lmtflg'] == 'Y'? $data['ballmt'] : 0;
+            $ZhSubAccountModel = new ZhSubAccount;
+            $result = $ZhSubAccountModel->insert($insert);
+            if($result){
+                return true;
+            }else{
+                return false;
+            }
+        }else{
+            return false;
+        }
+    }
+
+    /**
+     * 绑定子账号修改
+     */
+    public function edit_sub_account($ids=null){
+        $ZhSubAccountModel = new ZhSubAccount;
+        if ($this->request->isPost()) {
+            $this->token();
+            $bank = input("bank");
+            $data = input();
+            switch ($bank){
+                case 1:
+                    $result = $this->validate($data, 'BindBankSubAccount.zhaohang');
+                    if (true !== $result) {
+                        $this->error($result);
+                    }
+                    $result1 = $this->edit_zh_sub_account($data);
+                    if (!$result1){
+                        $this->error('修改失败');
+                    }else{
+                        Db::name('store')->where(['id' => $data['ids']])->update(['bank' => $bank]);
+                    }
+                    break;
+            }
+            $this->success('成功');
+        }
+        $res = zh_Api::zh_DCLISMOD('N36090');     // 此处为交易管家编号，要传什么去查招行文档
+        $res = json_decode($res,TRUE);
+        $this->view->assign('busModList',$res['response']['body']['ntqmdlstz']);
+        $bind_bank = Db::name('store')->where(['id' => $ids])->value('bank');
+        $this->view->assign('bind_bank',$bind_bank);
+        switch ($bind_bank){
+            case 1:
+                $info = $ZhSubAccountModel->where(['store_id' => $ids])->find();
+                $this->view->assign('info',$info);
+                break;
+        }
+        return $this->view->fetch();
+    }
+
+    /**
+     * 招行修改子账户接口
+     * @param $data
+     * @return bool
+     */
+    public function edit_zh_sub_account($data){
+        $res = zh_Api::zh_NTDMAMNT($data);
+        $res = json_decode($res,TRUE);
+        if($res['response']['head']['resultcode'] == 'SUC0000'){
+            $update['sub_name'] = $data['dmanam'];
+            $update['can_overdraw'] = $data['ovrctl'];
+            $update['return_method'] = $data['bcktyp'];
+            $update['can_off'] = $data['clstyp'];
+            $update['whether_limit'] = $data['lmtflg'];
+            $update['max_limit'] = $data['lmtflg'] == 'Y'? $data['ballmt'] : 0;
+            $ZhSubAccountModel = new ZhSubAccount;
+            $result = $ZhSubAccountModel->where(['store_id' => $data['ids']])->update($update);
+            if($result){
+                return true;
+            }else{
+                return false;
+            }
+        }else{
+            return false;
+        }
+    }
+
+
+    /**
+     * 关闭子账户（招行）
+     */
+    public function off_zh_sub_account($ids=Null){
+        $ZhSubAccountModel = new ZhSubAccount;
+        $info = $ZhSubAccountModel->where(['store_id' => $ids])->find();
+        $res = zh_Api::zh_NTDMADLT($info);
+        $res = json_decode($res,TRUE);
+        if($res['response']['head']['resultcode'] == 'SUC0000'){
+            $result = $ZhSubAccountModel->where(['store_id' => $ids])->delete();
+            if($result){
+                Db::name('store')->where(['id' => $ids])->update(['bank' => 0]);
+                $this->success('成功');
+            }else{
+                $this->error('删除子账户记录失败');
+            }
+        }else{
+            $this->error('关闭子账户失败');
+        }
     }
 
 

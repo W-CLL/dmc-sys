@@ -1,4 +1,5 @@
 <?php
+
 namespace zhaohang;
 
 use FG\ASN1\ASNObject;
@@ -29,16 +30,32 @@ class Father
     /**
      * 生成随机字符串
      * @param $length
+     * @param $type(0:数字字母混合 1:数字 2：字母)
      * @return string
      */
-    protected static function generateRandomString($length = 10) {
-        $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    protected static function generateRandomString($length = 10,$type = 0) {
+        if($type == 0){
+            $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        }elseif ($type == 1){
+            $characters = '0123456789';
+        }elseif ($type == 2){
+            $characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        }
         $charactersLength = strlen($characters);
         $randomString = '';
         for ($i = 0; $i < $length; $i++) {
             $randomString .= $characters[rand(0, $charactersLength - 1)];
         }
         return $randomString;
+    }
+
+    /**
+     * 生成随机订单号
+     * @return string
+     */
+    protected static function getOrderNum(){
+        $order_num = date('YmdHis').rand(100000,999999).rand(1000,9999).self::generateRandomString(4,2);
+        return $order_num;
     }
 
     /**
