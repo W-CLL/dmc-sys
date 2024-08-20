@@ -6,12 +6,11 @@ use app\admin\model\Admin;
 use app\common\controller\Backend;
 use app\common\library\Auth;
 use fast\Random;
-use jlqc\AccountRelationship;
-use jlqc\UserInfo;
-use think\Cache;
+
+use qywx\Api;
 use think\Db;
-use think\Validate;
-use zhaohang\Api as zh_Api;
+
+
 use app\admin\model\ZhSubAccount;
 
 /**
@@ -322,7 +321,8 @@ class Store extends Backend
             }
             $this->success('成功');
         }
-        $res = zh_Api::getOperationModel('N36090');     // 此处为交易管家编号，要传什么去查招行文档
+        $zhApi = new \zhaohang\Api();
+        $res = $zhApi->getOperationModel('N36090');     // 此处为交易管家编号，要传什么去查招行文档
         if($res){
             $res = json_decode($res,TRUE);
             $this->view->assign('busModList',$res['response']['body']['ntqmdlstz']);
@@ -340,7 +340,8 @@ class Store extends Backend
      * @return bool
      */
     public function bind_zh_sub_account($data){
-        $res = zh_Api::addChildAccount($data);
+        $zhApi = new \zhaohang\Api();
+        $res = $zhApi->addChildAccount($data);
         $res = json_decode($res,TRUE);
         if($res['response']['head']['resultcode'] == 'SUC0000'){
             $insert['store_id'] = $data['ids'];
@@ -391,7 +392,8 @@ class Store extends Backend
             }
             $this->success('成功');
         }
-        $res = zh_Api::getOperationModel('N36090');     // 此处为交易管家编号，要传什么去查招行文档
+        $zhApi = new \zhaohang\Api();
+        $res = $zhApi->getOperationModel('N36090');     // 此处为交易管家编号，要传什么去查招行文档
         $res = json_decode($res,TRUE);
         $this->view->assign('busModList',$res['response']['body']['ntqmdlstz']);
         $bind_bank = Db::name('store')->where(['id' => $ids])->value('bank');
@@ -411,7 +413,8 @@ class Store extends Backend
      * @return bool
      */
     public function edit_zh_sub_account($data){
-        $res = zh_Api::updateChildAccount($data);
+        $zhApi = new \zhaohang\Api();
+        $res = $zhApi->updateChildAccount($data);
         $res = json_decode($res,TRUE);
         if($res['response']['head']['resultcode'] == 'SUC0000'){
             $update['sub_name'] = $data['dmanam'];
@@ -439,7 +442,8 @@ class Store extends Backend
     public function off_zh_sub_account($ids=Null){
         $ZhSubAccountModel = new ZhSubAccount;
         $info = $ZhSubAccountModel->where(['store_id' => $ids])->find();
-        $res = zh_Api::delChildAccount($info);
+        $zhApi = new \zhaohang\Api();
+        $res = $zhApi->delChildAccount($info);
         $res = json_decode($res,TRUE);
         if($res['response']['head']['resultcode'] == 'SUC0000'){
             $result = $ZhSubAccountModel->where(['store_id' => $ids])->delete();

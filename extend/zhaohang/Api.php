@@ -5,15 +5,20 @@ namespace zhaohang;
 class Api extends ZhClient
 {
 
-    protected static function handlePostData($funcode, $body)
+    public function __construct()
+    {
+        parent::__construct();
+    }
+
+    protected function handlePostData($funcode, $body)
     {
         return [
             "request" => [
                 "body" => $body,
                 "head" => [
                     "funcode" => $funcode,
-                    "userid" => self::$userId,
-                    "reqid" => self::getReqId()
+                    "userid" => $this->userId,
+                    "reqid" => $this->getReqId()
                 ]
             ],
             "signature" => [
@@ -23,17 +28,18 @@ class Api extends ZhClient
         ];
     }
 
-    protected static function baseRquest($post, $funcode){
+    protected function baseRquest($post, $funcode)
+    {
         $data = json_encode($post, JSON_UNESCAPED_UNICODE);
-        $sign = self::SMSign($data);
+        $sign = $this->SMSign($data);
         // 替换签名字段
         $data = str_replace('__signature_sigdat__', $sign, $data);
-        $SM4Data = self::SM4CBCEncryption($data);
+        $SM4Data = $this->SM4CBCEncryption($data);
         // 发送请求
-        $response = self::httpPost(self::getFormData($SM4Data, $funcode));
+        $response = $this->httpPost($this->getFormData($SM4Data, $funcode));
         if ($response) {
             // 返回结果解密
-            return self::decrypt($response);
+            return $this->decrypt($response);
         }
         return false;
     }
@@ -43,19 +49,19 @@ class Api extends ZhClient
      * @param $str
      * @return array|false|string|string[]
      */
-    public static function getOperationModel($str)
+    public function getOperationModel($str)
     {
         $body = ["buscod" => $str];
         $funcode = "DCLISMOD";
-        $post = self::handlePostData($funcode,$body);
-        return self::baseRquest($post,$funcode);
+        $post = $this->handlePostData($funcode, $body);
+        return $this->baseRquest($post, $funcode);
     }
 
     /**
      * 新增记账子单元
      * @return array|false|string|string[]
      */
-    public static function addChildAccount($arr)
+    public function addChildAccount($arr)
     {
         $body = [
             "ntbusmody" => [
@@ -68,17 +74,17 @@ class Api extends ZhClient
                 "ovrctl" => $arr['ovrctl'],
                 "bcktyp" => $arr['bcktyp'],
                 "clstyp" => $arr['clstyp'],
-                "yurref" => self::getOrderNum(),
+                "yurref" => $this->getOrderNum(),
                 "lmtflg" => $arr['lmtflg'],
             ]
         ];
         $funcode = "NTDMAADD";
-        $post = self::handlePostData($funcode,$body);
+        $post = $this->handlePostData($funcode, $body);
 
         if ($arr['lmtflg'] == 'Y') { //Y设定账户余额限制 N  X
             $post['request']['body']['ntdmaaddx']['ballmt'] = $arr['ballmt'];
         }
-        return self::baseRquest($post,$funcode);
+        return $this->baseRquest($post, $funcode);
     }
 
 
@@ -87,7 +93,7 @@ class Api extends ZhClient
      * @param $arr
      * @return array|false|string|string[]
      */
-    public static function delChildAccount($arr)
+    public function delChildAccount($arr)
     {
         $body = [
             "ntbusmody" => [
@@ -95,15 +101,15 @@ class Api extends ZhClient
             ],
             "ntdmadltx1" => [
                 "accnbr" => $arr['settle_account'],   // 填入结算户
-                "yurref" => self::getOrderNum(),
+                "yurref" => $this->getOrderNum(),
             ],
             "ntdmadltx2" => [
                 "dmanbr" => $arr['sub_account']
             ]
         ];
         $funcode = "NTDMADLT";
-        $post = self::handlePostData($funcode,$body);
-        return self::baseRquest($post,$funcode);
+        $post = $this->handlePostData($funcode, $body);
+        return $this->baseRquest($post, $funcode);
 
     }
 
@@ -112,7 +118,7 @@ class Api extends ZhClient
      * @param $arr
      * @return array|false|string|string[]
      */
-    public static function updateChildAccount($arr)
+    public function updateChildAccount($arr)
     {
         $body = [
             "ntbusmody" => [
@@ -126,17 +132,17 @@ class Api extends ZhClient
                 "ovrctl" => $arr['ovrctl'],
                 "bcktyp" => $arr['bcktyp'],
                 "clstyp" => $arr['clstyp'],
-                "yurref" => self::getOrderNum(),
+                "yurref" => $this->getOrderNum(),
                 "lmtflg" => $arr['lmtflg'],
             ]
         ];
         $funcode = "NTDMAMNT";
-        $post = self::handlePostData($funcode,$body);
+        $post = $this->handlePostData($funcode, $body);
 
         if ($arr['lmtflg'] == 'Y') {
             $post['request']['body']['ntdmaaddx']['ballmt'] = $arr['ballmt'];
         }
-        return self::baseRquest($post,$funcode);
+        return $this->baseRquest($post, $funcode);
     }
 
 
@@ -144,7 +150,7 @@ class Api extends ZhClient
      * 查询记账子单元信息
      * @return array|false|string|string[]
      */
-    public static function getChildAccountInfo($arr)
+    public function getChildAccountInfo($arr)
     {
         $body = [
             "ntdmalstx" => [
@@ -154,14 +160,14 @@ class Api extends ZhClient
             ]
         ];
         $funcode = "NTDMALST";
-        $post = self::handlePostData($funcode,$body);
-        return self::baseRquest($post,$funcode);
+        $post = $this->handlePostData($funcode, $body);
+        return $this->baseRquest($post, $funcode);
     }
 
     /**
      * 转账
      */
-    public static function zh_BB1PAYOP()
+    public function zh_BB1PAYOP()
     {
         $body = [
             "bb1paybmx1" => [
@@ -179,14 +185,14 @@ class Api extends ZhClient
                     "bnkFlg" => 'Y',
                     "trsAmt" => '1.00',
                     "dbtAcc" => '755915671610302',
-                    "yurRef" => self::getOrderNum(),
+                    "yurRef" => $this->getOrderNum(),
                 ]
             ]
         ];
 
         $funcode = "BB1PAYOP";
-        $post = self::handlePostData($funcode,$body);
-        return self::baseRquest($post,$funcode);
+        $post = $this->handlePostData($funcode, $body);
+        return $this->baseRquest($post, $funcode);
     }
 
 
