@@ -14,14 +14,14 @@ class Callback extends Api
     protected $noNeedLogin = ['*'];
     protected $noNeedRight = ['*'];
     public function callback_test(){
-//        $data = array (
-//            'sigtim' => '20240813160306',
-//            'sigdat' => 'JcaXjlL9ta8zaI4qJ4EeW+QVWeVsNWj/2IpCbXAi4ir514nC1ekPxJc7wwFsEpimdTYqHBOUi88aIrwfMB7+Mw==',
-//            'notdat' => '{"msgdat":{"chknbr":" ","infflg":"2","refsub":"","refnbr":"C0146XR0000JPEZ","trscod":"CPUA","rpyacc":"755915671610302","gsbacc":" ","otrnar":" ","rpynam":"企业网银新20161103","amtcdr":"C","naryur":"测试2","vltdat":"20240813","yurref":"20240813155411","accnam":"企业网银新20161103","gsbnam":" ","narext":" ","trsanl":" ","nusage":" ","trsdat":"20240813","reqnbr":"6662996672","trstim":"160306","rpybnk":"招商银行深圳分行营业部","gsbbbk":" ","frmcod":"0000000121","athflg":"N","rpybbn":" ","rsvflg":"N","accnbr":"755915671610407","busnam":"支付","rpybbk":" ","c_trsamt":"1","c_ccynbr":"人民币","busnar":" ","blvamt":"903648757.66","rpyadr":"广东省深圳市"},"msgtyp":"NCCRTTRS"}',
-//            'notkey' => '755915671610407',
-//            'notnbr' => '245040309580595200',
-//            'nottyp' => 'YQN01010',
-//        );
+        // $data = array (
+        //     'sigtim' => '20240820134314',
+        //     'sigdat' => 'lFun5KSpvdGaOG6FwzqZNQJwqq44bAJ40p8GFldIH0eJ/2yjKclBAe1GXI/WXQ1l8oEjWBDAxlwVkGiTZ6C7Zg==',
+        //     'notdat' => '{"msgdat":{"chknbr":" ","infflg":"2","refsub":"","refnbr":"C0146XY0000DY5Z","trscod":"CPUA","rpyacc":"755915671610501","gsbacc":" ","otrnar":" ","rpynam":"企业网银新20161103","amtcdr":"C","naryur":"测试2","vltdat":"20240820","yurref":"20240820133854","accnam":"企业网银新20161103","gsbnam":" ","narext":" ","trsanl":" ","nusage":" ","trsdat":"20240820","reqnbr":"6662999454","trstim":"134313","rpybnk":"招商银行深圳分行营业部","gsbbbk":" ","frmcod":"0000000122","athflg":"N","rpybbn":" ","rsvflg":"N","accnbr":"755915671610407","busnam":"支付","rpybbk":" ","c_trsamt":"1","c_ccynbr":"人民币","busnar":" ","blvamt":"903648758.66","rpyadr":"广东省深圳市"},"msgtyp":"NCCRTTRS"}',
+        //     'notkey' => '755915671610407',
+        //     'notnbr' => '246321083862286336',
+        //     'nottyp' => 'YQN01010',
+        // );
         $data = input();
 //        Log::write($data,'notice');
         // 验证签名是否正确
