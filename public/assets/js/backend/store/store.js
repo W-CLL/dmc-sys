@@ -1,4 +1,4 @@
-define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefined, Backend, Table, Form) {
+define(['jquery', 'bootstrap', 'backend', 'table', 'form', 'bootstrap-table-fixed-columns'], function ($, undefined, Backend, Table, Form) {
 
     var Controller = {
         index: function () {
@@ -10,6 +10,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                     edit_url: 'store/store/edit',
                     multi_url: 'store/store/multi',
                     transfer_records_url :"transfer_records/index",
+                    bind_url: 'store/store/bind_bank_sub_account',
                     table: 'store',
                 }
             });
@@ -21,6 +22,8 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                 url: $.fn.bootstrapTable.defaults.extend.index_url,
                 pk: 'id',
                 sortName: 'id',
+                fixedColumns: true, // 固定列代码
+                fixedRightNumber: 1, // 固定右侧第一列
                 columns: [
                     [
                         {checkbox: true},
@@ -43,11 +46,18 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                                 return row.loginip
                             }},
                         {field: 'status', title: "状态", formatter: function(value,row,index) {
-                            if (row.status==0){
-                                return "禁用"
-                            }else if (row.status == 1){
-                                return "正常"
-                            }
+                                if (row.status==0){
+                                    return "禁用"
+                                }else if (row.status == 1){
+                                    return "正常"
+                                }
+                            }},
+                        {field: 'bank', title: "绑定银行", formatter: function(value,row,index) {
+                                if (row.bank == 0){
+                                    return "未绑定"
+                                }else if (row.bank == 1){
+                                    return "招商银行"
+                                }
                             }},
                         {field: 'operate', title: __('Operate'), buttons: [{
                                 name: "transfer_records",
@@ -61,7 +71,51 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                                     //返回true时按钮显示,返回false隐藏
                                     return true;
                                 }
-                            }], table: table, events: Table.api.events.operate, formatter: Table.api.formatter.operate}
+                            },{
+                                name: "bind_bank_sub_account",
+                                text: "绑定子账户",//按钮名称
+                                classname: 'btn btn-xs btn-success btn-dialog',
+                                icon: 'fa fa-plus',
+                                url: 'store/store/bind_bank_sub_account',//指向控制器对应方法
+                                confirm: '绑定子账户',
+                                visible:function(row){
+                                    if(row.bank == 0){
+                                        return true;
+                                    }else{
+                                        return false;
+                                    }
+                                },
+                            },{
+                                name: "edit_sub_account",
+                                text: "修改子账户",//按钮名称
+                                classname: 'btn btn-xs btn-info btn-dialog',
+                                icon: 'fa fa-align-justify',
+                                url: 'store/store/edit_sub_account',//指向控制器对应方法
+                                confirm: '修改子账户',
+                                visible:function(row){
+                                    if(row.bank != 0){
+                                        return true;
+                                    }else{
+                                        return false;
+                                    }
+                                },
+                            },{
+                                name: "off_zh_sub_account",
+                                text: "注销招行子账户",//按钮名称
+                                // classname: 'btn btn-xs btn-success btn-',
+                                classname: 'btn btn-xs btn-danger btn-magic btn-ajax',
+                                icon: 'fa fa-times',
+                                url: 'store/store/off_zh_sub_account',//指向控制器对应方法
+                                confirm: '确定注销招行子账户吗？',
+                                visible:function(row){
+                                    if(row.bank == 1){
+                                        return true;
+                                    }else{
+                                        return false;
+                                    }
+                                },
+                            }
+                            ], table: table, events: Table.api.events.operate, formatter: Table.api.formatter.operate}
                     ]
                 ]
             });
@@ -73,6 +127,12 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
             Controller.api.bindevent();
         },
         edit: function () {
+            Controller.api.bindevent();
+        },
+        bind_bank_sub_account: function () {
+            Controller.api.bindevent();
+        },
+        edit_sub_account: function () {
             Controller.api.bindevent();
         },
         transfer_records: function () {

@@ -1,0 +1,139 @@
+<form id="edit-form" class="form-horizontal" role="form" data-toggle="validator" method="POST" action="">
+    {:token()}
+
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">需要绑定的银行:</label>
+        <div class="col-xs-12 col-sm-8">
+            <div class="radio">
+                <label>
+                    <input name="bank"  type="radio" value="1" checked> 招商银行
+                </label>
+<!--                <label>-->
+<!--                    <input name="bank"  type="radio" value="2"> 正常-->
+<!--                </label>-->
+            </div>
+        </div>
+    </div>
+
+    <div id="zhaohang">
+
+        <div class="form-group">
+            <label class="control-label col-xs-12 col-sm-2">业务模式:</label>
+            <div class="col-xs-12 col-sm-4">
+                <select id="c-busmod" data-live-search="true" class="form-control selectpicker" name="busmod">
+                    <option value="" >请选择业务模式</option>
+                    {foreach $busModList as $k=>$v}
+                    <option value="{$v['busmod']}" >{$v['modals']}</option>
+                    {/foreach}
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="c-bbknbr" class="control-label col-xs-12 col-sm-2">分行号:</label>
+            <div class="col-xs-12 col-sm-4">
+                <input id="c-bbknbr"  class="form-control" name="bbknbr" type="text" value=""/>
+            </div>
+            <span>请到该网页进行查询分行号后填入<a href="https://openbiz.cmbchina.com/developer/UI/Business/CloudDirectConnect/Public/DocumentCenter/DocDetail.aspx?bizkey=DCCT20201215105601692&fabizkey=1&treeID=100044155"  target="_blank">查看分行号文档</a></span>
+        </div>
+
+        <div class="form-group">
+            <label for="c-accnbr" class="control-label col-xs-12 col-sm-2">结算号:</label>
+            <div class="col-xs-12 col-sm-4">
+                <input id="c-accnbr"  class="form-control" name="accnbr" type="text" value=""  />
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="c-dmanam" class="control-label col-xs-12 col-sm-2">记账子单元名称:</label>
+            <div class="col-xs-12 col-sm-4">
+                <input id="c-dmanam" class="form-control" name="dmanam" type="text" value="" />
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="control-label col-xs-12 col-sm-2">是否可透支:</label>
+            <div class="col-xs-12 col-sm-8">
+                <div class="radio">
+                    <label>
+                        <input name="ovrctl"  type="radio" value="Y" checked> 允许透支
+                    </label>
+                    <label>
+                        <input name="ovrctl"  type="radio" value="N"> 不允许透支
+                    </label>
+                    <label>
+                        <input name="ovrctl"  type="radio" value="X"> 不适用(收款识别开子单元必选这个)
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="control-label col-xs-12 col-sm-2">支付失败退回方式:</label>
+            <div class="col-xs-12 col-sm-8">
+                <div class="radio">
+                    <label>
+                        <input name="bcktyp"  type="radio" value="Y" > 退回原记账子单元
+                    </label>
+                    <label>
+                        <input name="bcktyp"  type="radio" value="N" checked> 退回结算户
+                    </label>
+                    <label>
+                        <input name="bcktyp"  type="radio" value="X"> 不适用(收款识别开子单元必选这个)
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="control-label col-xs-12 col-sm-2">余额非零时是否可关闭:</label>
+            <div class="col-xs-12 col-sm-8">
+                <div class="radio">
+                    <label>
+                        <input name="clstyp"  type="radio" value="Y" checked> 可关闭
+                    </label>
+                    <label>
+                        <input name="clstyp"  type="radio" value="N" > 不可关闭
+                    </label>
+                    <label>
+                        <input name="clstyp"  type="radio" value="X"> 不适用(收款识别开子单元必选这个)
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="control-label col-xs-12 col-sm-2">是否设置收款限额:</label>
+            <div class="col-xs-12 col-sm-8">
+                <div class="radio">
+                    <label>
+                        <input name="lmtflg"  type="radio" value="Y" > 设置收款额度
+                    </label>
+                    <label>
+                        <input name="lmtflg"  type="radio" value="N" checked> 不设置收款额度
+                    </label>
+                    <label>
+                        <input name="lmtflg"  type="radio" value="X"> 不适用(收款识别开子单元必选这个)
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="c-ballmt" class="control-label col-xs-12 col-sm-2">余额上限额度:</label>
+            <div class="col-xs-12 col-sm-4">
+                <input id="c-ballmt" class="form-control" name="ballmt" type="number" min="0" value="0" />
+            </div>
+            <span>如若选中“设置收款额度”，此处必须填大于零的数。选中其他则可无需理会</span>
+        </div>
+    </div>
+
+
+    <div class="form-group layer-footer">
+        <label class="control-label col-xs-12 col-sm-2"></label>
+        <div class="col-xs-12 col-sm-8">
+            <button type="submit" class="btn btn-primary btn-embossed disabled">{:__('OK')}</button>
+            <button type="reset" class="btn btn-default btn-embossed">{:__('Reset')}</button>
+        </div>
+    </div>
+</form>

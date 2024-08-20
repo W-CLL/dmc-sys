@@ -1,0 +1,144 @@
+<form id="edit-form" class="form-horizontal" role="form" data-toggle="validator" method="POST" action="">
+    {:token()}
+
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">需要绑定的银行:</label>
+        <div class="col-xs-12 col-sm-8">
+            <div class="radio">
+                <label>
+                    <input name="bank"  type="radio" value="1" <?php if ($bind_bank == 1) echo 'checked'; ?>> 招商银行
+                </label>
+                <!--                <label>-->
+                <!--                    <input name="bank"  type="radio" value="2"> 正常-->
+                <!--                </label>-->
+            </div>
+        </div>
+    </div>
+
+    <div id="zhaohang">
+
+        <div class="form-group">
+            <label class="control-label col-xs-12 col-sm-2">业务模式:</label>
+            <div class="col-xs-12 col-sm-4">
+                <select id="c-busmod" data-live-search="true" class="form-control selectpicker" name="busmod">
+                    <option value="" >请选择业务模式</option>
+                    {foreach $busModList as $k=>$v}
+                    <option value="{$v['busmod']}" {if $v['busmod'] == $info['bus_mod']}selected{/if}>{$v['modals']}</option>
+                    {/foreach}
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="c-bbknbr" class="control-label col-xs-12 col-sm-2">分行号:</label>
+            <div class="col-xs-12 col-sm-4">
+                <input id="c-bbknbr"  class="form-control" name="bbknbr" type="text" value="{$info['branch_num']}"  readonly/>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="c-accnbr" class="control-label col-xs-12 col-sm-2">结算号:</label>
+            <div class="col-xs-12 col-sm-4">
+                <input id="c-accnbr"  class="form-control" name="accnbr" type="text" value="{$info['settle_account']}"  readonly/>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="c-dmanbr" class="control-label col-xs-12 col-sm-2">记账子单元编号:</label>
+            <div class="col-xs-12 col-sm-4">
+                <input id="c-dmanbr"  class="form-control" name="dmanbr" type="text" value="{$info['sub_account']}"  readonly/>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="c-dmanam" class="control-label col-xs-12 col-sm-2">记账子单元名称:</label>
+            <div class="col-xs-12 col-sm-4">
+                <input id="c-dmanam" class="form-control" name="dmanam" type="text" value="{$info['sub_name']}" />
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="control-label col-xs-12 col-sm-2">是否可透支:</label>
+            <div class="col-xs-12 col-sm-8">
+                <div class="radio">
+                    <label>
+                        <input name="ovrctl"  type="radio" value="Y" <?php if ($info['can_overdraw'] == 'Y') echo 'checked'; ?>> 允许透支
+                    </label>
+                    <label>
+                        <input name="ovrctl"  type="radio" value="N" <?php if ($info['can_overdraw'] == 'N') echo 'checked'; ?>> 不允许透支
+                    </label>
+                    <label>
+                        <input name="ovrctl"  type="radio" value="X" <?php if ($info['can_overdraw'] == 'X') echo 'checked'; ?>> 不适用(收款识别开子单元必选这个)
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="control-label col-xs-12 col-sm-2">支付失败退回方式:</label>
+            <div class="col-xs-12 col-sm-8">
+                <div class="radio">
+                    <label>
+                        <input name="bcktyp"  type="radio" value="Y" <?php if ($info['return_method'] == 'Y') echo 'checked'; ?>> 退回原记账子单元
+                    </label>
+                    <label>
+                        <input name="bcktyp"  type="radio" value="N" <?php if ($info['return_method'] == 'N') echo 'checked'; ?>> 退回结算户
+                    </label>
+                    <label>
+                        <input name="bcktyp"  type="radio" value="X" <?php if ($info['return_method'] == 'X') echo 'checked'; ?>> 不适用(收款识别开子单元必选这个)
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="control-label col-xs-12 col-sm-2">余额非零时是否可关闭:</label>
+            <div class="col-xs-12 col-sm-8">
+                <div class="radio">
+                    <label>
+                        <input name="clstyp"  type="radio" value="Y" <?php if ($info['can_off'] == 'Y') echo 'checked'; ?>> 可关闭
+                    </label>
+                    <label>
+                        <input name="clstyp"  type="radio" value="N" <?php if ($info['can_off'] == 'N') echo 'checked'; ?>> 不可关闭
+                    </label>
+                    <label>
+                        <input name="clstyp"  type="radio" value="X" <?php if ($info['can_off'] == 'X') echo 'checked'; ?>> 不适用(收款识别开子单元必选这个)
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="control-label col-xs-12 col-sm-2">是否设置收款限额:</label>
+            <div class="col-xs-12 col-sm-8">
+                <div class="radio">
+                    <label>
+                        <input name="lmtflg"  type="radio" value="Y" <?php if ($info['whether_limit'] == 'Y') echo 'checked'; ?>> 设置收款额度
+                    </label>
+                    <label>
+                        <input name="lmtflg"  type="radio" value="N" <?php if ($info['whether_limit'] == 'N') echo 'checked'; ?>> 不设置收款额度
+                    </label>
+                    <label>
+                        <input name="lmtflg"  type="radio" value="X" <?php if ($info['whether_limit'] == 'X') echo 'checked'; ?>> 不适用(收款识别开子单元必选这个)
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="c-ballmt" class="control-label col-xs-12 col-sm-2">余额上限额度:</label>
+            <div class="col-xs-12 col-sm-4">
+                <input id="c-ballmt" class="form-control" name="ballmt" type="number" min="0" value="{$info['max_limit']}" />
+            </div>
+        </div>
+    </div>
+
+
+    <div class="form-group layer-footer">
+        <label class="control-label col-xs-12 col-sm-2"></label>
+        <div class="col-xs-12 col-sm-8">
+            <button type="submit" class="btn btn-primary btn-embossed disabled">{:__('OK')}</button>
+            <button type="reset" class="btn btn-default btn-embossed">{:__('Reset')}</button>
+        </div>
+    </div>
+</form>
