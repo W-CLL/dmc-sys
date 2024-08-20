@@ -325,9 +325,10 @@ class Store extends Backend
         $res = $zhApi->getOperationModel('N36090');     // 此处为交易管家编号，要传什么去查招行文档
         if($res){
             $res = json_decode($res,TRUE);
-            $this->view->assign('busModList',$res['response']['body']['ntqmdlstz']);
+            $list = $res['response']['body']['ntqmdlstz'];
+            $this->view->assign('busModList',$list);
         }else{
-            $this->error('未知错误');
+            $this->error('网络出现问题，请稍后再试！');
         }
 
         return $this->view->fetch('bind');
@@ -394,8 +395,12 @@ class Store extends Backend
         }
         $zhApi = new \zhaohang\Api();
         $res = $zhApi->getOperationModel('N36090');     // 此处为交易管家编号，要传什么去查招行文档
-        $res = json_decode($res,TRUE);
-        $this->view->assign('busModList',$res['response']['body']['ntqmdlstz']);
+        if($res){
+            $res = json_decode($res,TRUE);
+            $this->view->assign('busModList',$res['response']['body']['ntqmdlstz']);
+        }else{
+            $this->error('网络出现问题，请稍后再试！');
+        }
         $bind_bank = Db::name('store')->where(['id' => $ids])->value('bank');
         $this->view->assign('bind_bank',$bind_bank);
         switch ($bind_bank){
