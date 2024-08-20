@@ -23,7 +23,7 @@ class Callback extends Api
         //     'nottyp' => 'YQN01010',
         // );
         $data = input();
-//        Log::write($data,'notice');
+        Log::write($data,'datalog');
         // 验证签名是否正确
         $sign = $data["sigdat"];
         // 将数据中的签名重置
@@ -45,6 +45,7 @@ class Callback extends Api
         if ($b === true) {    // 验签
             $info = json_decode($data['notdat'],true);
             if($info['msgtyp'] == 'NCCRTTRS'){   // 判断是到款通知
+                Log::write('yes','daokuan');
                 $store_id = Db::name('zh_sub_account')->where(['settle_account'=>$info['msgdat']['accnbr'],'sub_account'=>$info['msgdat']['frmcod']])->value('store_id');
                 if($store_id){    //  查询是否有绑定这个鬼子账户
                     Db::startTrans();
@@ -123,7 +124,7 @@ class Callback extends Api
                         Db::commit();
                     }catch (\Exception $e) {
                         Db::rollback();
-                        Log::write($e,'error');
+                        Log::write($e,'err');
                     }
                 }
             }
