@@ -14,16 +14,17 @@ class Callback extends Api
     protected $noNeedLogin = ['*'];
     protected $noNeedRight = ['*'];
     public function callback_test(){
-//        $data = array (
-//            'sigtim' => '20240813160306',
-//            'sigdat' => 'JcaXjlL9ta8zaI4qJ4EeW+QVWeVsNWj/2IpCbXAi4ir514nC1ekPxJc7wwFsEpimdTYqHBOUi88aIrwfMB7+Mw==',
-//            'notdat' => '{"msgdat":{"chknbr":" ","infflg":"2","refsub":"","refnbr":"C0146XR0000JPEZ","trscod":"CPUA","rpyacc":"755915671610302","gsbacc":" ","otrnar":" ","rpynam":"企业网银新20161103","amtcdr":"C","naryur":"测试2","vltdat":"20240813","yurref":"20240813155411","accnam":"企业网银新20161103","gsbnam":" ","narext":" ","trsanl":" ","nusage":" ","trsdat":"20240813","reqnbr":"6662996672","trstim":"160306","rpybnk":"招商银行深圳分行营业部","gsbbbk":" ","frmcod":"0000000121","athflg":"N","rpybbn":" ","rsvflg":"N","accnbr":"755915671610407","busnam":"支付","rpybbk":" ","c_trsamt":"1","c_ccynbr":"人民币","busnar":" ","blvamt":"903648757.66","rpyadr":"广东省深圳市"},"msgtyp":"NCCRTTRS"}',
+//        $data =  array (
+//            'sigtim' => '20240820143510',
+//            'sigdat' => 'Zuo9wyQJVw8JBSKKFXjgqKvyCYh0reX0HD6GZDSfSXaMXmKMDedR2TqNxKnYLHwlcN0nu8bJU9tdMqfkwkzd3w==',
+//            'notdat' => '{"msgdat":{"chknbr":" ","infflg":"2","refsub":"","refnbr":"C0146XY0001NNOZ","trscod":"CPUA    ","rpyacc":"755915671610501","gsbacc":" ","otrnar":" ","rpynam":"企业网银新20161103","amtcdr":"C","naryur":"测试2","vltdat":"20240820","yurref":"20240820143312","accnam":"企业网银新20161103","gsbnam":" ","narext":" ","trsanl":" ","nusage":" ","trsdat":"20240820","reqnbr":"6662999458","trstim":"143508","rpybnk":"招商银行深圳分行营业部","gsbbbk":" ","frmcod":"0000000122","athflg":"N","rpybbn":" ","rsvflg":"N","accnbr":"755915671610407","busnam":"支付","rpybbk":" ","c_trsamt":"1","c_ccynbr":"人民币","busnar":" ","blvamt":"903648760.66","rpyadr":"广东省深圳市"},"msgtyp":"NCCRTTRS"}',
 //            'notkey' => '755915671610407',
-//            'notnbr' => '245040309580595200',
+//            'notnbr' => '246327775421792256',
 //            'nottyp' => 'YQN01010',
 //        );
         $data = input();
-        Log::write($data,'datalog');
+        $data['notdat'] = html_entity_decode($data['notdat']);
+//        Log::write($data,'datalog');
         // 验证签名是否正确
         $sign = $data["sigdat"];
         // 将数据中的签名重置
@@ -45,7 +46,6 @@ class Callback extends Api
         if ($b === true) {    // 验签
             $info = json_decode($data['notdat'],true);
             if($info['msgtyp'] == 'NCCRTTRS'){   // 判断是到款通知
-                Log::write('yes','daokuan');
                 $store_id = Db::name('zh_sub_account')->where(['settle_account'=>$info['msgdat']['accnbr'],'sub_account'=>$info['msgdat']['frmcod']])->value('store_id');
                 if($store_id){    //  查询是否有绑定这个鬼子账户
                     Db::startTrans();
