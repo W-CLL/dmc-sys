@@ -19,4 +19,4 @@ CREATE TABLE `fa_zh_sub_account` (
                                      PRIMARY KEY (`id`),
                                      UNIQUE KEY `sub_account` (`sub_account`) USING BTREE,
                                      UNIQUE KEY `store_id` (`store_id`) USING BTREE
-) ENGINE=MyISAM AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COMMENT='绑定招行子账户，不理解的字段去看文档：https://openbiz.cmbchina.com/developer/UI/Business/CloudDirectConnect/Public/DocumentCenter/DocDetail.aspx?bizkey=DCCT20231226155549458&fabizkey=1&treeID=100082838';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='绑定招行子账户，不理解的字段去看文档：https://openbiz.cmbchina.com/developer/UI/Business/CloudDirectConnect/Public/DocumentCenter/DocDetail.aspx?bizkey=DCCT20231226155549458&fabizkey=1&treeID=100082838';
