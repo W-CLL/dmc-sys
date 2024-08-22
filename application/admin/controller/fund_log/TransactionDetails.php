@@ -43,6 +43,11 @@ class TransactionDetails extends Backend
             $this->error("查询相隔时间不能超过一个月");
         }
         $transaction_data = FundManagement::fund_transaction($access_token,$advertiser_id,$start_date,$end_date,$offset,$limit,$transaction_type);
+        $return_code = FundManagement::$auth_return_code;
+
+        if(in_array($transaction_data['code'],$return_code)){
+            $this->error('千川授权已失效，请联系管理员');
+        }
         $data['rows'] = $transaction_data['data']['list'];
         $data['total'] = $transaction_data['data']['page_info']['total_number'];
         return $data;

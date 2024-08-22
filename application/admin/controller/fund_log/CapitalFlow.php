@@ -44,6 +44,12 @@ class CapitalFlow extends Backend
         }
 
         $finance_data = FundManagement::finance($access_token,$advertiser_id,$start_date,$end_date,$offset,$limit);
+        $return_code = FundManagement::$auth_return_code;
+
+        if(in_array($finance_data['code'],$return_code)){
+            $this->error('千川授权已失效，请联系管理员');
+        }
+
         $data['rows'] = $finance_data['data']['list'];
         $data['total'] = $finance_data['data']['page_info']['total_number'];
         return $data;
