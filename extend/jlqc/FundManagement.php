@@ -4,6 +4,15 @@ namespace jlqc;
 
 use Requests;
 Class FundManagement{
+
+    public static $auth_return_code = [
+        '40102',//access_token已过期
+        '40103',//refresh_token已过期
+        '40104',//The access_token is empty.
+        '40107',//refresh_token无效，请传入最新的refresh_token
+        '40115'//授权码无效
+    ];
+
     //获取账户余额
     public static function account_balance($access_token,$advertiser_id){
         $url = "https://api.oceanengine.com/open_api/v1.0/qianchuan/account/balance/get/?advertiser_id=".$advertiser_id;

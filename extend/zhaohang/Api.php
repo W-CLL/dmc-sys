@@ -140,7 +140,7 @@ class Api extends ZhClient
         $post = $this->handlePostData($funcode, $body);
 
         if ($arr['lmtflg'] == 'Y') {
-            $post['request']['body']['ntdmaaddx']['ballmt'] = $arr['ballmt'];
+            $post['request']['body']['ntdmamntx1']['ballmt'] = $arr['ballmt'];
         }
         return $this->baseRquest($post, $funcode);
     }

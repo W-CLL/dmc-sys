@@ -366,6 +366,12 @@ class RechargeRefund extends Store
         if ($company) {
             $access_token = Cache::get("qc_access_token");
             $qc_money = FundManagement::account_balance($access_token, $advertiser_id);
+            $return_code = FundManagement::$auth_return_code;
+
+            if(in_array($qc_money['code'],$return_code)){
+                return json(["code" => 0, "msg" => "千川授权已失效，请联系管理员"]);
+//                $this->error('千川授权已失效，请联系管理员');
+            }
             $money = $qc_money['data']['account_total'] / 100000;
             return json(["code" => 1, "data" => ["money" => $money, "account_type" => $company['account_type']], "msg" => "请求成功"]);
         }

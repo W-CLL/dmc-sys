@@ -29,7 +29,7 @@ define(['jquery', 'bootstrap', 'store', 'table', 'form'], function ($, undefined
                                 account_type = ret.data.account_type
                                 calculate_deductions(account_type)
                             }else{
-                                Toastr.error(__('请求失败'));
+                                Toastr.error(__(ret.msg));
                             }
                         }, error: function () {
                             Toastr.error(__('Network error'));
