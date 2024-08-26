@@ -80,6 +80,10 @@ class Store extends Backend
                 if ($v['group_id']){
                     $list[$k]['group'] = Db::name("store_group")->where("id",$v['group_id'])->find();
                 }
+                $list[$k]['sub_account'] = [];
+                if($v['bank'] == 1){
+                    $list[$k]['sub_account'] = Db::name("zh_sub_account")->where("store_id",$v['id'])->find();
+                }
             }
 
             $result = array("total" => $count, "rows" => $list);
