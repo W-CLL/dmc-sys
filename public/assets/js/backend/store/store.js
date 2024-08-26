@@ -59,6 +59,12 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', 'bootstrap-table-fixe
                                     return "招商银行"
                                 }
                             }},
+                        {field: 'sub_account', title: "子账户账户", formatter: function(value,row,index) {
+                                if (row.sub_account == ''){
+                                    return "-"
+                                }
+                                return row.sub_account.settle_account + row.sub_account.sub_account
+                            }},
                         {field: 'operate', title: __('Operate'), buttons: [{
                                 name: "transfer_records",
                                 text: "资金流水",//按钮名称
