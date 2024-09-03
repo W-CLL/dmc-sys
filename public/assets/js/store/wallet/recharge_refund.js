@@ -24,6 +24,8 @@ define(['jquery', 'bootstrap', 'store', 'table', 'form'], function ($, undefined
                         cache: false,
                         success: function (ret) {
                             if (ret.code){
+                                $('#qc_total_money').text(ret.data.total_money)
+                                $('#qc_grant_money').text(ret.data.grant_balance)
                                 $('#qc_money').text(ret.data.money)
                                 $('#account_type').text(ret.data.account_type == 1?'公':'私')
                                 account_type = ret.data.account_type
