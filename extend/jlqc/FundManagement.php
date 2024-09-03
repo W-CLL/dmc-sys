@@ -22,6 +22,14 @@ Class FundManagement{
         return Requests::get($url,$header);
     }
 
+    public static function account_balance_wallet($access_token,$advertiser_id){
+        $url = "https://api.oceanengine.com/open_api/v1.0/qianchuan/finance/wallet/get/?advertiser_id=".$advertiser_id;
+        $header = array(
+            'Access-Token:'. $access_token,
+        );
+        return Requests::get($url,$header);
+    }
+
     //获取财务流水信息
     public static function finance($access_token,$advertiser_id,$start_date,$end_date,$page,$page_size){
         $url = "https://ad.oceanengine.com/open_api/v1.0/qianchuan/finance/detail/get/?advertiser_id=".$advertiser_id."&start_date=".$start_date."&end_date=".$end_date."&page=".$page."&page_size=".$page_size;
