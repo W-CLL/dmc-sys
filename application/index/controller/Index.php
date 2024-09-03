@@ -33,9 +33,11 @@ class Index extends Frontend
         $company = Db::name("company")->where(['advertiser_id' => $advertiser_id, "store_id" => $store_id])->find();
         if ($company) {
             $access_token = Cache::get("qc_access_token");
-            $qc_money = FundManagement::account_balance($access_token, $advertiser_id);
+            $qc_money = FundManagement::account_balance_wallet($access_token, $advertiser_id);
+            $qc_money1 = FundManagement::account_balance($access_token, $advertiser_id);
             $return_code = FundManagement::$auth_return_code;
             dump($qc_money);
+            dump($qc_money1);
                 die;
             if(in_array($qc_money['code'],$return_code)){
                 return json(["code" => 0, "msg" => "千川授权已失效，请联系管理员"]);
