@@ -21,7 +21,7 @@ class Index extends Frontend
     }
 
 
-    public function get_qc_money($advertiser_id = '')
+    public function get_qc_money($advertiser_id = '',$store_id=8)
     {
         // 1795937699753995
         if (empty($advertiser_id)) {
@@ -30,7 +30,7 @@ class Index extends Frontend
         if(!$advertiser_id){
             $this->error('请输入正确的ID');
         }
-        $company = Db::name("company")->where(['advertiser_id' => $advertiser_id, "store_id" => $this->auth->id])->find();
+        $company = Db::name("company")->where(['advertiser_id' => $advertiser_id, "store_id" => $store_id])->find();
         if ($company) {
             $access_token = Cache::get("qc_access_token");
             $qc_money = FundManagement::account_balance($access_token, $advertiser_id);
