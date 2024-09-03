@@ -378,8 +378,8 @@ class RechargeRefund extends Store
             $actual_money = $total_money - $grant_balance;
             $data =[
                 "money" => $actual_money / 100000,
-                "total_money" => $actual_money/100000,
-                "grant_balance" => $actual_money/100000,
+                "total_money" => $total_money/100000,
+                "grant_balance" => $grant_balance/100000,
                 "account_type" => $company['account_type']
             ];
             return json(["code" => 1, "data" => $data,"msg" => "请求成功"]);
