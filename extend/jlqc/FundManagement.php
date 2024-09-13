@@ -175,6 +175,59 @@ Class FundManagement{
         return Requests::get($url,$header);
     }
 
+    // 获取钱包id信息
+    // https://open.oceanengine.com/labels/7/docs/1798907322782729?origin=left_nav
+    public static function get_wallet_info($access_token,$account_id,$account_type){
+
+        $header = array(
+            'Access-Token:'. $access_token
+        );
+        $url = "https://api.oceanengine.com/open_api/v3.0/shared_wallet/account_relation/get/?account_id=".$account_id."&account_type=".$account_type;
+        return Requests::get($url,$header);
+    }
+
+    // 获取钱包信息列表
+    // https://open.oceanengine.com/labels/7/docs/1798465839055872?origin=left_nav
+    public static function get_wallet_info_list($access_token,$account_id,$wallet_id_list,$account_type){
+
+        $header = array(
+            'Access-Token:'. $access_token
+        );
+        $url = "https://api.oceanengine.com/open_api/v3.0/shared_wallet/wallet_info/get/?account_id=".$account_id."&wallet_id_list=".$wallet_id_list."&account_type=".$account_type;
+        return Requests::get($url,$header);
+    }
+
+    // 获取最大可转余额
+    // https://open.oceanengine.com/labels/7/docs/1799667820221452?origin=left_nav
+    public static function get_max_transfer($access_token,$account_id,$account_type,$biz_request_no,$main_wallet_id,$sub_wallet_list,$transfer_direction){
+        $header = array(
+            'Access-Token:'. $access_token
+        );
+        $url = "https://api.oceanengine.com/open_api/v3.0/cg_transfer/wallet/transfer/can_transfer_balance/?account_id=".$account_id."&account_type=".$account_type."&biz_request_no=".$biz_request_no."&main_wallet_id=".$main_wallet_id."&sub_wallet_list=".$sub_wallet_list."&transfer_direction=".$transfer_direction;
+        return Requests::get($url,$header);
+    }
+
+
+    // 共享钱包转账
+    // https://open.oceanengine.com/labels/7/docs/1799669807408128?origin=left_nav
+    public static function wallet_transfer($access_token,$account_id,$account_type,$biz_request_no,$main_wallet_id ,$target_wallet_detail_list,$transfer_direction,$remark){
+        $url = "https://api.oceanengine.com/open_api/v3.0/cg_transfer/wallet/transfer/create/";
+        $header = array(
+            'Access-Token:'. $access_token,
+            'Content-Type:application/json',
+        );
+        $data = array(
+            "account_id" => (int)$account_id,
+            "account_type"=>strval($account_type),
+            "biz_request_no" => strval($biz_request_no),
+            "main_wallet_id"=>(int)$main_wallet_id,
+            "target_wallet_detail_list"=>$target_wallet_detail_list,
+            "transfer_direction"=>$transfer_direction,
+            "remark"=>$remark,
+        );
+        return Requests::post($url,json_encode($data,JSON_UNESCAPED_UNICODE),$header);
+    }
+
 }
 
 

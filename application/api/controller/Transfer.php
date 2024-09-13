@@ -78,4 +78,28 @@ class Transfer extends Api
         }
         return "更新成功,本次更新".count($transfer_records_data)."条数据";
     }
+
+
+    // 更新子钱包列表
+    public function check_sub_wallet_list(){
+        $token = Cache::get("qc_access_token");
+        $account_id = Db::name("qc_config")->where("id",1)->value("advertiser_id");
+        $account_type = 'AGENT';
+        $data = FundManagement::get_wallet_info($token,$account_id,$account_type);
+        $info = Db::name('qc_share_wallet')->where(['id'=>[">",0]])->field('sub_wallet_id')->select();
+        $out_list = array_diff(array_column($info,'sub_wallet_id'),$data['data']['sub_wallet_ids']);
+        $new_list = array_diff($data['data']['sub_wallet_ids'],array_column($info,'sub_wallet_id'));
+        if(!empty($out_list)){
+            Db::name('qc_share_wallet')->where('sub_wallet_id','in',$out_list)->delete();
+        }
+        if(!empty($new_list)){
+            foreach (array_values($new_list) as $v){
+                $ins[] = [
+                    'sub_wallet_id'=> $v,
+                    'main_wallet_id' => $data['data']['main_wallet_id'],
+                ];
+            }
+            Db::name('qc_share_wallet')->insertAll($ins);
+        }
+    }
 }
