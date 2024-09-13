@@ -39,15 +39,18 @@ define(['jquery', 'bootstrap', 'company', 'table', 'form'], function ($, undefin
                             }else if (row.type == 3){
                                 return "充值"
                             }else if (row.type == 4){
-                                return "转入"
+                                return "千川转入"
                             }else if (row.type == 5){
-                                return "转出"
+                                return "千川转出"
                             }else if (row.type == 6){
                                 return "授信充值"
                             }else if (row.type == 7){
                                 return "子账号充值"
+                            }else if (row.type == 8){
+                                return "转入共享钱包"
+                            }else if (row.type == 9){
+                                return "共享钱包转出"
                             }
-
                             }, operate: 'LIKE'},
                         {field: 'explain', title: "说明"},
                         {field: 'create_time', title:"时间" ,formatter: Table.api.formatter.datetime},
