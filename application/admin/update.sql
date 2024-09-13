@@ -20,3 +20,15 @@ CREATE TABLE `fa_zh_sub_account` (
                                      UNIQUE KEY `sub_account` (`sub_account`) USING BTREE,
                                      UNIQUE KEY `store_id` (`store_id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='绑定招行子账户，不理解的字段去看文档：https://openbiz.cmbchina.com/developer/UI/Business/CloudDirectConnect/Public/DocumentCenter/DocDetail.aspx?bizkey=DCCT20231226155549458&fabizkey=1&treeID=100082838';
+--2024.09.13
+--2024.9.13 已处理
+CREATE TABLE `fa_qc_share_wallet` (
+                                      `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT 'ID',
+                                      `sub_wallet_id` varchar(30) NOT NULL COMMENT '子钱包ID',
+                                      `bind_store_id` int(10) DEFAULT NULL COMMENT '绑定的商户ID',
+                                      `main_wallet_id` varchar(30) NOT NULL COMMENT '主钱包id',
+                                      `sub_wallet_type` tinyint(1) NOT NULL DEFAULT '0' COMMENT '账户类型:0未绑定,1公账,2私账',
+                                      PRIMARY KEY (`id`),
+                                      UNIQUE KEY `sub_wallet_id` (`sub_wallet_id`) USING BTREE,
+                                      KEY `store_id` (`bind_store_id`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='子钱包列表';

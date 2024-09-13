@@ -1,0 +1,116 @@
+<form id="transfer_money-form" class="form-horizontal" role="form" data-toggle="validator" method="POST" action="" >
+  {:token()}
+  <div class="form-group" id="receiving_account" style="">
+    <label for="c-receiving_account" class="control-label col-xs-12 col-sm-2">大钱包id:</label>
+    <div class="col-xs-12 col-sm-8" style="width: 230px">
+      <input id="c-receiving_account" class="form-control" name="main_wallet_id" type="text" value="{$walletList.main_wallet_id}" readonly>
+    </div>
+  </div>
+
+  <div class="form-group" id="receiving_name" style="">
+    <label for="c-receiving_name" class="control-label col-xs-12 col-sm-2">子钱包id:</label>
+    <div class="col-xs-12 col-sm-8" style="width: 230px">
+      <input id="c-receiving_name" class="form-control" name="sub_wallet_id" type="text" value="{$walletList.sub_wallet_id}" readonly>
+    </div>
+  </div>
+
+
+  <div class="form-group">
+    <label class="control-label col-xs-12 col-sm-2">转账方向:</label>
+    <div class="col-xs-12 col-sm-8">
+      <div class="radio">
+        <label>
+          <input name="transfer_direction" checked type="radio" value="TRANSFER_IN">  转入
+        </label>
+        <label>
+          <input name="transfer_direction" type="radio" value="TRANSFER_OUT"> 转出
+        </label>
+      </div>
+      <span style="font-size: 12px;color: red">以子钱包视角确定</span>
+    </div>
+  </div>
+  <br>
+  <div class="form-group">
+    <label  class="control-label col-xs-12 col-sm-2">钱包类型:</label>
+    <div class="col-xs-12 col-sm-8" style="color: #0d7be0;font-size: 20px">
+      <b>
+        {if $walletList.sub_wallet_type == 1}
+        公账
+        {elseif $walletList.sub_wallet_type == 2}
+        私账
+        {/if}
+      </b>
+    </div>
+  </div>
+
+  {if $walletList.sub_wallet_type == 1}
+  <div class="form-group">
+    <label  class="control-label col-xs-12 col-sm-2">余额(公):</label>
+    <div class="col-xs-12 col-sm-8" style="color: #0d7be0;font-size: 20px">
+      <b>{$storeList.public_money} 元</b>
+    </div>
+  </div>
+  <div class="form-group">
+    <label  class="control-label col-xs-12 col-sm-2">授信额度(公):</label>
+    <div class="col-xs-12 col-sm-8" style="color: #0d7be0;font-size: 20px">
+      <b>{$storeList.public_credit_limit} 元</b>
+    </div>
+  </div>
+  <div class="form-group">
+    <label  class="control-label col-xs-12 col-sm-2">返点比例(公):</label>
+    <div class="col-xs-12 col-sm-8" style="color: #0d7be0;font-size: 20px">
+      <b>{$storeList.public_discount_percentage} %</b>
+    </div>
+  </div>
+  {elseif $walletList.sub_wallet_type == 2}
+  <div class="form-group">
+    <label  class="control-label col-xs-12 col-sm-2">余额(私):</label>
+    <div class="col-xs-12 col-sm-8" style="color: #0d7be0;font-size: 20px">
+      <b>{$storeList.private_money} 元</b>
+    </div>
+  </div>
+  <div class="form-group">
+    <label  class="control-label col-xs-12 col-sm-2">授信额度(私):</label>
+    <div class="col-xs-12 col-sm-8" style="color: #0d7be0;font-size: 20px">
+      <b>{$storeList.private_credit_limit} 元</b>
+    </div>
+  </div>
+  <div class="form-group">
+    <label  class="control-label col-xs-12 col-sm-2">返点比例(私):</label>
+    <div class="col-xs-12 col-sm-8" style="color: #0d7be0;font-size: 20px">
+      <b>{$storeList.private_discount_percentage} %</b>
+    </div>
+  </div>
+  {/if}
+
+  <div class="form-group">
+    <label  class="control-label col-xs-12 col-sm-2">可转出余额:</label>
+    <div class="col-xs-12 col-sm-8" style="color: #0d7be0;font-size: 20px">
+      <b>{$maxTransferOutNum} 元</b>
+    </div>
+  </div>
+
+  <br>
+  <div class="form-group">
+    <label for="c-transfer_amount" class="control-label col-xs-12 col-sm-2">转账金额:</label>
+    <div class="col-xs-12 col-sm-8" style="width: 230px">
+      <input id="c-transfer_amount" data-rule="required" class="form-control" name="transfer_amount" type="number" min="0">
+    </div>
+  </div>
+
+  <div class="form-group" id="title" style="">
+    <label for="c-remark" class="control-label col-xs-12 col-sm-2">备注:</label>
+    <div class="col-xs-12 col-sm-8" style="width: 230px">
+      <input id="c-remark"  class="form-control" name="remark" type="text">
+    </div>
+  </div>
+
+
+  <div class="form-group layer-footer">
+    <label class="control-label col-xs-12 col-sm-2"></label>
+    <div class="col-xs-12 col-sm-8">
+      <button type="submit" class="btn btn-primary btn-embossed">{:__('OK')}</button>
+      <button type="reset" class="btn btn-default btn-embossed">{:__('Reset')}</button>
+    </div>
+  </div>
+</form>

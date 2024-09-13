@@ -1,0 +1,37 @@
+<form id="edit-form" class="form-horizontal" role="form" data-toggle="validator" method="POST" action="">
+    {:token()}
+    <input type="hidden" name="id" value="{$row.id}">
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">绑定账号:</label>
+        <div class="col-xs-12 col-sm-4">
+            <select  class="form-control selectpicker" name="store_id">
+                <option value="">请选择</option>
+                {foreach $storeList as $k => $v}
+                <option value="{$v.id}"  {if $row.bind_store_id == $v.id}selected{/if}>{$v.username}</option>
+                {/foreach}
+            </select>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">钱包类型:</label>
+        <div class="col-xs-12 col-sm-8">
+            <div class="radio">
+                <label>
+                    <input name="wallet_type"  type="radio" value="1" {if $row.sub_wallet_type == 1 || $row.sub_wallet_type == ''}checked{/if}> 公账
+                </label>
+                <label>
+                    <input name="wallet_type" type="radio" value="2" {if $row.sub_wallet_type == 2}checked{/if}> 私账
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group layer-footer">
+        <label class="control-label col-xs-12 col-sm-2"></label>
+        <div class="col-xs-12 col-sm-8">
+            <button type="submit" class="btn btn-primary btn-embossed disabled">{:__('OK')}</button>
+            <button type="reset" class="btn btn-default btn-embossed">{:__('Reset')}</button>
+        </div>
+    </div>
+</form>
