@@ -31,6 +31,15 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         {field: 'sub_wallet_id', title: "子钱包ID"},
                         {field: 'store.username', title: "绑定用户名"},
                         {field: 'sub_wallet_name', title: "子钱包名称"},
+                        {field: 'sub_wallet_type', title: "子钱包类型", formatter: function(value,row,index) {
+                                if (row.sub_wallet_type == 1){
+                                    return "公"
+                                }else if (row.sub_wallet_type == 2){
+                                    return "私"
+                                }else{
+                                    return "未绑定"
+                                }
+                            }, operate: 'LIKE'},
                         {field: 'main_wallet_id', title: "父钱包ID"},
                         {field: 'adv_cnt', title: "子钱包adv数量"},
                         {field: 'create_time', title:"子钱包创建时间" ,formatter: Table.api.formatter.datetime},
