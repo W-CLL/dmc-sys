@@ -90,6 +90,43 @@ define(['jquery', 'bootstrap', 'store', 'table', 'form', 'bootstrap-table-fixed-
         },
         transfer_money: function () {
             Controller.api.bindevent();
+            // 监听 transfer_direction 的变化
+            $('input[name="transfer_direction"]').on('change', function () {
+                handleTransferChange();
+            });
+
+            // 监听 c-transfer_amount 失焦
+            $('#c-transfer_amount').on('blur', function () {
+                handleTransferChange();
+            });
+
+            function handleTransferChange() {
+                var transferDirection = $('input[name="transfer_direction"]:checked').val();
+                var transferAmount = $('#c-transfer_amount').val();
+                var subWalletId = $('#c-receiving_sub_id').val();
+
+                // 发起 AJAX 请求
+                $.ajax({
+                    url: 'sub_wallet/get_actual_money',
+                    type: 'POST',
+                    data: {
+                        direction: transferDirection,
+                        amount: transferAmount,
+                        sub_wallet_id: subWalletId
+                    },
+                    dataType: 'json',
+                    success: function (response) {
+                        if(response.code == 1){
+                            $('#deduction').html(response.data);
+                        }else{
+                            $('#deduction').html("估算出错...");
+                        }
+                    },
+                    error: function (error) {
+                        console.log('请求错误:', error);
+                    }
+                });
+            }
         },
         api: {
             bindevent: function () {

@@ -96,12 +96,14 @@ class StoreRefund extends Model
      * 'company_id'=>'千川商户id','advertiser_id'=>'千川代理商id','discount_percentage'=>'折扣百分比']
      * @param $wallet_type
      * 目标充值钱包类型：1千川[默认]   2共享
+     * @param $is_update
+     * 是否执行更新操作
      * @return  float
      * @throws DataNotFoundException
      * @throws ModelNotFoundException
      * @throws DbException
      */
-    public function getRealRefundRebate($transfer_records_data,$wallet_type = 1)
+    public function getRealRefundRebate($transfer_records_data,$wallet_type = 1,$is_update = true)
     {
         $list = $this->getStoreRefundRecordList($transfer_records_data,$wallet_type);
         $totalRefundPoints = 0;
@@ -124,7 +126,9 @@ class StoreRefund extends Model
                 $remainingRefundAmount -= $currentTotal;
                 $wallet = 0;
                 $credit = 0;
-                $this->updateRefundMoney($item['id'], $wallet, $credit);     // 扣除钱包和授信额度
+                if($is_update){
+                    $this->updateRefundMoney($item['id'], $wallet, $credit);     // 扣除钱包和授信额度
+                }
                 // 如果处理金额超出了最近充值的所有金额，超出部分则按照最新百分比进行退款
                 if ($remainingRefundAmount > 0 && $key == ($recordCount - 1)) {
                     $rebate = round($remainingRefundAmount - ($remainingRefundAmount * 100) / ($percentage * 100), 2);
@@ -140,7 +144,9 @@ class StoreRefund extends Model
                 } else {
                     $credit -= $remainingRefundAmount - $wallet;
                 }
-                $this->updateRefundMoney($item['id'], $wallet, $credit);
+                if($is_update){
+                    $this->updateRefundMoney($item['id'], $wallet, $credit);     // 扣除钱包和授信额度
+                }
                 break;
             }
         }
