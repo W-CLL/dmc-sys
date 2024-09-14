@@ -13,6 +13,7 @@ use app\store\model\Store as StoreModel;
 use app\store\model\ShareWalletTransferLog as TransferLogModel;
 use app\store\model\StoreRefund as RefundModel;
 use app\store\model\StoreMoneyLog as StoreMoneyLogModel;
+use think\Request;
 
 
 class SubWallet extends Store
@@ -394,5 +395,58 @@ class SubWallet extends Store
             $randomString .= $characters[rand(0, $charactersLength - 1)];
         }
         return $randomString;
+    }
+
+
+    /**
+     * 获取实际动账金额
+     * @param Request $request
+     * @return \think\response\Json
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\ModelNotFoundException
+     * @throws \think\exception\DbException
+     */
+    public function get_actual_money(Request $request){
+        $res_msg = '';
+        $direction = $request->param('direction');
+        $amount = $request->param('amount');
+        $wallet_info = $this->WalletModel
+            ->where(['id'=>$request->param('sub_wallet_id')])
+            ->find();
+        $store_info = $this->StoreModel
+            ->where(['id'=>$this->auth->id])
+            ->field('id,public_discount_percentage,private_discount_percentage')
+            ->find();
+        if($wallet_info['sub_wallet_type'] == 1){
+            $wallet['wallet_discount'] = $store_info['public_discount_percentage'];
+        }else{
+            $wallet['wallet_discount'] = $store_info['private_discount_percentage'];
+        }
+        if($direction == 'TRANSFER_IN'){
+            $rebate = round($amount - ($amount * 100) / ($wallet['wallet_discount'] * 100), 2);
+            $actual_money = $amount - $rebate;
+            $res_msg = '预计从您钱包扣除金额:'.$actual_money;
+        }
+        elseif($direction == 'TRANSFER_OUT'){
+            $data = [
+                'money' => $amount,
+                'transfer_direction' => 2,
+                'discount_percentage' => $wallet['wallet_discount'],
+                'store_id' => $this->auth->id,
+                'account_type' => $wallet_info['sub_wallet_type']
+            ];
+            $rebate = $this->RefundModel->getRealRefundRebate($data,2,false);
+            if (empty($rebate)) {
+                $rebate = round($amount - ($amount * 100) / ($wallet['wallet_discount'] * 100), 2);
+            }
+            $actual_money = $amount - $rebate;
+            $res_msg = '预计给您钱包增加金额:'.$actual_money;
+        }
+        if(empty($res_msg)){
+            return json(['code' => 1,'msg'=> '成功', 'data' => $res_msg]);
+        }else{
+            return json(['code' => 0,'msg'=> '失败', 'data' => '']);
+        }
+
     }
 }
