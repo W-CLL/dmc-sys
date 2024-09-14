@@ -25,16 +25,18 @@ class StoreRefund extends Model
     /**
      * 获取多条商户归属下的千川折扣百分比扣除记录
      * @param $transfer_records_data
+     * @param $wallet_type
      * @return bool|string|Collection
      * @throws DataNotFoundException
      * @throws DbException
      * @throws ModelNotFoundException
      */
-    public function getStoreRefundRecordList($transfer_records_data)
+    public function getStoreRefundRecordList($transfer_records_data,$wallet_type)
     {
         $where = [
             'type' => $transfer_records_data['account_type'],
             'store_id' => $transfer_records_data['store_id'],
+            'wallet_type' => $wallet_type,
         ];
         //千川账户的充值记录
         return self::where($where)
@@ -49,12 +51,13 @@ class StoreRefund extends Model
     /**
      * 获取单条商户归属下的千川折扣百分比扣除记录
      * @param $transfer_records_data
+     * @param $wallet_type
      * @return array|bool|string|Model|null
      * @throws DataNotFoundException
      * @throws DbException
      * @throws ModelNotFoundException
      */
-    public function getStoreRefundRecord($transfer_records_data)
+    public function getStoreRefundRecord($transfer_records_data,$wallet_type)
     {
         $where = [
             'type' => $transfer_records_data['account_type'],
@@ -62,6 +65,7 @@ class StoreRefund extends Model
 //            'company_id' => $transfer_records_data['company_id'],
 //            'advertiser_id' => $transfer_records_data['advertiser_id'],
             'discount_percentage' => $transfer_records_data['discount_percentage'],
+            'wallet_type' => $wallet_type,
         ];
         //千川账户的充值记录
         return self::where($where)->order('id desc')->find();
@@ -90,14 +94,16 @@ class StoreRefund extends Model
      * ['money'=>'充值金额','transfer_direction'=>'充值方向',
      * 'remark'=>'备注','account_type'=>'账户类型','store_id'=>'商户id',
      * 'company_id'=>'千川商户id','advertiser_id'=>'千川代理商id','discount_percentage'=>'折扣百分比']
+     * @param $wallet_type
+     * 目标充值钱包类型：1千川[默认]   2共享
      * @return  float
      * @throws DataNotFoundException
      * @throws ModelNotFoundException
      * @throws DbException
      */
-    public function getRealRefundRebate($transfer_records_data)
+    public function getRealRefundRebate($transfer_records_data,$wallet_type = 1)
     {
-        $list = $this->getStoreRefundRecordList($transfer_records_data);
+        $list = $this->getStoreRefundRecordList($transfer_records_data,$wallet_type);
         $totalRefundPoints = 0;
         if (!$list) {
             return $totalRefundPoints;
@@ -147,17 +153,19 @@ class StoreRefund extends Model
      * @param $money
      * ['wallet'=>'充值使用的钱包数额','credit'=>'充值使用的授信额度']
      * @param $transfer_records_data
-     * ['money'=>'充值金额',
+     * ['money'=>'充值金额'[非计算后的金额],
      * 'account_type'=>'账户类型',
      * 'store_id'=>'商户id',
      * 'discount_percentage'=>'折扣百分比']
+     * @param $wallet_type
+     * 目标充值钱包类型：1千川[默认]   2共享
      * @return int|string
      * @throws Exception
      */
-    public function addStoreRefundRecord($money, $transfer_records_data)
+    public function addStoreRefundRecord($money, $transfer_records_data,$wallet_type = 1)
     {
         try {
-            $record = $this->getStoreRefundRecord($transfer_records_data);
+            $record = $this->getStoreRefundRecord($transfer_records_data,$wallet_type);
             $res = '';
             if (!$record || $record['discount_percentage'] != $transfer_records_data['discount_percentage']) {
                 $res = self::insertGetId([
@@ -168,6 +176,7 @@ class StoreRefund extends Model
 //                    'company_id' => $transfer_records_data['company_id'],
 //                    'advertiser_id' => $transfer_records_data['advertiser_id'],
                     'discount_percentage' => $transfer_records_data['discount_percentage'],
+                    'wallet_type' => $wallet_type,
                     'create_time' => time()]);
             } elseif ($record['discount_percentage'] == $transfer_records_data['discount_percentage']) {
                 $res = self::where('id', $record['id'])
