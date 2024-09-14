@@ -53,7 +53,7 @@ class SubWallet extends Store
             $list = $this->WalletModel
                 ->with('store')
                 ->where($where)
-                ->field("id,sub_wallet_id,bind_store_id")
+                ->field("id,sub_wallet_id,bind_store_id,sub_wallet_type")
                 ->order($sort, $order)
                 ->limit($offset,$limit)
                 ->select();
@@ -195,7 +195,7 @@ class SubWallet extends Store
         ];
         if($post['transfer_direction'] == 'TRANSFER_OUT'){
             $insert_data['transfer_direction'] = 2;
-            $real_rebate = $this->RefundModel->getRealRefundRebate($insert_data);
+            $real_rebate = $this->RefundModel->getRealRefundRebate($insert_data,2);
             if (empty($real_rebate)) {
                 $real_rebate = round($insert_data["money"] - ($insert_data["money"] * 100) / ($insert_data['discount_percentage'] * 100), 2);
             }
@@ -209,14 +209,20 @@ class SubWallet extends Store
             if($insert_data['actual_money'] > $wallet_info['wallet_money']){
                 $insert_data['deduction_balance'] = $wallet_info['wallet_money'];
                 $insert_data['deduction_credit_limit'] = $insert_data['actual_money'] - $wallet_info['wallet_money'];
+                // 计算商户使用钱包、额度的返点记录
+                $wallet_money = $wallet_info['wallet_money'];
+                $credit_limit = $insert_data['money'] - $wallet_info['wallet_money'];
             }else{
                 $insert_data['deduction_balance'] = $insert_data['actual_money'];
+                // 计算商户使用钱包、额度的返点记录
+                $wallet_money = $insert_data['money'];
+                $credit_limit = 0;
             }
             $money = [
-                'wallet' => $insert_data['deduction_balance'],
-                'credit' => $insert_data['deduction_credit_limit'],
+                'wallet' => $wallet_money,
+                'credit' => $credit_limit,
             ];
-            $this->RefundModel->addStoreRefundRecord($money, $insert_data);
+            $this->RefundModel->addStoreRefundRecord($money, $insert_data, 2);
         }
         return $insert_data;
     }
