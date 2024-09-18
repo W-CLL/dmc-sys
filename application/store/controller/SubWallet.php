@@ -411,7 +411,7 @@ class SubWallet extends Store
         $direction = $request->param('direction');
         $amount = $request->param('amount');
         $wallet_info = $this->WalletModel
-            ->where(['id'=>$request->param('sub_wallet_id')])
+            ->where(['sub_wallet_id'=>$request->param('sub_wallet_id')])
             ->find();
         $store_info = $this->StoreModel
             ->where(['id'=>$this->auth->id])
