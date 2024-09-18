@@ -425,7 +425,7 @@ class SubWallet extends Store
         if($direction == 'TRANSFER_IN'){
             $rebate = round($amount - ($amount * 100) / ($wallet['wallet_discount'] * 100), 2);
             $actual_money = $amount - $rebate;
-            $res_msg = '预计从您钱包扣除金额:'.$actual_money;
+            $res_msg = '预计从您钱包扣除金额: '.$actual_money.' 元';
         }
         elseif($direction == 'TRANSFER_OUT'){
             $data = [
@@ -440,9 +440,9 @@ class SubWallet extends Store
                 $rebate = round($amount - ($amount * 100) / ($wallet['wallet_discount'] * 100), 2);
             }
             $actual_money = $amount - $rebate;
-            $res_msg = '预计给您钱包增加金额:'.$actual_money;
+            $res_msg = '预计给您钱包增加金额: '.$actual_money.' 元';
         }
-        if(empty($res_msg)){
+        if(!empty($res_msg)){
             return json(['code' => 1,'msg'=> '成功', 'data' => $res_msg]);
         }else{
             return json(['code' => 0,'msg'=> '失败', 'data' => '']);
