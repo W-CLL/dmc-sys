@@ -6,7 +6,7 @@ use app\common\controller\Api;
 use Mdanter\Ecc\Crypto\Signature\Signature;
 use Mdanter\Ecc\Serializer\Signature\DerSignatureSerializer;
 use Rtgm\sm\RtSm2;
-use think\log;
+use think\Log;
 use think\Db;
 
 class Callback extends Api
@@ -14,24 +14,24 @@ class Callback extends Api
     protected $noNeedLogin = ['*'];
     protected $noNeedRight = ['*'];
     public function callback_test(){
-//        $data = array (
-//            'sigtim' => '20240813160306',
-//            'sigdat' => 'JcaXjlL9ta8zaI4qJ4EeW+QVWeVsNWj/2IpCbXAi4ir514nC1ekPxJc7wwFsEpimdTYqHBOUi88aIrwfMB7+Mw==',
-//            'notdat' => '{"msgdat":{"chknbr":" ","infflg":"2","refsub":"","refnbr":"C0146XR0000JPEZ","trscod":"CPUA","rpyacc":"755915671610302","gsbacc":" ","otrnar":" ","rpynam":"企业网银新20161103","amtcdr":"C","naryur":"测试2","vltdat":"20240813","yurref":"20240813155411","accnam":"企业网银新20161103","gsbnam":" ","narext":" ","trsanl":" ","nusage":" ","trsdat":"20240813","reqnbr":"6662996672","trstim":"160306","rpybnk":"招商银行深圳分行营业部","gsbbbk":" ","frmcod":"0000000121","athflg":"N","rpybbn":" ","rsvflg":"N","accnbr":"755915671610407","busnam":"支付","rpybbk":" ","c_trsamt":"1","c_ccynbr":"人民币","busnar":" ","blvamt":"903648757.66","rpyadr":"广东省深圳市"},"msgtyp":"NCCRTTRS"}',
-//            'notkey' => '755915671610407',
-//            'notnbr' => '245040309580595200',
-//            'nottyp' => 'YQN01010',
-//        );
+//         $data = array (
+//   'sigtim' => '20240828113707',
+//   'sigdat' => 'aGra9QJy7zWbpn8INDB6ufMAGLL6Aii70G4gjC7ZRo8uklxaj32DH/EuiAK3GZU4T4qcVMOGxao3Tbu7Yv6uIg==',
+//   'notdat' => '{"msgdat":{"chknbr":" ","infflg":"2","refsub":" ","refnbr":"C0146Y6000LM56Z","trscod":"NPT2","rpyacc":"8110901012601609428","gsbacc":" ","otrnar":" ","rpynam":"广州优布网络科技有限公司","amtcdr":"C","naryur":"服务费","vltdat":"20240828","yurref":" ","accnam":"广州斑马数字科技有限公司","gsbnam":" ","narext":" ","trsanl":" ","nusage":" ","trsdat":"20240828","reqnbr":" ","trstim":"112706","rpybnk":"中信银行","gsbbbk":" ","frmcod":"0000000001","athflg":"N","rpybbn":" ","rsvflg":"N","accnbr":"120926190210001","busnam":" ","rpybbk":" ","c_trsamt":"1000","c_ccynbr":"人民币","busnar":" ","blvamt":"2000","rpyadr":" "},"msgtyp":"NCCRTTRS"}',
+//   'notkey' => '120926190210001',
+//   'notnbr' => '247787888222928897',
+//   'nottyp' => 'YQN01010',
+// );
         $data = input();
         $data['notdat'] = html_entity_decode($data['notdat']);
-//        Log::write($data,'datalog');
+        Log::write($data,'datalog');
         // 验证签名是否正确
         $sign = $data["sigdat"];
         // 将数据中的签名重置
         $data["sigdat"] = "__signature_sigdat__";
         $json = json_encode($data, JSON_UNESCAPED_UNICODE);
 
-        $publicKey = unpack("H*", base64_decode('BNRhE10qHce4PRt8hCxAPfTmMDxW0Htw9SZHoUWn7U0Qj4GbU2Tgic4EmQSFjTcTdbDvNVmoSzwQvUkfzpRC9+k='))[1];
+        $publicKey = unpack("H*", base64_decode('BNJ1hbqyLRx6RkQqQH+NuppGHooDLcBXBNAqy8H75AU+HQAqUYinnbSo21YD/8SmC8kUJfWnHfcMiWuqEG/D/OQ='))[1];
         $signHex = bin2hex(base64_decode($sign));
         $r = substr($signHex, 0, 64);
         $s = substr($signHex, 64, 64);
