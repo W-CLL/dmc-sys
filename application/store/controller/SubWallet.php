@@ -106,7 +106,8 @@ class SubWallet extends Store
             Db::startTrans();
             try {
                 $insert_data = $this->buildData($wallet,$post,$wallet_info);
-                if(!$this->TransferLogModel->insert($insert_data)){
+                $swtl_id = $this->TransferLogModel->insertGetId($insert_data);
+                if(!$swtl_id){
                     throw new Exception('添加转账记录失败');
                 }
                 $this->deductMoney($store,$insert_data);
@@ -120,13 +121,13 @@ class SubWallet extends Store
                     'status' => 1,
                     'update_time' => time()
                 ];
-                $this->TransferLogModel->where(['id' => $this->TransferLogModel->getLastInsID()])->update($update_data);
+                $this->TransferLogModel->where(['id' => $swtl_id])->update($update_data);
                 Db::commit();
             }catch (\Exception $e){
                 Db::rollback();
                 $this->error($e->getMessage());
             }
-            $this->createStoreMoneyLog($this->TransferLogModel->getLastInsID(),$post,$insert_data,$store);
+            $this->createStoreMoneyLog($swtl_id,$post,$insert_data,$store);
             $this->success('转账成功');
         }
         $this->view->assign('storeList', $store);
