@@ -3,7 +3,7 @@
 
     <div class="form-group" >
         <label class="control-label col-xs-12 col-sm-2">注:</label>
-        <div class="col-xs-12 col-sm-8" style="padding-top: 7px">
+        <div class="col-xs-12 col-sm-8" style="padding-top: 3px">
             每天23:50~00:00都停止转账
         </div>
     </div>
@@ -24,14 +24,14 @@
 
     <div class="form-group" >
         <label class="control-label col-xs-12 col-sm-2">钱包余额(公):</label>
-        <div class="col-xs-12 col-sm-8" style="padding-top: 7px">
+        <div class="col-xs-12 col-sm-8" style="padding-top: 3px">
             {$public_money}
         </div>
     </div>
 
     <div class="form-group" >
         <label class="control-label col-xs-12 col-sm-2">钱包余额(私):</label>
-        <div class="col-xs-12 col-sm-8" style="padding-top: 7px">
+        <div class="col-xs-12 col-sm-8" style="padding-top: 3px">
             {$private_money}
         </div>
     </div>
@@ -39,7 +39,7 @@
     {if $public_credit_limit > 0 || $public_spending_credit_limit > 0}
     <div class="form-group" >
         <label class="control-label col-xs-12 col-sm-2">授信额度(公):</label>
-        <div class="col-xs-12 col-sm-8" style="padding-top: 7px">
+        <div class="col-xs-12 col-sm-8" style="padding-top: 3px">
             {$public_credit_limit}
         </div>
     </div>
@@ -48,7 +48,7 @@
     {if $private_credit_limit > 0 || $private_spending_credit_limit > 0}
     <div class="form-group" >
         <label class="control-label col-xs-12 col-sm-2">授信额度(私):</label>
-        <div class="col-xs-12 col-sm-8" style="padding-top: 7px">
+        <div class="col-xs-12 col-sm-8" style="padding-top: 3px">
             {$private_credit_limit}
         </div>
     </div>
@@ -57,7 +57,7 @@
     {if $public_spending_credit_limit > 0}
     <div class="form-group" >
         <label class="control-label col-xs-12 col-sm-2">已使用授信额度(公):</label>
-        <div class="col-xs-12 col-sm-8" style="padding-top: 7px">
+        <div class="col-xs-12 col-sm-8" style="padding-top: 3px">
             {$public_spending_credit_limit}
         </div>
     </div>
@@ -66,7 +66,7 @@
     {if $private_spending_credit_limit > 0}
     <div class="form-group" >
         <label class="control-label col-xs-12 col-sm-2">已使用授信额度(私):</label>
-        <div class="col-xs-12 col-sm-8" style="padding-top: 7px">
+        <div class="col-xs-12 col-sm-8" style="padding-top: 3px">
             {$private_spending_credit_limit}
         </div>
     </div>
@@ -74,36 +74,36 @@
 
     <div class="form-group" >
         <label class="control-label col-xs-12 col-sm-2">返点(公)%:</label>
-        <div class="col-xs-12 col-sm-8" style="padding-top: 7px" id="public_discount_percentage">{$public_discount_percentage}</div>
+        <div class="col-xs-12 col-sm-8" style="padding-top: 3px" id="public_discount_percentage">{$public_discount_percentage}</div>
     </div>
 
     <div class="form-group" >
         <label class="control-label col-xs-12 col-sm-2">返点(私)%:</label>
-        <div class="col-xs-12 col-sm-8" style="padding-top: 7px" id="private_discount_percentage">{$private_discount_percentage}</div>
+        <div class="col-xs-12 col-sm-8" style="padding-top: 3px" id="private_discount_percentage">{$private_discount_percentage}</div>
     </div>
 
     <div class="form-group" >
         <label class="control-label col-xs-12 col-sm-2">千川总余额:</label>
-        <div id="qc_total_money" class="col-xs-12 col-sm-8" style="padding-top: 7px">
+        <div id="qc_total_money" class="col-xs-12 col-sm-8" style="padding-top: 3px">
             0
         </div>
     </div>
     <div class="form-group" >
         <label class="control-label col-xs-12 col-sm-2">千川赠送余额:</label>
-        <div id="qc_grant_money" class="col-xs-12 col-sm-8" style="padding-top: 7px">
+        <div id="qc_grant_money" class="col-xs-12 col-sm-8" style="padding-top: 3px">
             0
         </div>
     </div>
     <div class="form-group" >
         <label class="control-label col-xs-12 col-sm-2">千川可操作余额:</label>
-        <div id="qc_money" class="col-xs-12 col-sm-8" style="padding-top: 7px">
+        <div id="qc_money" class="col-xs-12 col-sm-8" style="padding-top: 3px">
             0
         </div>
     </div>
 
     <div class="form-group" >
         <label class="control-label col-xs-12 col-sm-2">账户类型:</label>
-        <div id="account_type" class="col-xs-12 col-sm-8" style="padding-top: 7px">
+        <div id="account_type" class="col-xs-12 col-sm-8" style="padding-top: 3px">
         </div>
     </div>
 
@@ -120,14 +120,19 @@
         <label class="control-label col-xs-12 col-sm-2">金额:</label>
         <div class="col-xs-12 col-sm-8">
             <input type="number" style="width: 200px" class="form-control" id="money" name="money" value="" data-rule="required" />
-        </div>
-    </div>
-    <div class="form-group" >
-        <label class="control-label col-xs-12 col-sm-2"></label>
-        <div class="col-xs-12 col-sm-8">
             <span id="deduction"></span>
         </div>
+
     </div>
+
+    <div class="form-group" >
+        <label class="control-label col-xs-12 col-sm-2">备注:</label>
+        <div class="col-xs-12 col-sm-8">
+            <textarea style="width: 400px;" class="form-control" id="remark" name="remark" value="" maxlength="100" ></textarea>
+        </div>
+
+    </div>
+
 
     <div class="form-group layer-footer">
         <label class="control-label col-xs-12 col-sm-2"></label>

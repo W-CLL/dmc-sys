@@ -49,4 +49,7 @@ ALTER TABLE fa_store_money_log
     MODIFY COLUMN `type` tinyint (1) COMMENT '类型：1为总后台增加余额，2为总后台扣款，3回单充值，4千川转入，5千川转出,6授信额度充值，7子账户充值，8共享钱包转入，9共享钱包转出';
 ALTER TABLE fa_store_refund
     ADD COLUMN `wallet_type` tinyint(1) DEFAULT 1 COMMENT '目标钱包类型：1千川，2共享';
+--2024.09.25
+ALTER TABLE `fa_share_wallet_transfer_log`  ADD COLUMN `remark`varchar(255)  COMMENT '备注';
+ALTER TABLE `fa_transfer_records`  ADD COLUMN `remark` varchar(255)  COMMENT '备注';
 

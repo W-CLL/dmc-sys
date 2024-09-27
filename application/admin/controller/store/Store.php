@@ -130,9 +130,20 @@ class Store extends Backend
             }
             $this->error("添加失败，请检查用户名是否已存在");
         }
-        $admin_data = Admin::admin_nickname();
-        $this->view->assign('groupList', build_select('group_id', Db::name("store_group")->column('id,name'), 0, ['class' => 'form-control selectpicker']));
-        $this->view->assign('adminList', build_select('adminList[]', $admin_data, 0, ['class' => 'form-control selectpicker']));
+
+        $admin_model = model('Admin');
+
+//        $sales_data = $admin_model
+//            ->alias('a')
+//            ->join('AuthGroupAccess aga', 'a.id = aga.uid')
+//            ->join('AuthGroup ag', 'aga.group_id = ag.id')
+//            ->where('ag.name', 'like', '%销售%')
+//            ->column('a.id, a.nickname');
+
+        $admin_data =$admin_model::admin_nickname();
+        $this->view->assign('groupList', build_select('group_id', Db::name("store_group")->column('id,name'), 0, ['class' => 'form-control selectpicker','data-rule'=>'required']));
+        $this->view->assign('adminList', build_select('adminList[]', $admin_data, 0, ['class' => 'form-control selectpicker','data-live-search'=>'true','data-rule'=>'required']));
+//        $this->view->assign('salesList', build_select('sale_id', $sales_data, 0, ['class' => 'form-control selectpicker','data-live-search'=>'true', 'data-rule'=>'required','deselectAll'=>'']));
 
         return $this->view->fetch();
     }
@@ -217,17 +228,28 @@ class Store extends Backend
             $this->success();
         }
         $row = Db::name("store")
-            ->where("id",$ids)
-            ->field("id,admin_id,group_id,username,login_time,loginip,status,public_money,private_money,public_discount_percentage,private_discount_percentage,public_credit_limit,private_credit_limit")->find();
+            ->where("id",$ids)->find();
         $this->modelValidate = true;
         if (!$row) {
             $this->error(__('No Results were found'));
         }
-        $admin_data = Admin::admin_nickname();
+
+        $admin_model = model('Admin');
+
+
+//        $sales_data = $admin_model
+//            ->alias('a')
+//            ->join('AuthGroupAccess aga', 'a.id = aga.uid')
+//            ->join('AuthGroup ag', 'aga.group_id = ag.id')
+//            ->where('ag.name', 'like', '%销售%')
+//            ->column('a.id, a.nickname');
+
+        $admin_data = $admin_model::admin_nickname();
         $admin_ids = Db::name("store_admin_access")->where("store_id",$ids)->column("admin_id");
-        $this->view->assign('adminList', build_select('adminList[]', $admin_data, $admin_ids, ['class'=>'form-control selectpicker', 'multiple'=>'', 'data-rule'=>'required','data-live-search'=>'true']));
+        $this->view->assign('adminList', build_select('adminList[]', $admin_data, $admin_ids, ['class'=>'form-control selectpicker', 'data-rule'=>'required','data-live-search'=>'true']));
         $this->view->assign("row",$row);
         $this->view->assign('groupList', build_select('group_id', Db::name("store_group")->column('id,name'), $row['group_id'], ['class' => 'form-control selectpicker']));
+//        $this->view->assign('salesList', build_select('sale_id', $sales_data, $row['sale_id'], ['class' => 'form-control selectpicker','data-live-search'=>'true','data-rule'=>'required']));
 
         return $this->view->fetch();
     }

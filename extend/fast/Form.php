@@ -159,7 +159,7 @@ class FormBuilder
      *
      * @param string $name
      * @param string $value
-     * @param array  $options
+     * @param array $options
      * @return string
      */
     public function label($name, $value = null, $options = [])
@@ -175,7 +175,7 @@ class FormBuilder
     /**
      * Format the label value.
      *
-     * @param string      $name
+     * @param string $name
      * @param string|null $value
      * @return string
      */
@@ -190,7 +190,7 @@ class FormBuilder
      * @param string $type
      * @param string $name
      * @param string $value
-     * @param array  $options
+     * @param array $options
      * @return string
      */
     public function input($type, $name, $value = null, $options = [])
@@ -217,7 +217,7 @@ class FormBuilder
      *
      * @param string $name
      * @param string $value
-     * @param array  $options
+     * @param array $options
      * @return string
      */
     public function text($name, $value = null, $options = [])
@@ -229,7 +229,7 @@ class FormBuilder
      * 生成密码文本框
      *
      * @param string $name
-     * @param array  $options
+     * @param array $options
      * @return string
      */
     public function password($name, $options = [])
@@ -242,7 +242,7 @@ class FormBuilder
      *
      * @param string $name
      * @param string $value
-     * @param array  $options
+     * @param array $options
      * @return string
      */
     public function hidden($name, $value = null, $options = [])
@@ -255,7 +255,7 @@ class FormBuilder
      *
      * @param string $name
      * @param string $value
-     * @param array  $options
+     * @param array $options
      * @return string
      */
     public function email($name, $value = null, $options = [])
@@ -268,7 +268,7 @@ class FormBuilder
      *
      * @param string $name
      * @param string $value
-     * @param array  $options
+     * @param array $options
      * @return string
      */
     public function url($name, $value = null, $options = [])
@@ -280,7 +280,7 @@ class FormBuilder
      * 生成上传文件组件
      *
      * @param string $name
-     * @param array  $options
+     * @param array $options
      * @return string
      */
     public function file($name, $options = [])
@@ -293,7 +293,7 @@ class FormBuilder
      *
      * @param string $name
      * @param string $value
-     * @param array  $options
+     * @param array $options
      * @return string
      */
     public function textarea($name, $value = null, $options = [])
@@ -319,7 +319,7 @@ class FormBuilder
      *
      * @param string $name
      * @param string $value
-     * @param array  $options
+     * @param array $options
      * @return string
      */
     public function editor($name, $value = null, $options = [])
@@ -366,7 +366,7 @@ class FormBuilder
      * @param string $max
      * @param string $step
      * @param string $value
-     * @param array  $options
+     * @param array $options
      * @return string
      */
     public function slider($name, $min, $max, $step, $value = null, $options = [])
@@ -380,9 +380,9 @@ class FormBuilder
      * 生成下拉列表框
      *
      * @param string $name
-     * @param array  $list
-     * @param mixed  $selected
-     * @param array  $options
+     * @param array $list
+     * @param mixed $selected
+     * @param array $options
      * @return string
      */
     public function select($name, $list = [], $selected = null, $options = [])
@@ -400,6 +400,13 @@ class FormBuilder
             $html[] = $this->getSelectOption($display, $value, $selected);
         }
         $options['class'] = isset($options['class']) ? $options['class'] . (stripos($options['class'], 'form-control') !== false ? '' : ' form-control') : 'form-control';
+        if (is_array($selected)) {
+            if (count($selected) == 1 && !$selected[0]) {
+                array_unshift($html, '<option value="">请选择</option>');
+            }
+        } elseif (!$selected) {
+            array_unshift($html, '<option value="">请选择</option>');
+        }
 
         $options = $this->attributes($options);
         $list = implode('', $html);
@@ -411,9 +418,9 @@ class FormBuilder
      * 下拉列表(多选)
      *
      * @param string $name
-     * @param array  $list
-     * @param mixed  $selected
-     * @param array  $options
+     * @param array $list
+     * @param mixed $selected
+     * @param array $options
      * @return string
      */
     public function selects($name, $list = [], $selected = null, $options = [])
@@ -426,9 +433,9 @@ class FormBuilder
      * 下拉列表(友好)
      *
      * @param string $name
-     * @param array  $list
-     * @param mixed  $selected
-     * @param array  $options
+     * @param array $list
+     * @param mixed $selected
+     * @param array $options
      * @return string
      */
     public function selectpicker($name, $list = [], $selected = null, $options = [])
@@ -441,9 +448,9 @@ class FormBuilder
      * 下拉列表(友好)(多选)
      *
      * @param string $name
-     * @param array  $list
-     * @param mixed  $selected
-     * @param array  $options
+     * @param array $list
+     * @param mixed $selected
+     * @param array $options
      * @return string
      */
     public function selectpickers($name, $list = [], $selected = null, $options = [])
@@ -455,12 +462,12 @@ class FormBuilder
     /**
      * 生成动态下拉列表
      *
-     * @param string $name       名称
-     * @param mixed  $value
-     * @param string $url        数据源地址
-     * @param string $field      显示的字段名称,默认为name
+     * @param string $name 名称
+     * @param mixed $value
+     * @param string $url 数据源地址
+     * @param string $field 显示的字段名称,默认为name
      * @param string $primaryKey 主键,数据库中保存的值,默认为id
-     * @param array  $options
+     * @param array $options
      * @return string
      */
     public function selectpage($name, $value, $url, $field = null, $primaryKey = null, $options = [])
@@ -474,12 +481,12 @@ class FormBuilder
     /**
      * 生成动态下拉列表(复选)
      *
-     * @param string $name       名称
-     * @param mixed  $value
-     * @param string $url        数据源地址
-     * @param string $field      显示的字段名称,默认为name
+     * @param string $name 名称
+     * @param mixed $value
+     * @param string $url 数据源地址
+     * @param string $field 显示的字段名称,默认为name
      * @param string $primaryKey 主键,数据库中保存的值,默认为id
-     * @param array  $options
+     * @param array $options
      * @return string
      */
     public function selectpages($name, $value, $url, $field = null, $primaryKey = null, $options = [])
@@ -492,8 +499,8 @@ class FormBuilder
      * 生成城市选择框
      *
      * @param string $name
-     * @param mixed  $value
-     * @param array  $options
+     * @param mixed $value
+     * @param array $options
      * @return string
      */
     public function citypicker($name, $value, $options = [])
@@ -506,8 +513,8 @@ class FormBuilder
      * 生成switch组件
      *
      * @param string $name
-     * @param mixed  $value
-     * @param array  $options
+     * @param mixed $value
+     * @param array $options
      * @return string
      */
     public function switcher($name, $value, $options = [])
@@ -535,8 +542,8 @@ EOD;
     /**
      * 日期选择器
      * @param string $name
-     * @param mixed  $value
-     * @param array  $options
+     * @param mixed $value
+     * @param array $options
      * @return string
      */
     public function datepicker($name, $value, $options = [])
@@ -553,8 +560,8 @@ EOD;
      * 时间选择器
      *
      * @param string $name
-     * @param mixed  $value
-     * @param array  $options
+     * @param mixed $value
+     * @param array $options
      * @return string
      */
     public function timepicker($name, $value, $options = [])
@@ -571,8 +578,8 @@ EOD;
      * 日期时间选择器
      *
      * @param string $name
-     * @param mixed  $value
-     * @param array  $options
+     * @param mixed $value
+     * @param array $options
      * @return string
      */
     public function datetimepicker($name, $value, $options = [])
@@ -592,7 +599,7 @@ EOD;
      *
      * @param string $name
      * @param string $value
-     * @param array  $options
+     * @param array $options
      * @return string
      */
     public function daterange($name, $value, $options = [])
@@ -611,18 +618,18 @@ EOD;
      *
      * @param string $name
      * @param string $value
-     * @param array  $options
+     * @param array $options
      * @return string
      */
     public function timerange($name, $value, $options = [])
     {
         $defaults = [
-            'data-locale'                  => [
+            'data-locale' => [
                 'format' => 'HH:mm:ss'
             ],
-            'data-ranges'                  => [],
+            'data-ranges' => [],
             'data-show-custom-range-label' => "false",
-            'data-time-picker'             => "true",
+            'data-time-picker' => "true",
         ];
         $options = array_merge($defaults, $options);
         return $this->datetimerange($name, $value, $options);
@@ -633,7 +640,7 @@ EOD;
      *
      * @param string $name
      * @param string $value
-     * @param array  $options
+     * @param array $options
      * @return string
      */
     public function datetimerange($name, $value, $options = [])
@@ -652,10 +659,10 @@ EOD;
      * 生成字段列表组件
      *
      * @param string $name
-     * @param mixed  $value
-     * @param array  $title
+     * @param mixed $value
+     * @param array $title
      * @param string $template
-     * @param array  $options
+     * @param array $options
      * @return string
      */
     public function fieldlist($name, $value, $title = null, $template = null, $options = [])
@@ -685,10 +692,10 @@ EOD;
     /**
      * 生成联动下拉列表
      *
-     * @param string $url     联动获取数据源的URL地址
-     * @param array  $names   联动字段名称
-     * @param array  $values  联动字段默认选中的值
-     * @param array  $options 扩展属性
+     * @param string $url 联动获取数据源的URL地址
+     * @param array $names 联动字段名称
+     * @param array $values 联动字段默认选中的值
+     * @param array $options 扩展属性
      * @return string
      */
     public function cxselect($url, $names = [], $values = [], $options = [])
@@ -723,7 +730,7 @@ EOD;
      * @param string $begin
      * @param string $end
      * @param string $selected
-     * @param array  $options
+     * @param array $options
      * @return string
      */
     public function selectRange($name, $begin, $end, $selected = null, $options = [])
@@ -739,7 +746,7 @@ EOD;
      * @param string $begin
      * @param string $end
      * @param string $selected
-     * @param array  $options
+     * @param array $options
      * @return string
      */
     public function selectYear($name, $begin, $end, $selected, $options)
@@ -752,7 +759,7 @@ EOD;
      *
      * @param string $name
      * @param string $selected
-     * @param array  $options
+     * @param array $options
      * @param string $format
      * @return string
      */
@@ -787,7 +794,7 @@ EOD;
     /**
      * 生成optionGroup
      *
-     * @param array  $list
+     * @param array $list
      * @param string $label
      * @param string $selected
      * @return string
@@ -840,9 +847,9 @@ EOD;
      * 生成复选按钮
      *
      * @param string $name
-     * @param mixed  $value
-     * @param bool   $checked
-     * @param array  $options
+     * @param mixed $value
+     * @param bool $checked
+     * @param array $options
      * @return string
      */
     public function checkbox($name, $value = 1, $checked = null, $options = [])
@@ -858,9 +865,9 @@ EOD;
      * 生成一组筛选框
      *
      * @param string $name
-     * @param array  $list
-     * @param mixed  $checked
-     * @param array  $options
+     * @param array $list
+     * @param mixed $checked
+     * @param array $options
      * @return string
      */
     public function checkboxs($name, $list, $checked, $options = [])
@@ -879,9 +886,9 @@ EOD;
      * 生成单选按钮
      *
      * @param string $name
-     * @param mixed  $value
-     * @param bool   $checked
-     * @param array  $options
+     * @param mixed $value
+     * @param bool $checked
+     * @param array $options
      * @return string
      */
     public function radio($name, $value = null, $checked = null, $options = [])
@@ -901,9 +908,9 @@ EOD;
      * 生成一组单选框
      *
      * @param string $name
-     * @param array  $list
-     * @param mixed  $checked
-     * @param array  $options
+     * @param array $list
+     * @param mixed $checked
+     * @param array $options
      * @return string
      */
     public function radios($name, $list, $checked = null, $options = [])
@@ -923,10 +930,10 @@ EOD;
      *
      * @param string $name
      * @param string $value
-     * @param array  $inputAttr
-     * @param array  $uploadAttr
-     * @param array  $chooseAttr
-     * @param array  $previewAttr
+     * @param array $inputAttr
+     * @param array $uploadAttr
+     * @param array $chooseAttr
+     * @param array $previewAttr
      * @return string
      */
     public function image($name = null, $value = null, $inputAttr = [], $uploadAttr = [], $chooseAttr = [], $previewAttr = [])
@@ -944,10 +951,10 @@ EOD;
      *
      * @param string $name
      * @param string $value
-     * @param array  $inputAttr
-     * @param array  $uploadAttr
-     * @param array  $chooseAttr
-     * @param array  $previewAttr
+     * @param array $inputAttr
+     * @param array $uploadAttr
+     * @param array $chooseAttr
+     * @param array $previewAttr
      * @return string
      */
     public function images($name = null, $value = null, $inputAttr = [], $uploadAttr = [], $chooseAttr = [], $previewAttr = [])
@@ -966,10 +973,10 @@ EOD;
      *
      * @param string $name
      * @param string $value
-     * @param array  $inputAttr
-     * @param array  $uploadAttr
-     * @param array  $chooseAttr
-     * @param array  $previewAttr
+     * @param array $inputAttr
+     * @param array $uploadAttr
+     * @param array $chooseAttr
+     * @param array $previewAttr
      * @return string
      */
     public function upload($name = null, $value = null, $inputAttr = [], $uploadAttr = [], $chooseAttr = [], $previewAttr = [])
@@ -982,10 +989,10 @@ EOD;
      *
      * @param string $name
      * @param string $value
-     * @param array  $inputAttr
-     * @param array  $uploadAttr
-     * @param array  $chooseAttr
-     * @param array  $previewAttr
+     * @param array $inputAttr
+     * @param array $uploadAttr
+     * @param array $chooseAttr
+     * @param array $previewAttr
      * @return string
      */
     public function uploads($name = null, $value = null, $inputAttr = [], $uploadAttr = [], $chooseAttr = [], $previewAttr = [])
@@ -1002,8 +1009,8 @@ EOD;
     {
         $domname = str_replace(['[', ']', '.'], '', $name);
         $options = [
-            'id'            => "faupload-{$domname}",
-            'class'         => "btn btn-danger faupload",
+            'id' => "faupload-{$domname}",
+            'class' => "btn btn-danger faupload",
             'data-input-id' => "c-{$domname}",
         ];
         $upload = $uploadAttr === false ? false : true;
@@ -1014,8 +1021,8 @@ EOD;
         }
         $uploadBtn = $upload ? $this->button('<i class="fa fa-upload"></i> ' . __('Upload'), array_merge($options, $uploadAttr)) : '';
         $options = [
-            'id'            => "fachoose-{$domname}",
-            'class'         => "btn btn-danger fachoose",
+            'id' => "fachoose-{$domname}",
+            'class' => "btn btn-danger fachoose",
             'data-input-id' => "c-{$domname}",
         ];
         if ($preview) {
@@ -1043,7 +1050,7 @@ EOD;
      * 生成一个按钮
      *
      * @param string $value
-     * @param array  $options
+     * @param array $options
      * @return string
      */
     public function button($value = null, $options = [])
@@ -1059,7 +1066,7 @@ EOD;
      * 获取ID属性值
      *
      * @param string $name
-     * @param array  $attributes
+     * @param array $attributes
      * @return string
      */
     public function getIdAttribute($name, $attributes)
@@ -1153,7 +1160,7 @@ class Arr
      * Determine if the given key exists in the provided array.
      *
      * @param \ArrayAccess|array $array
-     * @param string|int         $key
+     * @param string|int $key
      * @return bool
      */
     public static function exists($array, $key)
@@ -1168,8 +1175,8 @@ class Arr
      * Get an item from an array using "dot" notation.
      *
      * @param \ArrayAccess|array $array
-     * @param string             $key
-     * @param mixed              $default
+     * @param string $key
+     * @param mixed $default
      * @return mixed
      */
     public static function get($array, $key, $default = null)
@@ -1196,7 +1203,7 @@ class Arr
     /**
      * Get all of the given array except for a specified array of items.
      *
-     * @param array        $array
+     * @param array $array
      * @param array|string $keys
      * @return array
      */
@@ -1209,7 +1216,7 @@ class Arr
     /**
      * Remove one or many array items from a given array using "dot" notation.
      *
-     * @param array        $array
+     * @param array $array
      * @param array|string $keys
      * @return void
      */
@@ -1248,8 +1255,8 @@ if (!function_exists('array_get')) {
      * Get an item from an array using "dot" notation.
      *
      * @param \ArrayAccess|array $array
-     * @param string             $key
-     * @param mixed              $default
+     * @param string $key
+     * @param mixed $default
      * @return mixed
      */
     function array_get($array, $key, $default = null)
@@ -1278,7 +1285,7 @@ if (!function_exists('array_except')) {
     /**
      * Get all of the given array except for a specified array of items.
      *
-     * @param array        $array
+     * @param array $array
      * @param array|string $keys
      * @return array
      */

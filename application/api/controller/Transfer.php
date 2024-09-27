@@ -3,6 +3,7 @@ namespace app\api\controller;
 
 
 use app\common\controller\Api;
+use app\store\model\StoreMoneyLog;
 use jlqc\FundManagement;
 use think\Cache;
 use think\Db;
@@ -34,6 +35,7 @@ class Transfer extends Api
                             "advertiser_id" => $v['advertiser_id'],
                             "transfer_records_id" => $v['id'],
                             "money" => $v['money'],
+                            "account_type" => $transfer_records_data['account_type'],
                             //记录到数据库
                             "rebate" => $transfer_records_data["rebate"],
                             "discount_percentage" => $transfer_records_data['discount_percentage'],
@@ -52,7 +54,9 @@ class Transfer extends Api
                             $money_log['type'] = 5;
                             $money_log['explain'] = "千川转出".$v['money']."元";
                         }
-                        if (!Db::name("store_money_log")->insert($money_log)){
+                        $storeMoneyLogModel =new StoreMoneyLog();
+                        $logId = $storeMoneyLogModel->insertGetId($money_log);
+                        if (!$logId){
                             throw new \Exception('转账成功，资金记录写入失败');
                         }
                         if (!Db::name("transfer_records")->where(["id"=>$v['id']])->update(['status'=>1])){

@@ -22,6 +22,7 @@ Class FundManagement{
         return Requests::get($url,$header);
     }
 
+    //获取账户钱包详细信息
     public static function account_balance_wallet($access_token,$advertiser_id){
         $url = "https://api.oceanengine.com/open_api/v1.0/qianchuan/finance/wallet/get/?advertiser_id=".$advertiser_id;
         $header = array(
@@ -33,6 +34,59 @@ Class FundManagement{
     //获取财务流水信息
     public static function finance($access_token,$advertiser_id,$start_date,$end_date,$page,$page_size){
         $url = "https://ad.oceanengine.com/open_api/v1.0/qianchuan/finance/detail/get/?advertiser_id=".$advertiser_id."&start_date=".$start_date."&end_date=".$end_date."&page=".$page."&page_size=".$page_size;
+        $header = array(
+            'Access-Token:'. $access_token,
+        );
+        return Requests::get($url,$header);
+    }
+
+    /**
+     * 获取广告计划操作日志
+     * @param $access_token
+     * @param $params
+     * ['advertiser_id'=>"广告id",
+     * 'object_id'=>"操作对象ID, 1 <= len <= 20 , 可以为campaign_id、ad_id、creative_id， 各种id可以随意组合",
+     * 'start_date'=>"日志查询开始时间，格式 "2019-07-24 21:46:57"",
+     * 'end_date'=>"日志查询结束时间，格式 "2019-07-24 21:46:57"",
+     * 'page'=>"页码  * 默认值: 1"
+     * 'page_size'=>"获取条数  * 默认值: 10允许值:1~20"]
+     * @return mixed
+     */
+    public static function get_opt_log($access_token,$params){
+        $base_url = "https://ad.oceanengine.com/open_api/2/tools/log_search";
+        $url = buildUrlWithParams($base_url,$params);
+        $header = array(
+            'Access-Token:'. $access_token,
+            'Content-Type:'.'application/json'
+        );
+        return Requests::get($url,$header);
+    }
+
+    /**
+     * 获取广告计划数据(还没完善)
+     * @param $access_token
+     * @param $params
+     * ['advertiser_id'=>"广告id",
+     * 'fields'=>"需要查询的消耗指标字段，具体文档：https://open.oceanengine.com/labels/12/docs/1697466415173644,该接口有默认值可以不传",
+     * 'start_date'=>"开始时间，格式 2021-04-05，开始时间不得早于今日-180天",
+     * 'end_date'=>"结束时间，格式 2021-04-05
+     * 若不传time_granularity，则时间跨度不能超过180天
+     * 若传time_granularity为TIME_GRANULARITY_DAILY 天维度，则时间跨度不能超过30天
+     * 若传time_granularity为TIME_GRANULARITY_HOURLY 小时纬度，则时间跨度不能超过7天",
+     * 'filtering'=>"过滤条件,类型是object,具体看fields的文档，该接口有默认值，可以不传",
+     * 'page'=>"页码  * 默认值: 1"
+     * 'page_size'=>"获取条数  * 默认值: 10允许值:1~20"]
+     * @return void
+     */
+    public static function get_ad_report($access_token,$params){
+        $params['fields'] = ['cpm_platform','stat_cost','show_cnt','ctr','click_cnt'];
+        $params['filtering'] = [
+            'marketing_goal'=>"ALL",
+          ];
+        $base_url = "https://ad.oceanengine.com/open_api/v1.0/qianchuan/report/ad/get";
+        $url = buildUrlWithParams($base_url,$params);
+//        dump($url);
+//        die;
         $header = array(
             'Access-Token:'. $access_token,
         );
@@ -141,15 +195,16 @@ Class FundManagement{
             'Access-Token:'. $access_token,
             'Content-Type:application/json',
         );
+        $randomStr = generate_random_string(10,true);
         $data = array(
-            "biz_request_no" => strval($biz_request_no),
+            "biz_request_no" => $randomStr,
             "agent_id"=>(int)$agent_id,
             "account_id" => (int)$account_id,
             "target_account_detail_list"=>$target_account_detail_list,
             "transfer_direction"=>$transfer_direction,
             "remark"=>$remark,
         );
-        return Requests::post($url,json_encode($data,JSON_UNESCAPED_UNICODE),$header);
+        return [Requests::post($url,json_encode($data,JSON_UNESCAPED_UNICODE),$header),$randomStr];
     }
 
     //查询转账单信息

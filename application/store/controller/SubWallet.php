@@ -123,6 +123,16 @@ class SubWallet extends Store
                 ];
                 $this->TransferLogModel->where(['id' => $swtl_id])->update($update_data);
                 Db::commit();
+                //添加同步转账记录任务
+                //暂时转入才同步
+                if($post['transfer_direction'] == 'TRANSFER_IN' ){
+                    $queueModel = new \app\common\model\Queue();
+                    $queueModel->addQueue("同步共享钱包充值记录","app\job\SyncCharge",
+                        "syncCharge",
+                        ["log_id" => $swtl_id,'data'=>$insert_data],
+                        "share_wallet_transfer_log"
+                    );
+                }
             }catch (\Exception $e){
                 Db::rollback();
                 $this->error($e->getMessage());
@@ -144,6 +154,8 @@ class SubWallet extends Store
         if (!is_numeric($post['transfer_amount']) || $post['transfer_amount'] < 0) {
             $this->error("请输入正确金额");
         }
+
+        $wallet_info['sub_wallet_type']  = $walletList['sub_wallet_type'];//子钱包类型
         if($walletList['sub_wallet_type'] == 1){
             $wallet_info['wallet_money'] = $storeList['public_money'];
             $wallet_info['wallet_limit'] = $storeList['public_credit_limit'];
@@ -190,8 +202,9 @@ class SubWallet extends Store
             'money' => $post['transfer_amount'],
             'deduction_credit_limit' => 0,
             'deduction_balance' => 0,
+            "remark" => $post["remark"],
             'status' => 0,
-            'account_type' => $walletList['sub_wallet_type'],
+            'account_type' => $wallet_info['sub_wallet_type'],
             'discount_percentage' => $wallet_info['wallet_discount'],
             'create_time' => time(),
         ];
@@ -307,6 +320,7 @@ class SubWallet extends Store
             'store_id' => $store_data['id'],
             'swtl_id' => $swtl_id,
             'money' => $post['transfer_amount'],
+            'account_type' =>$transfer_data['account_type'],
             'rebate' => $transfer_data['rebate'],
             'discount_percentage' => $transfer_data['discount_percentage'],
             'create_time' => time()
@@ -364,7 +378,9 @@ class SubWallet extends Store
                     throw new Exception('金额变更失败');
                 }
             }
-            if(!$this->StoreMoneyLogModel->insert($money_log_data)){
+//            $storeMoneyLogModel =new StoreMoneyLog();
+            $logId = $this->StoreMoneyLogModel->insertGetId($money_log_data);
+            if(!$logId){
                 throw new Exception('金额变更记录失败');
             }
             Db::commit();
