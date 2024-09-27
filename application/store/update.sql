@@ -19,6 +19,7 @@ ALTER TABLE `fa_store_money_log` MODIFY COLUMN `discount_percentage` DECIMAL (5,
 --2024.8.16 已处理
 ALTER TABLE `fa_transfer_records` MODIFY COLUMN `discount_percentage` DECIMAL (5,3);
 --2024.09.13
+--2024.9.13 测试服已处理
 --2024.9.13 已处理
 CREATE TABLE `fa_share_wallet_transfer_log`
 (
@@ -42,6 +43,7 @@ CREATE TABLE `fa_share_wallet_transfer_log`
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='共享钱包转账记录表';
 --2024.09.13
+--2024.9.13 测试服已处理
 --2024.9.13 已处理
 ALTER TABLE fa_store_money_log
     ADD COLUMN `swtl_id` int(11) DEFAULT NULL COMMENT '共享钱包转账记录id';
@@ -50,6 +52,7 @@ ALTER TABLE fa_store_money_log
 ALTER TABLE fa_store_refund
     ADD COLUMN `wallet_type` tinyint(1) DEFAULT 1 COMMENT '目标钱包类型：1千川，2共享';
 --2024.09.25
+--2024.09.27 测试服已更新
 ALTER TABLE `fa_share_wallet_transfer_log`  ADD COLUMN `remark`varchar(255)  COMMENT '备注';
 ALTER TABLE `fa_transfer_records`  ADD COLUMN `remark` varchar(255)  COMMENT '备注';
 

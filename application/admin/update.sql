@@ -1,8 +1,10 @@
 --2024.08.19
+--2024.8.19 测试服已处理
 --2024.8.19 已处理
 ALTER TABLE fa_store
     ADD COLUMN `bank` tinyint(1) DEFAULT 0 COMMENT '绑定银行（0：未绑定，1：招行）';
 --2024.08.19
+--2024.8.19 测试服已处理
 --2024.8.19 已处理
 CREATE TABLE `fa_zh_sub_account`
 (
@@ -23,6 +25,7 @@ CREATE TABLE `fa_zh_sub_account`
     UNIQUE KEY `store_id` (`store_id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='绑定招行子账户，不理解的字段去看文档：https://openbiz.cmbchina.com/developer/UI/Business/CloudDirectConnect/Public/DocumentCenter/DocDetail.aspx?bizkey=DCCT20231226155549458&fabizkey=1&treeID=100082838';
 --2024.09.13
+--2024.8.19 测试服已处理
 --2024.9.13 已处理
 CREATE TABLE `fa_qc_share_wallet`
 (
@@ -37,6 +40,7 @@ CREATE TABLE `fa_qc_share_wallet`
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='子钱包列表';
 
 --2024.09.19
+--2024.09.27 测试服已更新
 CREATE TABLE `fa_queue_record`
 (
     `id`             int(11) NOT NULL AUTO_INCREMENT,
@@ -54,6 +58,7 @@ CREATE TABLE `fa_queue_record`
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COMMENT='队列任务记录表';
 --2024.09.19
+--2024.09.27 测试服已更新
 CREATE TABLE `fa_sync_charge_record`
 (
     `id`          int(11) NOT NULL AUTO_INCREMENT,
@@ -66,6 +71,7 @@ CREATE TABLE `fa_sync_charge_record`
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COMMENT='同步充值记录表';
 
 --2024.09.19
+--2024.09.27 测试服已更新
 CREATE TABLE `fa_external_accounts`
 (
     `id`          int(11) NOT NULL AUTO_INCREMENT,
@@ -77,3 +83,7 @@ CREATE TABLE `fa_external_accounts`
     `status`      tinyint(1) NOT NULL DEFAULT '1',
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='对外账号列表';
+--2024.09.19
+--2024.09.27 测试服已更新
+INSERT INTO `dmc`.`fa_external_accounts` (`id`, `account`, `secret`, `platform`, `create_time`, `update_time`, `status`)
+VALUES (1, '20240919001', '密钥自行生成添加', 'yuanxi_crm', NULL, NULL, 1);

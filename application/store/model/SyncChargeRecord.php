@@ -12,7 +12,7 @@ class SyncChargeRecord extends Model
     protected $autoWriteTimestamp = 'int';
 //    // 定义时间戳字段名
     protected $createTime = 'create_time';
-    protected $updateTime = false;
+    protected $updateTime = 'update_time';
 
 
 
