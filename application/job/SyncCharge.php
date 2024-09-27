@@ -110,7 +110,7 @@ class SyncCharge
                 } catch (Exception $e) {
                     Db::rollback();
                     $queueData->save(['msg' => $e->getMessage(), 'status' => 2]);
-                    return false;
+                    return true;
                 }
             }
             return false;
