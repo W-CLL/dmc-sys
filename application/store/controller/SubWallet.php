@@ -126,13 +126,16 @@ class SubWallet extends Store
                 //添加同步转账记录任务
                 //暂时转入才同步
                 if($post['transfer_direction'] == 'TRANSFER_IN' ){
-                    $queueModel = new \app\common\model\Queue();
-                    $queueModel->addQueue("同步共享钱包充值记录","app\job\SyncCharge",
-                        "syncCharge",
-                        ["log_id" => $swtl_id,'data'=>$insert_data],
-                        "share_wallet_transfer_log"
-                    );
+                    $name = "同步共享钱包充值记录";
+                }else{
+                    $name = "同步共享钱包退款记录";
                 }
+                $queueModel = new \app\common\model\Queue();
+                $queueModel->addQueue($name,"app\job\SyncCharge",
+                    "syncCharge",
+                    ["log_id" => $swtl_id,'data'=>$insert_data],
+                    "share_wallet_transfer_log"
+                );
             }catch (\Exception $e){
                 Db::rollback();
                 $this->error($e->getMessage());

@@ -1,7 +1,7 @@
 <?php
 /**
  *
- * 同步充值订单数据到crm系统
+ * 同步订单数据到crm系统
  */
 
 namespace app\job;
@@ -93,8 +93,8 @@ class SyncCharge
                 $crmId = $rsp['data']['id'];
                 Db::startTrans();
                 try {
-//                    Db::name('queue_record')->where('job_id', $queueData['job_id'])->update(['status' => 1, 'msg' => '同步充值订单到crm成功,log:' . $logId . "crm_id:" . $crmId])
-                    $queueData->save(['status' => 1, 'msg' => '同步充值订单到crm成功,log_id:' . $logId . ",crm_id:" . $crmId]);
+//                    Db::name('queue_record')->where('job_id', $queueData['job_id'])->update(['status' => 1, 'msg' => '同步订单到crm成功,log:' . $logId . "crm_id:" . $crmId])
+                    $queueData->save(['status' => 1, 'msg' => '同步订单到crm成功,log_id:' . $logId . ",crm_id:" . $crmId]);
                     $syncChargeRecordModel = new SyncChargeRecord();
                     $syncRecord = $syncChargeRecordModel->where(['log_id' => $logId, 'crm_id' => $crmId])->find();
                     if (!$syncRecord) {
@@ -146,7 +146,7 @@ class SyncCharge
                 $msg = $res['msg'] . json_encode($data);
                 $queueData->save(['status' => 2, 'msg' => $res['msg'] . json_encode($data)]);
 //                Db::name('queue_record')->where('job_id', $job_id)->update(['status' => 2, 'msg' => $res['msg'] . json_encode($data)]);
-                Log::error('同步充值订单到crm失败：' . json_encode($res['msg']));
+                Log::error('同步订单到crm失败：' . json_encode($res['msg']));
                 $job_status = false;
             } else {
                 $syncChargeRecordModel = new SyncChargeRecord();
@@ -161,14 +161,14 @@ class SyncCharge
                 ];
                 $syncChargeRecordModel->save($insertData);
                 $status = 1;
-                $msg = '同步充值订单到crm成功,log_id:' . $moneyLog['id'] . ",crm_id:" . $res['data'];
-                Log::info('同步充值订单到crm成功：' . json_encode($res['msg']));
+                $msg = '同步订单到crm成功,log_id:' . $moneyLog['id'] . ",crm_id:" . $res['data'];
+                Log::info('同步订单到crm成功：' . json_encode($res['msg']));
                 $job_status = true;
             }
         } else {
             $status = 2;
             $msg = $res . json_encode($data);
-            Log::error('同步充值订单到crm失败：' . json_encode($res['msg']));
+            Log::error('同步订单到crm失败：' . json_encode($res['msg']));
             $job_status = false;
         }
         $queueData->save(['status' => $status, 'msg' => $msg]);
@@ -197,7 +197,7 @@ class SyncCharge
             ->where('log.id', $jobData['log_id']);
 
         if ($queueData['relation_table'] == 'share_wallet_transfer_log') {
-            $field = 'log.money,log.account_type,log.id,log.discount_percentage,log.remark,log.sub_wallet_id,
+            $field = 'log.money,log.account_type,log.id,log.discount_percentage,log.remark,log.sub_wallet_id, transfer_direction,
              sa.admin_id, 
              a.nickname as adduser,
              s.username';
@@ -206,7 +206,7 @@ class SyncCharge
             $note = $transferData['remark'];
             $extra_type = self::CHARGE_TYPE_SUB;//crm标识 1备款 2共享
         } else {
-            $field = 'log.money,log.account_type,log.id,log.discount_percentage,log.remark,log.advertiser_id,
+            $field = 'log.money,log.account_type,log.id,log.discount_percentage,log.remark,log.advertiser_id, transfer_direction,
              sa.admin_id, 
              a.nickname as adduser,
              s.username';
@@ -215,10 +215,15 @@ class SyncCharge
             $note = $transferData['remark'];
             $extra_type = self::CHARGE_TYPE_READY;//crm标识 1备款 2共享
         }
+        $money = $transferData['money'];
+        // 如果为退款账单，则金额取负
+        if($transferData['transfer_direction'] == 2){
+            $money = -$transferData['money'];
+        }
 
         $data['customer_name'] = $transferData['username'];
         $data['adduser'] = $transferData['adduser'];
-        $data['sales_price'] = $transferData['money'];
+        $data['sales_price'] = $money;
         $data['customer_back'] = $transferData['discount_percentage'];
         $data['account_type'] = $transferData['account_type'];
         $data['account'] = $account;
