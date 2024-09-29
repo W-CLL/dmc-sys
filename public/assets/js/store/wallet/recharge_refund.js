@@ -40,7 +40,7 @@ define(['jquery', 'bootstrap', 'store', 'table', 'form'], function ($, undefined
                 }
             });
 
-            $('#transaction_type').on('change', function() {
+            $('input[name="transaction_type"]').on('change', function() {
                 calculate_deductions(account_type)
             });
 
@@ -61,7 +61,7 @@ define(['jquery', 'bootstrap', 'store', 'table', 'form'], function ($, undefined
                         return ;
                     }
 
-                    let transaction_type = $("#transaction_type").val();
+                    let transaction_type = $('input[name="transaction_type"]').val();
                     let deduction_money = (money * 100) / discount_percentage * 100 / 10000
 
                     var actual_money = parseFloat(deduction_money.toFixed(2))
