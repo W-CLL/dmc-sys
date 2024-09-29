@@ -50,7 +50,7 @@ define(['jquery', 'bootstrap', 'store', 'table', 'form'], function ($, undefined
             });
             function calculate_deductions(type) {
                 var money = $("#money").val()
-
+                console.log(1)
                 if (money > 0){
                     var discount_percentage;
                     if (type == 1){
@@ -61,7 +61,7 @@ define(['jquery', 'bootstrap', 'store', 'table', 'form'], function ($, undefined
                         return ;
                     }
 
-                    let transaction_type = $('input[name="transaction_type"]').val();
+                    let transaction_type = $('input[name="transaction_type"]:checked');
                     let deduction_money = (money * 100) / discount_percentage * 100 / 10000
 
                     var actual_money = parseFloat(deduction_money.toFixed(2))
