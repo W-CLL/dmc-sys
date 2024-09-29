@@ -50,7 +50,6 @@ define(['jquery', 'bootstrap', 'store', 'table', 'form'], function ($, undefined
             });
             function calculate_deductions(type) {
                 var money = $("#money").val()
-                console.log(1)
                 if (money > 0){
                     var discount_percentage;
                     if (type == 1){
