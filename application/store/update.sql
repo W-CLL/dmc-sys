@@ -53,6 +53,7 @@ ALTER TABLE fa_store_refund
     ADD COLUMN `wallet_type` tinyint(1) DEFAULT 1 COMMENT '目标钱包类型：1千川，2共享';
 --2024.09.25
 --2024.09.27 测试服已更新
+--2024.9.30 正式服已处理
 ALTER TABLE `fa_share_wallet_transfer_log`  ADD COLUMN `remark`varchar(255)  COMMENT '备注';
 ALTER TABLE `fa_transfer_records`  ADD COLUMN `remark` varchar(255)  COMMENT '备注';
 
