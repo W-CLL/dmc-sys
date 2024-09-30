@@ -40,7 +40,7 @@ define(['jquery', 'bootstrap', 'store', 'table', 'form'], function ($, undefined
                 }
             });
 
-            $('#transaction_type').on('change', function() {
+            $('input[name="transaction_type"]').on('change', function() {
                 calculate_deductions(account_type)
             });
 
@@ -50,7 +50,6 @@ define(['jquery', 'bootstrap', 'store', 'table', 'form'], function ($, undefined
             });
             function calculate_deductions(type) {
                 var money = $("#money").val()
-
                 if (money > 0){
                     var discount_percentage;
                     if (type == 1){
@@ -61,13 +60,27 @@ define(['jquery', 'bootstrap', 'store', 'table', 'form'], function ($, undefined
                         return ;
                     }
 
-                    let transaction_type = $("#transaction_type").val();
+                    let transaction_type = $('input[name="transaction_type"]:checked').val();
                     let deduction_money = (money * 100) / discount_percentage * 100 / 10000
 
                     var actual_money = parseFloat(deduction_money.toFixed(2))
                     if (transaction_type == 1){
                         $("#deduction").text("转入此金额将扣除您钱包" + actual_money + "元")
                     }else{
+                        // 发起ajax获取actual_money值
+                        $.ajax({
+                            url: 'wallet/recharge_refund/get_actual_money',
+                            dataType: 'json',
+                            data: {advertiser_id: $('#advertiser_id').val(), money: money},
+                            cache: false,
+                            success: function (ret) {
+                                if (ret.code){
+                                    actual_money = ret.data.actual_money
+                                }else{
+                                    Toastr.error(__(ret.msg));
+                                }
+                            }
+                        })
                         $("#deduction").text("转出此金额将增加您钱包" + actual_money + "元")
                     }
                     return ;

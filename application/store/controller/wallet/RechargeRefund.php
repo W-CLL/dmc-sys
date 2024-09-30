@@ -47,6 +47,7 @@ class RechargeRefund extends Store
             "advertiser_id" => $company_advertiser_id,
             "transfer_direction" => $transaction_type,
             "money" => $money,
+            "remark" => input("remark", ""),
             "create_time" => time()
         ];
 
@@ -124,7 +125,7 @@ class RechargeRefund extends Store
                 }
 
                 //发起转账
-                $data = FundManagement::create_transfer($access_token, $transfer_records_id, $advertiser_id, $advertiser_id, $target_account_detail_list, $transfer_direction, $remark);
+                list($data, $biz_request_no) = FundManagement::create_transfer($access_token, $transfer_records_id, $advertiser_id, $advertiser_id, $target_account_detail_list, $transfer_direction, $remark);
                 if (!isset($data['code']) || !isset($data['message']) || $data['code'] != 0 || $data['message'] != "OK") {
                     throw new Exception("发起转账失败");
                 }
@@ -134,6 +135,19 @@ class RechargeRefund extends Store
                 $transfer_records_data['update_time'] = time();
                 Db::name("transfer_records")->where(["id" => $transfer_records_id])->update($transfer_records_data);
                 Db::commit();
+                //添加同步转账记录任务
+                //暂时转入账户才同步
+                if ($transfer_records_data["transfer_direction"] == 1) {
+                    $name = "同步备款充值记录";
+                }else{
+                    $name = "同步备款退款记录";
+                }
+                $queueModel = new \app\common\model\Queue();
+                $queueModel->addQueue($name, "app\job\SyncCharge",
+                    "syncCharge",
+                    ["log_id" => $transfer_records_id, 'data' => $transfer_records_data],
+                    "transfer_records"
+                );
             } catch (\Exception $e) {
                 Db::rollback();
                 $this->error($e->getMessage());
@@ -142,7 +156,7 @@ class RechargeRefund extends Store
             $explain_record = [];
             //查询转账状态
             for ($i = 1; $i <= 3; $i++) {
-                $transfer_detail_data = FundManagement::transfer_detail($access_token, $transfer_records_id, $advertiser_id, $data['data']['transfer_serial']);
+                $transfer_detail_data = FundManagement::transfer_detail($access_token, $biz_request_no, $advertiser_id, $data['data']['transfer_serial']);
                 if (isset($transfer_detail_data['code']) && isset($transfer_detail_data['message']) && $transfer_detail_data['code'] == 0 && $transfer_detail_data['message'] == "OK") {
                     if ($transfer_detail_data['data']['transfer_status'] === 'TRANSFER_SUCCESS') {
                         //转账成功
@@ -223,7 +237,9 @@ class RechargeRefund extends Store
                                     $sql->update(["update_time" => time()]);
                                 }
                             }
-                            if (!Db::name("store_money_log")->insert($money_log)) {
+                            $storeMoneyLogModel = new StoreMoneyLog();
+                            $logId = $storeMoneyLogModel->insertGetId($money_log);
+                            if (!$logId) {
                                 throw new \Exception('转账成功，资金记录写入失败');
                             }
                             if (!Db::name("transfer_records")->where(["id" => $transfer_records_id])->update(['status' => 1])) {
@@ -359,8 +375,8 @@ class RechargeRefund extends Store
         if (empty($advertiser_id)) {
             $advertiser_id = input("advertiser_id");
         }
-        if(!$advertiser_id){
-            $this->error('请输入正确的ID');
+        if (!$advertiser_id) {
+            $this->error('请选择账户');
         }
         $company = Db::name("company")->where(['advertiser_id' => $advertiser_id, "store_id" => $this->auth->id])->find();
         if ($company) {
@@ -369,22 +385,55 @@ class RechargeRefund extends Store
             $qc_money = FundManagement::account_balance_wallet($access_token, $advertiser_id);//获取钱包详细信息
             $return_code = FundManagement::$auth_return_code;
 
-            if(in_array($qc_money['code'],$return_code)){
+            if (in_array($qc_money['code'], $return_code)) {
                 return json(["code" => 0, "msg" => "千川授权已失效，请联系管理员"]);
 //                $this->error('千川授权已失效，请联系管理员');
             }
             $total_money = $qc_money['data']['total_balance_abs'];
             $grant_balance = $qc_money['data']['grant_balance'];
             $actual_money = $total_money - $grant_balance;
-            $data =[
+            $data = [
                 "money" => $actual_money / 100000,
-                "total_money" => $total_money/100000,
-                "grant_balance" => $grant_balance/100000,
+                "total_money" => $total_money / 100000,
+                "grant_balance" => $grant_balance / 100000,
                 "account_type" => $company['account_type']
             ];
-            return json(["code" => 1, "data" => $data,"msg" => "请求成功"]);
+            return json(["code" => 1, "data" => $data, "msg" => "请求成功"]);
         }
         return json(["code" => 0, "msg" => "请求失败，请刷新后重新请求"]);
+    }
+
+    public function get_actual_money($advertiser_id = '',$money = 0){
+        if (empty($advertiser_id) && empty($money)) {
+            $advertiser_id = input("advertiser_id");
+            $money = input("money");
+        }
+        $company = Db::name("company")->where(['advertiser_id' => $advertiser_id, "store_id" => $this->auth->id])->find();
+        $store_info = Db::name("store")->where(['id' => $this->auth->id])->find();
+        if($company['account_type'] == 1){
+            $wallet['wallet_discount'] = $store_info['public_discount_percentage'];
+        }elseif ($company['account_type'] == 2){
+            $wallet['wallet_discount'] = $store_info['private_discount_percentage'];
+        }else{
+            return json(["code" => 0, "msg" => "请求失败"]);
+        }
+        $data = [
+            'money' => $money,
+            'transfer_direction' => 2,
+            'discount_percentage' => $wallet['wallet_discount'],
+            'store_id' => $this->auth->id,
+            'account_type' => $company['account_type']
+        ];
+        $RefundModel = new StoreRefund();
+        $rebate = $RefundModel->getRealRefundRebate($data,2,false);
+        if (empty($rebate)) {
+            $rebate = round($money - ($money * 100) / ($wallet['wallet_discount'] * 100), 2);
+        }
+        $actual_money = $money - $rebate;
+        $return_data = [
+            "actual_money" => $actual_money,
+        ];
+        return json(["code" => 1, "data" => $return_data, "msg" => "请求成功"]);
     }
 
 }

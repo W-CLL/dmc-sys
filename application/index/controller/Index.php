@@ -3,6 +3,7 @@
 namespace app\index\controller;
 
 use app\common\controller\Frontend;
+use GuzzleHttp\Client;
 use jlqc\FundManagement;
 use think\Cache;
 use think\Db;
@@ -46,10 +47,10 @@ class Index extends Frontend
             $total_money = $qc_money['data']['total_balance_abs'];
             $grant_balance = $qc_money['data']['grant_balance'];
             $actual_money = $total_money - $grant_balance;
-            $data =[
+            $data = [
                 "money" => $actual_money / 100000,
-                "total_money" => $actual_money/100000,
-                "grant_balance" => $actual_money/100000,
+                "total_money" => $actual_money / 100000,
+                "grant_balance" => $actual_money / 100000,
                 "account_type" => $company['account_type']
             ];
             return json(["code" => 1,
@@ -57,6 +58,139 @@ class Index extends Frontend
                 "msg" => "请求成功"]);
         }
         return json(["code" => 0, "msg" => "请求失败，请刷新后重新请求"]);
+    }
+
+    public function testGetAdplanList()
+    {
+        $access_token = Cache::get("qc_access_token");
+        $params = [
+            'advertiser_id' => '1809337625800922',
+            'page' => '1',
+            'page_size' => '20',
+            'start_date' => '2024-09-09',
+            'end_date' => '2024-09-09',
+        ];
+        $res = FundManagement::get_ad_report($access_token, $params);
+        $plan_id = array_column($res['data']['list'], "ad_id");
+
+        return $plan_id;
+    }
+
+    public function testGetAdplanOptList()
+    {
+        $object_ids = $this->testGetAdplanList();
+        $access_token = Cache::get("qc_access_token");
+//        ["1809620655760507","1809620613160972","1809620545414218","809620495048720"]
+        $params = [
+            'advertiser_id' => '1809337625800922',
+            'object_id' => $object_ids,
+            'page' => '1',
+            'page_size' => '20',
+            'start_date' => '2024-09-09 00:10:00',
+            'end_date' => '2024-09-09 23:59:59',
+        ];
+        $res = FundManagement::get_opt_log($access_token, $params);
+        dump($res);
+        die;
+        $taotal_page = $res['data']['page_info']['total_page'];
+//        $taotal_page = $res['data']['page_info']['total_page'];
+        for ($i = 1; $i <= $taotal_page; $i++) {
+            if ($i > 1) {
+                $params['page'] = $i;
+                $res = FundManagement::get_opt_log($access_token, $params);
+            }
+            foreach ($res['data']['logs'] as $item) {
+                if ($item['operator'] == "用户1417096113932") {
+                    $new_data[] = $item;
+                } else {
+                    $other_data[] = $item;
+                }
+            }
+        }
+//        dump($res);
+        dump($new_data);
+        dump($other_data);
+        die;
+    }
+
+    public function testAddQueue()
+    {
+        $queueModel = new \app\common\model\Queue();
+        $res = $queueModel->addQueue("app\job\Test", "test", ["name" => "test1"]);
+        dump($res);
+        die;
+    }
+
+    public function genExternalAccount(){
+        $secret = bin2hex(random_bytes(16));
+        dump($secret);
+        die;
+    }
+
+    public function testSyncCrm()
+    {
+        $account = Db::name('external_accounts')->where('status',1)->find();
+        $url = "http://crm1688.cn.com";
+        $method = "post";
+        $a  ='{"customer_name":"xiaogege","adduser":"陈秀玉",
+        "sales_price":"950","customer_back":"1.035","account_type":"1","account":"136844","note":"","addtime":"1727059203","from":1}';
+
+        $enData =  openssl_encrypt($a, 'AES-128-ECB', $account['secret'], 0);
+
+        $params = [
+            'app'=>'charge_controller_dmcapi',
+            'data'=>$enData,
+            'account'=>'20240919001',
+            'act'=>'post',
+        ];
+
+        $client = new Client();
+        $response = $client->request($method, $url, [
+            'form_params' => $params
+        ]);
+
+        $res = $response->getBody()->getContents();
+        dump(json_decode($res,true));
+        die;
+
+    }
+
+    public function testGetCrmData()
+    {
+        $params = [
+            'app'=>'charge_controller_dmcapi',
+            'act'=>'get',
+            'log_id'=>'306',
+            'account'=>'20240919002'
+        ];
+       dump( buildCrmRequest($params));
+       die;
+    }
+
+    public function testTransfer()
+    {
+
+       $token =  Cache::get("qc_access_token");
+        $a = $transfer_detail_data = FundManagement::transfer_detail($token, 'dfsdfdf', '1739518270441480', "ZZO7418880759731159820");
+        dump($a);
+        die;
+//        $target_account_detail_list[] = [
+//            'account_id' => (int)$company_advertiser_id,
+//            'transfer_capital_detail_list' => [[
+//                'capital_type' => 'PREPAY_GENERAL',
+//                'transfer_amount' => (int)($money * 100),
+//            ]]
+//        ];
+//        $data = FundManagement::create_transfer($token, 288, 1739518270441480, 1739518270441480, $target_account_detail_list, $transfer_direction, $remark);
+
+//        $qc_money = FundManagement::account_balance_wallet($token, "1791676091878467");//获取钱包详细信息
+            $qc_money = FundManagement::account_balance($token, 1805332345397339);//获取不到赠送余额
+
+//        $qc_money = FundManagement::account_balance_wallet($token, "1805332345397339");//获取钱包详细信息
+        $return_code = FundManagement::$auth_return_code;
+        dump($qc_money);
+    dump($a);
+    die;
     }
 
 

@@ -2,6 +2,9 @@
 
 // 公共助手函数
 
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
+use think\Env;
 use think\exception\HttpResponseException;
 use think\Response;
 
@@ -10,7 +13,7 @@ if (!function_exists('__')) {
     /**
      * 获取语言变量值
      * @param string $name 语言变量名
-     * @param array  $vars 动态变量值
+     * @param array $vars 动态变量值
      * @param string $lang 语言
      * @return mixed
      */
@@ -32,9 +35,9 @@ if (!function_exists('format_bytes')) {
 
     /**
      * 将字节转换为可读文本
-     * @param int    $size      大小
+     * @param int $size 大小
      * @param string $delimiter 分隔符
-     * @param int    $precision 小数位数
+     * @param int $precision 小数位数
      * @return string
      */
     function format_bytes($size, $delimiter = '', $precision = 2)
@@ -51,7 +54,7 @@ if (!function_exists('datetime')) {
 
     /**
      * 将时间戳转换为日期时间
-     * @param int    $time   时间戳
+     * @param int $time 时间戳
      * @param string $format 日期时间格式
      * @return string
      */
@@ -66,7 +69,7 @@ if (!function_exists('human_date')) {
 
     /**
      * 获取语义化时间
-     * @param int $time  时间
+     * @param int $time 时间
      * @param int $local 本地时间
      * @return string
      */
@@ -80,7 +83,7 @@ if (!function_exists('cdnurl')) {
 
     /**
      * 获取上传资源的CDN的地址
-     * @param string  $url    资源相对地址
+     * @param string $url 资源相对地址
      * @param boolean $domain 是否显示域名 或者直接传入域名
      * @return string
      */
@@ -133,8 +136,8 @@ if (!function_exists('rmdirs')) {
 
     /**
      * 删除文件夹
-     * @param string $dirname  目录
-     * @param bool   $withself 是否删除自身
+     * @param string $dirname 目录
+     * @param bool $withself 是否删除自身
      * @return boolean
      */
     function rmdirs($dirname, $withself = true)
@@ -163,7 +166,7 @@ if (!function_exists('copydirs')) {
     /**
      * 复制文件夹
      * @param string $source 源文件夹
-     * @param string $dest   目标文件夹
+     * @param string $dest 目标文件夹
      */
     function copydirs($source, $dest)
     {
@@ -199,7 +202,7 @@ if (!function_exists('addtion')) {
 
     /**
      * 附加关联字段数据
-     * @param array $items  数据列表
+     * @param array $items 数据列表
      * @param mixed $fields 渲染的来源字段
      * @return array
      */
@@ -272,7 +275,7 @@ if (!function_exists('var_export_short')) {
 
     /**
      * 使用短标签打印或返回数组结构
-     * @param mixed   $data
+     * @param mixed $data
      * @param boolean $return 是否返回数据
      * @return string
      */
@@ -535,7 +538,7 @@ if (!function_exists('build_suffix_image')) {
     /**
      * 生成文件后缀图片
      * @param string $suffix 后缀
-     * @param null   $background
+     * @param null $background
      * @return string
      */
     function build_suffix_image($suffix, $background = null)
@@ -560,3 +563,100 @@ EOT;
         return $icon;
     }
 }
+if (!function_exists('buildUrlWithParams')) {
+    /**
+     * 构建带参数的URL
+     * @param $url
+     * @param $params
+     * @return string
+     */
+    function buildUrlWithParams($url, $params)
+    {
+        $paramStr = '';
+
+        if (!empty($params)) {
+            foreach ($params as $k => $v) {
+                if (is_array($v)) {
+                    $v = json_encode($v);
+                }
+                $paramStr .= "$k=" . urlencode($v) . '&';
+            }
+            $paramStr = rtrim($paramStr, '&');
+        }
+        return $url . '/' . '?' . $paramStr;
+    }
+}
+
+if (!function_exists('buildCrmRequest')) {
+    /**
+     * 快速构建请求crm系统方法
+     * @param array $params
+     * 参数中必须包含 app:对应crm控制器名,account:唯一账号，act:请求方法
+     * 如果是post/put必须传加密data
+     * @param $method
+     * @return mixed
+     * @throws GuzzleException
+     */
+    function buildCrmRequest($params, $method = 'GET')
+    {
+        switch ($method) {
+            case 'GET':
+            case 'DELETE':
+                $query = ['query' => $params];
+                break;
+            case 'POST':
+            case 'PUT':
+                $query = ['form_params' => $params];
+                break;
+            default:
+                $query = [];
+        }
+        $client = new Client();
+        $response = $client->request($method, Env::get('crm_config.crm_url'), $query);
+        $res = $response->getBody()->getContents();
+        return json_decode($res, true);
+    }
+
+}
+
+
+if (!function_exists('generate_random_string')) {
+    /**
+     * 生成随机字符串
+     * @param int $length
+     * 随机字符串长度
+     * @param bool $use_millisecond
+     * 是否使用毫秒级时间拼接在字符串前面
+     * @param string $type
+     * NUMBER_AND_LETTERS:数字字母混合(默认) ONLY_NUMBER:纯数字 ONLY_LETTERS：字母
+     * @return string
+     */
+
+    function generate_random_string($length = 10, $use_millisecond = false, $type = 'NUMBER_AND_LETTERS')
+    {
+        switch ($type) {
+            case 'ONLY_NUMBER':
+                $characters = '0123456789';
+                break;
+            case 'ONLY_LETTERS':
+                $characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                break;
+            default:
+                $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                break;
+        }
+
+        $charactersLength = strlen($characters);
+        $randomString = '';
+        if ($use_millisecond) {
+            $timeStamp = microtime(true);
+            $ms = (int)(($timeStamp - floor($timeStamp)) * 1000);
+            $randomString = date('YmdHis') . str_pad($ms, 3, '0', STR_PAD_LEFT);
+        }
+        for ($i = 0; $i < $length; $i++) {
+            $randomString .= $characters[rand(0, $charactersLength - 1)];
+        }
+        return $randomString;
+    }
+}
+
