@@ -403,6 +403,39 @@ class RechargeRefund extends Store
         return json(["code" => 0, "msg" => "请求失败，请刷新后重新请求"]);
     }
 
+    public function get_actual_money($advertiser_id = '',$money = 0){
+        if (empty($advertiser_id) && empty($money)) {
+            $advertiser_id = input("advertiser_id");
+            $money = input("money");
+        }
+        $company = Db::name("company")->where(['advertiser_id' => $advertiser_id, "store_id" => $this->auth->id])->find();
+        $store_info = Db::name("store")->where(['id' => $this->auth->id])->find();
+        if($company['account_type'] == 1){
+            $wallet['wallet_discount'] = $store_info['public_discount_percentage'];
+        }elseif ($company['account_type'] == 2){
+            $wallet['wallet_discount'] = $store_info['private_discount_percentage'];
+        }else{
+            return json(["code" => 0, "msg" => "请求失败"]);
+        }
+        $data = [
+            'money' => $money,
+            'transfer_direction' => 2,
+            'discount_percentage' => $wallet['wallet_discount'],
+            'store_id' => $this->auth->id,
+            'account_type' => $company['account_type']
+        ];
+        $RefundModel = new StoreRefund();
+        $rebate = $RefundModel->getRealRefundRebate($data,2,false);
+        if (empty($rebate)) {
+            $rebate = round($money - ($money * 100) / ($wallet['wallet_discount'] * 100), 2);
+        }
+        $actual_money = $money - $rebate;
+        $return_data = [
+            "actual_money" => $actual_money,
+        ];
+        return json(["code" => 1, "data" => $return_data, "msg" => "请求成功"]);
+    }
+
 }
 
 

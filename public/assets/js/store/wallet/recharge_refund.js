@@ -67,6 +67,20 @@ define(['jquery', 'bootstrap', 'store', 'table', 'form'], function ($, undefined
                     if (transaction_type == 1){
                         $("#deduction").text("转入此金额将扣除您钱包" + actual_money + "元")
                     }else{
+                        // 发起ajax获取actual_money值
+                        $.ajax({
+                            url: 'wallet/recharge_refund/get_actual_money',
+                            dataType: 'json',
+                            data: {advertiser_id: $('#advertiser_id').val(), money: money},
+                            cache: false,
+                            success: function (ret) {
+                                if (ret.code){
+                                    actual_money = ret.data.actual_money
+                                }else{
+                                    Toastr.error(__(ret.msg));
+                                }
+                            }
+                        })
                         $("#deduction").text("转出此金额将增加您钱包" + actual_money + "元")
                     }
                     return ;
