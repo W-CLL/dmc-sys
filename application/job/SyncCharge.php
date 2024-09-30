@@ -82,6 +82,7 @@ class SyncCharge
             'act' => 'get',
             'log_id' => $data['log_id'],
             'log_type' => $type,
+            'from' => Env::get('crm_config.crm_from_type'),
             'account' => $account['account']
         ];
         $rsp = buildCrmRequest($params);
@@ -157,9 +158,12 @@ class SyncCharge
                 $insertData = [
                     'log_id' => $moneyLog['id'],
                     'crm_id' => $res['data'],
-                    'type' => $type,
+                    'type' => $type
                 ];
-                $syncChargeRecordModel->save($insertData);
+                $record = $syncChargeRecordModel->where($insertData)->find();
+                if(!$record){
+                    $syncChargeRecordModel->save($insertData);
+                }
                 $status = 1;
                 $msg = '同步订单到crm成功,log_id:' . $moneyLog['id'] . ",crm_id:" . $res['data'];
                 Log::info('同步订单到crm成功：' . json_encode($res['msg']));
@@ -228,7 +232,7 @@ class SyncCharge
         $data['account_type'] = $transferData['account_type'];
         $data['account'] = $account;
         $data['note'] = $note ?: '';
-        $data['from'] = 1;
+        $data['from'] = Env::get('crm_config.crm_from_type',2);
         $data['addtime'] = time();
         $data['extra_id'] = $transferData['id'];
         $data['extra_type'] = $extra_type;
