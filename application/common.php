@@ -611,6 +611,9 @@ if (!function_exists('buildCrmRequest')) {
             default:
                 $query = [];
         }
+        $query['headers'] = [
+          'Expect' => ''
+        ];
         $client = new Client();
         $response = $client->request($method, Env::get('crm_config.crm_url'), $query);
         $res = $response->getBody()->getContents();

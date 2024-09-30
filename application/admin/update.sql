@@ -41,6 +41,7 @@ CREATE TABLE `fa_qc_share_wallet`
 
 --2024.09.19
 --2024.09.27 测试服已更新
+--2024.9.30 正式服已处理
 CREATE TABLE `fa_queue_record`
 (
     `id`             int(11) NOT NULL AUTO_INCREMENT,
@@ -59,6 +60,7 @@ CREATE TABLE `fa_queue_record`
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COMMENT='队列任务记录表';
 --2024.09.19
 --2024.09.27 测试服已更新
+--2024.9.30 正式服已处理
 CREATE TABLE `fa_sync_charge_record`
 (
     `id`          int(11) NOT NULL AUTO_INCREMENT,
@@ -72,6 +74,7 @@ CREATE TABLE `fa_sync_charge_record`
 
 --2024.09.19
 --2024.09.27 测试服已更新
+--2024.9.30 正式服已处理
 CREATE TABLE `fa_external_accounts`
 (
     `id`          int(11) NOT NULL AUTO_INCREMENT,
@@ -85,5 +88,6 @@ CREATE TABLE `fa_external_accounts`
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='对外账号列表';
 --2024.09.19
 --2024.09.27 测试服已更新
+--2024.9.30 正式服已处理
 INSERT INTO `dmc`.`fa_external_accounts` (`id`, `account`, `secret`, `platform`, `create_time`, `update_time`, `status`)
 VALUES (1, '20240919001', '密钥自行生成添加', 'yuanxi_crm', NULL, NULL, 1);
