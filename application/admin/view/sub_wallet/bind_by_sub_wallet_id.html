@@ -1,0 +1,38 @@
+<form id="edit-form" class="form-horizontal" role="form" data-toggle="validator" method="POST" action="">
+
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">输入子钱包ID【绑公帐】:</label>
+        <div class="col-xs-12 col-sm-8">
+            <textarea rows="5" cols="60" name="public_sub_wallet_id"></textarea>
+            <span style="font-size: 14px;color: red;display: block">此处填入绑定公账的子钱包ID【批量操作用英文版的 ' , ' 分割开】</span>
+        </div>
+
+    </div>
+    <br>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">输入子钱包ID【绑私帐】:</label>
+        <div class="col-xs-12 col-sm-8">
+            <textarea rows="5" cols="60" name="private_sub_wallet_id"></textarea>
+            <span style="font-size: 14px;color: red;display: block">此处填入绑定私账的子钱包ID【批量操作用英文版的 ' , ' 分割开】</span>
+        </div>
+    </div>
+    <br>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">绑定账号:</label>
+        <div class="col-xs-12 col-sm-4">
+            <select  class="form-control selectpicker" name="store_id">
+                <option value="">请选择</option>
+                {foreach $storeList as $k => $v}
+                <option value="{$v.id}">{$v.username}</option>
+                {/foreach}
+            </select>
+        </div>
+    </div>
+    <div class="form-group layer-footer">
+        <label class="control-label col-xs-12 col-sm-2"></label>
+        <div class="col-xs-12 col-sm-8">
+            <button type="submit" class="btn btn-primary btn-embossed disabled">{:__('OK')}</button>
+            <button type="reset" class="btn btn-default btn-embossed">{:__('Reset')}</button>
+        </div>
+    </div>
+</form>
