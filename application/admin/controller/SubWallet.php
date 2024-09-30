@@ -126,4 +126,44 @@ class SubWallet extends Backend
 
         return $this->view->fetch();
     }
+
+    /**
+     * 根据子钱包ID去进行批量绑定
+     */
+    public function bind_by_sub_wallet_id(){
+        $StoreModel = new StoreModel();
+        $WalletModel = new WalletModel();
+        if ($this->request->isPost()) {
+            $err_num = 0;
+            $this->token();
+            $post = $this->request->post();
+            if(empty($post['store_id'])){
+                $this->error('请选择绑定账号');
+            }
+            if(empty($post['public_sub_wallet_id']) && empty($post['private_sub_wallet_id'])){
+                $this->error('空提交');
+            }
+            if(!empty($post['public_sub_wallet_id'])){
+                $public_sub_wallet_id_list = explode(",",$post['public_sub_wallet_id']);
+                $public_sub_wallet_id_list = array_combine($public_sub_wallet_id_list,array_fill(0,count($public_sub_wallet_id_list),1));
+            }
+            if (!empty($post['private_sub_wallet_id'])){
+                $private_sub_wallet_id_list = explode(",",$post['private_sub_wallet_id']);
+                $private_sub_wallet_id_list = array_combine($private_sub_wallet_id_list,array_fill(0,count($private_sub_wallet_id_list),2));
+            }
+            $sub_wallet_id_list = $public_sub_wallet_id_list + $private_sub_wallet_id_list;
+            foreach ($sub_wallet_id_list as $k=>$v){
+                if ($WalletModel->where(["id"=>$k])->update(['bind_store_id' => $post['store_id'],'sub_wallet_type' => $v])){
+                    $err_num++;
+                }
+            }
+            if($err_num != 0){
+                $this->error("失败了".$err_num."次");
+            }else{
+                $this->success("批量绑定成功");
+            }
+        }
+        $this->view->assign('storeList', $StoreModel->field('id,username')->select());
+        return $this->view->fetch();
+    }
 }
