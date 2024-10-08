@@ -46,7 +46,7 @@ class SubWallet extends Backend
             $list = $WalletModel
                 ->with('store')
                 ->where($where)
-                ->field("id,sub_wallet_id,bind_store_id,sub_wallet_type,sub_wallet_type")
+                ->field("id,sub_wallet_id,bind_store_id,sub_wallet_type,sub_wallet_type,discount_percentage")
                 ->order($sort, $order)
                 ->limit($offset,$limit)
                 ->select();
@@ -92,6 +92,7 @@ class SubWallet extends Backend
             $id = input("id");
             $data['bind_store_id'] = input("store_id");
             $data['sub_wallet_type'] = input("wallet_type");
+            $data['discount_percentage'] = input("discount_percentage");
             if ($WalletModel->where("id",$id)->update($data)){
                 $this->success('绑定成功');
             }
@@ -117,6 +118,7 @@ class SubWallet extends Backend
             }
             $data['bind_store_id'] = input("store_id");
             $data['sub_wallet_type'] = input("wallet_type");
+            $data['discount_percentage'] = input("discount_percentage");
             if ($WalletModel->where(["id"=>["in",$wallet_ids]])->update($data)){
                 $this->success('批量绑定成功');
             }
@@ -140,6 +142,7 @@ class SubWallet extends Backend
             $private_sub_wallet_id_list = [];
             $this->token();
             $post = $this->request->post();
+            $post['discount_percentage'] = number_format($post['discount_percentage'], 4, '.', '');
             if(empty($post['store_id'])){
                 $this->error('请选择绑定账号');
             }
@@ -156,7 +159,7 @@ class SubWallet extends Backend
             }
             $sub_wallet_id_list = $public_sub_wallet_id_list + $private_sub_wallet_id_list;
             foreach ($sub_wallet_id_list as $k=>$v){
-                if ($WalletModel->where(["sub_wallet_id"=>$k])->update(['bind_store_id' => $post['store_id'],'sub_wallet_type' => $v])){
+                if (!$WalletModel->where(["sub_wallet_id"=>$k])->update(['bind_store_id' => $post['store_id'], 'sub_wallet_type' => $v, 'discount_percentage' => $post['discount_percentage']])){
                     $err_num++;
                     $err_id .= $k.",";
                 }
