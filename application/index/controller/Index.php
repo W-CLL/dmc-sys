@@ -3,6 +3,7 @@
 namespace app\index\controller;
 
 use app\common\controller\Frontend;
+use app\common\model\Queue;
 use GuzzleHttp\Client;
 use jlqc\FundManagement;
 use think\Cache;
@@ -115,13 +116,16 @@ class Index extends Frontend
 
     public function testAddQueue()
     {
+        echo "禁止访问!";
+        die;
         $queueModel = new \app\common\model\Queue();
         $res = $queueModel->addQueue("app\job\Test", "test", ["name" => "test1"]);
         dump($res);
         die;
     }
 
-    public function genExternalAccount(){
+    public function genExternalAccount()
+    {
         $secret = bin2hex(random_bytes(16));
         dump($secret);
         die;
@@ -129,19 +133,21 @@ class Index extends Frontend
 
     public function testSyncCrm()
     {
-        $account = Db::name('external_accounts')->where('status',1)->find();
+        echo "禁止访问!";
+        die;
+        $account = Db::name('external_accounts')->where('status', 1)->find();
         $url = "http://crm1688.cn.com";
         $method = "post";
-        $a  ='{"customer_name":"xiaogege","adduser":"陈秀玉",
+        $a = '{"customer_name":"xiaogege","adduser":"陈秀玉",
         "sales_price":"950","customer_back":"1.035","account_type":"1","account":"136844","note":"","addtime":"1727059203","from":1}';
 
-        $enData =  openssl_encrypt($a, 'AES-128-ECB', $account['secret'], 0);
+        $enData = openssl_encrypt($a, 'AES-128-ECB', $account['secret'], 0);
 
         $params = [
-            'app'=>'charge_controller_dmcapi',
-            'data'=>$enData,
-            'account'=>'20240919001',
-            'act'=>'post',
+            'app' => 'charge_controller_dmcapi',
+            'data' => $enData,
+            'account' => '20240919001',
+            'act' => 'post',
         ];
 
         $client = new Client();
@@ -150,27 +156,59 @@ class Index extends Frontend
         ]);
 
         $res = $response->getBody()->getContents();
-        dump(json_decode($res,true));
+        dump(json_decode($res, true));
         die;
 
     }
 
     public function testGetCrmData()
     {
+        echo "禁止访问!";
+        die;
         $params = [
-            'app'=>'charge_controller_dmcapi',
-            'act'=>'get',
-            'log_id'=>'306',
-            'account'=>'20240919002'
+            'app' => 'charge_controller_dmcapi',
+            'act' => 'get',
+            'log_id' => '306',
+            'account' => '20240919002'
         ];
-       dump( buildCrmRequest($params));
-       die;
+        dump(buildCrmRequest($params));
+        die;
     }
+
+    public function testUpdateCrmData()
+    {
+        $queueModel = new Queue();
+        $list = $queueModel->select();
+
+        foreach ($list as $item) {
+            $pattern = '/log_id:(\d+),crm_id:(\d+)/';
+            if (preg_match($pattern, $item['msg'], $matches)) {
+
+                $logId = $matches[1];
+                $crmId = $matches[2];
+                $logData = Db::name($item['relation_table'])->where('id', $logId)->find();
+
+                if ($logData) {
+                    $params = [
+                        'app' => 'charge_controller_dmcapi',
+                        'act' => 'put',
+                        'crm_id' => $crmId,
+                        'account' => '20240919001',
+                        'add_time' => $logData['create_time']
+                    ];
+                    $res =  buildCrmRequest($params);
+                    dump($res);
+                }
+            }
+        }
+    }
+
 
     public function testTransfer()
     {
-
-       $token =  Cache::get("qc_access_token");
+        echo "禁止访问!";
+        die;
+        $token = Cache::get("qc_access_token");
         $a = $transfer_detail_data = FundManagement::transfer_detail($token, 'dfsdfdf', '1739518270441480', "ZZO7418880759731159820");
         dump($a);
         die;
@@ -184,13 +222,13 @@ class Index extends Frontend
 //        $data = FundManagement::create_transfer($token, 288, 1739518270441480, 1739518270441480, $target_account_detail_list, $transfer_direction, $remark);
 
 //        $qc_money = FundManagement::account_balance_wallet($token, "1791676091878467");//获取钱包详细信息
-            $qc_money = FundManagement::account_balance($token, 1805332345397339);//获取不到赠送余额
+        $qc_money = FundManagement::account_balance($token, 1805332345397339);//获取不到赠送余额
 
 //        $qc_money = FundManagement::account_balance_wallet($token, "1805332345397339");//获取钱包详细信息
         $return_code = FundManagement::$auth_return_code;
         dump($qc_money);
-    dump($a);
-    die;
+        dump($a);
+        die;
     }
 
 
