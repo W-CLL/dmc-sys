@@ -135,6 +135,7 @@ class SubWallet extends Backend
         $WalletModel = new WalletModel();
         if ($this->request->isPost()) {
             $err_num = 0;
+            $err_id = '';
             $this->token();
             $post = $this->request->post();
             if(empty($post['store_id'])){
@@ -153,12 +154,13 @@ class SubWallet extends Backend
             }
             $sub_wallet_id_list = $public_sub_wallet_id_list + $private_sub_wallet_id_list;
             foreach ($sub_wallet_id_list as $k=>$v){
-                if ($WalletModel->where(["id"=>$k])->update(['bind_store_id' => $post['store_id'],'sub_wallet_type' => $v])){
+                if ($WalletModel->where(["sub_wallet_id"=>$k])->update(['bind_store_id' => $post['store_id'],'sub_wallet_type' => $v])){
                     $err_num++;
+                    $err_id .= $k.",";
                 }
             }
             if($err_num != 0){
-                $this->error("失败了".$err_num."次");
+                $this->error("失败了".$err_num."次，绑定失败的ID为：".$err_id);
             }else{
                 $this->success("批量绑定成功");
             }
