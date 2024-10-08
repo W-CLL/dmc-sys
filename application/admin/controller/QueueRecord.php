@@ -43,7 +43,7 @@ Class QueueRecord extends Backend{
                         break;
                 }
 
-                $item['msg'] = substr( $item['msg'], 0, 60);
+                $item['msg'] = substr( $item['msg'], 0, 65);
             }
 
             $result = array("total" => $list->total(), "rows" => $list->items());

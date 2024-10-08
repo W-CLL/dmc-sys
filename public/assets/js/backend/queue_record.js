@@ -21,16 +21,17 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form','bootstrap-table-fixed
                 columns: [
                     [
                         {checkbox: true},
-                        {field: 'id', title: __('Id')},
+                        {field: 'id', title: __('Id'), visible: false},
                         {field: 'job_id', title: "任务id", operate: false, searchList: Config.searchList, formatter: Table.api.formatter.label},
                         {field: 'class_name', title:"任务类名", align: 'left', formatter:function (value, row, index) {
                                 return value.toString().replace(/(&|&amp;)nbsp;/g, '&nbsp;');
                             }
                         },
                         {field: 'job_name', title: "任务名称"},
-                        {field: 'msg', title: "执行信息",width:130},
+                        {field: 'msg', title: "执行信息",width:130,align:'left'},
                         {field: 'remark', title: "备注"},
                         {field: 'status_text', title: __('Status')},
+                        {field: 'create_time', title:"创建时间" ,formatter: Table.api.formatter.datetime},
                         {field: 'operate', title: __('Operate'),
                             buttons:[{
                                 name: "queue_records",
