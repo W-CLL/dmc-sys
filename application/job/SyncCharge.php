@@ -221,7 +221,7 @@ class SyncCharge
             $extra_type = self::CHARGE_TYPE_READY;//crm标识 1备款 2共享
             $addTime = $transferData['create_time'];
         }
-        $money = $transferData['money'];
+        $money = $transferData['actual_money'];
         // 如果为退款账单，则金额取负
         if($transferData['transfer_direction'] == 2){
             $money = -$transferData['money'];
