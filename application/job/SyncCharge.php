@@ -201,7 +201,7 @@ class SyncCharge
             ->where('log.id', $jobData['log_id']);
 
         if ($queueData['relation_table'] == 'share_wallet_transfer_log') {
-            $field = 'log.money,log.account_type,log.id,log.discount_percentage,log.remark,log.sub_wallet_id, transfer_direction,
+            $field = 'log.money,log.account_type,log.id,log.discount_percentage,log.remark,log.sub_wallet_id, log.transfer_direction,log.create_time,
              sa.admin_id, 
              a.nickname as adduser,
              s.username';
@@ -209,8 +209,9 @@ class SyncCharge
             $account = $transferData['sub_wallet_id'];
             $note = $transferData['remark'];
             $extra_type = self::CHARGE_TYPE_SUB;//crm标识 1备款 2共享
+            $addTime = $transferData['create_time'];
         } else {
-            $field = 'log.money,log.account_type,log.id,log.discount_percentage,log.remark,log.advertiser_id, transfer_direction,
+            $field = 'log.money,log.account_type,log.id,log.discount_percentage,log.remark,log.advertiser_id, log.transfer_direction,log.create_time,
              sa.admin_id, 
              a.nickname as adduser,
              s.username';
@@ -218,6 +219,7 @@ class SyncCharge
             $account = $transferData['advertiser_id'];
             $note = $transferData['remark'];
             $extra_type = self::CHARGE_TYPE_READY;//crm标识 1备款 2共享
+            $addTime = $transferData['create_time'];
         }
         $money = $transferData['money'];
         // 如果为退款账单，则金额取负
@@ -233,7 +235,7 @@ class SyncCharge
         $data['account'] = $account;
         $data['note'] = $note ?: '';
         $data['from'] = Env::get('crm_config.crm_from_type',2);
-        $data['addtime'] = time();
+        $data['addtime'] = $addTime;
         $data['extra_id'] = $transferData['id'];
         $data['extra_type'] = $extra_type;
         return [$data, $transferData];
