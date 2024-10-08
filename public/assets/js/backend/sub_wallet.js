@@ -103,6 +103,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         var body = layer.getChildFrame('body', index);
                         var store_id = body.find("select[name='store_id']")[0].value;
                         var wallet_type = body.find("input[name='wallet_type']:checked").val();
+                        var discount_percentage = body.find("input[name='discount_percentage']").val();
                         console.log(store_id)
                         Fast.api.ajax({
                             url: 'sub_wallet/batch_binding',
@@ -110,6 +111,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                                 store_id: store_id,
                                 wallet_type: wallet_type,
                                 wallet_ids: checkids.join(','),
+                                discount_percentage: discount_percentage,
                             }
                         }, function (data, ret) {
                             table.bootstrapTable('refresh', {});
