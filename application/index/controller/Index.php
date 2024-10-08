@@ -177,6 +177,8 @@ class Index extends Frontend
 
     public function testUpdateCrmData()
     {
+        echo "禁止访问!";
+        exit;
         $queueModel = new Queue();
         $list = $queueModel->select();
 
