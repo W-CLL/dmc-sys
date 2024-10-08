@@ -136,6 +136,8 @@ class SubWallet extends Backend
         if ($this->request->isPost()) {
             $err_num = 0;
             $err_id = '';
+            $public_sub_wallet_id_list = [];
+            $private_sub_wallet_id_list = [];
             $this->token();
             $post = $this->request->post();
             if(empty($post['store_id'])){
