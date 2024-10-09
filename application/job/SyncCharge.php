@@ -57,8 +57,8 @@ class SyncCharge
                 }
             }
         } catch (Exception $e) {
-          $queueData->save(['id'=>$queueData['id'],'status' => 2, 'msg' => $e->getMessage()]);
-          $job->delete();
+            $queueData->save(['id' => $queueData['id'], 'status' => 2, 'msg' => $e->getMessage()]);
+            $job->delete();
         }
     }
 
@@ -161,7 +161,7 @@ class SyncCharge
                     'type' => $type
                 ];
                 $record = $syncChargeRecordModel->where($insertData)->find();
-                if(!$record){
+                if (!$record) {
                     $syncChargeRecordModel->save($insertData);
                 }
                 $status = 1;
@@ -181,17 +181,20 @@ class SyncCharge
 
     }
 
+    /**
+     * 构建数据
+     * 客户名字 customer_name
+     * 录单员(dmc业务员) adduser
+     * 实际金额   sales_price
+     * 客户返点   customer_back
+     * 账号类型   account_type
+     * 备注      note
+     * 来源      from  dmc为1
+     * 账户，千川广告id/子钱包账号      account
+     */
+
     private function buildData($jobData, $queueData)
     {
-        /*  客户名字 customer_name
-            录单员(dmc业务员) adduser
-            实际金额   sales_price
-            客户返点   customer_back
-            账号类型   account_type
-            备注      note
-            来源      from  dmc为1
-            账户，千川广告id/子钱包账号      account
-        */
 
         $transferLog = Db::name($queueData['relation_table'])
             ->alias('log')
@@ -221,9 +224,9 @@ class SyncCharge
             $extra_type = self::CHARGE_TYPE_READY;//crm标识 1备款 2共享
             $addTime = $transferData['create_time'];
         }
-        $money = $transferData['money'];
+        $money = $transferData['actual_money'];
         // 如果为退款账单，则金额取负
-        if($transferData['transfer_direction'] == 2){
+        if ($transferData['transfer_direction'] == 2) {
             $money = -$transferData['money'];
         }
 
@@ -234,7 +237,7 @@ class SyncCharge
         $data['account_type'] = $transferData['account_type'];
         $data['account'] = $account;
         $data['note'] = $note ?: '';
-        $data['from'] = Env::get('crm_config.crm_from_type',2);
+        $data['from'] = Env::get('crm_config.crm_from_type', 2);
         $data['addtime'] = $addTime;
         $data['extra_id'] = $transferData['id'];
         $data['extra_type'] = $extra_type;
