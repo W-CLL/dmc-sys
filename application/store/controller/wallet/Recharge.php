@@ -57,6 +57,7 @@ Class Recharge extends Store{
         "收款方户名",
         "收款户名",
         "收款人姓名",
+        "收款人户名",
     ];
 
 
