@@ -227,7 +227,7 @@ class SyncCharge
         $money = $transferData['actual_money'];
         // 如果为退款账单，则金额取负
         if ($transferData['transfer_direction'] == 2) {
-            $money = -$transferData['money'];
+            $money = -$transferData['actual_money'];
         }
 
         $data['customer_name'] = $transferData['username'];
