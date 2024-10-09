@@ -34,7 +34,8 @@ Class Recharge extends Store{
         "指令序号",
         "汇款编号",
         "回单号",
-        "受理单号"
+        "受理单号",
+        "回单流水号"
     ];
 
     protected static $money_name = [
@@ -45,6 +46,7 @@ Class Recharge extends Store{
         "转账金额",
         "金额(小写)",
         "收款金额",
+        "转账汇款金额"
     ];
 
     protected static $payee_key = [
