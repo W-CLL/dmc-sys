@@ -46,7 +46,8 @@ Class Recharge extends Store{
         "转账金额",
         "金额(小写)",
         "收款金额",
-        "转账汇款金额"
+        "转账汇款金额",
+        "币种及金额(大小写)",
     ];
 
     protected static $payee_key = [
