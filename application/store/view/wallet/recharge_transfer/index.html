@@ -1,0 +1,94 @@
+<form id="edit-form" class="form-horizontal form-ajax" style="margin-top: 100px;" role="form" data-toggle="validator" method="POST" action="">
+
+
+    <div class="form-group" >
+        <label class="control-label col-xs-12 col-sm-2">注:</label>
+        <div class="col-xs-12 col-sm-8" style="padding-top: 3px">
+            每天23:50~00:00都停止转账
+        </div>
+    </div>
+
+
+    <div class="form-group" >
+        <label class="control-label col-xs-12 col-sm-2">千川账户【发起方】:</label>
+        <div class="col-xs-12 col-sm-8"  style="width: 400px">
+            <select data-live-search="true" name="advertiser_id_initiate" id="advertiser_id_initiate" class="form-control selectpicker">
+                <option value="0" selected="selected">无</option>
+                {foreach $company_data as $vo}
+                <option value="{$vo.advertiser_id}">{$vo.advertiser_id} {$vo.name}</option>
+                {/foreach}
+            </select>
+        </div>
+    </div>
+
+    <div class="form-group" >
+        <label class="control-label col-xs-12 col-sm-2">千川账户【目标方】:</label>
+        <div class="col-xs-12 col-sm-8"  style="width: 400px">
+            <select data-live-search="true" name="advertiser_id_target" id="advertiser_id_target" class="form-control selectpicker">
+                <option value="0" selected="selected">无</option>
+                {foreach $company_data as $vo}
+                <option value="{$vo.advertiser_id}">{$vo.advertiser_id} {$vo.name}</option>
+                {/foreach}
+            </select>
+        </div>
+    </div>
+
+    <div class="form-group" >
+        <label class="control-label col-xs-12 col-sm-2">【发起方】可操作余额:</label>
+        <div id="initiate_money" class="col-xs-12 col-sm-8" style="padding-top: 3px">
+            0
+        </div>
+    </div>
+
+    <div class="form-group" >
+        <label class="control-label col-xs-12 col-sm-2">金额:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input type="number" style="width: 200px" class="form-control" id="money" name="money" value="" data-rule="required" />
+            <span id="deduction"></span>
+        </div>
+
+    </div>
+
+    <div class="form-group" >
+        <label class="control-label col-xs-12 col-sm-2">备注:</label>
+        <div class="col-xs-12 col-sm-8">
+            <textarea style="width: 400px;" class="form-control" id="remark" name="remark" value="" maxlength="100" ></textarea>
+        </div>
+
+    </div>
+
+
+    <div class="form-group layer-footer">
+        <label class="control-label col-xs-12 col-sm-2"></label>
+        <div class="col-xs-12 col-sm-8">
+            <button id="myButton" type="submit" class="btn btn-primary btn-embossed disabled">提交</button>
+        </div>
+    </div>
+</form>
+
+<script>
+
+    // 防抖函数
+    function debounce(func, wait) {
+        let timeout;
+        return function() {
+            const context = this;
+            const args = arguments;
+            clearTimeout(timeout); // 清除上一次的计时器
+            timeout = setTimeout(() => func.apply(context, args), wait); // 设置新的计时器
+        };
+    }
+
+    // 按钮点击处理函数
+    function handleButtonClick() {
+        console.log('按钮被点击了！');
+        // 这里可以放置你希望在按钮点击后执行的代码
+    }
+
+    // 获取按钮元素
+    const myButton = document.getElementById('myButton');
+
+    // 应用防抖函数到按钮点击事件
+    myButton.addEventListener('click', debounce(handleButtonClick, 5000));
+</script>
+
