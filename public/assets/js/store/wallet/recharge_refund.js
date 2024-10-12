@@ -28,6 +28,7 @@ define(['jquery', 'bootstrap', 'store', 'table', 'form'], function ($, undefined
                                 $('#qc_grant_money').text(ret.data.grant_balance)
                                 $('#qc_money').text(ret.data.money)
                                 $('#account_type').text(ret.data.account_type == 1?'公':'私')
+                                $('#account_discount_percentage').text(ret.data.discount_percentage == 0?'不适用':`${ret.data.discount_percentage} (优先使用该返点)`)
                                 account_type = ret.data.account_type
                                 calculate_deductions(account_type)
                             }else{
@@ -59,6 +60,11 @@ define(['jquery', 'bootstrap', 'store', 'table', 'form'], function ($, undefined
                     }else{
                         return ;
                     }
+                    if ($('#account_discount_percentage').text() != '不适用'){
+                        discount_percentage = $('#account_discount_percentage').text()
+                        discount_percentage = discount_percentage.replace(/[^\d.]/g, "")
+                    }
+                    console.log(discount_percentage);
 
                     let transaction_type = $('input[name="transaction_type"]:checked').val();
                     let deduction_money = (money * 100) / discount_percentage * 100 / 10000

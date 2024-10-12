@@ -59,7 +59,11 @@
   <div class="form-group">
     <label  class="control-label col-xs-12 col-sm-2">返点比例(公):</label>
     <div class="col-xs-12 col-sm-8" style="color: #0d7be0;font-size: 20px">
+      {if $walletList.discount_percentage != 0}
+      <b>{$walletList.discount_percentage} %</b>
+      {else}
       <b>{$storeList.public_discount_percentage} %</b>
+      {/if}
     </div>
   </div>
   {elseif $walletList.sub_wallet_type == 2}
@@ -78,7 +82,11 @@
   <div class="form-group">
     <label  class="control-label col-xs-12 col-sm-2">返点比例(私):</label>
     <div class="col-xs-12 col-sm-8" style="color: #0d7be0;font-size: 20px">
+      {if $walletList.discount_percentage != 0}
+      <b>{$walletList.discount_percentage} %</b>
+      {else}
       <b>{$storeList.private_discount_percentage} %</b>
+      {/if}
     </div>
   </div>
   {/if}

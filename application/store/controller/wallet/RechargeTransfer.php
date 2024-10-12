@@ -32,9 +32,9 @@ class RechargeTransfer extends Store
 
         $initiate_company = Db::name("company")->where(['advertiser_id' => $advertiser_id_initiate, "store_id" => $this->auth->id])->field('id,account_type')->find();
         $target_company = Db::name("company")->where(['advertiser_id' => $advertiser_id_target, "store_id" => $this->auth->id])->field('id,account_type')->find();
-//        if ($initiate_company['id'] == $target_company['id'] || empty($target_company) || empty($initiate_company)) {
-//            $this->error("账户选择非法");
-//        }
+        if ($initiate_company['id'] == $target_company['id'] || empty($target_company) || empty($initiate_company)) {
+            $this->error("账户选择非法");
+        }
         if (!is_numeric($money) || $money < 0) {
             $this->error("请输入正确金额");
         }

@@ -172,6 +172,10 @@ class SubWallet extends Store
         else{
             $this->error('该子钱包类型不支持转账');
         }
+        // 如果子钱包自定义折扣比例，则取子钱包自定义的比例为先
+        if(!empty($walletList['discount_percentage'])){
+            $wallet_info['wallet_discount'] = $walletList['discount_percentage'];
+        }
         if($post['transfer_direction'] == 'TRANSFER_OUT'){
             if($max_transfer_out < $post['transfer_amount']){
                 $this->error('转出金额超出上限');
@@ -430,6 +434,9 @@ class SubWallet extends Store
         $res_msg = '';
         $direction = $request->param('direction');
         $amount = $request->param('amount');
+        if(empty($direction) || empty($amount)){
+            return json(['code' => 0,'msg'=> '失败', 'data' => '']);
+        }
         $wallet_info = $this->WalletModel
             ->where(['sub_wallet_id'=>$request->param('sub_wallet_id')])
             ->find();
@@ -441,6 +448,10 @@ class SubWallet extends Store
             $wallet['wallet_discount'] = $store_info['public_discount_percentage'];
         }else{
             $wallet['wallet_discount'] = $store_info['private_discount_percentage'];
+        }
+        // 优先使用自定义的子钱包折扣
+        if(!empty($wallet_info['discount_percentage'])){
+            $wallet['wallet_discount'] = $wallet_info['discount_percentage'];
         }
         if($direction == 'TRANSFER_IN'){
             $rebate = round($amount - ($amount * 100) / ($wallet['wallet_discount'] * 100), 2);

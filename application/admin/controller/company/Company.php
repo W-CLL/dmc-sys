@@ -136,6 +136,7 @@ class Company extends Backend
             $id = input("id");
             $data['account_type'] = input("account_type");
             $data['store_id'] = input("store_id");
+            $data['discount_percentage'] = number_format(input("discount_percentage"), 4, '.', '');
             if (Db::name("company")->where("id",$id)->update($data)){
                 $this->success();
             }
@@ -145,7 +146,7 @@ class Company extends Backend
 
         $row = Db::name("company")
             ->where("id",$ids)
-            ->field("id,store_id,account_type")
+            ->field("id,store_id,account_type,discount_percentage")
             ->find();
         $this->modelValidate = true;
         if (!$row) {
@@ -164,6 +165,7 @@ class Company extends Backend
             $company_ids = input("company_ids");
             $data['store_id'] = input("store_id");
             $data['account_type'] = input("account_type");
+            $data['discount_percentage'] = number_format(input("discount_percentage"), 4, '.', '');
             if (Db::name("company")->where(["id"=>["in",$company_ids]])->update($data)){
                 $this->success();
             }

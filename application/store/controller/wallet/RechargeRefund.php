@@ -32,7 +32,7 @@ class RechargeRefund extends Store
             $this->error('千川账户余额不足，不能转出');
         }
 
-        $company = Db::name("company")->where(['advertiser_id' => $company_advertiser_id, "store_id" => $this->auth->id])->field('id,account_type')->find();
+        $company = Db::name("company")->where(['advertiser_id' => $company_advertiser_id, "store_id" => $this->auth->id])->field('id,account_type,discount_percentage')->find();
         if (empty($company)) {
             $this->error("请选择千川账户");
         }
@@ -63,7 +63,9 @@ class RechargeRefund extends Store
             $balance = $store["private_money"];
             $credit_limit = $store["private_credit_limit"];
         }
-
+        if(!empty($company['discount_percentage'])){
+            $transfer_records_data['discount_percentage'] = $company['discount_percentage'];
+        }
         $rebate = round($money - ($money * 100) / ($transfer_records_data['discount_percentage'] * 100), 2);
 
         if (($money - $rebate) > ($balance + $credit_limit) && $transaction_type == 1) {
@@ -396,7 +398,8 @@ class RechargeRefund extends Store
                 "money" => $actual_money / 100000,
                 "total_money" => $total_money / 100000,
                 "grant_balance" => $grant_balance / 100000,
-                "account_type" => $company['account_type']
+                "account_type" => $company['account_type'],
+                "discount_percentage" => $company['discount_percentage']
             ];
             return json(["code" => 1, "data" => $data, "msg" => "请求成功"]);
         }
@@ -416,6 +419,9 @@ class RechargeRefund extends Store
             $wallet['wallet_discount'] = $store_info['private_discount_percentage'];
         }else{
             return json(["code" => 0, "msg" => "请求失败"]);
+        }
+        if(!empty($company['discount_percentage'])){
+            $wallet['wallet_discount'] = $company['discount_percentage'];
         }
         $data = [
             'money' => $money,

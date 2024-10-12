@@ -120,6 +120,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         var body = layer.getChildFrame('body', index);
                         var store_id = body.find("select[name='store_id']")[0].value;
                         var account_type = body.find("select[name='account_type']")[0].value;
+                        var discount_percentage = body.find("input[name='discount_percentage']")[0].value;
                         var token = body.find("input[name='__token__']")[0].value;
                         console.log(store_id)
                         Fast.api.ajax({
@@ -128,6 +129,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                                 __token__ : token,
                                 store_id: store_id,
                                 account_type: account_type,
+                                discount_percentage: discount_percentage,
                                 company_ids: checkids.join(','),
                             }
                         }, function (data, ret) {

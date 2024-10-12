@@ -92,7 +92,9 @@ define(['jquery', 'bootstrap', 'store', 'table', 'form', 'bootstrap-table-fixed-
             Controller.api.bindevent();
             // 监听 transfer_direction 的变化
             $('input[name="transfer_direction"]').on('change', function () {
-                handleTransferChange();
+                if ($('#c-transfer_amount').val()) {
+                    handleTransferChange();
+                }
             });
 
             // 监听 c-transfer_amount 失焦
