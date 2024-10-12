@@ -204,7 +204,7 @@ class SyncCharge
             ->where('log.id', $jobData['log_id']);
 
         if ($queueData['relation_table'] == 'share_wallet_transfer_log') {
-            $field = 'log.money,log.account_type,log.id,log.discount_percentage,log.remark,log.sub_wallet_id, log.transfer_direction,log.create_time,
+            $field = 'log.*,
              sa.admin_id, 
              a.nickname as adduser,
              s.username';
@@ -214,7 +214,7 @@ class SyncCharge
             $extra_type = self::CHARGE_TYPE_SUB;//crm标识 1备款 2共享
             $addTime = $transferData['create_time'];
         } else {
-            $field = 'log.money,log.account_type,log.id,log.discount_percentage,log.remark,log.advertiser_id, log.transfer_direction,log.create_time,
+            $field = 'log.*,
              sa.admin_id, 
              a.nickname as adduser,
              s.username';
