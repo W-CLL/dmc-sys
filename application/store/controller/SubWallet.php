@@ -173,7 +173,7 @@ class SubWallet extends Store
             $this->error('该子钱包类型不支持转账');
         }
         // 如果子钱包自定义折扣比例，则取子钱包自定义的比例为先
-        if(!empty($walletList['discount_percentage'])){
+        if(!empty(floatval($walletList['discount_percentage']))){
             $wallet_info['wallet_discount'] = $walletList['discount_percentage'];
         }
         if($post['transfer_direction'] == 'TRANSFER_OUT'){
@@ -450,7 +450,7 @@ class SubWallet extends Store
             $wallet['wallet_discount'] = $store_info['private_discount_percentage'];
         }
         // 优先使用自定义的子钱包折扣
-        if(!empty($wallet_info['discount_percentage'])){
+        if(!empty(floatval($wallet_info['discount_percentage']))){
             $wallet['wallet_discount'] = $wallet_info['discount_percentage'];
         }
         if($direction == 'TRANSFER_IN'){

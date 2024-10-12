@@ -63,7 +63,7 @@ class RechargeRefund extends Store
             $balance = $store["private_money"];
             $credit_limit = $store["private_credit_limit"];
         }
-        if(!empty($company['discount_percentage'])){
+        if(!empty(floatval($company['discount_percentage']))){
             $transfer_records_data['discount_percentage'] = $company['discount_percentage'];
         }
         $rebate = round($money - ($money * 100) / ($transfer_records_data['discount_percentage'] * 100), 2);
@@ -420,7 +420,7 @@ class RechargeRefund extends Store
         }else{
             return json(["code" => 0, "msg" => "请求失败"]);
         }
-        if(!empty($company['discount_percentage'])){
+        if(!empty(floatval($company['discount_percentage']))){
             $wallet['wallet_discount'] = $company['discount_percentage'];
         }
         $data = [
