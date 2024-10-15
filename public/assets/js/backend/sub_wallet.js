@@ -40,6 +40,14 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                                     return "未绑定"
                                 }
                             }, operate: 'LIKE'},
+                        {field: 'discount_percentage', title: "特定比例", formatter: function(value,row,index) {
+                                const discount_percentage = row.discount_percentage * 1;
+                                if (discount_percentage == 0){
+                                    return "不适用"
+                                }else{
+                                    return row.discount_percentage+"%";
+                                }
+                            }, operate: 'LIKE'},
                         {field: 'main_wallet_id', title: "父钱包ID"},
                         {field: 'adv_cnt', title: "子钱包adv数量"},
                         {field: 'create_time', title:"子钱包创建时间" ,formatter: Table.api.formatter.datetime},
