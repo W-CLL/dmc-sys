@@ -100,7 +100,7 @@ class Company extends Backend
                 ->where($where)
                 ->whereOr($whereOr)
                 ->order($sort, $order)
-                ->field("id,advertiser_id,store_id,company_name,name,first_industry_name,second_industry_name,account_type")
+                ->field("id,advertiser_id,store_id,company_name,name,first_industry_name,second_industry_name,account_type,discount_percentage")
                 ->limit($offset,$limit)
                 ->select();
 
