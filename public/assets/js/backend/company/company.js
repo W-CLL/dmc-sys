@@ -38,6 +38,14 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                                     return "私"
                                 }
                             }},
+                        {field: 'discount_percentage', title: "特定比例", formatter: function(value,row,index) {
+                                const discount_percentage = row.discount_percentage * 1;
+                                if (discount_percentage == 0){
+                                    return "不适用"
+                                }else{
+                                    return row.discount_percentage+"%";
+                                }
+                            }, operate: 'LIKE'},
                         {field: 'name', title: "账户名", operate: 'LIKE'},
                         {field: 'first_industry_name', title: "类别1", operate: 'LIKE'},
                         {field: 'second_industry_name', title: "类别2", operate: 'LIKE'},
