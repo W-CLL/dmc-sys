@@ -44,6 +44,8 @@ class HandleCrmData extends Frontend
 
     public function fixCrmMoneyData()
     {
+        echo "禁止访问!";
+        exit;
         $queueModel = new Queue();
         $list = $queueModel->select();
 

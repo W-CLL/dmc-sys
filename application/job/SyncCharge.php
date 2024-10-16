@@ -195,30 +195,29 @@ class SyncCharge
 
     private function buildData($jobData, $queueData)
     {
-
-        $transferLog = Db::name($queueData['relation_table'])
+        $field = 'log.*,
+             sa.admin_id, 
+             a.nickname as adduser,
+             s.username';
+        $transferData = Db::name($queueData['relation_table'])
             ->alias('log')
             ->join('store s', 'log.store_id = s.id')
             ->join('store_admin_access sa', 'log.store_id = sa.store_id', 'left')
             ->join('admin a', 'sa.admin_id = a.id', 'left')
-            ->where('log.id', $jobData['log_id']);
+            ->where('log.id', $jobData['log_id'])
+            ->field($field)
+            ->find();
 
         if ($queueData['relation_table'] == 'share_wallet_transfer_log') {
-            $field = 'log.*,
-             sa.admin_id, 
-             a.nickname as adduser,
-             s.username';
-            $transferData = $transferLog->field($field)->find();
+
+//            $transferData = $transferLog->field($field)->find();
             $account = $transferData['sub_wallet_id'];
             $note = $transferData['remark'];
             $extra_type = self::CHARGE_TYPE_SUB;//crm标识 1备款 2共享
             $addTime = $transferData['create_time'];
         } else {
-            $field = 'log.*,
-             sa.admin_id, 
-             a.nickname as adduser,
-             s.username';
-            $transferData = $transferLog->field($field)->find();
+
+//            $transferData = $transferLog->field($field)->find();
             $account = $transferData['advertiser_id'];
             $note = $transferData['remark'];
             $extra_type = self::CHARGE_TYPE_READY;//crm标识 1备款 2共享
