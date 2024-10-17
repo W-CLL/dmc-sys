@@ -140,8 +140,13 @@ class SubWallet extends Store
                 Db::rollback();
                 $this->error($e->getMessage());
             }
-            $this->createStoreMoneyLog($swtl_id,$post,$insert_data,$store);
-            $this->success('转账成功');
+            $bool = $this->checkTransferStatus($swtl_id);
+            if($bool){
+                $this->createStoreMoneyLog($swtl_id,$post,$insert_data,$store);
+                $this->success('转账成功');
+            }else{
+                $this->error('转账失败');
+            }
         }
         $this->view->assign('storeList', $store);
         $this->view->assign('walletList', $wallet);
@@ -183,7 +188,7 @@ class SubWallet extends Store
             }
         }
         elseif ($post['transfer_direction'] == 'TRANSFER_IN'){
-            if($min_transfer < $post['transfer_amount']){
+            if($min_transfer > $post['transfer_amount']){
                 $this->error('转入金额不得小于最小转入金额：'.$min_transfer);
             }
             $rebate = round($post['transfer_amount'] - ($post['transfer_amount'] * 100) / ($wallet_info['wallet_discount'] * 100), 2);
@@ -317,6 +322,29 @@ class SubWallet extends Store
         return FundManagement::wallet_transfer($access_token, $account_id, $account_type, $biz_request_no, $main_wallet_id, $target_wallet_detail_list, $transfer_direction, $remark);
     }
 
+    /**
+     * 查询转账状态
+     */
+    private function checkTransferStatus($swtl_id){
+        $return_bool = false;
+        $token = $this->token;
+        $account_id = $this->account_id;
+        $account_type = $this->account_type;
+        $biz_request_no = $this->generateRandomString();
+        $transfer_serial = $this->TransferLogModel->where(['id'=>$swtl_id])->value('transfer_serial');
+        $data = FundManagement::check_transfer_detail($token, $account_id, $account_type, $biz_request_no, $transfer_serial);
+        if ($data['data']['transfer_status'] == 'TRANSFER_SUCCESS'){
+            $update['status'] = 1;
+            $update['update_time'] = time();
+            $return_bool = true;
+        }elseif ($data['data']['transfer_status'] == 'TRANSFER_FAILURE'){
+            $update['status'] = 2;
+            $update['fail_reason'] = $data['data']['transfer_wallet_record_list'][0]['transfer_capital_record_list'][0]['fail_reason'];
+            $update['update_time'] = time();
+        }
+        $this->TransferLogModel->where(['id'=>$swtl_id])->update($update);
+        return $return_bool;
+    }
 
     /**
      * 创建用户动账记录
