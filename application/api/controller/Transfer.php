@@ -106,4 +106,52 @@ class Transfer extends Api
             Db::name('qc_share_wallet')->insertAll($ins);
         }
     }
+
+
+    // 更新子钱包转账记录
+    public function update_sub_wallet_transfer_log(){
+        $token = Cache::get("qc_access_token");
+        $account_id = Db::name("qc_config")->where("id",1)->value("advertiser_id");
+        $account_type = 'AGENT';
+        $biz_request_no = generate_random_string(10,true);
+        $list = Db::name('share_wallet_transfer_log')
+            ->where(['status' => ['=',0],'transfer_serial' =>['neq','']])
+            ->select();
+        Db::startTrans();
+        try{
+            foreach ($list as $v){
+                $data = FundManagement::check_transfer_detail($token,$account_id,$account_type,$biz_request_no,$v['transfer_serial']);
+                if(!isset($data['data']['transfer_status'])){
+                    \think\Log::write($data,'err');
+                    continue;
+                }
+                if($data['data']['transfer_status'] == 'TRANSFER_FAILED'){
+                    $update['status'] = 2;
+                    $update['fail_reason'] = $data['data']['transfer_wallet_record_list'][0]['transfer_capital_record_list'][0]['fail_reason'];
+                    $update['update_time'] = time();
+                    // 退款
+                    $refund_info = Db::name('store_money_log')->where(['swtl_id' => $v['id']])->find();
+                    if($refund_info['account_type'] == 1){
+                        $field = 'public_money';
+                    }elseif ($refund_info['account_type'] == 2){
+                        $field = 'private_money';
+                    }
+                    if(!Db::name('store')->where('id',$refund_info['store_id'])->setInc($field,$refund_info['actual_money'])){
+                        throw new \Exception('退款失败');
+                    }
+                }
+                elseif ($data['data']['transfer_status'] == 'TRANSFER_SUCCESS'){
+                    $update['status'] = 1;
+                    $update['update_time'] = time();
+                }
+                if(!Db::name('share_wallet_transfer_log')->where('id',$v['id'])->update($update)){
+                    throw new \Exception('更新失败');
+                }
+                Db::commit();
+            }
+        }catch(\Exception $e){
+            \think\Log::write($e->getMessage(),'Exception');
+            Db::rollback();
+        }
+    }
 }

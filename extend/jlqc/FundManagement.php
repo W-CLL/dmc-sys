@@ -283,6 +283,15 @@ Class FundManagement{
         return Requests::post($url,json_encode($data,JSON_UNESCAPED_UNICODE),$header);
     }
 
+    // 查询转账单信息
+    public static function check_transfer_detail($access_token,$account_id,$account_type,$biz_request_no,$transfer_serial){
+        $header = array(
+            'Access-Token:'. $access_token
+        );
+        $url = "https://api.oceanengine.com/open_api/v3.0/cg_transfer/wallet/transfer/detail/?account_id=".$account_id."&account_type=".$account_type."&biz_request_no=".$biz_request_no."&transfer_serial=".$transfer_serial;
+        return Requests::get($url,$header);
+    }
+
 }
 
 
