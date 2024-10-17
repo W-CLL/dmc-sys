@@ -7,6 +7,8 @@ use app\store\model\StoreMoneyLog;
 use jlqc\FundManagement;
 use think\Cache;
 use think\Db;
+use app\store\model\StoreRefund;
+use think\Exception;
 
 
 class Transfer extends Api
@@ -125,6 +127,7 @@ class Transfer extends Api
                     \think\Log::write($data,'err');
                     continue;
                 }
+                $store_info = Db::name('store')->where('id',$v['store_id'])->find();
                 if($data['data']['transfer_status'] == 'TRANSFER_FAILED'){
                     $update['status'] = 2;
                     $update['fail_reason'] = $data['data']['transfer_wallet_record_list'][0]['transfer_capital_record_list'][0]['fail_reason'];
@@ -132,17 +135,70 @@ class Transfer extends Api
                     // 退款
                     $refund_info = Db::name('store_money_log')->where(['swtl_id' => $v['id']])->find();
                     if($refund_info['account_type'] == 1){
-                        $field = 'public_money';
+                        $balance_field = 'public_money';
+                        $limit_field = 'public_credit_limit';
+                        $spending_field = 'public_spending_credit_limit';
                     }elseif ($refund_info['account_type'] == 2){
-                        $field = 'private_money';
+                        $balance_field = 'private_money';
+                        $limit_field = 'private_credit_limit';
+                        $spending_field = 'private_spending_credit_limit';
+                    }else{
+                        throw new \Exception('未知的账户类型');
                     }
-                    if(!Db::name('store')->where('id',$refund_info['store_id'])->setInc($field,$refund_info['actual_money'])){
+                    $RefundModel = new StoreRefund();
+                    $RefundModel->getRealRefundRebate($v,2);
+                    if($store_info[$spending_field] < $v['deduction_credit_limit']){
+                        $change = Db::name('store')->where('id',$v['store_id'])->inc($balance_field,$v['deduction_balance'] + $v['deduction_credit_limit'] - $store_info[$spending_field])
+                            ->inc($limit_field,$store_info[$spending_field])
+                            ->dec($spending_field,$store_info[$spending_field]);
+                    }else{
+                        $change = Db::name('store')->where('id',$v['store_id'])->inc($balance_field,$v['deduction_balance'])
+                            ->inc($limit_field,$v['deduction_credit_limit'])
+                            ->dec($spending_field,$v['deduction_credit_limit']);
+                    }
+                    if(!$change->update()){
                         throw new \Exception('退款失败');
                     }
                 }
                 elseif ($data['data']['transfer_status'] == 'TRANSFER_SUCCESS'){
                     $update['status'] = 1;
                     $update['update_time'] = time();
+                    // 生成记录
+                    $money_log_data = [
+                        'store_id' => $v['store_id'],
+                        'swtl_id' => $v['id'],
+                        'money' => $v['money'],
+                        'account_type' =>$v['account_type'],
+                        'rebate' => $v['rebate'],
+                        'discount_percentage' => $v['discount_percentage'],
+                        'create_time' => time()
+                    ];
+                    if($v['transfer_direction'] == 1){
+                        $money_log_data['actual_money'] = $v['actual_money'];
+                        $money_log_data["deduction_balance"] = $v["deduction_balance"];
+                        $money_log_data['deduction_credit_limit'] = $v["deduction_credit_limit"];
+                        $money_log_data['type'] = 8;
+                        $money_log_data['explain'] = "转入子钱包[".$v['sub_wallet_id']."]，返点：".$v['rebate']."，扣除余额：".$v['deduction_balance']."，扣除授信额度：".$v['deduction_credit_limit']."，实际扣除金额：".$v['actual_money']."【单位：元】";
+                    }
+                    $logId = Db::name('store_money_log')->insertGetId($money_log_data);
+                    if(!$logId){
+                        throw new Exception('金额变更记录失败');
+                    }
+                    //添加同步转账记录任务
+                    //暂时转入才同步
+                    if($v['transfer_direction'] == 1 ){
+                        $name = "同步共享钱包充值记录";
+                    }else{
+                        $name = "同步共享钱包退款记录";
+                    }
+                    $queueModel = new \app\common\model\Queue();
+                    $queueModel->addQueue($name,"app\job\SyncCharge",
+                        "syncCharge",
+                        ["log_id" => $v['id'],'data'=>$v],
+                        "share_wallet_transfer_log"
+                    );
+                }else{
+                    throw new \Exception('转账状态未知，请手动查询');
                 }
                 if(!Db::name('share_wallet_transfer_log')->where('id',$v['id'])->update($update)){
                     throw new \Exception('更新失败');

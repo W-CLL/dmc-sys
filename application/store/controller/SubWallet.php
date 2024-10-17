@@ -123,6 +123,14 @@ class SubWallet extends Store
                 ];
                 $this->TransferLogModel->where(['id' => $swtl_id])->update($update_data);
                 Db::commit();
+            }catch (\Exception $e){
+                Db::rollback();
+                $this->error($e->getMessage());
+            }
+            // 等待1秒,等接口处理完成再查询
+            sleep(1);
+            $bool = $this->checkTransferStatus($swtl_id,$post,$insert_data,$store);
+            if($bool){
                 //添加同步转账记录任务
                 //暂时转入才同步
                 if($post['transfer_direction'] == 'TRANSFER_IN' ){
@@ -136,15 +144,6 @@ class SubWallet extends Store
                     ["log_id" => $swtl_id,'data'=>$insert_data],
                     "share_wallet_transfer_log"
                 );
-            }catch (\Exception $e){
-                Db::rollback();
-                $this->error($e->getMessage());
-            }
-            // 等待1秒,等接口处理完成再查询
-            sleep(1);
-            $bool = $this->checkTransferStatus($swtl_id);
-            if($bool){
-                $this->createStoreMoneyLog($swtl_id,$post,$insert_data,$store);
                 $this->success('转账成功');
             }else{
                 $this->error('转账失败');
@@ -327,7 +326,7 @@ class SubWallet extends Store
     /**
      * 查询转账状态
      */
-    private function checkTransferStatus($swtl_id){
+    private function checkTransferStatus($swtl_id,$post,$insert_data,$store){
         $return_bool = false;
         $token = $this->token;
         $account_id = $this->account_id;
@@ -335,17 +334,54 @@ class SubWallet extends Store
         $biz_request_no = $this->generateRandomString();
         $transfer_serial = $this->TransferLogModel->where(['id'=>$swtl_id])->value('transfer_serial');
         $data = FundManagement::check_transfer_detail($token, $account_id, $account_type, $biz_request_no, $transfer_serial);
-        if ($data['data']['transfer_status'] == 'TRANSFER_SUCCESS'){
-            $update['status'] = 1;
-            $update['update_time'] = time();
-            $return_bool = true;
-        }elseif ($data['data']['transfer_status'] == 'TRANSFER_FAILURE'){
-            $update['status'] = 2;
-            $update['fail_reason'] = $data['data']['transfer_wallet_record_list'][0]['transfer_capital_record_list'][0]['fail_reason'];
-            $update['update_time'] = time();
-        }
-        if(isset($update)){
-            $this->TransferLogModel->where(['id'=>$swtl_id])->update($update);
+        Db::startTrans();
+        try{
+            if ($data['data']['transfer_status'] == 'TRANSFER_SUCCESS'){
+                $update['status'] = 1;
+                $update['update_time'] = time();
+                $return_bool = true;
+                $this->createStoreMoneyLog($swtl_id,$post,$insert_data,$store);
+            }elseif ($data['data']['transfer_status'] == 'TRANSFER_FAILURE'){
+                $update['status'] = 2;
+                $update['fail_reason'] = $data['data']['transfer_wallet_record_list'][0]['transfer_capital_record_list'][0]['fail_reason'];
+                $update['update_time'] = time();
+                // 退款
+                $refund_info = $this->StoreMoneyLogModel->where(['swtl_id' => $swtl_id])->find();
+                if($refund_info['account_type'] == 1){
+                    $balance_field = 'public_money';
+                    $limit_field = 'public_credit_limit';
+                    $spending_field = 'public_spending_credit_limit';
+                }elseif ($refund_info['account_type'] == 2){
+                    $balance_field = 'private_money';
+                    $limit_field = 'private_credit_limit';
+                    $spending_field = 'private_spending_credit_limit';
+                }else{
+                    throw new \Exception('未知的账户类型');
+                }
+                $this->RefundModel->getRealRefundRebate($insert_data,2);
+                $swtl_info = $this->TransferLogModel->where(['id'=>$swtl_id])->find();
+                if($store[$spending_field] < $swtl_info['deduction_credit_limit']){
+                    $change = $this->StoreModel->where('id',$store['id'])->inc($balance_field,$swtl_info['deduction_balance'] + $swtl_info['deduction_credit_limit'] - $store[$spending_field])
+                        ->inc($limit_field,$store[$spending_field])
+                        ->dec($spending_field,$store[$spending_field]);
+                }else{
+                    $change = $this->StoreModel->where('id',$swtl_info['store_id'])->inc($balance_field,$swtl_info['deduction_balance'])
+                        ->inc($limit_field,$swtl_info['deduction_credit_limit'])
+                        ->dec($spending_field,$swtl_info['deduction_credit_limit']);
+                }
+                if(!$change->update()){
+                    throw new \Exception('退款失败');
+                }
+            }
+            if(isset($update)){
+                if(!$this->TransferLogModel->where(['id'=>$swtl_id])->update($update)){
+                    throw new \Exception('状态更新失败');
+                }
+            }
+            Db::commit();
+        }catch (Exception $e){
+            Db::rollback();
+            $this->error($e->getMessage());
         }
         return $return_bool;
     }
