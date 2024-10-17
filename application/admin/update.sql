@@ -89,7 +89,7 @@ CREATE TABLE `fa_external_accounts`
 --2024.09.19
 --2024.09.27 测试服已更新
 --2024.9.30 正式服已处理
-INSERT INTO `dmc`.`fa_external_accounts` (`id`, `account`, `secret`, `platform`, `create_time`, `update_time`, `status`)
+INSERT INTO `fa_external_accounts` (`id`, `account`, `secret`, `platform`, `create_time`, `update_time`, `status`)
 VALUES (1, '20240919001', '密钥自行生成添加', 'yuanxi_crm', NULL, NULL, 1);
 --2024.10.09
 --2024.10.09 测试服已更新
