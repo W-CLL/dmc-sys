@@ -345,13 +345,13 @@ class SubWallet extends Store
                 $update['status'] = 2;
                 $update['fail_reason'] = $data['data']['transfer_wallet_record_list'][0]['transfer_capital_record_list'][0]['fail_reason'];
                 $update['update_time'] = time();
+                $swtl_info = $this->TransferLogModel->where(['id'=>$swtl_id])->find();
                 // 退款
-                $refund_info = $this->StoreMoneyLogModel->where(['swtl_id' => $swtl_id])->find();
-                if($refund_info['account_type'] == 1){
+                if($swtl_info['account_type'] == 1){
                     $balance_field = 'public_money';
                     $limit_field = 'public_credit_limit';
                     $spending_field = 'public_spending_credit_limit';
-                }elseif ($refund_info['account_type'] == 2){
+                }elseif ($swtl_info['account_type'] == 2){
                     $balance_field = 'private_money';
                     $limit_field = 'private_credit_limit';
                     $spending_field = 'private_spending_credit_limit';
@@ -359,7 +359,6 @@ class SubWallet extends Store
                     throw new \Exception('未知的账户类型');
                 }
                 $this->RefundModel->getRealRefundRebate($insert_data,2);
-                $swtl_info = $this->TransferLogModel->where(['id'=>$swtl_id])->find();
                 if($store[$spending_field] < $swtl_info['deduction_credit_limit']){
                     $change = $this->StoreModel->where('id',$store['id'])->inc($balance_field,$swtl_info['deduction_balance'] + $swtl_info['deduction_credit_limit'] - $store[$spending_field])
                         ->inc($limit_field,$store[$spending_field])
