@@ -56,4 +56,9 @@ ALTER TABLE fa_store_refund
 --2024.9.30 正式服已处理
 ALTER TABLE `fa_share_wallet_transfer_log`  ADD COLUMN `remark`varchar(255)  COMMENT '备注';
 ALTER TABLE `fa_transfer_records`  ADD COLUMN `remark` varchar(255)  COMMENT '备注';
+--2024.10.17
+--2024.10.18 测试服已更新
+--2024.10.18 已处理
+ALTER TABLE fa_share_wallet_transfer_log
+    ADD COLUMN `fail_reason` varchar(255) DEFAULT NULL COMMENT '失败原因';
 
