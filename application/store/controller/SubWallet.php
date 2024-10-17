@@ -100,9 +100,10 @@ class SubWallet extends Store
             ->find();
         $res = FundManagement::get_max_transfer($this->token,$this->account_id,$this->account_type,$this->generateRandomString(),$wallet['main_wallet_id'],json_encode([(int)$wallet['sub_wallet_id']]),'TRANSFER_OUT');
         $max_transfer_out = $res['data']['can_transfer_detail_list'][0]['non_brand_max_transfer_balance'] / 100;
+        $min_transfer = $res['data']['can_transfer_detail_list'][0]['payee_transfer_amount_detail_list'][0]['non_brand_min_transfer_balance'] / 100;
         if ($this->request->isPost()) {
             $post = $this->request->post();
-            $wallet_info = $this->checkParam($wallet,$store,$post,$max_transfer_out);
+            $wallet_info = $this->checkParam($wallet,$store,$post,$max_transfer_out,$min_transfer);
             Db::startTrans();
             try {
                 $insert_data = $this->buildData($wallet,$post,$wallet_info);
@@ -118,7 +119,6 @@ class SubWallet extends Store
                 $update_data = [
                     'record' => json_encode($result, JSON_UNESCAPED_UNICODE),
                     'transfer_serial' => $result['data']['transfer_serial'],
-                    'status' => 1,
                     'update_time' => time()
                 ];
                 $this->TransferLogModel->where(['id' => $swtl_id])->update($update_data);
@@ -146,6 +146,7 @@ class SubWallet extends Store
         $this->view->assign('storeList', $store);
         $this->view->assign('walletList', $wallet);
         $this->view->assign('maxTransferOutNum', $max_transfer_out);
+        $this->view->assign('minTransferNum', $min_transfer);
         return $this->view->fetch();
     }
 
@@ -153,7 +154,7 @@ class SubWallet extends Store
     /**
      * 检查参数
      */
-    private function checkParam($walletList,$storeList,$post,$max_transfer_out){
+    private function checkParam($walletList,$storeList,$post,$max_transfer_out,$min_transfer){
         if (!is_numeric($post['transfer_amount']) || $post['transfer_amount'] < 0) {
             $this->error("请输入正确金额");
         }
@@ -182,6 +183,9 @@ class SubWallet extends Store
             }
         }
         elseif ($post['transfer_direction'] == 'TRANSFER_IN'){
+            if($min_transfer < $post['transfer_amount']){
+                $this->error('转入金额不得小于最小转入金额：'.$min_transfer);
+            }
             $rebate = round($post['transfer_amount'] - ($post['transfer_amount'] * 100) / ($wallet_info['wallet_discount'] * 100), 2);
             if (($post['transfer_amount'] - $rebate) > ($wallet_info['wallet_money'] + $wallet_info['wallet_limit'])) {
                 $this->error('转入余额超出上限');
