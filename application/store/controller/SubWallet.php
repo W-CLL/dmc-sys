@@ -140,6 +140,8 @@ class SubWallet extends Store
                 Db::rollback();
                 $this->error($e->getMessage());
             }
+            // 等待1秒,等接口处理完成再查询
+            sleep(1);
             $bool = $this->checkTransferStatus($swtl_id);
             if($bool){
                 $this->createStoreMoneyLog($swtl_id,$post,$insert_data,$store);
@@ -342,7 +344,9 @@ class SubWallet extends Store
             $update['fail_reason'] = $data['data']['transfer_wallet_record_list'][0]['transfer_capital_record_list'][0]['fail_reason'];
             $update['update_time'] = time();
         }
-        $this->TransferLogModel->where(['id'=>$swtl_id])->update($update);
+        if(isset($update)){
+            $this->TransferLogModel->where(['id'=>$swtl_id])->update($update);
+        }
         return $return_bool;
     }
 
