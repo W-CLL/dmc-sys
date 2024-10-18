@@ -28,6 +28,7 @@ define(['jquery', 'bootstrap', 'store', 'table', 'form'], function ($, undefined
                     [
                         {checkbox: true},
                         {field: 'id', title: __('Id'),visible: false},
+                        {field: 'id', title: "id"},
                         {field: 'advertiser_id', title: "千川id"},
                         {field: 'money', title: "变更金额"},
                         {field: 'type', title: "类型", formatter: function(value,row,index) {

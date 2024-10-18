@@ -28,6 +28,7 @@ define(['jquery', 'bootstrap', 'company', 'table', 'form'], function ($, undefin
                     [
                         {checkbox: true},
                         {field: 'id', title: __('Id'),visible: false},
+                        {field: 'id', title: "ID"},
                         {field: 'advertiser_id', title: "千川id"},
                         {field: 'store_username', title: "账户名称"},
                         {field: 'money', title: "变更金额"},
@@ -64,6 +65,7 @@ define(['jquery', 'bootstrap', 'company', 'table', 'form'], function ($, undefin
                     params.account_id = document.getElementById('account_id').value;
                     params.store_id = document.getElementById('store_id').value;
                     params.money = document.getElementById('money').value;
+                    params.id = document.getElementById('id').value;
                     return params;
                 }
             });
