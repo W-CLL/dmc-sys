@@ -84,7 +84,7 @@ class Index extends Store
             $keeplogin = $this->request->post('keeplogin',1);
 //            $token = $this->request->post('__token__');
             $rule = [
-                'username'  => 'require|length:3,30',
+                'username'  => 'require|length:2,30',
                 'password'  => 'require|length:3,30',
 //                '__token__' => 'require|token',
             ];
