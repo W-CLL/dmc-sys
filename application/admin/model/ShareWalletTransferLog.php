@@ -1,6 +1,6 @@
 <?php
 
-namespace app\store\model;
+namespace app\admin\model;
 
 use think\Model;
 

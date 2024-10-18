@@ -46,6 +46,10 @@ Class StoreMoneyLog extends Backend{
         if($store_id){
             $where['store_id'] = $store_id;
         }
+        $id = input('id');
+        if($id){
+            $where['id'] = $id;
+        }
 //        $interval = $startDate->diff($endDate);
 //
 //        if ($interval->m > 1 || ($interval->m == 1 && $interval->d > 0)) {
@@ -91,7 +95,7 @@ Class StoreMoneyLog extends Backend{
             ->field("id,advertiser_id")
             ->group("advertiser_id")
             ->select();
-        $store_data = Db::name('store')->field("id,username")->select();;
+        $store_data = Db::name('store')->field("id,username")->select();
         $this->assign('account_data',$account_data?:[]);
         $this->assign('store_data',$store_data);
         return $this->view->fetch();
