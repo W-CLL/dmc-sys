@@ -146,7 +146,7 @@ class SubWallet extends Store
                 );
                 $this->success('转账成功');
             }else{
-                $this->error('转账失败');
+                $this->error('转账异常，请到共享钱包转账详情页面，确认转账最终状态');
             }
         }
         $this->view->assign('storeList', $store);
