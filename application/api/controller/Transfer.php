@@ -122,6 +122,7 @@ class Transfer extends Api
         Db::startTrans();
         try{
             foreach ($list as $v){
+                $update = [];
                 $data = FundManagement::check_transfer_detail($token,$account_id,$account_type,$biz_request_no,$v['transfer_serial']);
                 if(!isset($data['data']['transfer_status'])){
                     \think\Log::write($data,'err');
