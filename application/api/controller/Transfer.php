@@ -180,6 +180,50 @@ class Transfer extends Api
                         $money_log_data['deduction_credit_limit'] = $v["deduction_credit_limit"];
                         $money_log_data['type'] = 8;
                         $money_log_data['explain'] = "转入子钱包[".$v['sub_wallet_id']."]，返点：".$v['rebate']."，扣除余额：".$v['deduction_balance']."，扣除授信额度：".$v['deduction_credit_limit']."，实际扣除金额：".$v['actual_money']."【单位：元】";
+                    }else{
+                        $money_log_data['type'] = 9;
+                        $money_log_data["actual_money"] = $v["actual_money"] - $v["rebate"];
+                        $money_log_data['explain'] = "子钱包[".$v['sub_wallet_id']."]转出，转出金额：".$v['money']."，扣除返点：".$v['rebate']."，预计到账金额：".$v['actual_money'];
+                        if($v['account_type'] == 1){
+                            if($store_info['public_spending_credit_limit'] >= $money_log_data['actual_money']){
+                                $public_money = 0.00;
+                                $public_credit_limit = (float)$money_log_data['actual_money'];
+                                $public_spending_credit_limit = (float)$money_log_data['actual_money'];
+                            }else{
+                                $public_money = (float)$money_log_data['actual_money'] - (float)$store_info['public_spending_credit_limit'];
+                                $public_credit_limit = (float)$store_info['public_spending_credit_limit'];
+                                $public_spending_credit_limit = (float)$store_info['public_spending_credit_limit'];
+                            }
+                            $res = $this->StoreModel->where([
+                                'id'=>['=',$store_info['id']]
+                            ])
+                                ->inc('public_money',$public_money)
+                                ->inc('public_credit_limit',$public_credit_limit)
+                                ->dec('public_spending_credit_limit',$public_spending_credit_limit);
+                            $money_log_data["deduction_credit_limit"] = $public_spending_credit_limit;
+                            $money_log_data['explain'] .= "，归还已使用授信额度：".$public_spending_credit_limit."，实际到账金额：".$public_money."【单位：元】";
+                        }else{
+                            if($store_info['private_spending_credit_limit'] >= $money_log_data['actual_money']){
+                                $private_money = 0;
+                                $private_credit_limit = (float)$money_log_data['actual_money'];
+                                $private_spending_credit_limit = (float)$money_log_data['actual_money'];
+                            }else{
+                                $private_money = (float)$money_log_data['actual_money'] - (float)$store_info['private_spending_credit_limit'];
+                                $private_credit_limit = (float)$store_info['private_spending_credit_limit'];
+                                $private_spending_credit_limit = (float)$store_info['private_spending_credit_limit'];
+                            }
+                            $res = $this->StoreModel->where([
+                                'id'=>['=',$store_info['id']]
+                            ])
+                                ->inc('private_money',$private_money)
+                                ->inc('private_credit_limit',$private_credit_limit)
+                                ->dec('private_spending_credit_limit',$private_spending_credit_limit);
+                            $money_log_data["deduction_credit_limit"] = $private_spending_credit_limit;
+                            $money_log_data['explain'] .= "，归还已使用授信额度：".$private_spending_credit_limit."，实际到账金额：".$private_money."【单位：元】";
+                        }
+                        if(!$res->update(["update_time" => time()])){
+                            throw new Exception('转出金额变更失败');
+                        }
                     }
                     $logId = Db::name('store_money_log')->insertGetId($money_log_data);
                     if(!$logId){
