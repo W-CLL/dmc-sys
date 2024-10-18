@@ -47,12 +47,12 @@ define(['jquery', 'bootstrap', 'company', 'table', 'form'], function ($, undefin
                                 }
                             }, operate: 'LIKE'},
                         {field: 'status', title: "状态", formatter: function(value,row,index) {
-                                if (row.status == 0){
-                                    return "未知"
-                                }else if (row.status == 1){
-                                    return "成功"
-                                }else if (row.status == 2){
-                                    return "失败"
+                                if (row.status == 0) {
+                                    return '<button class="btn btn-warning disabled">未知</button>';
+                                } else if (row.status == 1) {
+                                    return '<button class="btn btn-success disabled">成功</button>';
+                                } else if (row.status == 2) {
+                                    return '<button class="btn btn-danger disabled">失败</button>';
                                 }
                             }, operate: 'LIKE'},
                         {field: 'fail_reason', title: "失败原因"},
