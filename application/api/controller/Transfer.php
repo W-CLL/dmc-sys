@@ -194,7 +194,7 @@ class Transfer extends Api
                                 $public_credit_limit = (float)$store_info['public_spending_credit_limit'];
                                 $public_spending_credit_limit = (float)$store_info['public_spending_credit_limit'];
                             }
-                            $res = $this->StoreModel->where([
+                            $res = Db::name('store')->where([
                                 'id'=>['=',$store_info['id']]
                             ])
                                 ->inc('public_money',$public_money)
@@ -212,7 +212,7 @@ class Transfer extends Api
                                 $private_credit_limit = (float)$store_info['private_spending_credit_limit'];
                                 $private_spending_credit_limit = (float)$store_info['private_spending_credit_limit'];
                             }
-                            $res = $this->StoreModel->where([
+                            $res = Db::name('store')->where([
                                 'id'=>['=',$store_info['id']]
                             ])
                                 ->inc('private_money',$private_money)
