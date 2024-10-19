@@ -54,7 +54,7 @@ class SubWallet extends Store
             $list = $this->WalletModel
                 ->with('store')
                 ->where($where)
-                ->field("id,sub_wallet_id,bind_store_id,sub_wallet_type")
+                ->field("id,sub_wallet_id,bind_store_id,sub_wallet_type,transfer_in_sum_public_cash,transfer_out_sum_public_cash,transfer_in_sum_private_cash,transfer_out_sum_private_cash,transfer_in_sum_public_vr,transfer_out_sum_public_vr,transfer_in_sum_private_vr,transfer_out_sum_private_vr")
                 ->order($sort, $order)
                 ->limit($offset,$limit)
                 ->select();
@@ -129,7 +129,7 @@ class SubWallet extends Store
             }
             // 等待1秒,等接口处理完成再查询
             sleep(1);
-            $bool = $this->checkTransferStatus($swtl_id,$post,$insert_data,$store);
+            $bool = $this->checkTransferStatus($swtl_id,$post,$insert_data,$store);  // 改动此方法时，需要同步修改定时任务类的方法
             if($bool){
                 //添加同步转账记录任务
                 //暂时转入才同步
@@ -334,6 +334,7 @@ class SubWallet extends Store
         $biz_request_no = $this->generateRandomString();
         $transfer_serial = $this->TransferLogModel->where(['id'=>$swtl_id])->value('transfer_serial');
         $data = FundManagement::check_transfer_detail($token, $account_id, $account_type, $biz_request_no, $transfer_serial);
+        $swtl_info = $this->TransferLogModel->where(['id'=>$swtl_id])->find();
         Db::startTrans();
         try{
             if ($data['data']['transfer_status'] == 'TRANSFER_SUCCESS'){
@@ -341,11 +342,14 @@ class SubWallet extends Store
                 $update['update_time'] = time();
                 $return_bool = true;
                 $this->createStoreMoneyLog($swtl_id,$post,$insert_data,$store);
+                // 记录子钱包累计额度
+                if(!$this->changeSubWalletMoneyTotal($swtl_info)){
+                    throw new \Exception('更新累计额度发生错误');
+                }
             }elseif ($data['data']['transfer_status'] == 'TRANSFER_FAILURE'){
                 $update['status'] = 2;
                 $update['fail_reason'] = $data['data']['transfer_wallet_record_list'][0]['transfer_capital_record_list'][0]['fail_reason'];
                 $update['update_time'] = time();
-                $swtl_info = $this->TransferLogModel->where(['id'=>$swtl_id])->find();
                 // 退款
                 if($swtl_info['account_type'] == 1){
                     $balance_field = 'public_money';
@@ -411,6 +415,13 @@ class SubWallet extends Store
                 $money_log_data['deduction_credit_limit'] = $transfer_data["deduction_credit_limit"];
                 $money_log_data['type'] = 8;
                 $money_log_data['explain'] = "转入子钱包[".$transfer_data['sub_wallet_id']."]，返点：".$transfer_data['rebate']."，扣除余额：".$transfer_data['deduction_balance']."，扣除授信额度：".$transfer_data['deduction_credit_limit']."，实际扣除金额：".$transfer_data['actual_money']."【单位：元】";
+                if($transfer_data['account_type'] == 1){
+                    $money_log_data['balance_surplus'] = $store_data['public_money'] - $transfer_data['deduction_balance'];
+                    $money_log_data['credit_limit_surplus'] = $store_data['public_credit_limit'] - $transfer_data['deduction_credit_limit'];
+                }else{
+                    $money_log_data['balance_surplus'] = $store_data['private_money'] - $transfer_data['deduction_balance'];
+                    $money_log_data['credit_limit_surplus'] = $store_data['private_credit_limit'] - $transfer_data['deduction_credit_limit'];
+                }
             }else{
                 $money_log_data['type'] = 9;
                 $money_log_data["actual_money"] = $transfer_data["actual_money"] - $transfer_data["rebate"];
@@ -433,6 +444,8 @@ class SubWallet extends Store
                         ->dec('public_spending_credit_limit',$public_spending_credit_limit);
                     $money_log_data["deduction_credit_limit"] = $public_spending_credit_limit;
                     $money_log_data['explain'] .= "，归还已使用授信额度：".$public_spending_credit_limit."，实际到账金额：".$public_money."【单位：元】";
+                    $money_log_data['balance_surplus'] = $store_data['public_money'] + $public_money;
+                    $money_log_data['credit_limit_surplus'] = $store_data['public_credit_limit'] + $public_credit_limit;
                 }else{
                     if($store_data['private_spending_credit_limit'] >= $money_log_data['actual_money']){
                         $private_money = 0;
@@ -451,6 +464,8 @@ class SubWallet extends Store
                         ->dec('private_spending_credit_limit',$private_spending_credit_limit);
                     $money_log_data["deduction_credit_limit"] = $private_spending_credit_limit;
                     $money_log_data['explain'] .= "，归还已使用授信额度：".$private_spending_credit_limit."，实际到账金额：".$private_money."【单位：元】";
+                    $money_log_data['balance_surplus'] = $store_data['private_money'] + $private_money;
+                    $money_log_data['credit_limit_surplus'] = $store_data['private_credit_limit'] + $private_credit_limit;
                 }
                 if(!$res->update(["update_time" => time()])){
                     throw new Exception('金额变更失败');
@@ -466,6 +481,32 @@ class SubWallet extends Store
             Db::rollback();
             $this->error($e->getMessage());
         }
+    }
+
+    /**
+     * 更新子钱包累计金额
+     * @param $data
+     */
+    private function changeSubWalletMoneyTotal($data){
+        $res = $this->WalletModel->where(['sub_wallet_id' => $data['sub_wallet_id']]);
+        if($data['transfer_direction'] == 1){
+            if($data['account_type'] == 1){
+                $res = $res->inc('transfer_in_sum_public_cash',$data['actual_money'])
+                    ->inc('transfer_in_sum_public_vr',$data['money']);
+            }else{
+                $res = $res->inc('transfer_in_sum_private_cash',$data['actual_money'])
+                    ->inc('transfer_in_sum_private_vr',$data['money']);
+            }
+        }else{
+            if($data['account_type'] == 1){
+                $res = $res->inc('transfer_out_sum_public_cash',$data['actual_money'])
+                    ->inc('transfer_out_sum_public_vr',$data['money']-$data['rebate']);
+            }else{
+                $res = $res->inc('transfer_out_sum_private_cash',$data['actual_money'])
+                    ->inc('transfer_out_sum_private_vr',$data['money']-$data['rebate']);
+            }
+        }
+        return $res->update();
     }
 
 

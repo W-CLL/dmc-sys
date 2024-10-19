@@ -224,6 +224,27 @@ class Transfer extends Api
                         if(!$res->update(["update_time" => time()])){
                             throw new Exception('转出金额变更失败');
                         }
+                        $res = Db::name('qc_share_wallet')->where(['sub_wallet_id' => $v['sub_wallet_id']]);
+                        if($v['transfer_direction'] == 1){
+                            if($v['account_type'] == 1){
+                                $res = $res->inc('transfer_in_sum_public_cash',$v['actual_money'])
+                                    ->inc('transfer_in_sum_public_vr',$v['money']);
+                            }else{
+                                $res = $res->inc('transfer_in_sum_private_cash',$v['actual_money'])
+                                    ->inc('transfer_in_sum_private_vr',$v['money']);
+                            }
+                        }else{
+                            if($v['account_type'] == 1){
+                                $res = $res->inc('transfer_out_sum_public_cash',$v['actual_money'])
+                                    ->inc('transfer_out_sum_public_vr',$v['money']-$v['rebate']);
+                            }else{
+                                $res = $res->inc('transfer_out_sum_private_cash',$v['actual_money'])
+                                    ->inc('transfer_out_sum_private_vr',$v['money']-$v['rebate']);
+                            }
+                        }
+                        if(!$res->update()){
+                            throw new \Exception('更新累计额度发生错误');
+                        }
                     }
                     $logId = Db::name('store_money_log')->insertGetId($money_log_data);
                     if(!$logId){

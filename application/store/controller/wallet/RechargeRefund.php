@@ -187,6 +187,13 @@ class RechargeRefund extends Store
                                 if ($money_log["deduction_credit_limit"] > 0) {
                                     $money_log["explain"] .= ",扣除余额:" . $transfer_records_data["deduction_balance"] . ",扣除授信额度:" . $transfer_records_data["deduction_credit_limit"];
                                 }
+                                if ($money_log["account_type"] == 1) {
+                                    $money_log['balance_surplus'] = $store['public_money'] - $transfer_records_data['deduction_balance'];
+                                    $money_log['credit_limit_surplus'] = $store['public_credit_limit'] - $transfer_records_data['deduction_credit_limit'];
+                                }else{
+                                    $money_log['balance_surplus'] = $store['private_money'] - $transfer_records_data['deduction_balance'];
+                                    $money_log['credit_limit_surplus'] = $store['private_credit_limit'] - $transfer_records_data['deduction_credit_limit'];
+                                }
                             } else {
 
                                 $money_log['type'] = 5;
@@ -200,6 +207,8 @@ class RechargeRefund extends Store
                                         if ($store["public_spending_credit_limit"] >= $money_log["actual_money"]) {
                                             $money_log["deduction_credit_limit"] = $money_log["actual_money"];
                                             $money_log["explain"] .= ",已使用授信余额扣除:" . $money_log["actual_money"] . "实际到账:0";
+                                            $money_log['balance_surplus'] = $store['public_money'];
+                                            $money_log['credit_limit_surplus'] = $store['public_credit_limit'] + $money_log["actual_money"];
 
                                             $sql->dec("public_spending_credit_limit", $money_log["actual_money"])
                                                 ->inc("public_credit_limit", $money_log["actual_money"]);
@@ -207,6 +216,8 @@ class RechargeRefund extends Store
                                             $money_log["deduction_credit_limit"] = $store["public_spending_credit_limit"];
                                             $actual_money = $money_log["actual_money"] - $store["public_spending_credit_limit"];
                                             $money_log["explain"] .= ",已使用授信余额扣除:" . $store["public_spending_credit_limit"] . ",实际到账:" . $actual_money;
+                                            $money_log['balance_surplus'] = $store['public_money'] + $actual_money;
+                                            $money_log['credit_limit_surplus'] = $store['public_credit_limit'] + $store["public_spending_credit_limit"];
                                             $sql->inc("public_money", $actual_money)
                                                 ->inc("public_credit_limit", $store["public_spending_credit_limit"])
                                                 ->dec("public_spending_credit_limit", $store["public_spending_credit_limit"]);
@@ -222,6 +233,8 @@ class RechargeRefund extends Store
                                         if ($store["private_spending_credit_limit"] >= $money_log["actual_money"]) {
                                             $money_log["deduction_credit_limit"] = $money_log["actual_money"];
                                             $money_log["explain"] .= ",已使用授信余额扣除:" . $money_log["actual_money"] . "实际到账:0";
+                                            $money_log['balance_surplus'] = $store['private_money'];
+                                            $money_log['credit_limit_surplus'] = $store['private_credit_limit'] + $money_log["actual_money"];
 
                                             $sql->dec("private_spending_credit_limit", $money_log["actual_money"])
                                                 ->inc("private_credit_limit", $money_log["actual_money"]);
@@ -229,6 +242,9 @@ class RechargeRefund extends Store
                                             $money_log["deduction_credit_limit"] = $store["private_spending_credit_limit"];
                                             $actual_money = $money_log["actual_money"] - $store["private_spending_credit_limit"];
                                             $money_log["explain"] .= ",已使用授信余额扣除:" . $store["private_spending_credit_limit"] . ",实际到账:" . $actual_money;
+                                            $money_log['balance_surplus'] = $store['private_money'] + $actual_money;
+                                            $money_log['credit_limit_surplus'] = $store['private_credit_limit'] + $store["private_spending_credit_limit"];
+
                                             $sql->inc("private_money", $actual_money)
                                                 ->inc("private_credit_limit", $store["private_spending_credit_limit"])
                                                 ->dec("private_spending_credit_limit", $store["private_spending_credit_limit"]);

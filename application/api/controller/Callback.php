@@ -71,7 +71,9 @@ class Callback extends Api
                                     "order_number" => $info['msgdat']['yurref'],
                                     "type" => 7,
                                     "explain" => '充值公账钱包'.$info['msgdat']['c_trsamt'].'元，已使用公账授信额度'.$store_info['public_spending_credit_limit'].'元,扣除'.$info['msgdat']['c_trsamt'].'元，实际到账0元',
-                                    "create_time" => time()
+                                    "create_time" => time(),
+                                    "balance_surplus" => $store_info['public_money'],
+                                    "credit_limit_surplus" => $store_info['public_credit_limit'] + $info['msgdat']['c_trsamt'],
                                 ])){
                                     throw new \Exception('新增记录失败');
                                 }
@@ -95,7 +97,9 @@ class Callback extends Api
                                     "order_number" => $info['msgdat']['yurref'],
                                     "type" => 7,
                                     "explain" => '充值公账钱包'.$info['msgdat']['c_trsamt'].'元，已使用公账授信额度'.$store_info['public_spending_credit_limit'].'元,扣除'.$store_info['public_spending_credit_limit'].'元，实际到账'.$inc_money.'元',
-                                    "create_time" => time()
+                                    "create_time" => time(),
+                                    "balance_surplus" => $store_info['public_money'] + $inc_money,
+                                    "credit_limit_surplus" => $store_info['public_credit_limit'] + $store_info['public_spending_credit_limit'],
                                 ])){
                                     throw new \Exception('新增记录失败');
                                 }
@@ -116,7 +120,9 @@ class Callback extends Api
                                 "order_number" => $info['msgdat']['yurref'],
                                 "type" => 7,
                                 "explain" => '充值公账钱包'.$info['msgdat']['c_trsamt'].'元',
-                                "create_time" => time()
+                                "create_time" => time(),
+                                "balance_surplus" => $store_info['public_money'] + $info['msgdat']['c_trsamt'],
+                                "credit_limit_surplus" => $store_info['public_credit_limit'],
                             ])){
                                 throw new \Exception('新增记录失败');
                             }

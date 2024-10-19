@@ -77,7 +77,7 @@ Class StoreMoneyLog extends Backend{
             }
 
             $list = Db::name("store_money_log")
-                ->field("id,store_id,advertiser_id,money,type,explain,create_time")
+                ->field("id,store_id,advertiser_id,money,type,explain,balance_surplus,credit_limit_surplus,account_type,create_time")
                 ->where($where)
                 ->order($sort, $order)
                 ->limit($offset,$limit)

@@ -20,7 +20,7 @@ Class MoneyLog extends Store{
 
             $list = Db::name("store_money_log")
                 ->where(['store_id'=>$this->auth->id])
-                ->field("id,money,account_type,advertiser_id,type,explain,create_time")
+                ->field("id,money,account_type,advertiser_id,type,explain,balance_surplus,credit_limit_surplus,account_type,create_time")
                 ->order($sort, $order)
                 ->limit($offset,$limit)
                 ->select();
