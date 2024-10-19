@@ -61,4 +61,27 @@ ALTER TABLE `fa_transfer_records`  ADD COLUMN `remark` varchar(255)  COMMENT '�
 --2024.10.18 已处理
 ALTER TABLE fa_share_wallet_transfer_log
     ADD COLUMN `fail_reason` varchar(255) DEFAULT NULL COMMENT '失败原因';
+--2024.10.19
+--2024.10.19 测试服已处理
+--2024.10.19 已处理
+ALTER TABLE fa_qc_share_wallet
+    ADD COLUMN `transfer_in_sum_public_cash` decimal(14, 2) DEFAULT 0.00 COMMENT '转入总金额(私帐转入)       实际金额';
+ALTER TABLE fa_qc_share_wallet
+    ADD COLUMN `transfer_out_sum_public_cash` decimal(14, 2) DEFAULT 0.00 COMMENT '转出总金额(私帐转出)      实际金额';
+ALTER TABLE fa_qc_share_wallet
+    ADD COLUMN `transfer_in_sum_private_cash` decimal(14, 2) DEFAULT 0.00 COMMENT '转入总金额(公帐转入)      实际金额';
+ALTER TABLE fa_qc_share_wallet
+    ADD COLUMN `transfer_out_sum_private_cash` decimal(14, 2) DEFAULT 0.00 COMMENT '转出总金额(公帐转出)     实际金额';
+ALTER TABLE fa_qc_share_wallet
+    ADD COLUMN `transfer_in_sum_public_vr` decimal(14, 2) DEFAULT 0.00 COMMENT '转入总金额(私帐转入)    虚拟币(含返点)';
+ALTER TABLE fa_qc_share_wallet
+    ADD COLUMN `transfer_out_sum_public_vr` decimal(14, 2) DEFAULT 0.00 COMMENT '转出总金额(私帐转出)    虚拟币(含返点)';
+ALTER TABLE fa_qc_share_wallet
+    ADD COLUMN `transfer_in_sum_private_vr` decimal(14, 2) DEFAULT 0.00 COMMENT '转入总金额(公帐转入)    虚拟币(含返点)';
+ALTER TABLE fa_qc_share_wallet
+    ADD COLUMN `transfer_out_sum_private_vr` decimal(14, 2) DEFAULT 0.00 COMMENT '转出总金额(公帐转出)    虚拟币(含返点)';
+ALTER TABLE fa_store_money_log
+    ADD COLUMN `balance_surplus` decimal(10, 2) DEFAULT 0.00 COMMENT '变动后钱包余额';
+ALTER TABLE fa_store_money_log
+    ADD COLUMN `credit_limit_surplus` decimal(10, 2) DEFAULT 0.00 COMMENT '变动后授信余额';
 

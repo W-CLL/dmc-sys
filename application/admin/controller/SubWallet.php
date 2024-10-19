@@ -8,6 +8,7 @@ use think\Cache;
 use app\admin\model\QcShareWallet as WalletModel;
 use app\admin\model\QcConfig as QcConfigModel;
 use app\admin\model\Store as StoreModel;
+use app\admin\model\ShareWalletOnceBind as OnceBindModel;
 
 class SubWallet extends Backend
 {
@@ -46,7 +47,7 @@ class SubWallet extends Backend
             $list = $WalletModel
                 ->with('store')
                 ->where($where)
-                ->field("id,sub_wallet_id,bind_store_id,sub_wallet_type,sub_wallet_type,discount_percentage")
+//                ->field("id,sub_wallet_id,bind_store_id,sub_wallet_type,sub_wallet_type,discount_percentage")
                 ->order($sort, $order)
                 ->limit($offset,$limit)
                 ->select();
@@ -87,19 +88,50 @@ class SubWallet extends Backend
     {
         $WalletModel = new WalletModel();
         $StoreModel = new StoreModel();
+        $OnceBindModel = new OnceBindModel();
+        $row = $WalletModel->where("id",$ids)->find();
         if ($this->request->isPost()) {
             $this->token();
             $id = input("id");
             $data['bind_store_id'] = input("store_id");
             $data['sub_wallet_type'] = input("wallet_type");
             $data['discount_percentage'] = number_format(input("discount_percentage"), 4, '.', '');
-            if ($WalletModel->where("id",$id)->update($data)){
+            $once_bind = $OnceBindModel->where(['sub_wallet_id' => $row['sub_wallet_id'], 'bind_store_id' => $data['bind_store_id']])->find();
+            if ($WalletModel->save($data,['id' => $id])){
+                if($data['bind_store_id'] != $row['bind_store_id']){
+                    $arr = [
+                        'sub_wallet_id' => $row['sub_wallet_id'],
+                        'bind_store_id' => $row['bind_store_id'],
+                        'transfer_in_sum_public_cash' => $row['transfer_in_sum_public_cash'],
+                        'transfer_out_sum_public_cash' => $row['transfer_out_sum_public_cash'],
+                        'transfer_in_sum_private_cash' => $row['transfer_in_sum_private_cash'],
+                        'transfer_out_sum_private_cash' => $row['transfer_out_sum_private_cash'],
+                        'transfer_in_sum_public_vr' => $row['transfer_in_sum_public_vr'],
+                        'transfer_out_sum_public_vr' => $row['transfer_out_sum_public_vr'],
+                        'transfer_in_sum_private_vr' => $row['transfer_in_sum_private_vr'],
+                        'transfer_out_sum_private_vr' => $row['transfer_out_sum_private_vr'],
+                    ];
+                    $OBID = $OnceBindModel->where(['sub_wallet_id' => $row['sub_wallet_id'], 'bind_store_id' => $row['bind_store_id']])->value('id');
+                    if($OBID){
+                        $arr['id'] = $OBID;
+                    }
+                    $reset['transfer_in_sum_public_cash'] = isset($once_bind['transfer_in_sum_public_cash'])?$once_bind['transfer_in_sum_public_cash']:0;
+                    $reset['transfer_out_sum_public_cash'] = isset($once_bind['transfer_out_sum_public_cash'])?$once_bind['transfer_out_sum_public_cash']:0;
+                    $reset['transfer_in_sum_private_cash'] = isset($once_bind['transfer_in_sum_private_cash'])?$once_bind['transfer_in_sum_private_cash']:0;
+                    $reset['transfer_out_sum_private_cash'] = isset($once_bind['transfer_out_sum_private_cash'])?$once_bind['transfer_out_sum_private_cash']:0;
+                    $reset['transfer_in_sum_public_vr'] = isset($once_bind['transfer_in_sum_public_vr'])?$once_bind['transfer_in_sum_public_vr']:0;
+                    $reset['transfer_out_sum_public_vr'] = isset($once_bind['transfer_out_sum_public_vr'])?$once_bind['transfer_out_sum_public_vr']:0;
+                    $reset['transfer_in_sum_private_vr'] = isset($once_bind['transfer_in_sum_private_vr'])?$once_bind['transfer_in_sum_private_vr']:0;
+                    $reset['transfer_out_sum_private_vr'] = isset($once_bind['transfer_out_sum_private_vr'])?$once_bind['transfer_out_sum_private_vr']:0;
+                    $WalletModel->where(['id' => $id])->update($reset);
+                    $OnceBindModel->saveAll([$arr]);
+                }
                 $this->success('绑定成功');
             }
-            $this->error('绑定失败');
+            $this->error('绑定失败/无更新');
         }
         $this->view->assign('storeList', $StoreModel->field('id,username')->select());
-        $this->view->assign('row', $WalletModel->where("id",$ids)->find());
+        $this->view->assign('row', $row);
         return $this->view->fetch();
     }
 
@@ -110,16 +142,49 @@ class SubWallet extends Backend
     public function batch_binding(){
         $WalletModel = new WalletModel();
         $StoreModel = new StoreModel();
+        $OnceBindModel = new OnceBindModel();
         if ($this->request->isPost()) {
             $this->token();
             $wallet_ids = input("wallet_ids");
             if(empty(input("store_id")) || empty(input("wallet_type"))){
                 $this->error("参数错误");
             }
+            $list = $WalletModel->where(["id"=>["in",$wallet_ids]])->select();
             $data['bind_store_id'] = input("store_id");
             $data['sub_wallet_type'] = input("wallet_type");
             $data['discount_percentage'] = number_format(input("discount_percentage"), 4, '.', '');
             if ($WalletModel->where(["id"=>["in",$wallet_ids]])->update($data)){
+                foreach ($list as $k => $v){
+                    $once_bind = $OnceBindModel->where(['sub_wallet_id' => $v['sub_wallet_id'], 'bind_store_id' => $data['bind_store_id']])->find();
+                    if($data['bind_store_id'] != $v['bind_store_id']){
+                        $arr = [
+                            'sub_wallet_id' => $v['sub_wallet_id'],
+                            'bind_store_id' => $v['bind_store_id'],
+                            'transfer_in_sum_public_cash' => $v['transfer_in_sum_public_cash'],
+                            'transfer_out_sum_public_cash' => $v['transfer_out_sum_public_cash'],
+                            'transfer_in_sum_private_cash' => $v['transfer_in_sum_private_cash'],
+                            'transfer_out_sum_private_cash' => $v['transfer_out_sum_private_cash'],
+                            'transfer_in_sum_public_vr' => $v['transfer_in_sum_public_vr'],
+                            'transfer_out_sum_public_vr' => $v['transfer_out_sum_public_vr'],
+                            'transfer_in_sum_private_vr' => $v['transfer_in_sum_private_vr'],
+                            'transfer_out_sum_private_vr' => $v['transfer_out_sum_private_vr'],
+                        ];
+                        $OBID = $OnceBindModel->where(['sub_wallet_id' => $v['sub_wallet_id'], 'bind_store_id' => $v['bind_store_id']])->value('id');
+                        if($OBID){
+                            $arr['id'] = $OBID;
+                        }
+                        $reset['transfer_in_sum_public_cash'] = isset($once_bind['transfer_in_sum_public_cash'])?$once_bind['transfer_in_sum_public_cash']:0;
+                        $reset['transfer_out_sum_public_cash'] = isset($once_bind['transfer_out_sum_public_cash'])?$once_bind['transfer_out_sum_public_cash']:0;
+                        $reset['transfer_in_sum_private_cash'] = isset($once_bind['transfer_in_sum_private_cash'])?$once_bind['transfer_in_sum_private_cash']:0;
+                        $reset['transfer_out_sum_private_cash'] = isset($once_bind['transfer_out_sum_private_cash'])?$once_bind['transfer_out_sum_private_cash']:0;
+                        $reset['transfer_in_sum_public_vr'] = isset($once_bind['transfer_in_sum_public_vr'])?$once_bind['transfer_in_sum_public_vr']:0;
+                        $reset['transfer_out_sum_public_vr'] = isset($once_bind['transfer_out_sum_public_vr'])?$once_bind['transfer_out_sum_public_vr']:0;
+                        $reset['transfer_in_sum_private_vr'] = isset($once_bind['transfer_in_sum_private_vr'])?$once_bind['transfer_in_sum_private_vr']:0;
+                        $reset['transfer_out_sum_private_vr'] = isset($once_bind['transfer_out_sum_private_vr'])?$once_bind['transfer_out_sum_private_vr']:0;
+                        $WalletModel->where(['id' => $v['id']])->update($reset);
+                        $OnceBindModel->saveAll([$arr]);
+                    }
+                }
                 $this->success('批量绑定成功');
             }
             $this->error('批量绑定失败');
@@ -135,6 +200,7 @@ class SubWallet extends Backend
     public function bind_by_sub_wallet_id(){
         $StoreModel = new StoreModel();
         $WalletModel = new WalletModel();
+        $OnceBindModel = new OnceBindModel();
         if ($this->request->isPost()) {
             $err_num = 0;
             $err_id = '';
@@ -160,13 +226,44 @@ class SubWallet extends Backend
             $sub_wallet_id_list = $public_sub_wallet_id_list + $private_sub_wallet_id_list;
             foreach ($sub_wallet_id_list as $k=>$v){
                 $k = trim($k);
+                $info = $WalletModel->where("sub_wallet_id",$k)->find();
                 if (!$WalletModel->where(["sub_wallet_id"=>$k])->update(['bind_store_id' => $post['store_id'], 'sub_wallet_type' => $v, 'discount_percentage' => $post['discount_percentage']])){
                     $err_num++;
                     $err_id .= $k.",";
+                }else{
+                    $once_bind = $OnceBindModel->where(['sub_wallet_id' => $info['sub_wallet_id'], 'bind_store_id' => $post['store_id']])->find();
+                    if($post['store_id'] != $info['bind_store_id']){
+                        $arr = [
+                            'sub_wallet_id' => $info['sub_wallet_id'],
+                            'bind_store_id' => $info['bind_store_id'],
+                            'transfer_in_sum_public_cash' => $info['transfer_in_sum_public_cash'],
+                            'transfer_out_sum_public_cash' => $info['transfer_out_sum_public_cash'],
+                            'transfer_in_sum_private_cash' => $info['transfer_in_sum_private_cash'],
+                            'transfer_out_sum_private_cash' => $info['transfer_out_sum_private_cash'],
+                            'transfer_in_sum_public_vr' => $info['transfer_in_sum_public_vr'],
+                            'transfer_out_sum_public_vr' => $info['transfer_out_sum_public_vr'],
+                            'transfer_in_sum_private_vr' => $info['transfer_in_sum_private_vr'],
+                            'transfer_out_sum_private_vr' => $info['transfer_out_sum_private_vr'],
+                        ];
+                        $OBID = $OnceBindModel->where(['sub_wallet_id' => $info['sub_wallet_id'], 'bind_store_id' => $info['bind_store_id']])->value('id');
+                        if($OBID){
+                            $arr['id'] = $OBID;
+                        }
+                        $reset['transfer_in_sum_public_cash'] = isset($once_bind['transfer_in_sum_public_cash'])?$once_bind['transfer_in_sum_public_cash']:0;
+                        $reset['transfer_out_sum_public_cash'] = isset($once_bind['transfer_out_sum_public_cash'])?$once_bind['transfer_out_sum_public_cash']:0;
+                        $reset['transfer_in_sum_private_cash'] = isset($once_bind['transfer_in_sum_private_cash'])?$once_bind['transfer_in_sum_private_cash']:0;
+                        $reset['transfer_out_sum_private_cash'] = isset($once_bind['transfer_out_sum_private_cash'])?$once_bind['transfer_out_sum_private_cash']:0;
+                        $reset['transfer_in_sum_public_vr'] = isset($once_bind['transfer_in_sum_public_vr'])?$once_bind['transfer_in_sum_public_vr']:0;
+                        $reset['transfer_out_sum_public_vr'] = isset($once_bind['transfer_out_sum_public_vr'])?$once_bind['transfer_out_sum_public_vr']:0;
+                        $reset['transfer_in_sum_private_vr'] = isset($once_bind['transfer_in_sum_private_vr'])?$once_bind['transfer_in_sum_private_vr']:0;
+                        $reset['transfer_out_sum_private_vr'] = isset($once_bind['transfer_out_sum_private_vr'])?$once_bind['transfer_out_sum_private_vr']:0;
+                        $WalletModel->where(['id' => $info['id']])->update($reset);
+                        $OnceBindModel->saveAll([$arr]);
+                    }
                 }
             }
             if($err_num != 0){
-                $this->error("失败了".$err_num."次，绑定失败的ID为：".$err_id);
+                $this->error("部分成功，失败了".$err_num."次，绑定失败的ID为：".$err_id);
             }else{
                 $this->success("批量绑定成功");
             }

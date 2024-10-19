@@ -48,6 +48,14 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                                     return row.discount_percentage+"%";
                                 }
                             }, operate: 'LIKE'},
+                        {field: 'transfer_in_sum_public_cash', title: "累计实际付款(公)"},
+                        {field: 'transfer_out_sum_public_cash', title: "累计实际到账(公)"},
+                        {field: 'transfer_in_sum_private_cash', title: "累计实际付款(私)"},
+                        {field: 'transfer_out_sum_private_cash', title: "累计实际到账(私)"},
+                        {field: 'transfer_in_sum_public_vr', title: "累计付款(公)【+返点】"},
+                        {field: 'transfer_out_sum_public_vr', title: "累计到账(公)【-返点】"},
+                        {field: 'transfer_in_sum_private_vr', title: "累计付款(私)【+返点】"},
+                        {field: 'transfer_out_sum_private_vr', title: "累计到账(私)【-返点】"},
                         {field: 'main_wallet_id', title: "父钱包ID"},
                         {field: 'adv_cnt', title: "子钱包adv数量"},
                         {field: 'create_time', title:"子钱包创建时间" ,formatter: Table.api.formatter.datetime},

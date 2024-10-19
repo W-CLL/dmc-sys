@@ -85,6 +85,7 @@ Class Recharge extends Store{
                 try{
                     if ($order['account_type'] == 1){
                             $before_money = $store['public_money'];
+                            $before_limit = $store['public_credit_limit'];
                             $actual_money = $order['money'];
                             $deduction_credit_limit = 0;
                             $explain = "充值公账钱包" . $order['money'] . "元";
@@ -112,7 +113,8 @@ Class Recharge extends Store{
                         }
                     }else{
                             $before_money = $store['private_money'];
-                        $actual_money = $order['money'];
+                            $before_limit = $store['private_credit_limit'];
+                            $actual_money = $order['money'];
                             $deduction_credit_limit = 0;
                             $explain = "充值私账钱包" . $order['money'] . "元";
                             if ($store['private_spending_credit_limit'] > 0){
@@ -151,7 +153,9 @@ Class Recharge extends Store{
                         "order_number" => $order["order_number"],
                         "type" => 3,
                         "explain" => $explain,
-                        "create_time" => time()
+                        "create_time" => time(),
+                        "balance_surplus" => $before_money + $actual_money,
+                        "credit_limit_surplus" => $before_limit + $deduction_credit_limit
                     ]);
                     // 提交事务
                     Db::commit();

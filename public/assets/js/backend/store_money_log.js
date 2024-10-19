@@ -54,6 +54,27 @@ define(['jquery', 'bootstrap', 'company', 'table', 'form'], function ($, undefin
                             }
                             }, operate: 'LIKE'},
                         {field: 'explain', title: "说明"},
+                        {field: 'account_type', title: "账户类型" ,formatter: function(value,row,index) {
+                                if (row.account_type == 1){
+                                    return "公"
+                                }else if(row.account_type == 2){
+                                    return "私"
+                                }
+                            }, operate: 'LIKE'},
+                        {field: 'balance_surplus', title: "变动后钱包余额", formatter: function(value,row,index) {
+                                if (row.balance_surplus == 0 && row.credit_limit_surplus == 0){
+                                    return "-"
+                                }else{
+                                    return row.balance_surplus
+                                }
+                            }, operate: 'LIKE'},
+                        {field: 'credit_limit_surplus', title: "变动后授信余额", formatter: function(value,row,index) {
+                                if (row.balance_surplus == 0 && row.credit_limit_surplus == 0){
+                                    return "-"
+                                }else{
+                                    return row.credit_limit_surplus
+                                }
+                            }, operate: 'LIKE'},
                         {field: 'create_time', title:"时间" ,formatter: Table.api.formatter.datetime},
                         // {field: 'operate', title: __('Operate'), table: table, events: Table.api.events.operate, formatter: Table.api.formatter.operate},
                     ]

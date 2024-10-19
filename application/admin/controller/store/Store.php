@@ -273,12 +273,14 @@ class Store extends Backend
                 }
                 $data['before_money'] = $store['public_money'];
                 $data['today_money'] = round($store['public_money'] + $add_money,2);
+                $data['balance_surplus'] = round($store['public_money'] + $add_money,2);
             }else{
                 if (!Db::name("store")->where('id',$store['id'])->setInc('private_money',$add_money)){
                     return false;
                 }
                 $data['before_money'] = $store['private_money'];
                 $data['today_money'] = round($store['private_money'] + $add_money,2);
+                $data['balance_surplus'] = round($store['private_money'] + $add_money,2);
             }
 
             $money_log[] = $data;
@@ -310,6 +312,7 @@ class Store extends Backend
                 }
                 $data['before_money'] = $store['public_money'];
                 $data['today_money'] = round($store['public_money'] - $deduct_money,2);
+                $data['credit_limit_surplus'] = round($store['public_money'] - $deduct_money,2);
             }else{
                 $where['private_money'] = ['>=',$deduct_money];
                 if (!Db::name("store")->where($where)->setDec('private_money',$deduct_money)){
@@ -317,6 +320,7 @@ class Store extends Backend
                 }
                 $data['before_money'] = $store['private_money'];
                 $data['today_money'] = round($store['private_money'] - $deduct_money,2);
+                $data['credit_limit_surplus'] = round($store['private_money'] - $deduct_money,2);
             }
             $money_log[] = $data;
         }
