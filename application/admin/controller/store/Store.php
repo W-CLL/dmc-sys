@@ -160,6 +160,7 @@ class Store extends Backend
             $this->token();
             $data['id'] = input("id");
 
+            $data['username'] = input('username');
             $data['group_id'] = input("group_id",0);
             $data['public_discount_percentage'] = input("public_discount_percentage",0);
             $data['private_discount_percentage'] = input("private_discount_percentage",0);
