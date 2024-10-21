@@ -68,7 +68,7 @@ class Callback extends Api
                                     "deduction_credit_limit" => $info['msgdat']['c_trsamt'],
                                     "before_money" => $store_info['public_money'],
                                     "today_money" => $store_info['public_money'],
-                                    "order_number" => $info['msgdat']['yurref'],
+                                    "order_number" => $info['msgdat']['refnbr'],
                                     "type" => 7,
                                     "explain" => '充值公账钱包'.$info['msgdat']['c_trsamt'].'元，已使用公账授信额度'.$store_info['public_spending_credit_limit'].'元,扣除'.$info['msgdat']['c_trsamt'].'元，实际到账0元',
                                     "create_time" => time(),
