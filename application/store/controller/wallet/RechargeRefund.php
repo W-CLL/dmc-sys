@@ -188,11 +188,11 @@ class RechargeRefund extends Store
                                     $money_log["explain"] .= ",扣除余额:" . $transfer_records_data["deduction_balance"] . ",扣除授信额度:" . $transfer_records_data["deduction_credit_limit"];
                                 }
                                 if ($money_log["account_type"] == 1) {
-                                    $money_log['balance_surplus'] = $store['public_money'] - $transfer_records_data['deduction_balance'];
-                                    $money_log['credit_limit_surplus'] = $store['public_credit_limit'] - $transfer_records_data['deduction_credit_limit'];
+                                    $money_log['balance_surplus'] = $store['public_money'];
+                                    $money_log['credit_limit_surplus'] = $store['public_credit_limit'];
                                 }else{
-                                    $money_log['balance_surplus'] = $store['private_money'] - $transfer_records_data['deduction_balance'];
-                                    $money_log['credit_limit_surplus'] = $store['private_credit_limit'] - $transfer_records_data['deduction_credit_limit'];
+                                    $money_log['balance_surplus'] = $store['private_money'];
+                                    $money_log['credit_limit_surplus'] = $store['private_credit_limit'];
                                 }
                             } else {
 
@@ -223,7 +223,7 @@ class RechargeRefund extends Store
                                                 ->dec("public_spending_credit_limit", $store["public_spending_credit_limit"]);
                                         }
                                     } else {
-                                        $sql->inc("public_limit", $money_log["actual_money"]);
+                                        $sql->inc("public_money", $money_log["actual_money"]);
                                     }
                                     $sql->update(["update_time" => time()]);
                                 } else {
