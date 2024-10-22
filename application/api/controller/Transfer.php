@@ -134,12 +134,11 @@ class Transfer extends Api
                     $update['fail_reason'] = $data['data']['transfer_wallet_record_list'][0]['transfer_capital_record_list'][0]['fail_reason'];
                     $update['update_time'] = time();
                     // 退款
-                    $refund_info = Db::name('store_money_log')->where(['swtl_id' => $v['id']])->find();
-                    if($refund_info['account_type'] == 1){
+                    if($v['account_type'] == 1){
                         $balance_field = 'public_money';
                         $limit_field = 'public_credit_limit';
                         $spending_field = 'public_spending_credit_limit';
-                    }elseif ($refund_info['account_type'] == 2){
+                    }elseif ($v['account_type'] == 2){
                         $balance_field = 'private_money';
                         $limit_field = 'private_credit_limit';
                         $spending_field = 'private_spending_credit_limit';
