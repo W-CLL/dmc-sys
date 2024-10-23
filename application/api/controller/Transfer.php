@@ -180,11 +180,11 @@ class Transfer extends Api
                         $money_log_data['type'] = 8;
                         $money_log_data['explain'] = "转入子钱包[".$v['sub_wallet_id']."]，返点：".$v['rebate']."，扣除余额：".$v['deduction_balance']."，扣除授信额度：".$v['deduction_credit_limit']."，实际扣除金额：".$v['actual_money']."【单位：元】";
                         if($v['account_type'] == 1){
-                            $money_log_data['balance_surplus'] = $store_info['public_money'] - $v['deduction_balance'];
-                            $money_log_data['credit_limit_surplus'] = $store_info['public_credit_limit'] - $v['deduction_credit_limit'];
+                            $money_log_data['balance_surplus'] = $store_info['public_money'];
+                            $money_log_data['credit_limit_surplus'] = $store_info['public_credit_limit'];
                         }else{
-                            $money_log_data['balance_surplus'] = $store_info['private_money'] - $v['deduction_balance'];
-                            $money_log_data['credit_limit_surplus'] = $store_info['private_credit_limit'] - $v['deduction_credit_limit'];
+                            $money_log_data['balance_surplus'] = $store_info['private_money'];
+                            $money_log_data['credit_limit_surplus'] = $store_info['private_credit_limit'];
                         }
                     }else{
                         $money_log_data['type'] = 9;
