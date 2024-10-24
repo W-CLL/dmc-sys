@@ -24,6 +24,12 @@ Class MoneyLog extends Store{
                 ->order($sort, $order)
                 ->limit($offset,$limit)
                 ->select();
+            foreach ($list as $k=>$v){
+                if($v['type'] == 8 || $v['type'] == 9){
+                    preg_match('/\[(.*?)\]/', $v['explain'], $matches);
+                    $list[$k]['sub_wallet_id'] = $matches[1];
+                }
+            }
             $count = Db::name("store_money_log")->where(['store_id'=>$this->auth->id])->count();
             $result = array("total" => $count, "rows" => $list);
 
