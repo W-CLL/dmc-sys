@@ -30,6 +30,7 @@ define(['jquery', 'bootstrap', 'company', 'table', 'form'], function ($, undefin
                         {field: 'id', title: __('Id'),visible: false},
                         {field: 'id', title: "ID"},
                         {field: 'advertiser_id', title: "千川id"},
+                        {field: 'sub_id', title: "钱包id"},
                         {field: 'store_username', title: "账户名称"},
                         {field: 'money', title: "变更金额"},
                         {field: 'type', title: "类型", formatter: function(value,row,index) {
