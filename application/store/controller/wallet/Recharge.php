@@ -37,6 +37,7 @@ Class Recharge extends Store{
         "受理单号",
         "回单流水号",
         "柜员交易号",
+        "转账流水号"
     ];
 
     protected static $money_name = [
