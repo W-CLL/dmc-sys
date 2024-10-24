@@ -82,8 +82,15 @@ Class StoreMoneyLog extends Backend{
                 ->order($sort, $order)
                 ->limit($offset,$limit)
                 ->select();
-            foreach ($list as $k=>$v){
+            foreach ($list as $k=>&$v){
                 $list[$k]['store_username'] = Db::name("store")->where("id",$v['store_id'])->value("username");
+
+                    preg_match('/\[(\d+)\]/', $v['explain'], $matches);
+                    // 检查是否匹配成功
+                    if (isset($matches[1]) && $v['swtl_id']) {
+                        $v['sub_id'] =$matches[1];
+                    }
+
             }
             $count = Db::name("store_money_log")->where($where)->count();
             $result = array("total" => $count, "rows" => $list);
