@@ -179,6 +179,52 @@ class Company extends Backend
     }
 
 
+    public function bind_by_qc_id(){
+        if ($this->request->isPost()) {
+            $err_num = 0;
+            $err_id = '';
+            $public_qc_id_list = [];
+            $private_qc_id_list = [];
+            $this->token();
+            $post = $this->request->post();
+            $post['discount_percentage'] = number_format($post['discount_percentage'], 4, '.', '');
+            if(empty($post['store_id'])){
+                $this->error('请选择绑定账号');
+            }
+            if(empty($post['public_qc_id']) && empty($post['private_qc_id'])){
+                $this->error('空提交');
+            }
+            if(!empty($post['public_qc_id'])){
+                $public_qc_id_list = array_filter(explode("\n",$post['public_qc_id']), function($value) {
+                    return trim($value) !== '';
+                });
+                $public_qc_id_list = array_combine($public_qc_id_list,array_fill(0,count($public_qc_id_list),1));
+            }
+            if (!empty($post['private_qc_id'])){
+                $private_qc_id_list = array_filter(explode("\n",$post['private_qc_id']), function($value) {
+                    return trim($value) !== '';
+                });
+                $private_qc_id_list = array_combine($private_qc_id_list,array_fill(0,count($private_qc_id_list),2));
+            }
+            $qc_id_list = $public_qc_id_list + $private_qc_id_list;
+            foreach ($qc_id_list as $k=>$v){
+                $k = trim($k);
+                if (!Db::name('company')->where(["advertiser_id"=>$k])->update(['store_id' => $post['store_id'], 'account_type' => $v, 'discount_percentage' => $post['discount_percentage']])){
+                    $err_num++;
+                    $err_id .= $k.",";
+                }
+            }
+            if($err_num != 0){
+                $this->error("部分成功，失败了".$err_num."次，绑定失败的ID为：".$err_id);
+            }else{
+                $this->success("批量绑定成功");
+            }
+        }
+        $this->view->assign('storeList', Db::name("store")->field('id,username')->select());
+        return $this->view->fetch();
+    }
+
+
 
 
 
