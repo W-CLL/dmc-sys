@@ -216,11 +216,15 @@ class SubWallet extends Backend
                 $this->error('空提交');
             }
             if(!empty($post['public_sub_wallet_id'])){
-                $public_sub_wallet_id_list = array_filter(explode(",",$post['public_sub_wallet_id']));
+                $public_sub_wallet_id_list = array_filter(explode("\n",$post['public_sub_wallet_id']), function($value) {
+                    return trim($value) !== '';
+                });
                 $public_sub_wallet_id_list = array_combine($public_sub_wallet_id_list,array_fill(0,count($public_sub_wallet_id_list),1));
             }
             if (!empty($post['private_sub_wallet_id'])){
-                $private_sub_wallet_id_list = array_filter(explode(",",$post['private_sub_wallet_id']));
+                $private_sub_wallet_id_list = array_filter(explode("\n",$post['private_sub_wallet_id']), function($value) {
+                    return trim($value) !== '';
+                });
                 $private_sub_wallet_id_list = array_combine($private_sub_wallet_id_list,array_fill(0,count($private_sub_wallet_id_list),2));
             }
             $sub_wallet_id_list = $public_sub_wallet_id_list + $private_sub_wallet_id_list;

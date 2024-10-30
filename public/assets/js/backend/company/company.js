@@ -155,6 +155,9 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
         transfer_records: function () {
             Controller.api.bindevent();
         },
+        bind_by_qc_id: function () {
+            Controller.api.bindevent();
+        },
         api: {
             bindevent: function () {
                 Form.api.bindevent($("form[role=form]"));
