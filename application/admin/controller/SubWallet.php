@@ -14,7 +14,7 @@ class SubWallet extends Backend
 {
     public function index()
     {
-
+        $StoreModel = new StoreModel();
         if ($this->request->isAjax()) {
             $WalletModel = new WalletModel();
             $QcConfigModel = new QcConfigModel();
@@ -28,13 +28,6 @@ class SubWallet extends Backend
             if ($filter != '') {
                 $filter = (array)json_decode($filter, true);
                 $where = $this->screen_filter($filter);
-            }
-            if(!empty($where['bind_store_id'])){
-                if($where['bind_store_id'][1] == 0){
-                    $where['bind_store_id'][0] = 'NULL';
-                }else{
-                    $where['bind_store_id'][0] = 'NOT NULL';
-                }
             }
 
 
@@ -78,6 +71,7 @@ class SubWallet extends Backend
 
             return json($result);
         }
+        $this->view->assign('storeList', $StoreModel->field('id,username')->select());
         return $this->view->fetch();
     }
 

@@ -42,15 +42,16 @@
                 <div class="col-xs-12 col-sm-6 col-md-3" style="min-height:68px;">
                     <!--这里添加68px是为了避免刷新时出现元素错位闪屏-->
                     <div class="form-group">
-                        <label class="control-label">是否绑定用户</label>
+                        <label class="control-label">绑定商户</label>
                         <input type="hidden" class="operate" data-name="bind_store_id" value="="/>
                         <div>
                             <!--给select一个固定的高度-->
                             <!--@formatter:off-->
-                            <select id="c-state" class="form-control selectpicker" name="bind_store_id" style="height:31px;">
-                                <option value="" >ALL</option>
-                                <option value="0" >未绑定</option>
-                                <option value="1" >已绑定</option>
+                            <select  id="c-store_id" class="form-control selectpicker" name="bind_store_id" style="height:31px;">
+                                <option value="">ALL</option>
+                                {foreach $storeList as $k => $v}
+                                <option value="{$v.id}">{$v.username}</option>
+                                {/foreach}
                             </select>
                             <!--@formatter:on-->
                         </div>
