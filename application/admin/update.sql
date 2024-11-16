@@ -95,26 +95,39 @@ VALUES (1, '20240919001', '密钥自行生成添加', 'yuanxi_crm', NULL, NULL, 
 --2024.10.09 测试服已更新
 --2024.10.09 已处理
 ALTER TABLE fa_qc_share_wallet
-    ADD COLUMN `discount_percentage` decimal(7,4) DEFAULT 0.0000 COMMENT '折扣百分比';
+    ADD COLUMN `discount_percentage` decimal(7, 4) DEFAULT 0.0000 COMMENT '折扣百分比';
 ALTER TABLE fa_company
-    ADD COLUMN `discount_percentage` decimal(7,4) DEFAULT 0.0000 COMMENT '折扣百分比';
+    ADD COLUMN `discount_percentage` decimal(7, 4) DEFAULT 0.0000 COMMENT '折扣百分比';
 --2024.10.19
 --2024.10.19 测试服已更新
 --2024.10.19 已处理
-CREATE TABLE `fa_share_wallet_once_bind` (
-                                             `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT 'ID',
-                                             `sub_wallet_id` varchar(30) NOT NULL COMMENT '子钱包ID',
-                                             `bind_store_id` int(10) NOT NULL COMMENT '曾绑定过的商户ID',
-                                             `transfer_in_sum_public_cash` decimal(14,2) DEFAULT '0.00' COMMENT '转入总金额(私帐转入)       实际金额',
-                                             `transfer_out_sum_public_cash` decimal(14,2) DEFAULT '0.00' COMMENT '转出总金额(私帐转出)      实际金额',
-                                             `transfer_in_sum_private_cash` decimal(14,2) DEFAULT '0.00' COMMENT '转入总金额(公帐转入)      实际金额',
-                                             `transfer_out_sum_private_cash` decimal(14,2) DEFAULT '0.00' COMMENT '转出总金额(公帐转出)     实际金额',
-                                             `transfer_in_sum_public_vr` decimal(14,2) DEFAULT '0.00' COMMENT '转入总金额(私帐转入)    虚拟币(含返点)',
-                                             `transfer_out_sum_public_vr` decimal(14,2) DEFAULT '0.00' COMMENT '转出总金额(私帐转出)    虚拟币(含返点)',
-                                             `transfer_in_sum_private_vr` decimal(14,2) DEFAULT '0.00' COMMENT '转入总金额(公帐转入)    虚拟币(含返点)',
-                                             `transfer_out_sum_private_vr` decimal(14,2) DEFAULT '0.00' COMMENT '转出总金额(公帐转出)    虚拟币(含返点)',
-                                             PRIMARY KEY (`id`),
-                                             KEY `sub_wallet_id` (`sub_wallet_id`) USING BTREE,
-                                             KEY `bind_store_id` (`bind_store_id`) USING BTREE
+CREATE TABLE `fa_share_wallet_once_bind`
+(
+    `id`                            int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT 'ID',
+    `sub_wallet_id`                 varchar(30) NOT NULL COMMENT '子钱包ID',
+    `bind_store_id`                 int(10) NOT NULL COMMENT '曾绑定过的商户ID',
+    `transfer_in_sum_public_cash`   decimal(14, 2) DEFAULT '0.00' COMMENT '转入总金额(私帐转入)       实际金额',
+    `transfer_out_sum_public_cash`  decimal(14, 2) DEFAULT '0.00' COMMENT '转出总金额(私帐转出)      实际金额',
+    `transfer_in_sum_private_cash`  decimal(14, 2) DEFAULT '0.00' COMMENT '转入总金额(公帐转入)      实际金额',
+    `transfer_out_sum_private_cash` decimal(14, 2) DEFAULT '0.00' COMMENT '转出总金额(公帐转出)     实际金额',
+    `transfer_in_sum_public_vr`     decimal(14, 2) DEFAULT '0.00' COMMENT '转入总金额(私帐转入)    虚拟币(含返点)',
+    `transfer_out_sum_public_vr`    decimal(14, 2) DEFAULT '0.00' COMMENT '转出总金额(私帐转出)    虚拟币(含返点)',
+    `transfer_in_sum_private_vr`    decimal(14, 2) DEFAULT '0.00' COMMENT '转入总金额(公帐转入)    虚拟币(含返点)',
+    `transfer_out_sum_private_vr`   decimal(14, 2) DEFAULT '0.00' COMMENT '转出总金额(公帐转出)    虚拟币(含返点)',
+    PRIMARY KEY (`id`),
+    KEY                             `sub_wallet_id` (`sub_wallet_id`) USING BTREE,
+    KEY                             `bind_store_id` (`bind_store_id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='记录子钱包曾经绑过的商户';
+
+--2024.10.19
+CREATE TABLE `fa_ad_operator`
+(
+    `id`          int(11) NOT NULL AUTO_INCREMENT,
+    `name`        varchar(50) NOT NULL COMMENT '名字',
+    `type`        tinyint(1) NOT NULL COMMENT '类型：0运营 1客户',
+    `status`      tinyint(1) NOT NULL DEFAULT '1' COMMENT '状态：0禁用 1正常',
+    `create_time` bigint(11) DEFAULT NULL COMMENT '创建时间',
+    `update_time` bigint(11) DEFAULT NULL COMMENT '更新时间',
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COMMENT='千川投放计划操作员记录表';
 
