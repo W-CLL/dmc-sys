@@ -65,30 +65,32 @@ class Index extends Frontend
     {
         $access_token = Cache::get("qc_access_token");
         $params = [
-            'advertiser_id' => '1809337625800922',
+            'advertiser_id' => '1792947127846912',
             'page' => '1',
             'page_size' => '20',
-            'start_date' => '2024-09-09',
-            'end_date' => '2024-09-09',
+            'start_date' => '2024-11-01',
+            'end_date' => '2024-11-30',
         ];
-        $res = FundManagement::get_ad_report($access_token, $params);
-        $plan_id = array_column($res['data']['list'], "ad_id");
 
-        return $plan_id;
+        $res = FundManagement::get_ad_report($access_token, $params);
+        dump($res);
+        die;
+        return array_column($res['data']['list'], "ad_id");
     }
 
     public function testGetAdplanOptList()
     {
-        $object_ids = $this->testGetAdplanList();
+//        $object_ids = $this->testGetAdplanList();
         $access_token = Cache::get("qc_access_token");
-//        ["1809620655760507","1809620613160972","1809620545414218","809620495048720"]
+        $object_ids =  ["1809509354991732","1809509882042505"];
+
         $params = [
-            'advertiser_id' => '1809337625800922',
+            'advertiser_id' => '1791291980794964',
             'object_id' => $object_ids,
             'page' => '1',
             'page_size' => '20',
-            'start_date' => '2024-09-09 00:10:00',
-            'end_date' => '2024-09-09 23:59:59',
+            'start_date' => '2024-11-01 00:10:00',
+            'end_date' => '2024-11-30 23:59:59',
         ];
         $res = FundManagement::get_opt_log($access_token, $params);
         dump($res);
@@ -208,10 +210,14 @@ class Index extends Frontend
 
     public function testTransfer()
     {
-        echo "禁止访问!";
-        die;
+//        echo "禁止访问!";
+//        die;
         $token = Cache::get("qc_access_token");
-        $a = $transfer_detail_data = FundManagement::transfer_detail($token, 'dfsdfdf', '1739518270441480', "ZZO7418880759731159820");
+        $a = $transfer_detail_data = FundManagement::transfer_detail(
+            $token,
+            'dfsdfdf',
+            '1739518270441480',
+            "ZZO7426391592618984211");
         dump($a);
         die;
 //        $target_account_detail_list[] = [
