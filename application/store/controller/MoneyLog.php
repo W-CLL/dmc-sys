@@ -17,9 +17,26 @@ Class MoneyLog extends Store{
             $offset = input("offset",0);
             $limit = input("limit",10);
 
+            $start_date = input("start_date");
+            $end_date = input("end_date");
+
+            $startDate =strtotime($start_date);
+            $endDate = strtotime($end_date." 23:59:59");
+
+            if($startDate && $endDate){
+                $where['create_time'] = ["between",[$startDate,$endDate]];
+            }
+            $money = input('money');
+            $is_numeric = is_numeric($money);
+
+            if(strlen($money)>0 && $is_numeric){
+                $where['money'] = $money;
+            }
+            $where['store_id'] = $this->auth->id;
+
 
             $list = Db::name("store_money_log")
-                ->where(['store_id'=>$this->auth->id])
+                ->where($where)
                 ->field("id,money,account_type,advertiser_id,type,explain,balance_surplus,credit_limit_surplus,account_type,create_time")
 //                ->order($sort, $order)
                 ->order('create_time desc')
