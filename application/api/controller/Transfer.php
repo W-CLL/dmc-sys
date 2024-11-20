@@ -45,7 +45,7 @@ class Transfer extends Api
                             //记录到数据库
                             "rebate" => $v["rebate"],
                             "discount_percentage" => $v['discount_percentage'],
-                            "create_time" => time()
+                            "create_time" => $v['create_time']
                         ];
 
                         if ($v["transfer_direction"] == 1) {
@@ -130,7 +130,7 @@ class Transfer extends Api
                         if (!$logId) {
                             throw new \Exception('转账成功，资金记录写入失败');
                         }
-                        if (!Db::name("transfer_records")->where(["id" => $v['id']])->update(['status' => 1])) {
+                        if (!Db::name("transfer_records")->where(["id" => $v['id']])->update(['status' => 1,'explain' => ''])) {
                             throw new \Exception('转账成功，状态更新失败');
                         }
 
@@ -138,9 +138,9 @@ class Transfer extends Api
                     } catch (\Exception $e) {
                         Db::rollback();
                         Db::name("transfer_records")->where(["id" => $v['id']])->update(['status' => 6, 'explain' => $e->getMessage()]);
-                        $this->error($e->getMessage());
+                        // $this->error($e->getMessage());
                     }
-                    $this->success();
+                    // $this->success();
                 } else if ($transfer_detail_data['data']['transfer_status'] == 'NO_TRANSFER') {
                     //未转账
                     Db::name("transfer_records")->where(["id" => $v['id']])->update(['status' => 3]);
@@ -151,13 +151,13 @@ class Transfer extends Api
                 } else if ($transfer_detail_data['data']['transfer_status'] == 'TRANSFER_FAILED') {
                     Db::name("transfer_records")->where(["id" => $v['id']])->update(['status' => 2, 'explain' => $transfer_detail_data['data']['transfer_target_record_list'][0]['transfer_capital_record_list'][0]['fail_reason']]);
                     //转账失败
-                    $this->error("转账失败," . $transfer_detail_data['data']['transfer_target_record_list'][0]['transfer_capital_record_list'][0]['fail_reason']);
+                    // $this->error("转账失败," . $transfer_detail_data['data']['transfer_target_record_list'][0]['transfer_capital_record_list'][0]['fail_reason']);
                 }
             } else {
                 $explain_record[] = $transfer_records_data;
 
                 Db::name("transfer_records")->where(["id" => $v['id']])->update(['status' => 5, 'explain_record' => json_encode($explain_record, JSON_UNESCAPED_UNICODE), 'explain' => "查询转账状态失败", 'update_time' => time()]);
-                $this->error("查询转账状态失败");
+                // $this->error("查询转账状态失败");
             }
 
         }
