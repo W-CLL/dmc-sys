@@ -173,7 +173,7 @@ class Company extends Backend
         }
         $store_data = Db::name("store")->column('id as store_id,username');
         $store_data[0] = "不绑定";
-        $this->view->assign('storeList', build_select('store_id', $store_data, 0, ['class' => 'form-control selectpicker']));
+        $this->view->assign('storeList', build_select('store_id', $store_data, 0, ['class' => 'form-control selectpicker' ,'data-live-search'=>'true']));
 
         return $this->view->fetch();
     }
