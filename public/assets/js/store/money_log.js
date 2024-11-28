@@ -78,7 +78,14 @@ define(['jquery', 'bootstrap', 'store', 'table', 'form'], function ($, undefined
                         {field: 'create_time', title:"时间" ,formatter: Table.api.formatter.datetime},
                         // {field: 'operate', title: __('Operate'), table: table, events: Table.api.events.operate, formatter: Table.api.formatter.operate},
                     ]
-                ]
+                ],
+                queryParams:function (params) {
+                    let time_data = document.getElementById('dateRange').value.split(' - ');
+                    params.start_date = time_data[0];
+                    params.end_date = time_data[1];
+                    params.money = document.getElementById('money').value;
+                    return params;
+                }
             });
 
             // 为表格绑定事件

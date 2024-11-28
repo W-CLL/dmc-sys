@@ -20,7 +20,8 @@ Class MoneyLog extends Backend{
 
             $list = Db::name("money_log")
                 ->field("id,money,type,explain,create_time")
-                ->order($sort, $order)
+//                ->order($sort, $order)
+                ->order('create_time desc')
                 ->limit($offset,$limit)
                 ->select();
             $count = Db::name("money_log")->count();
