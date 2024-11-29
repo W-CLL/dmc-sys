@@ -61,32 +61,40 @@ function get_transfer_image(cookie,transfer_serial) {
 
       page.on('request', async request => { // 监听请求事件，注意这里使用了async
 
-        const headers = await request.headers(); // 获取请求头部，使用await
-        headers['Cookie'] = cookie; // 添加token
-        if ("https://agent.oceanengine.com/admin/fundModule/flowQuery/transferRecord" === request.url()){
-          headers['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7';
-          headers['Accept-Encoding'] = 'gzip, deflate, br, zstd';
-          headers['Accept-Language'] = 'zh-CN,zh;q=0.9';
-          headers['Cache-Control'] = 'max-age=0';
-          headers['Accept-Encoding'] = 'gzip, deflate, br, zstd';
-          headers['Referer'] = 'https://agent.oceanengine.com/admin/homepage';
-          headers['Sec-Ch-Ua'] = '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"';
-          headers['Sec-Ch-Ua-Mobile'] = '?0';
-          headers['Sec-Ch-Ua-Platform'] = '"Windows"';
-          headers['Sec-Fetch-Dest'] = 'document';
-          headers['Sec-Fetch-Mode'] = 'navigate';
-          headers['Sec-Fetch-Site'] = 'same-origin';
-          headers['Sec-Fetch-User'] = '?1';
-          headers['Upgrade-Insecure-Requests'] = '1';
-          headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
-        }
+          const headers = await request.headers(); // 获取请求头部，使用await
+          headers['Cookie'] = cookie; // 添加token
+          if ("https://agent.oceanengine.com/admin/fundModule/flowQuery/transferRecord" === request.url()) {
+              headers['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7';
+              headers['Accept-Encoding'] = 'gzip, deflate, br, zstd';
+              headers['Accept-Language'] = 'zh-CN,zh;q=0.9';
+              headers['Cache-Control'] = 'max-age=0';
+              headers['Accept-Encoding'] = 'gzip, deflate, br, zstd';
+              headers['Referer'] = 'https://agent.oceanengine.com/admin/homepage';
+              headers['Sec-Ch-Ua'] = '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"';
+              headers['Sec-Ch-Ua-Mobile'] = '?0';
+              headers['Sec-Ch-Ua-Platform'] = '"Windows"';
+              headers['Sec-Fetch-Dest'] = 'document';
+              headers['Sec-Fetch-Mode'] = 'navigate';
+              headers['Sec-Fetch-Site'] = 'same-origin';
+              headers['Sec-Fetch-User'] = '?1';
+              headers['Upgrade-Insecure-Requests'] = '1';
+              headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
+          }
 
-        request.continue({ headers }); // 继续请求
+          request.continue({headers}); // 继续请求
       });
+      const responses = [];
       try {
-        // 访问一个网址
-        await page.goto('https://agent.oceanengine.com/admin/fundModule/flowQuery/transferRecord');
-        await page.waitForResponse(response => response.request().url() === 'https://agent.oceanengine.com/agent/transfer/transaction-record/v3');
+          // 访问一个网址
+          await page.goto('https://agent.oceanengine.com/admin/fundModule/flowQuery/transferRecord');
+          // await page.waitForResponse(response => response.request().url() === 'https://agent.oceanengine.com/agent/transfer/transaction-record/v3',{timeout:60000});
+
+          page.on('response', response => {
+              if (response.url() === 'https://agent.oceanengine.com/agent/transfer/transaction-record/v3') {
+                  responses.push(response);
+              }
+          });
+          await page.waitForTimeout(5000);
       } catch (error) {
         console.log("cookie失效")
         // console.error('An error occurred:', error);
@@ -107,75 +115,77 @@ function get_transfer_image(cookie,transfer_serial) {
       await page.click(acceptCookiesSelector);
 
       await timeout(3000)
-
-      const remitterType='div[data-rbd-draggable-id="remitterType"] .i-icon-close svg';
+      //去掉一些多余的筛选
+      // 关闭转出方类型
+      const remitterType = 'div[data-rbd-draggable-id="remitterType"] .i-icon-close svg';
       await page.waitForSelector(remitterType);
       await page.click(remitterType);
-
-      const remitterFirstAdAgentId='div[data-rbd-draggable-id="remitterFirstAdAgentId"] .i-icon-close svg';
+      //转出方代理商账户
+      const remitterFirstAdAgentId = 'div[data-rbd-draggable-id="remitterFirstAdAgentId"] .i-icon-close svg';
       await page.waitForSelector(remitterFirstAdAgentId);
       await page.click(remitterFirstAdAgentId);
-
-      const remitterCustomerId='div[data-rbd-draggable-id="remitterCustomerId"] .i-icon-close svg';
+      //转出方客户
+      const remitterCustomerId = 'div[data-rbd-draggable-id="remitterCustomerId"] .i-icon-close svg';
       await page.waitForSelector(remitterCustomerId);
       await page.click(remitterCustomerId);
-
-      const payeeType='div[data-rbd-draggable-id="payeeType"] .i-icon-close svg';
+        //转入方类型
+      const payeeType = 'div[data-rbd-draggable-id="payeeType"] .i-icon-close svg';
       await page.waitForSelector(payeeType);
       await page.click(payeeType);
 
-      const payeeFirstAdAgentId='div[data-rbd-draggable-id="payeeFirstAdAgentId"] .i-icon-close svg';
+      const payeeFirstAdAgentId = 'div[data-rbd-draggable-id="payeeFirstAdAgentId"] .i-icon-close svg';
       await page.waitForSelector(payeeFirstAdAgentId);
       await page.click(payeeFirstAdAgentId);
 
-      const payeeCustomerId='div[data-rbd-draggable-id="payeeCustomerId"] .i-icon-close svg';
+      const payeeCustomerId = 'div[data-rbd-draggable-id="payeeCustomerId"] .i-icon-close svg';
       await page.waitForSelector(payeeCustomerId);
       await page.click(payeeCustomerId);
-      
-      const transferOrderSerial='div[data-rbd-draggable-id="transferOrderSerial"] .i-icon-close svg';
+
+      const transferOrderSerial = 'div[data-rbd-draggable-id="transferOrderSerial"] .i-icon-close svg';
       await page.waitForSelector(transferOrderSerial);
       await page.click(transferOrderSerial);
 
-      const grants='div[data-rbd-draggable-id="grants"] .i-icon-close svg';
+      const grants = 'div[data-rbd-draggable-id="grants"] .i-icon-close svg';
       await page.waitForSelector(grants);
       await page.click(grants);
 
-      const amount='div[data-rbd-draggable-id="amount"] .i-icon-close svg';
+      const amount = 'div[data-rbd-draggable-id="amount"] .i-icon-close svg';
       await page.waitForSelector(amount);
       await page.click(amount);
 
-      const prepayAmount='div[data-rbd-draggable-id="prepayAmount"] .i-icon-close svg';
+      const prepayAmount = 'div[data-rbd-draggable-id="prepayAmount"] .i-icon-close svg';
       await page.waitForSelector(prepayAmount);
       await page.click(prepayAmount);
 
-      const creditAmount='div[data-rbd-draggable-id="creditAmount"] .i-icon-close svg';
+      const creditAmount = 'div[data-rbd-draggable-id="creditAmount"] .i-icon-close svg';
       await page.waitForSelector(creditAmount);
       await page.click(creditAmount);
 
-      const remark='div[data-rbd-draggable-id="remark"] .i-icon-close svg';
+      const remark = 'div[data-rbd-draggable-id="remark"] .i-icon-close svg';
       await page.waitForSelector(remark);
       await page.click(remark);
 
-      const byted_confirm_ok='button[class="byted-btn byted-btn-size-md byted-btn-type-primary byted-btn-shape-angle byted-can-input-grouped byted-confirm-ok"]';
+        //提交保存
+      const byted_confirm_ok = 'button[class="byted-btn byted-btn-size-lg byted-btn-type-primary byted-btn-shape-angle byted-can-input-grouped byted-confirm-ok"]';
+      // const byted_confirm_ok = 'button[class="byted-btn byted-btn-size-md byted-btn-type-primary byted-btn-shape-angle byted-can-input-grouped byted-confirm-ok"]';
       await page.waitForSelector(byted_confirm_ok);
       await page.click(byted_confirm_ok);
 
       await timeout(1000)
 
-
-
+        //进行截图
       var folder = create_folder(path.join(__dirname, '/../public/transfer_images/'))
-      var image = Date.now() + generateRandomInt(1,10000) + '.png';
+      var image = Date.now() + generateRandomInt(1, 10000) + '.png';
       let url = folder + '/' + image
       // 使用clip选项来指定截图区域
       await page.screenshot({
-        path: url, // 截图保存的文件路径
-        clip: {
-          x: 120,  // 截图区域的左上角x坐标
-          y: 360,  // 截图区域的左上角y坐标
-          width: 1180,  // 截图区域的宽度
-          height: 120  // 截图区域的高度
-        }
+          path: url, // 截图保存的文件路径
+          clip: {
+              x: 120,  // 截图区域的左上角x坐标
+              y: 360,  // 截图区域的左上角y坐标
+              width: 1180,  // 截图区域的宽度
+              height: 120  // 截图区域的高度
+          }
       });
 
       const startIndex = url.indexOf("transfer_images/");
@@ -194,9 +204,9 @@ function get_transfer_image(cookie,transfer_serial) {
   })();
 }
 
-function get_cookie(email,password){
-  (async () => {
-    // // 设置启动选项以显示浏览器界面
+function get_cookie(email, password) {
+    (async () => {
+        // // 设置启动选项以显示浏览器界面
     // const browserOptions = {
     //   headless: false, // 设置为 false 以显示界面
     //   // 其他选项，如慢动作（slowMo）可用于减慢操作速度以便观察
@@ -343,7 +353,7 @@ app.all('*', function(req, resp) {
 
 // 启动服务器
 app.listen(3000, () => {
-  console.log('原神启动');
+  console.log('鸣潮启动');
 
 });
 
