@@ -174,6 +174,7 @@ class Oauth2 extends Api {
         $data = Db::name("transfer_records")
             ->where(["status"=>1])
             ->whereNull("image")
+            ->where(['transfer_serial'=>['>',0]])
             ->where(["create_time"=>[">",strtotime('today midnight')]])
             ->where(["create_time"=>["<",time() - 300]])
             ->select();
