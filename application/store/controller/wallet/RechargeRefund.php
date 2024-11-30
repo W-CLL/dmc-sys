@@ -66,7 +66,12 @@ class RechargeRefund extends Store
         if(!empty(floatval($company['discount_percentage']))){
             $transfer_records_data['discount_percentage'] = $company['discount_percentage'];
         }
-        $rebate = round($money - ($money * 100) / ($transfer_records_data['discount_percentage'] * 100), 2);
+        if(!empty(floatval($transfer_records_data['discount_percentage']))){
+            $rebate = round($money - ($money * 100) / ($transfer_records_data['discount_percentage'] * 100), 2);
+        }else{
+            $rebate = 0;
+        }
+
 
         if (($money - $rebate) > ($balance + $credit_limit) && $transaction_type == 1) {
             $this->error('钱包余额不足，不能转入！');
@@ -340,7 +345,12 @@ class RechargeRefund extends Store
             $transfer_direction = 'TRANSFER_IN';
             $remark = "抖秒冲转入";
             //返点金额 计算方式 交易金额 - （交易金额*100 / 折扣百分比*100）取小数点后两位 1 - (1*100 / 1.1*100) = 0.1;
-            $transfer_records_data["rebate"] = round($transfer_records_data["money"] - ($transfer_records_data["money"] * 100) / ($transfer_records_data['discount_percentage'] * 100), 2);
+            if(!empty(floatval($transfer_records_data['discount_percentage']))){
+                $transfer_records_data["rebate"] = round($transfer_records_data["money"] - ($transfer_records_data["money"] * 100) / ($transfer_records_data['discount_percentage'] * 100), 2);
+            }else{
+                $transfer_records_data["rebate"] = 0;
+            }
+
             //实际交易（扣除）金额 交易金额 - 返点金额
             $transfer_records_data['actual_money'] = number_format($transfer_records_data["money"] - $transfer_records_data["rebate"], 2, '.', '');
             //钱包余额+授信额度 小于实际交易金额
@@ -371,8 +381,10 @@ class RechargeRefund extends Store
                 'credit' => $credit_limit,
             ];
 
-            //添加当前折扣百分比下的充值记录
-            $store_refund_model->addStoreRefundRecord($money, $transfer_records_data);
+            if(!empty(floatval($transfer_records_data['discount_percentage']))){
+                //添加当前折扣百分比下的充值记录
+                $store_refund_model->addStoreRefundRecord($money, $transfer_records_data);
+            }
         } else {
             $transfer_direction = 'TRANSFER_OUT';
             $remark = "抖秒冲转出";
@@ -381,7 +393,11 @@ class RechargeRefund extends Store
 
             $real_rebate = $store_refund_model->getRealRefundRebate($transfer_records_data);
             if (empty($real_rebate)) {
-                $real_rebate = $transfer_records_data["rebate"] = round($transfer_records_data["money"] - ($transfer_records_data["money"] * 100) / ($transfer_records_data['discount_percentage'] * 100), 2);
+                if(!empty(floatval($transfer_records_data['discount_percentage']))){
+                    $real_rebate = $transfer_records_data["rebate"] = round($transfer_records_data["money"] - ($transfer_records_data["money"] * 100) / ($transfer_records_data['discount_percentage'] * 100), 2);
+                }else{
+                    $real_rebate = $transfer_records_data["rebate"] = 0;
+                }
             }
             $transfer_records_data["rebate"] = $real_rebate;
             $transfer_records_data['actual_money'] = $transfer_records_data["money"];
@@ -459,12 +475,3 @@ class RechargeRefund extends Store
     }
 
 }
-
-
-
-
-
-
-
-
-
