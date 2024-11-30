@@ -2,12 +2,9 @@
     {:token()}
     <div class="form-group">
         <label class="control-label col-xs-12 col-sm-2">绑定账号:</label>
-        <select  class="form-control selectpicker"  data-live-search="true" name="store_id">
-            <option value="">请选择</option>
-            {foreach $storeList as $k => $v}
-            <option value="{$v.id}">{$v.username}</option>
-            {/foreach}
-        </select>
+        <div class="col-xs-12 col-sm-8">
+        {$storeLists}
+        </div>
     </div>
 
     <div class="form-group">

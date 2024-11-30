@@ -68,22 +68,22 @@ class SubWallet extends Backend
 
             return json($result);
         }
-        $subWalletList = $WalletModel->field('sub_wallet_id')->select();
-        $list_info = array_column((array)$subWalletList, 'sub_wallet_id');
-        $selectList = [];
-        $list_info = array_map(function ($value) {
-            return (int)$value;
-        }, $list_info);
-        $lists = FundManagement::get_wallet_info_list($token, $account_id, json_encode($list_info), $account_type);
-        foreach ($lists['data']['wallet_info'] as $item) {
-            foreach ($list_info as $k => $v) {
-                if ($v == $item['wallet_id']) {
-                    $selectList[$v] = $v . ' ' . $item['common_wallet_info']['wallet_name'];
-                }
-            }
-        }
+//        $subWalletList = $WalletModel->field('sub_wallet_id')->select();
+//        $list_info = array_column((array)$subWalletList, 'sub_wallet_id');
+//        $selectList = [];
+//        $list_info = array_map(function ($value) {
+//            return (int)$value;
+//        }, $list_info);
+//        $lists = FundManagement::get_wallet_info_list($token, $account_id, json_encode($list_info), $account_type);
+//        foreach ($lists['data']['wallet_info'] as $item) {
+//            foreach ($list_info as $k => $v) {
+//                if ($v == $item['wallet_id']) {
+//                    $selectList[$v] = $v . ' ' . $item['common_wallet_info']['wallet_name'];
+//                }
+//            }
+//        }
 //        build_select('group_id', Db::name("store_group")->column('id,name'), 0, ['class' => 'form-control selectpicker','data-rule'=>'required'])
-        $this->view->assign('subWalletList', build_select('sub_wallet_id', $selectList, 0, ['class' => 'form-control selectpicker', 'data-live-search' => 'true']));
+//        $this->view->assign('subWalletList', build_select('sub_wallet_id', $selectList, 0, ['class' => 'form-control selectpicker', 'data-live-search' => 'true']));
         $this->view->assign('storeList', $StoreModel->field('id,username')->select());
         return $this->view->fetch();
     }
@@ -197,7 +197,8 @@ class SubWallet extends Backend
             }
             $this->error('批量绑定失败');
         }
-        $this->view->assign('storeList', $StoreModel->field('id,username')->select());
+        $storeList = $StoreModel->column('id,username');
+        $this->view->assign('storeLists', build_select('store_id', $storeList, 0,['class' => 'form-control selectpicker', 'data-live-search' => 'true']));
 
         return $this->view->fetch();
     }
