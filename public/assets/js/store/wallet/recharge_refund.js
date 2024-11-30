@@ -67,7 +67,12 @@ define(['jquery', 'bootstrap', 'store', 'table', 'form'], function ($, undefined
                     console.log(discount_percentage);
 
                     let transaction_type = $('input[name="transaction_type"]:checked').val();
-                    let deduction_money = (money * 100) / discount_percentage * 100 / 10000
+                    let deduction_money;
+                    if (discount_percentage == 0) {
+                        deduction_money = money * 1; // 或者其他合理的默认值
+                    } else {
+                        deduction_money = (money * 100) / discount_percentage * 100 / 10000;
+                    }
 
                     var actual_money = parseFloat(deduction_money.toFixed(2))
                     if (transaction_type == 1){
