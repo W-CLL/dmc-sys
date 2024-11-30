@@ -448,7 +448,7 @@ class RechargeRefund extends Store
         ];
         $RefundModel = new StoreRefund();
         $rebate = $RefundModel->getRealRefundRebate($data,2,false);
-        if (empty($rebate)) {
+        if (empty($rebate) && $wallet['wallet_discount'] != 0) {
             $rebate = round($money - ($money * 100) / ($wallet['wallet_discount'] * 100), 2);
         }
         $actual_money = $money - $rebate;
