@@ -143,6 +143,9 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
         bind_by_sub_wallet_id: function () {
             Controller.api.bindevent();
         },
+        batch_binding: function () {
+            Controller.api.bindevent();
+        },
         api: {
             bindevent: function () {
                 Form.api.bindevent($("form[role=form]"));
