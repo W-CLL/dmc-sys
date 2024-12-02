@@ -5,6 +5,7 @@ namespace app\api\controller;
 use app\common\controller\Api;
 use fast\Random;
 use jlqc\AccountRelationship;
+use jlqc\FundManagement;
 use jlqc\UserInfo;
 use Requests;
 use think\Cache;
@@ -107,7 +108,7 @@ class Oauth2 extends Api {
         if ($advertiser_ids){
             $advertiser_ids = unserialize($advertiser_ids);
         }else{
-            $advertiser_ids = Db::name("company")->column("advertiser_id,name");
+            $advertiser_ids = Db::name("company")->column("advertiser_id,name,kahuna");
             Cache::set("advertiser_ids",serialize($advertiser_ids));
         }
         $advertiser_data = AccountRelationship::advertiser_select($access_token,$config_data['advertiser_id'],1,100);
@@ -120,12 +121,21 @@ class Oauth2 extends Api {
                 $public_info_data = UserInfo::public_info($access_token, json_encode($advertiser_data['data']['advertiser_ids']));
             }
             foreach ($public_info_data['data'] as $k => $v){
+                $res1 = FundManagement::get_ad_info($access_token,json_encode([$v["id"]],JSON_UNESCAPED_UNICODE));
                 if (isset($advertiser_ids[$v["id"]])){
-                    if ($advertiser_ids[$v["id"]] != $v['name']){
-                        Db::name("company")->where(["advertiser_id"=>$v["id"]])->update([
-                            "name" => $v["name"],
-                            "update_time" => time()
-                        ]);
+                    if ($advertiser_ids[$v["id"]]['name'] != $v['name']) {
+                        $update_data['name'] = $v['name'];
+                        $update_data['update_time'] = time();
+                    }
+                    if ($advertiser_ids[$v["id"]]['kahuna'] != $res1['data']['account_detail_list'][0]['optimizer_name']) {
+                        $update_data['kahuna'] = $res1['data']['account_detail_list'][0]['optimizer_name'];
+                        $update_data['update_time'] = time();
+                    }
+                    if(!empty($update_data)){
+                        Db::name("company")->where(["advertiser_id"=>$v["id"]])->update($update_data);
+                        $advertiser_ids[$v["id"]]['name'] = $v["name"];
+                        $advertiser_ids[$v["id"]]['kahuna'] = $res1['data']['account_detail_list'][0]['optimizer_name'];
+                        Cache::set("advertiser_ids",serialize($advertiser_ids));
                     }
                 }else{
                     $salt = Random::alnum();
@@ -139,8 +149,10 @@ class Oauth2 extends Api {
                         "password" => $this->auth->getEncryptPassword("123456",$salt),
                         "create_time" => time(),
                         "update_time" => time(),
+                        "kahuna" => $res1['data']['account_detail_list'][0]['optimizer_name'],
                     ];
-                    $advertiser_ids[$v["id"]] = $v["name"];
+                    $advertiser_ids[$v["id"]]['name'] = $v["name"];
+                    $advertiser_ids[$v["id"]]['kahuna'] = $res1['data']['account_detail_list'][0]['optimizer_name'];
                 }
             }
         }
