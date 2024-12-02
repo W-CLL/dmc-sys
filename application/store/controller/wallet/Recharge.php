@@ -37,7 +37,8 @@ Class Recharge extends Store{
         "受理单号",
         "回单流水号",
         "柜员交易号",
-        "转账流水号"
+        "转账流水号",
+        "流水号",
     ];
 
     protected static $money_name = [
@@ -62,6 +63,7 @@ Class Recharge extends Store{
         "收款户名",
         "收款人姓名",
         "收款人户名",
+        "姓名", // ocr识别失败?返回一个"姓名"键
     ];
 
 
