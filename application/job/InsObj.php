@@ -41,13 +41,9 @@ class InsObj
     private function Run($data)
     {
         $access_token = Cache::get("qc_access_token");
-        $obj_arr = Cache::get('obj_arr');
-        if (!$obj_arr) {
-            $obj_arr = Db::name('qc_obj')->where('status', 1)->column('advertiser_id', 'object_id');
-            Cache::set('obj_arr', $obj_arr);
-        }
+        $redis = Cache::store('redis')->handler();
         foreach ($data['res']['data']['list'] as $item) {
-            if (!isset($obj_arr[$item['ad_id']])) {
+            if (!$redis->SISMEMBER('obj_id',$item['ad_id'])) {
                 $arr['company_id'] = $data['company_id'];
                 $arr['advertiser_id'] = $item['advertiser_id'];
                 $arr['object_id'] = $item['ad_id'];
@@ -58,8 +54,10 @@ class InsObj
                         $arr['status'] = 0;
                     } else {
                         $arr['status'] = 1;
-                        $obj_arr[$item['ad_id']] = $item['advertiser_id'];
+                        $redis->SADD('obj_id',$item['ad_id']);
+                        $redis->SADD('obj_arr',serialize(['advertiser_id' => $item['advertiser_id'], 'object_id' => $item['ad_id']]));
                     }
+                    $arr['object_name'] = $ad_detail_res['data']['name'];
                 } else {
                     $arr['status'] = 0;
                 }
@@ -74,8 +72,6 @@ class InsObj
                 }
             }
         }
-        // 更新缓存数据
-        Cache::set('obj_arr', $obj_arr);
         return true;
     }
 }
