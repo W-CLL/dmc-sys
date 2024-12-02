@@ -194,6 +194,7 @@ CREATE TABLE `fa_qc_obj` (
                              `company_id` int(10) NOT NULL COMMENT '千川表id',
                              `advertiser_id` varchar(50) NOT NULL COMMENT '广告商id',
                              `object_id` varchar(50) NOT NULL COMMENT '项目id',
+                             `object_name` text COMMENT '项目名称',
                              `status` tinyint(1) NOT NULL DEFAULT '1' COMMENT '计划状态   1可操作  0不可操作',
                              `create_time` bigint(16) NOT NULL COMMENT '创建时间',
                              PRIMARY KEY (`id`),
