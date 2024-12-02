@@ -85,8 +85,6 @@ Class FundManagement{
           ];
         $base_url = "https://ad.oceanengine.com/open_api/v1.0/qianchuan/report/ad/get";
         $url = buildUrlWithParams($base_url,$params);
-//        dump($url);
-//        die;
         $header = array(
             'Access-Token:'. $access_token,
         );
@@ -289,6 +287,56 @@ Class FundManagement{
             'Access-Token:'. $access_token
         );
         $url = "https://api.oceanengine.com/open_api/v3.0/cg_transfer/wallet/transfer/detail/?account_id=".$account_id."&account_type=".$account_type."&biz_request_no=".$biz_request_no."&transfer_serial=".$transfer_serial;
+        return Requests::get($url,$header);
+    }
+
+
+    public static function get_agent_statement($access_token,$agent_id,$start_date,$end_date,$page,$page_size,$advertiser_id){
+        $url = "https://api.oceanengine.com/open_api/2/agent/adv/cost_report/list/query/";
+        $header = array(
+            'Access-Token:'. $access_token,
+            'Content-Type:'.'application/json'
+        );
+        $data = array(
+            "agent_id" => (int)$agent_id,
+            "start_date" => $start_date,
+            "end_date" => $end_date,
+            "page" => (int)$page,
+            "page_size" => (int)$page_size,
+            "order_type" => "DESC",
+            "filtering" => array(
+                "advertiser_ids" => array(
+                    $advertiser_id
+                )
+            )
+        );
+        return Requests::post($url,json_encode($data,JSON_UNESCAPED_UNICODE),$header);
+    }
+
+
+    public static function get_ad_id_list($access_token,$advertiser_id,$page,$page_size){
+        $header = array(
+            'Access-Token:'. $access_token,
+        );
+        $url = "https://ad.oceanengine.com/open_api/2/agent/advertiser/select/?advertiser_id=".$advertiser_id."&page=".$page."&page_size=".$page_size;
+        return Requests::get($url,$header);
+
+    }
+
+    public static function get_ad_info($access_token,$account_ids){
+        $header = array(
+            'Access-Token:'. $access_token,
+        );
+        $url = "https://api.oceanengine.com/open_api/2/agent/advertiser_info/query/?account_ids=".$account_ids;
+        return Requests::get($url,$header);
+    }
+
+
+    public static function get_ad_detail($access_token,$advertiser_id,$ad_id){
+        $header = array(
+            'Access-Token:'. $access_token,
+        );
+        $url = "https://ad.oceanengine.com/open_api/v1.0/qianchuan/ad/detail/get/?advertiser_id=".$advertiser_id."&ad_id=".$ad_id."&request_material_url=false";
         return Requests::get($url,$header);
     }
 
