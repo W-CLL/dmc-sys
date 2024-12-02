@@ -4,6 +4,7 @@ namespace app\api\controller;
 
 
 use app\common\controller\Api;
+use app\common\model\Queue;
 use app\store\model\StoreMoneyLog;
 use jlqc\FundManagement;
 use think\Cache;
@@ -426,4 +427,79 @@ class Transfer extends Api
             Db::rollback();
         }
     }
+
+
+
+    // 创建获取广告计划队列 [每天凌晨执行] 1
+    public function createQcObjQueue(){
+        $queueModel = new Queue();
+        $company_info = Db::name('company')->where("id",'>',0)->field('id,advertiser_id')->select();
+        $split_array = array_chunk($company_info, 100);
+        foreach ($split_array as $k=>$v){
+            $data['time_describe'] = ' -1 days';
+            $data['data'] = $v;
+            $queueModel->addQueue('获取广告计划','app\job\QcObj','createQcObj',$data,'');
+        }
+    }
+
+
+    // 创建获取广告计划操作日志队列 [每天凌晨执行]  2
+    public function createQcOptQueue(){
+        $queueModel = new Queue();
+        $data = [];
+        $redis = Cache::store('redis')->handler();
+        $array = $redis->SMEMBERS('obj_arr');
+        foreach ($array as $v) {
+            $v = unserialize($v);
+            if (!isset($data[$v['advertiser_id']])) {
+                $data[$v['advertiser_id']] = [];
+            }
+            $data[$v['advertiser_id']][] = $v['object_id'];
+        }
+        $split_array = array_chunk($data, 50, true);
+        foreach ($split_array as $v){
+            $queue_data['start_time'] = date('Y-m-d H:i:s', strtotime(date('Y-m-d') . ' -1 days'));
+            $queue_data['end_time'] = date('Y-m-d H:i:s', strtotime(date('Y-m-d')));
+            $queue_data['data'] = $v;
+            $queueModel->addQueue('获取广告计划操作日志','app\job\QcOpt','createQcOpt',$queue_data,'');
+        }
+    }
+
+
+    // 创建更新广告计划状态队列 [每天凌晨执行]  3
+    public function updateObjStatus(){
+        $queueModel = new Queue();
+        $obj_info = [];
+        $redis = Cache::store('redis')->handler();
+        $array = $redis->SMEMBERS('obj_arr');
+        foreach ($array as $v) {
+            $v = unserialize($v);
+            $obj_info[$v['object_id']] = $v['advertiser_id'];
+        }
+        $split_array = array_chunk($obj_info, 100);
+        foreach ($split_array as $v){
+            $queueModel->addQueue('更新广告计划状态','app\job\updateObjStatus','updateObjStatus',$v,'');
+        }
+    }
+
+
+
+    // 消费缓存数据更新队列状态
+    public function consumptionCache(){
+        $queueModel = new Queue();
+        $redis= Cache::store('redis')->handler();
+        for($i=0;$i<=200;$i++){
+            $data = $redis->lpop('queue_status_update');
+            if(empty($data)){
+                break;
+            }
+            $data = unserialize($data);
+            $job_id = array_keys($data)[0];
+            if(!$queueModel->where('job_id',$job_id)->update($data[$job_id])){
+                $redis->rpush('queue_status_update',$data);
+            }
+        }
+        echo 'success';
+    }
+
 }

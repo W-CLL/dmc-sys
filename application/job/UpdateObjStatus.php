@@ -42,15 +42,16 @@ class UpdateObjStatus
     }
 
     private function Run($data){
+        $redis = Cache::store('redis')->handler();
         $access_token = Cache::get("qc_access_token");
         foreach ($data as $key => $value){
             $ad_detail_res = FundManagement::get_ad_detail($access_token, $value, $key);
             if($ad_detail_res['code'] != 0){
                 $where[] = $value;
-                unset($data[$key]);
+                $redis->SREM('obj_arr',serialize(['advertiser_id' => $value, 'object_id' => $key]));
             }else if ($ad_detail_res['data']['status'] == 'DELETE' || $ad_detail_res['data']['status'] == 'FROZEN' || $ad_detail_res['data']['status'] == 'TIME_DONE') {
                 $where[] = $value;
-                unset($data[$key]);
+                $redis->SREM('obj_arr',serialize(['advertiser_id' => $value, 'object_id' => $key]));
             }
         }
         if(!empty($where)){
@@ -59,7 +60,6 @@ class UpdateObjStatus
                 return false;
             }
         }
-        Cache::set("obj_arr",$data);
         return true;
     }
 
