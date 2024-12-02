@@ -66,6 +66,8 @@ class QcObj
                 $queue_data['response'] = $res;
                 $queue_data['company_id'] = $value['id'];
                 $queueModel->addQueue('广告计划数据分割','app\job\DivideObj','createDivideObj',$queue_data,'');
+            }else{
+                return false;
             }
         }
         return true;

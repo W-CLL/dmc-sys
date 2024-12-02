@@ -62,6 +62,8 @@ class QcOpt
                     $queue_data['total_page'] = $res['data']['page_info']['total_page'];
                     $queue_data['params'] = $params;
                     $queueModel->addQueue('广告计划操作数据分割处理','app\job\DivideOpt','createDivideOpt',$queue_data,'');
+                }else{
+                    return false;
                 }
             }
         }
