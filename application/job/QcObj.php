@@ -33,7 +33,9 @@ class QcObj
                 //如果任务执行失败了，重新发布这个任务，3s后
                 $job->release(3);
             }
-            $redis->rpush('queue_status_update', serialize($queue_status_update_array));
+            if(isset($queue_status_update_array)){
+                $redis->rpush('queue_status_update', serialize($queue_status_update_array));
+            }
             Db::commit();
         } catch (\Exception $e) {
             Db::rollback();
