@@ -19,4 +19,44 @@
     </div>
 </div>
 
+<script id="customformtpl" type="text/html">
+    <form action="" class="form-commonsearch">
+        <div style="border-radius:2px;margin-bottom:10px;background:#f5f5f5;padding:15px 20px;">
+            <div class="row">
+                <div class="col-xs-12 col-sm-6 col-md-3" style="min-height:68px;">
+                    <!--这里添加68px是为了避免刷新时出现元素错位闪屏-->
+                    <div class="form-group">
+                        <label class="control-label">状态</label>
+                        <input type="hidden" class="operate" data-name="status" value="="/>
+                        <div>
+                            <!--给select一个固定的高度-->
+                            <!--@formatter:off-->
+                            <select id="c-status" class="form-control selectpicker" name="status" style="height:31px;">
+                                <option value="" >ALL</option>
+                                <option value="0" >等待中</option>
+                                <option value="1" >已完成</option>
+                                <option value="2" >失败</option>
+                            </select>
+                            <!--@formatter:on-->
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xs-12 col-sm-6 col-md-3">
+                    <div class="form-group">
+                        <label class="control-label"></label>
+                        <div class="row">
+                            <div class="col-xs-6">
+                                <input type="submit" class="btn btn-success btn-block" value="提交"/>
+                            </div>
+                            <div class="col-xs-6">
+                                <input type="reset" class="btn btn-primary btn-block" value="重置"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</script>
+
 
