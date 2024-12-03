@@ -496,7 +496,7 @@ class Transfer extends Api
             $data = unserialize($data);
             $job_id = array_keys($data)[0];
             if(!$queueModel->where('job_id',$job_id)->update($data[$job_id])){
-                $redis->rpush('queue_status_update',$data);
+                $redis->rpush('queue_status_update',serialize($data));
             }
         }
         echo 'success';
