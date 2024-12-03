@@ -16,4 +16,8 @@ class Operator extends Model
     protected $createTime = 'create_time';
     protected $updateTime = 'update_time';
 
+    public function get_operator_name(){
+        return $this->field('name')->select();
+    }
+
 }

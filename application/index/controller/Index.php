@@ -338,5 +338,4 @@ class Index extends Frontend
     }
 
 
-
 }

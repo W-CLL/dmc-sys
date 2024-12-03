@@ -76,13 +76,12 @@ Class FundManagement{
      * 'filtering'=>"过滤条件,类型是object,具体看fields的文档，该接口有默认值，可以不传",
      * 'page'=>"页码  * 默认值: 1"
      * 'page_size'=>"获取条数  * 默认值: 10允许值:1~20"]
-     * @return void
      */
     public static function get_ad_report($access_token,$params){
         $params['fields'] = ['cpm_platform','stat_cost','show_cnt','ctr','click_cnt'];
         $params['filtering'] = [
             'marketing_goal'=>"ALL",
-          ];
+        ];
         $base_url = "https://ad.oceanengine.com/open_api/v1.0/qianchuan/report/ad/get";
         $url = buildUrlWithParams($base_url,$params);
         $header = array(

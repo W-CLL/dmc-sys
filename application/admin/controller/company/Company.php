@@ -7,6 +7,7 @@ use app\common\library\Auth;
 use fast\Random;
 use jlqc\AccountRelationship;
 use jlqc\UserInfo;
+use jlqc\FundManagement;
 use think\Cache;
 use think\Db;
 use app\admin\model\Company as CompanyModel;
@@ -221,6 +222,42 @@ class Company extends Backend
             }
         }
         $this->view->assign('storeList', Db::name("store")->field('id,username')->select());
+        return $this->view->fetch();
+    }
+
+    public function query_grant($ids = null){
+        if ($this->request->isPost()) {
+            $no_grant_sum = 0;
+            $grant_sum = 0;
+            $this->token();
+            // 判断
+            $stare_time = strtotime($_POST['start_time']);
+            $end_time = strtotime($_POST['end_time']);
+            if($end_time < $stare_time){
+                $this->error("开始日期不能大于结束日期");
+            }
+            if($end_time >= strtotime('today') || $stare_time >= strtotime('today')){
+                $this->error("可选日期范围是今天以前");
+            }
+            $difference = ($end_time - $stare_time) / (60 * 60 * 24);
+            if($difference > 365){
+                $this->error("开始时间与结束时间的跨度不能超过365天。");
+            }
+
+            $access_token = Cache::get("qc_access_token");
+            $advertiser_id = Db::name("company")->where("id",$ids)->value("advertiser_id");
+            $agent_id = Db::name("qc_config")->where("id",1)->value("advertiser_id");
+            $data = FundManagement::get_agent_statement($access_token,$agent_id, date("Y-m-d",$stare_time), date("Y-m-d",$end_time),1,100,(int)$advertiser_id);
+            $total_page = ceil($data['data']['page_info']['total_number']/$data['data']['page_info']['page_size']);
+            for($i=1;$i<=$total_page;$i++){
+                $data = FundManagement::get_agent_statement($access_token,$agent_id, date("Y-m-d",$stare_time), date("Y-m-d",$end_time),$i,100,(int)$advertiser_id);
+                foreach ($data['data']['list'] as $v){
+                    $no_grant_sum += $v['no_grant_cost'] / 100000;
+                    $grant_sum += $v['cost'] / 100000;
+                }
+            }
+            $this->error("查询成功，该账号[".$advertiser_id."]<br>非赠款消耗为：".$no_grant_sum."元<br>总消耗为：".$grant_sum."元");
+        }
         return $this->view->fetch();
     }
 
