@@ -28,7 +28,7 @@ Class QueueRecord extends Backend{
             $list = $this->model
                 ->where($where)
 //                ->where($where_str)
-                ->orderRaw('CASE WHEN status = 2 THEN 0 ELSE 1 END, id DESC')
+                ->order('id desc')
                 ->paginate($limit);
             foreach ($list as $item){
                 switch ($item['status']){
