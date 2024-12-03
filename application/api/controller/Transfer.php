@@ -447,20 +447,17 @@ class Transfer extends Api
     public function createQcOptQueue(){
         $queueModel = new Queue();
         $data = [];
-        if(!Cache::get('obj_arr')){
-            $obj_info = Db::name('qc_obj')->where("status",'=',1)->column('advertiser_id','object_id');
-            Cache::set('obj_arr',$obj_info);
-        }else{
-            $obj_info = Cache::get('obj_arr');
-        }
-        foreach ($obj_info as $k=>$v){
-            if(!isset($data[$v])){
-                $data[$v] = [];
+        $redis = Cache::store('redis')->handler();
+        $array = $redis->SMEMBERS('obj_arr');
+        foreach ($array as $v) {
+            $v = unserialize($v);
+            if (!isset($data[$v['advertiser_id']])) {
+                $data[$v['advertiser_id']] = [];
             }
-            $data[$v][] = $k;
+            $data[$v['advertiser_id']][] = $v['object_id'];
         }
         $split_array = array_chunk($data, 50, true);
-        foreach ($split_array as $k=>$v){
+        foreach ($split_array as $v){
             $queue_data['start_time'] = date('Y-m-d H:i:s', strtotime(date('Y-m-d') . ' -1 days'));
             $queue_data['end_time'] = date('Y-m-d H:i:s', strtotime(date('Y-m-d')));
             $queue_data['data'] = $v;
@@ -472,14 +469,15 @@ class Transfer extends Api
     // 创建更新广告计划状态队列 [每天凌晨执行]  3
     public function updateObjStatus(){
         $queueModel = new Queue();
-        if(!Cache::get('obj_arr')){
-            $obj_info = Db::name('qc_obj')->where("status",'=',1)->column('advertiser_id','object_id');
-            Cache::set('obj_arr',$obj_info);
-        }else{
-            $obj_info = Cache::get('obj_arr');
+        $obj_info = [];
+        $redis = Cache::store('redis')->handler();
+        $array = $redis->SMEMBERS('obj_arr');
+        foreach ($array as $v) {
+            $v = unserialize($v);
+            $obj_info[$v['object_id']] = $v['advertiser_id'];
         }
         $split_array = array_chunk($obj_info, 100);
-        foreach ($split_array as $k=>$v){
+        foreach ($split_array as $v){
             $queueModel->addQueue('更新广告计划状态','app\job\updateObjStatus','updateObjStatus',$v,'');
         }
     }
@@ -495,18 +493,16 @@ class Transfer extends Api
             if(empty($data)){
                 break;
             }
+            if($data == "Array"){
+                continue;
+            }
             $data = unserialize($data);
             $job_id = array_keys($data)[0];
             if(!$queueModel->where('job_id',$job_id)->update($data[$job_id])){
-                $redis->rpush('queue_status_update',$data);
+                $redis->rpush('queue_status_update',serialize($data));
             }
         }
         echo 'success';
-    }
-
-    public function test(){
-        $redis= Cache::store('redis')->handler();
-        $redis->SADD('1','test1');
     }
 
 }
