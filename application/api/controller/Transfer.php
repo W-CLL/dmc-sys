@@ -493,6 +493,9 @@ class Transfer extends Api
             if(empty($data)){
                 break;
             }
+            if($data == "Array"){
+                continue;
+            }
             $data = unserialize($data);
             $job_id = array_keys($data)[0];
             if(!$queueModel->where('job_id',$job_id)->update($data[$job_id])){
