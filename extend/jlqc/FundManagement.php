@@ -81,7 +81,7 @@ Class FundManagement{
         $params['fields'] = ['cpm_platform','stat_cost','show_cnt','ctr','click_cnt'];
         $params['filtering'] = [
             'marketing_goal'=>"ALL",
-          ];
+        ];
         $base_url = "https://ad.oceanengine.com/open_api/v1.0/qianchuan/report/ad/get";
         $url = buildUrlWithParams($base_url,$params);
         $header = array(

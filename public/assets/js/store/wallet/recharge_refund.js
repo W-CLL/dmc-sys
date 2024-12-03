@@ -54,9 +54,9 @@ define(['jquery', 'bootstrap', 'store', 'table', 'form'], function ($, undefined
                 if (money > 0){
                     var discount_percentage;
                     if (type == 1){
-                         discount_percentage = $("#public_discount_percentage").text()
+                        discount_percentage = $("#public_discount_percentage").text()
                     }else if (type == 2){
-                         discount_percentage = $("#private_discount_percentage").text()
+                        discount_percentage = $("#private_discount_percentage").text()
                     }else{
                         return ;
                     }
@@ -96,7 +96,7 @@ define(['jquery', 'bootstrap', 'store', 'table', 'form'], function ($, undefined
                     }
                     return ;
                 }
-                 $("#deduction").text("");
+                $("#deduction").text("");
             }
 
         },

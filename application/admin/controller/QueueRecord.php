@@ -57,12 +57,12 @@ Class QueueRecord extends Backend{
     //重启任务的逻辑就是删掉原来失败的重新构建
 
     public function rebuildOne($ids){
-       $res =  $this->model->rebuildOne($ids);
-       if($res){
-        $this->success('重启成功');
-       }else{
-           $this->error('重启失败');
-       }
+        $res =  $this->model->rebuildOne($ids);
+        if($res){
+            $this->success('重启成功');
+        }else{
+            $this->error('重启失败');
+        }
     }
     public function rebuildAll(){
     }
