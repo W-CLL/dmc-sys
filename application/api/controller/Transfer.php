@@ -21,7 +21,7 @@ class Transfer extends Api
     //检查转账中状态的转账记录并更新
     public function transfer_records_save()
     {
-        $transfer_records_data = Db::name("transfer_records")->where("status", 4)->select();
+        $transfer_records_data = Db::name("transfer_records")->whereBetween("status",[2,5])->select();
         if (empty($transfer_records_data)) {
             return "暂无更新";
         }
