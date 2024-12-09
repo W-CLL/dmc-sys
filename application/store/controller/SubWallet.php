@@ -98,9 +98,10 @@ class SubWallet extends Store
             ->field('id,public_money,private_money,public_credit_limit,private_credit_limit,public_spending_credit_limit,private_spending_credit_limit,public_discount_percentage,private_discount_percentage')
             ->lock(true)
             ->find();
-        $res = FundManagement::get_max_transfer($this->token,$this->account_id,$this->account_type,$this->generateRandomString(),$wallet['main_wallet_id'],json_encode([(int)$wallet['sub_wallet_id']]),'TRANSFER_OUT');
-        $max_transfer_out = $res['data']['can_transfer_detail_list'][0]['non_brand_max_transfer_balance'] / 100;
-        $min_transfer = $res['data']['can_transfer_detail_list'][0]['payee_transfer_amount_detail_list'][0]['non_brand_min_transfer_balance'] / 100;
+        $out_res = FundManagement::get_max_transfer($this->token,$this->account_id,$this->account_type,$this->generateRandomString(),$wallet['main_wallet_id'],json_encode([(int)$wallet['sub_wallet_id']]),'TRANSFER_OUT');
+        $in_res = FundManagement::get_max_transfer($this->token,$this->account_id,$this->account_type,$this->generateRandomString(),$wallet['main_wallet_id'],json_encode([(int)$wallet['sub_wallet_id']]),'TRANSFER_IN');
+        $max_transfer_out = $out_res['data']['can_transfer_detail_list'][0]['non_brand_max_transfer_balance'] / 100;
+        $min_transfer = $in_res['data']['can_transfer_detail_list'][0]['payee_transfer_amount_detail_list'][0]['non_brand_min_transfer_balance'] / 100;
         if ($this->request->isPost()) {
             $post = $this->request->post();
             $wallet_info = $this->checkParam($wallet,$store,$post,$max_transfer_out,$min_transfer);

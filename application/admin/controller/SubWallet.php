@@ -105,7 +105,7 @@ class SubWallet extends Backend
             $data['discount_percentage'] = number_format(input("discount_percentage"), 4, '.', '');
             $once_bind = $OnceBindModel->where(['sub_wallet_id' => $row['sub_wallet_id'], 'bind_store_id' => $data['bind_store_id']])->find();
             if ($WalletModel->save($data, ['id' => $id])) {
-                if ($data['bind_store_id'] != $row['bind_store_id']) {
+                if ($data['bind_store_id'] != $row['bind_store_id'] && !empty($row['bind_store_id'])) {
                     $arr = [
                         'sub_wallet_id' => $row['sub_wallet_id'],
                         'bind_store_id' => $row['bind_store_id'],
@@ -164,7 +164,7 @@ class SubWallet extends Backend
             if ($WalletModel->where(["id" => ["in", $wallet_ids]])->update($data)) {
                 foreach ($list as $k => $v) {
                     $once_bind = $OnceBindModel->where(['sub_wallet_id' => $v['sub_wallet_id'], 'bind_store_id' => $data['bind_store_id']])->find();
-                    if ($data['bind_store_id'] != $v['bind_store_id']) {
+                    if ($data['bind_store_id'] != $v['bind_store_id'] && !empty($v['bind_store_id'])) {
                         $arr = [
                             'sub_wallet_id' => $v['sub_wallet_id'],
                             'bind_store_id' => $v['bind_store_id'],
