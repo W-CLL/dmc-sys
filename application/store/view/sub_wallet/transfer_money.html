@@ -126,8 +126,34 @@
   <div class="form-group layer-footer">
     <label class="control-label col-xs-12 col-sm-2"></label>
     <div class="col-xs-12 col-sm-8">
-      <button type="submit" class="btn btn-primary btn-embossed">{:__('OK')}</button>
+      <button id="myButton" type="submit" class="btn btn-primary btn-embossed">{:__('OK')}</button>
       <button type="reset" class="btn btn-default btn-embossed">{:__('Reset')}</button>
     </div>
   </div>
 </form>
+
+<script>
+
+  // 防抖函数
+  function debounce(func, wait) {
+    let timeout;
+    return function() {
+      const context = this;
+      const args = arguments;
+      clearTimeout(timeout); // 清除上一次的计时器
+      timeout = setTimeout(() => func.apply(context, args), wait); // 设置新的计时器
+    };
+  }
+
+  // 按钮点击处理函数
+  function handleButtonClick() {
+    console.log('按钮被点击了！');
+    // 这里可以放置你希望在按钮点击后执行的代码
+  }
+
+  // 获取按钮元素
+  const myButton = document.getElementById('myButton');
+
+  // 应用防抖函数到按钮点击事件
+  myButton.addEventListener('click', debounce(handleButtonClick, 5000));
+</script>

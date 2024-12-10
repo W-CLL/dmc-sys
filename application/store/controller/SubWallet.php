@@ -126,6 +126,8 @@ class SubWallet extends Store
                 Db::commit();
             }catch (\Exception $e){
                 Db::rollback();
+                \think\Log::write($insert_data,'insertData');
+                \think\Log::write($e->getMessage(),'excMsg');
                 $this->error($e->getMessage());
             }
             // 等待1秒,等接口处理完成再查询
@@ -193,7 +195,11 @@ class SubWallet extends Store
             if($min_transfer > $post['transfer_amount']){
                 $this->error('转入金额不得小于最小转入金额：'.$min_transfer);
             }
-            $rebate = round($post['transfer_amount'] - ($post['transfer_amount'] * 100) / ($wallet_info['wallet_discount'] * 100), 2);
+            if(!empty(floatval($wallet_info['wallet_discount']))){
+                $rebate = round($post['transfer_amount'] - ($post['transfer_amount'] * 100) / ($wallet_info['wallet_discount'] * 100), 2);
+            }else{
+                $rebate = 0;
+            }
             if (($post['transfer_amount'] - $rebate) > ($wallet_info['wallet_money'] + $wallet_info['wallet_limit'])) {
                 $this->error('转入余额超出上限');
             }
@@ -228,16 +234,24 @@ class SubWallet extends Store
         ];
         if($post['transfer_direction'] == 'TRANSFER_OUT'){
             $insert_data['transfer_direction'] = 2;
-            $real_rebate = $this->RefundModel->getRealRefundRebate($insert_data,2);
-            if (empty($real_rebate)) {
-                $real_rebate = round($insert_data["money"] - ($insert_data["money"] * 100) / ($insert_data['discount_percentage'] * 100), 2);
+            if(!empty(floatval($wallet_info['wallet_discount']))) {
+                $real_rebate = $this->RefundModel->getRealRefundRebate($insert_data, 2);
+                if (empty($real_rebate)) {
+                    $real_rebate = round($insert_data["money"] - ($insert_data["money"] * 100) / ($insert_data['discount_percentage'] * 100), 2);
+                }
+            }else{
+                $real_rebate = 0;
             }
             $insert_data["rebate"] = $real_rebate;
             $insert_data['actual_money'] = $insert_data["money"];
         }
         else{
             $insert_data['transfer_direction'] = 1;
-            $insert_data['rebate'] = round($post['transfer_amount'] - ($post['transfer_amount'] * 100) / ($wallet_info['wallet_discount'] * 100), 2);
+            if(!empty(floatval($wallet_info['wallet_discount']))){
+                $insert_data['rebate'] = round($post['transfer_amount'] - ($post['transfer_amount'] * 100) / ($wallet_info['wallet_discount'] * 100), 2);
+            }else{
+                $insert_data['rebate'] = 0;
+            }
             $insert_data['actual_money'] = $insert_data['money'] - $insert_data['rebate'];
             if($insert_data['actual_money'] > $wallet_info['wallet_money']){
                 $insert_data['deduction_balance'] = $wallet_info['wallet_money'];
@@ -255,7 +269,9 @@ class SubWallet extends Store
                 'wallet' => $wallet_money,
                 'credit' => $credit_limit,
             ];
-            $this->RefundModel->addStoreRefundRecord($money, $insert_data, 2);
+            if(!empty(floatval($wallet_info['wallet_discount']))){
+                $this->RefundModel->addStoreRefundRecord($money, $insert_data, 2);
+            }
         }
         return $insert_data;
     }
@@ -567,21 +583,29 @@ class SubWallet extends Store
             $wallet['wallet_discount'] = $wallet_info['discount_percentage'];
         }
         if($direction == 'TRANSFER_IN'){
-            $rebate = round($amount - ($amount * 100) / ($wallet['wallet_discount'] * 100), 2);
+            if(!empty(floatval($wallet['wallet_discount']))){
+                $rebate = round($amount - ($amount * 100) / ($wallet['wallet_discount'] * 100), 2);
+            }else{
+                $rebate = 0;
+            }
             $actual_money = $amount - $rebate;
             $res_msg = '预计从您钱包扣除金额: '.$actual_money.' 元';
         }
         elseif($direction == 'TRANSFER_OUT'){
-            $data = [
-                'money' => $amount,
-                'transfer_direction' => 2,
-                'discount_percentage' => $wallet['wallet_discount'],
-                'store_id' => $this->auth->id,
-                'account_type' => $wallet_info['sub_wallet_type']
-            ];
-            $rebate = $this->RefundModel->getRealRefundRebate($data,2,false);
-            if (empty($rebate)) {
-                $rebate = round($amount - ($amount * 100) / ($wallet['wallet_discount'] * 100), 2);
+            if(!empty(floatval($wallet['wallet_discount']))) {
+                $data = [
+                    'money' => $amount,
+                    'transfer_direction' => 2,
+                    'discount_percentage' => $wallet['wallet_discount'],
+                    'store_id' => $this->auth->id,
+                    'account_type' => $wallet_info['sub_wallet_type']
+                ];
+                $rebate = $this->RefundModel->getRealRefundRebate($data,2,false);
+                if (empty($rebate)) {
+                    $rebate = round($amount - ($amount * 100) / ($wallet['wallet_discount'] * 100), 2);
+                }
+            }else{
+                $rebate = 0;
             }
             $actual_money = $amount - $rebate;
             $res_msg = '预计给您钱包增加金额: '.$actual_money.' 元';
