@@ -84,7 +84,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                                     // classname: 'btn btn-xs btn-success btn-magic btn-dialog',
                                     icon: 'fa fa-magic',
                                     url: function(row) {
-                                        return '/TBlQxHczkR.php/operate_monitor/obj/index?ad_id=' + row.advertiser_id;
+                                        return '/TBlQxHczkR.php/operate_monitor/obj/details?ad_id=' + row.advertiser_id;
                                     }, // 指向控制器对应方法
                                     confirm: '查看当前用户计划列表',
                                     visible: function(row) {
