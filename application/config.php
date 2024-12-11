@@ -200,7 +200,7 @@ return [
             // 设置不同的缓存保存目录
             'path'   => RUNTIME_PATH . 'file/',
         ],
-        // redis缓存
+        // redis缓存【默认调用Db0】
         'redis'   =>  [
             // 驱动方式
             'type'   => 'redis',
@@ -209,6 +209,17 @@ return [
             'port'   => '6379',
             'password'=> "s1v5h4d",
             'timeout' => 3600
+        ],
+        // redis缓存
+        'redis_db2'   =>  [
+            // 驱动方式
+            'type'   => 'redis',
+            // 服务器地址
+            'host'   => '127.0.0.1',  //redis服务器ip
+            'port'   => '6379',
+            'password'=> "s1v5h4d",
+            'timeout' => 3600,
+            'database' => 2,
         ],
     ],
     // +----------------------------------------------------------------------

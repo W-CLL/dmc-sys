@@ -4,6 +4,7 @@ namespace app\job;
 
 use think\Db;
 use think\Cache;
+use think\Log;
 use think\queue\Job;
 use jlqc\FundManagement;
 use app\common\model\Queue;
@@ -17,7 +18,7 @@ class QcObj
     public function fire(Job $job, $data)
     {
         $jobId = json_decode($job->getRawBody(), true)['id'];
-        $redis = Cache::store('redis')->handler();
+        $redis = Cache::store('redis_db2')->handler();
         Db::startTrans();
         try {
             $isJobDone = $this->Run($data);
@@ -57,19 +58,25 @@ class QcObj
         foreach ($data['data'] as $key => $value){
             $params = [
                 'advertiser_id' => $value['advertiser_id'],
+                'filtering' => [
+                    'marketing_goal' => $data['marketing_goal'],
+                    'ad_create_start_date' => date('Y-m-d', strtotime(date('Y-m-d') . $data['time_describe'])),
+                    'ad_create_end_date' => date('Y-m-d'),
+                    'status' => 'ALL_INCLUDE_DELETED'
+                ],
                 'page' => '1',
                 'page_size' => '200',
-                'start_date' => date('Y-m-d', strtotime(date('Y-m-d') . $data['time_describe'])),
-                'end_date' => date('Y-m-d'),
             ];
-            $res = FundManagement::get_ad_report($access_token, $params);
+            $res = FundManagement::get_ad_list($access_token, $params);
             if($res['code'] == 0){
                 $queue_data['request_condition'] = $params;
                 $queue_data['response'] = $res;
                 $queue_data['company_id'] = $value['id'];
+                $queue_data['marketing_goal'] = ($data['marketing_goal'] == 'VIDEO_PROM_GOODS') ? 1 : 2;
+                $queue_data['advertiser_id'] = $value['advertiser_id'];
                 $queueModel->addQueue('广告计划数据分割','app\job\DivideObj','createDivideObj',$queue_data,'');
             }else{
-                return false;
+                Log::error($value['advertiser_id'].'返回错误信息：' . $res['message']);
             }
         }
         return true;

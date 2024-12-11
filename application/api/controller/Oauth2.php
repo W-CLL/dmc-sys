@@ -5,6 +5,7 @@ namespace app\api\controller;
 use app\common\controller\Api;
 use fast\Random;
 use jlqc\AccountRelationship;
+use jlqc\FundManagement;
 use jlqc\UserInfo;
 use Requests;
 use think\Cache;
@@ -205,6 +206,54 @@ class Oauth2 extends Api {
             }
         }
         return "执行成功";
+    }
+
+
+    public function updateKahuna(){
+        if(Cache::get('kahuna_run_status') == 1){
+            echo "今日已经更新完毕";
+            return;
+        }
+        $i = 0;
+        $access_token = Cache::get("qc_access_token");
+        $advertiser_ids = Cache::get("ad_ids");
+        $advertiser_ids_info = Cache::get("ad_ids_info");
+        if (!$advertiser_ids){
+            $advertiser_ids = Db::name("company")->column("advertiser_id");
+        }
+        if (!$advertiser_ids_info){
+            $advertiser_ids_info = Db::name("company")->column("kahuna","advertiser_id");
+            Cache::set('ad_ids_info',$advertiser_ids_info);
+        }
+        $advertiser_ids = array_map(function ($item){
+            return (int)$item;
+        },$advertiser_ids);
+        foreach ($advertiser_ids as $key => $split){
+            if ($i == 50){
+                break;
+            }
+            $res1 = FundManagement::get_ad_info($access_token,json_encode([$split],JSON_UNESCAPED_UNICODE));
+            if($res1['code'] == 0 && $res1['data']['account_detail_list'][0]['optimizer_name'] != $advertiser_ids_info[$split]){
+                $arr['kahuna'] = $res1['data']['account_detail_list'][0]['optimizer_name'];
+                if(!Db::name('company')->where(['advertiser_id'=>$split])->update($arr)){
+                    throw new \Exception('出错');
+                }
+            }
+            unset($advertiser_ids[$key]);
+            $i++;
+        }
+        if($i < 50){
+            $expiryDate = new \DateTime();
+            $expiryDate->setTime(0, 0, 0);
+            $expiryDate->modify('+1 day');
+            Cache::rm('ad_ids');
+            Cache::rm('ad_ids_info');
+            Cache::set('kahuna_run_status',1,$expiryDate);
+            echo "全部完成";
+            return;
+        }
+        Cache::set('ad_ids',$advertiser_ids);
+        echo "本次更新完成";
     }
 
 

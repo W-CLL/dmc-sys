@@ -4,6 +4,7 @@ namespace app\job;
 
 use think\Cache;
 use think\Db;
+use think\Log;
 use think\queue\Job;
 use jlqc\FundManagement;
 use app\common\model\Queue;
@@ -18,7 +19,7 @@ class QcOpt
     public function fire(Job $job, $data)
     {
         $jobId = json_decode($job->getRawBody(), true)['id'];
-        $redis = Cache::store('redis')->handler();
+        $redis = Cache::store('redis_db2')->handler();
         Db::startTrans();
         try {
             $isJobDone = $this->doJob($data);
@@ -65,7 +66,7 @@ class QcOpt
                     $queue_data['params'] = $params;
                     $queueModel->addQueue('广告计划操作数据分割处理','app\job\DivideOpt','createDivideOpt',$queue_data,'');
                 }else{
-                    return false;
+                    Log::error(json_encode($v).' 返回错误信息：' . $res['message']);
                 }
             }
         }

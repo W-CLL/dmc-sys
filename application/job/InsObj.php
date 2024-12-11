@@ -13,7 +13,7 @@ class InsObj
     public function fire(Job $job, $data)
     {
         $jobId = json_decode($job->getRawBody(), true)['id'];
-        $redis = Cache::store('redis')->handler();
+        $redis = Cache::store('redis_db2')->handler();
         Db::startTrans();
         try {
             $isJobDone = $this->Run($data);
@@ -42,28 +42,24 @@ class InsObj
 
     private function Run($data)
     {
-        $access_token = Cache::get("qc_access_token");
-        $redis = Cache::store('redis')->handler();
+        $redis = Cache::store('redis_db2')->handler();
         foreach ($data['res']['data']['list'] as $item) {
             if (!$redis->SISMEMBER('obj_id',$item['ad_id'])) {
                 $arr['company_id'] = $data['company_id'];
-                $arr['advertiser_id'] = $item['advertiser_id'];
+                $arr['advertiser_id'] = $data['advertiser_id'];
                 $arr['object_id'] = $item['ad_id'];
+                $arr['ad_create_time'] = strtotime($item['ad_create_time']);
                 $arr['create_time'] = time();
-                $ad_detail_res = FundManagement::get_ad_detail($access_token, $item['advertiser_id'], $item['ad_id']);
-                if ($ad_detail_res['code'] == 0) {
-                    if ($ad_detail_res['data']['status'] == 'DELETE' || $ad_detail_res['data']['status'] == 'FROZEN' || $ad_detail_res['data']['status'] == 'TIME_DONE') {
-                        $arr['status'] = 0;
-                    } else {
-                        $arr['status'] = 1;
-                        $redis->SADD('obj_id',$item['ad_id']);
-                        $redis->SADD('obj_arr',serialize(['advertiser_id' => $item['advertiser_id'], 'object_id' => $item['ad_id']]));
-                    }
-                    $arr['object_name'] = $ad_detail_res['data']['name'];
-                } else {
+                if ($item['status'] == 'DELETE' || $item['status'] == 'FROZEN') {
                     $arr['status'] = 0;
+                } else {
+                    $arr['status'] = 1;
+                    $redis->SADD('obj_arr',serialize(['advertiser_id' => $data['advertiser_id'], 'object_id' => $item['ad_id']]));
                 }
+                $arr['object_name'] = $item['name'];
+                $arr['marketing_goal'] = $data['marketing_goal'];
                 $ins_data[] = $arr;
+                $redis->SADD('obj_id',$item['ad_id']);
             }
         }
         if (!empty($ins_data)) {

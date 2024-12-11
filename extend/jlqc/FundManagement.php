@@ -339,6 +339,17 @@ Class FundManagement{
         return Requests::get($url,$header);
     }
 
+
+    // 广告商下的计划获取  yes！ https://open.oceanengine.com/labels/12/docs/1697467558690816?origin=left_nav
+    public static function get_ad_list($access_token,$params){
+        $base_url = "https://ad.oceanengine.com/open_api/v1.0/qianchuan/ad/get";
+        $url = buildUrlWithParams($base_url,$params);
+        $header = array(
+            'Access-Token:'. $access_token,
+        );
+        return Requests::get($url,$header);
+    }
+
 }
 
 

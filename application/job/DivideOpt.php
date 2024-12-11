@@ -13,7 +13,7 @@ class DivideOpt
     public function fire(Job $job, $data)
     {
         $jobId = json_decode($job->getRawBody(), true)['id'];
-        $redis = Cache::store('redis')->handler();
+        $redis = Cache::store('redis_db2')->handler();
         Db::startTrans();
         try {
             $isJobDone = $this->doJob($data);

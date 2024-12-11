@@ -80,14 +80,18 @@ class Index extends Frontend
 ////        var_dump($sum);
 //        die;
         $params = [
-            'advertiser_id' => '1811064042732587',
+            'advertiser_id' => '1811064042731111',
+            'filtering' => [
+                'marketing_goal' => 'LIVE_PROM_GOODS',
+                'ad_create_start_date' => '2024-12-01',
+                'ad_create_end_date' => '2024-12-06',
+                'status' => 'ALL_INCLUDE_DELETED'
+            ],
             'page' => '1',
-            'page_size' => '20',
-            'start_date' => '2024-11-01',
-            'end_date' => '2024-11-17',
+            'page_size' => '200',
         ];
 
-        $res = FundManagement::get_ad_report($access_token, $params);
+        $res = FundManagement::get_ad_list($access_token, $params);
 
         var_dump($res);
         die;
@@ -264,14 +268,28 @@ class Index extends Frontend
     }
 
     // 初始化obj表
-    public function firstRunGetObj(){
+    public function firstRunGetVPGObj(){
         $queueModel = new Queue();
         $company_info = Db::name('company')->field('id,advertiser_id')->select();
-        $split_array = array_chunk($company_info, 100);
+        $split_array = array_chunk($company_info, 20);
         foreach ($split_array as $item){
+            $data['marketing_goal'] = 'VIDEO_PROM_GOODS';  // 推商品
             $data['time_describe'] = ' -30 days';
             $data['data'] = $item;
-            $queueModel->addQueue('获取广告计划','app\job\QcObj','createQcObj',$data,'');
+            $queueModel->addQueue('获取广告计划【推商品】','app\job\QcObj','createQcObj',$data,'');
+        }
+        echo "初始化队列已创建";
+    }
+
+    public function firstRunGetLPGObj(){
+        $queueModel = new Queue();
+        $company_info = Db::name('company')->field('id,advertiser_id')->select();
+        $split_array = array_chunk($company_info, 20);
+        foreach ($split_array as $item){
+            $data['marketing_goal'] = 'LIVE_PROM_GOODS';  // 推直播间
+            $data['time_describe'] = ' -30 days';
+            $data['data'] = $item;
+            $queueModel->addQueue('获取广告计划【推直播间】','app\job\QcObj','createQcObj',$data,'');
         }
         echo "初始化队列已创建";
     }
@@ -320,14 +338,14 @@ class Index extends Frontend
 
     public function firstRunGetOpt(){
         $queueModel = new Queue();
-        $obj_info = Db::name('qc_obj')->column('advertiser_id','object_id');
+        $obj_info = Db::name('qc_obj')->column('advertiser_id','object_id');  // 52000
         foreach ($obj_info as $k=>$v){
             if(!isset($data[$v])){
                 $data[$v] = [];
             }
             $data[$v][] = $k;
         }
-        $split_array = array_chunk($data, 200, true);
+        $split_array = array_chunk($data, 1, true);
         foreach ($split_array as $item){
             $queue_data['start_time'] = date('Y-m-d 00:00:00', strtotime("first day of this month"));
             $queue_data['end_time'] = date('Y-m-d 23:59:59', strtotime("last day of this month"));
@@ -335,6 +353,14 @@ class Index extends Frontend
             $queueModel->addQueue('获取计划操作','app\job\QcOpt','createQcOpt',$queue_data,'');
         }
         echo "初始化队列已创建";
+    }
+
+
+    public function checkRedisSet(){
+        $redis = Cache::store('redis_db2')->handler();
+//        Cache::store('redis_db2')->handler()->SADD('testasdgf',1);
+        $set_info = $redis->SMEMBERS('obj_id');
+        var_dump($set_info);
     }
 
 

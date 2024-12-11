@@ -20,7 +20,7 @@ class Queue extends Model
     /**
      * 添加任务
      * @param string $jobName 任务名
-     * @param string $jobHandlerClassName 任务类名
+     * @param string $jobHandlerClassName 任务类名(大小写必须明确)
      * @param string $jobQueueName 队列名
      * @param array $jobData 任务数据
      * @param string $remark 备注

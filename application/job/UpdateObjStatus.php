@@ -4,6 +4,7 @@ namespace app\job;
 
 use think\Cache;
 use think\Db;
+use think\Log;
 use think\queue\Job;
 use jlqc\FundManagement;
 use app\common\model\Queue;
@@ -12,11 +13,13 @@ class UpdateObjStatus
     public function fire(Job $job, $data)
     {
         $jobId = json_decode($job->getRawBody(), true)['id'];
-        $redis = Cache::store('redis')->handler();
+        $redis = Cache::store('redis_db2')->handler();
         Db::startTrans();
         try {
             $canRun = $this->check();
             if (!$canRun) {
+                echo "进来啦";
+                sleep(60);
                 return;
             }
             $isJobDone = $this->Run($data);
@@ -44,21 +47,21 @@ class UpdateObjStatus
     }
 
     private function Run($data){
-        $redis = Cache::store('redis')->handler();
+        $redis = Cache::store('redis_db2')->handler();
         $access_token = Cache::get("qc_access_token");
         foreach ($data as $key => $value){
             $ad_detail_res = FundManagement::get_ad_detail($access_token, $value, $key);
             if($ad_detail_res['code'] != 0){
                 $where[] = $value;
                 $redis->SREM('obj_arr',serialize(['advertiser_id' => $value, 'object_id' => $key]));
-            }else if ($ad_detail_res['data']['status'] == 'DELETE' || $ad_detail_res['data']['status'] == 'FROZEN' || $ad_detail_res['data']['status'] == 'TIME_DONE') {
+            }else if ($ad_detail_res['data']['status'] == 'DELETE' || $ad_detail_res['data']['status'] == 'FROZEN') {
                 $where[] = $value;
                 $redis->SREM('obj_arr',serialize(['advertiser_id' => $value, 'object_id' => $key]));
             }
         }
         if(!empty($where)){
             $res = Db::name('qc_obj')->where('object_id','in',$where)->update(['status'=>0]);
-            if(!$res){
+            if($res === false){
                 return false;
             }
         }

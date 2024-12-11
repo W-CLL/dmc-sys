@@ -430,15 +430,29 @@ class Transfer extends Api
 
 
 
-    // 创建获取广告计划队列 [每天凌晨执行] 1
-    public function createQcObjQueue(){
+    // 创建获取广告计划队列 [每天凌晨执行]
+    public function createVPGObjQueue(){
         $queueModel = new Queue();
         $company_info = Db::name('company')->where("id",'>',0)->field('id,advertiser_id')->select();
         $split_array = array_chunk($company_info, 100);
         foreach ($split_array as $k=>$v){
+            $data['marketing_goal'] = 'VIDEO_PROM_GOODS';  // 推商品
             $data['time_describe'] = ' -1 days';
             $data['data'] = $v;
-            $queueModel->addQueue('获取广告计划','app\job\QcObj','createQcObj',$data,'');
+            $queueModel->addQueue('获取广告计划【推商品】','app\job\QcObj','createQcObj',$data,'');
+        }
+    }
+
+    // 创建获取广告计划队列 [每天凌晨执行]
+    public function createLPGObjQueue(){
+        $queueModel = new Queue();
+        $company_info = Db::name('company')->where("id",'>',0)->field('id,advertiser_id')->select();
+        $split_array = array_chunk($company_info, 100);
+        foreach ($split_array as $k=>$v){
+            $data['marketing_goal'] = 'LIVE_PROM_GOODS';  // 推直播间
+            $data['time_describe'] = ' -1 days';
+            $data['data'] = $v;
+            $queueModel->addQueue('获取广告计划【推直播间】','app\job\QcObj','createQcObj',$data,'');
         }
     }
 
@@ -447,7 +461,7 @@ class Transfer extends Api
     public function createQcOptQueue(){
         $queueModel = new Queue();
         $data = [];
-        $redis = Cache::store('redis')->handler();
+        $redis = Cache::store('redis_db2')->handler();
         $array = $redis->SMEMBERS('obj_arr');
         foreach ($array as $v) {
             $v = unserialize($v);
@@ -456,7 +470,7 @@ class Transfer extends Api
             }
             $data[$v['advertiser_id']][] = $v['object_id'];
         }
-        $split_array = array_chunk($data, 50, true);
+        $split_array = array_chunk($data, 1, true);
         foreach ($split_array as $v){
             $queue_data['start_time'] = date('Y-m-d H:i:s', strtotime(date('Y-m-d') . ' -1 days'));
             $queue_data['end_time'] = date('Y-m-d H:i:s', strtotime(date('Y-m-d')));
@@ -467,18 +481,18 @@ class Transfer extends Api
 
 
     // 创建更新广告计划状态队列 [每天凌晨执行]  3
-    public function updateObjStatus(){
+    public function updateObjStatusQueue(){
         $queueModel = new Queue();
         $obj_info = [];
-        $redis = Cache::store('redis')->handler();
+        $redis = Cache::store('redis_db2')->handler();
         $array = $redis->SMEMBERS('obj_arr');
         foreach ($array as $v) {
             $v = unserialize($v);
             $obj_info[$v['object_id']] = $v['advertiser_id'];
         }
-        $split_array = array_chunk($obj_info, 100);
+        $split_array = array_chunk($obj_info, 100, true);
         foreach ($split_array as $v){
-            $queueModel->addQueue('更新广告计划状态','app\job\updateObjStatus','updateObjStatus',$v,'');
+            $queueModel->addQueue('更新广告计划状态','app\job\UpdateObjStatus','updateObjStatus',$v,'');
         }
     }
 
@@ -487,7 +501,7 @@ class Transfer extends Api
     // 消费缓存数据更新队列状态
     public function consumptionCache(){
         $queueModel = new Queue();
-        $redis= Cache::store('redis')->handler();
+        $redis= Cache::store('redis_db2')->handler();
         for($i=0;$i<=200;$i++){
             $data = $redis->lpop('queue_status_update');
             if(empty($data)){
