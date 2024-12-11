@@ -382,7 +382,7 @@ define(['jquery', 'bootstrap', 'store', 'addtabs', 'adminlte', 'form'], function
                 layer.open({
                     type: 2,
                     area: ['680px', '520px'],
-                    content: 'index/password_save',
+                    content: '/store.php/index/password_save',
                     fixed: false, // 不固定
                     maxmin: true,
                     shadeClose: true,
@@ -394,7 +394,7 @@ define(['jquery', 'bootstrap', 'store', 'addtabs', 'adminlte', 'form'], function
                         var password = body.find("input[name='password']")[0].value;
                         console.log(123)
                         Fast.api.ajax({
-                            url: 'index/password_save',
+                            url: '/store.php/index/password_save',
                             data: {
                                 passwords : passwords,
                                 password: password,
