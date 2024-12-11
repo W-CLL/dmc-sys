@@ -348,7 +348,7 @@ class Index extends Frontend
         $split_array = array_chunk($data, 1, true);
         foreach ($split_array as $item){
             $queue_data['start_time'] = date('Y-m-d 00:00:00', strtotime("first day of this month"));
-            $queue_data['end_time'] = date('Y-m-d 23:59:59', strtotime("last day of this month"));
+            $queue_data['end_time'] = date('Y-m-d 23:59:59', strtotime("yesterday"));
             $queue_data['data'] = $item;
             $queueModel->addQueue('获取计划操作','app\job\QcOpt','createQcOpt',$queue_data,'');
         }
