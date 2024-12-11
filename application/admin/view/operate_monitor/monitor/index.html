@@ -57,7 +57,12 @@
                     </form>
                     <div id="toolbar" class="toolbar" style="display: flex;">
                         <a href="javascript:;" id="shuaxin" class="btn btn-primary btn-refresh" title="{:__('Refresh')}" ><i class="fa fa-refresh"></i> </a>
-                        <a href="{:url('operate_monitor.obj/index?ad_id=' . $ad_id)}" style="margin-left: 10px" class="btn btn-success btn-block">返回上一页</a>
+                        {if !empty($details)}
+                        <a href="{:url('operate_monitor.obj/details?ad_id=' . $ad_id)}" style="margin-left: 10px" class="btn btn-success btn-block">返回上一页</a>
+                        {else}
+                        <a href="{:url('operate_monitor.obj/index')}" style="margin-left: 10px" class="btn btn-success btn-block">返回上一页</a>
+                        {/if}
+
                     </div>
 
 

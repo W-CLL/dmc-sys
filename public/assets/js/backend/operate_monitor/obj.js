@@ -39,7 +39,7 @@ define(['jquery', 'bootstrap', 'company', 'table', 'form'], function ($, undefin
                                     // classname: 'btn btn-xs btn-success btn-magic btn-dialog',
                                     icon: 'fa fa-magic',
                                     url: function(row) {
-                                        return '/TBlQxHczkR.php/operate_monitor/monitor/index?obj_id=' + row.object_id + '&ad_id=' + row.advertiser_id;
+                                        return '/TBlQxHczkR.php/operate_monitor/monitor/index?obj_id=' + row.object_id + '&ad_id=' + row.advertiser_id + '&details=0';
                                     }, // 指向控制器对应方法
                                     confirm: '查看当前计划操作详情列表',
                                     visible: function(row) {
@@ -61,7 +61,7 @@ define(['jquery', 'bootstrap', 'company', 'table', 'form'], function ($, undefin
             // 初始化表格参数配置
             Table.api.init({
                 extend: {
-                    index_url: 'operate_monitor/obj/index' + location.search,
+                    index_url: 'operate_monitor/obj/details' + location.search,
                     table: 'qc_obj',
                 }
             });
@@ -94,7 +94,7 @@ define(['jquery', 'bootstrap', 'company', 'table', 'form'], function ($, undefin
                                     // classname: 'btn btn-xs btn-success btn-magic btn-dialog',
                                     icon: 'fa fa-magic',
                                     url: function(row) {
-                                        return '/TBlQxHczkR.php/operate_monitor/monitor/index?obj_id=' + row.object_id + '&ad_id=' + row.advertiser_id;
+                                        return '/TBlQxHczkR.php/operate_monitor/monitor/index?obj_id=' + row.object_id + '&ad_id=' + row.advertiser_id + '&details=1';
                                     }, // 指向控制器对应方法
                                     confirm: '查看当前计划操作详情列表',
                                     visible: function(row) {

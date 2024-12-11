@@ -23,6 +23,7 @@ class Monitor extends Backend
     {
         $obj_id = input("obj_id");
         $ad_id = input("ad_id");
+        $details = input("details");
         $operatorModel = new OperatorModel();
         $planOptLogModel = new PlanOptLogModel();
         if ($this->request->isAjax()) {
@@ -70,6 +71,7 @@ class Monitor extends Backend
             return json($result);
         }
         $this->assign("ad_id",$ad_id);
+        $this->assign("details",$details);
         return $this->view->fetch();
     }
 
