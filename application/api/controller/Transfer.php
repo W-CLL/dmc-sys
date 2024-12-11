@@ -502,7 +502,7 @@ class Transfer extends Api
     public function consumptionCache(){
         $queueModel = new Queue();
         $redis= Cache::store('redis_db2')->handler();
-        for($i=0;$i<=200;$i++){
+        for($i=0;$i<=500;$i++){
             $data = $redis->lpop('queue_status_update');
             if(empty($data)){
                 break;
