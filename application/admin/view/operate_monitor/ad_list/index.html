@@ -1,0 +1,161 @@
+<div class="panel panel-default panel-intro">
+    {:build_heading()}
+
+    <div class="panel-body">
+        <div id="myTabContent" class="tab-content">
+            <div class="tab-pane fade active in" id="one">
+                <div class="widget-body no-padding">
+                    <form id="edit-form" class="form-commonsearch" role="form" data-toggle="validator" method="POST" action="">
+
+                        <div style="border-radius:2px;margin-bottom:10px;background:#f5f5f5;padding:15px 20px;">
+                            <!--<h4>自定义搜索表单</h4>-->
+                            <hr>
+                            <div class="row">
+                                <div style="width: 100%;display: flex;">
+
+                                    <div class="col-xs-4 col-sm-4 col-md-4">
+                                        <div class="form-group">
+                                            <label class="control-label">非赠款日期查询筛选</label>
+                                            <div>
+                                                <input type="text"  class="form-control datetimerange" id="dateRange" data-locale='{"format":"YYYY-MM-DD"}' placeholder="指定日期" value="" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-xs-3 col-sm-3 col-md-3">
+                                        <div class="form-group">
+                                            <!--<input type="hidden" class="operate" data-name="city" value="="/>-->
+                                            <label class="control-label">负责人</label>
+                                            <div>
+                                                <input type="text" class="form-control" name="kahuna" id="kahuna" placeholder="请输入负责人" value=""/>
+                                            </div>
+                                        </div>
+                                    </div>
+
+
+
+                                </div>
+
+                                <div class="col-xs-6 col-sm-6 col-md-3">
+                                    <div class="form-group">
+                                        <label class="control-label"></label>
+                                        <div class="row">
+                                            <div class="col-xs-3">
+                                                <input type="button"  id="tj"  class="btn btn-success btn-block" value="提交"/>
+                                            </div>
+                                            <div class="col-xs-3">
+                                                <input type="reset" class="btn btn-primary btn-block" value="重置"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="toolbar" class="toolbar" style="display: flex;">
+                        <a href="javascript:;" id="shuaxin" class="btn btn-primary btn-refresh" title="{:__('Refresh')}">
+                            <i class="fa fa-refresh"></i>
+                        </a>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        <!-- 近7天按钮 -->
+                        <a href="javascript:;" class="btn btn-primary" onclick="setDateRange('7d')">
+                            <span>近7天</span>
+                        </a>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        <!-- 近14天按钮 -->
+                        <a href="javascript:;" class="btn btn-primary" onclick="setDateRange('14d')">
+                            <span>近14天</span>
+                        </a>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        <!-- 近30天按钮，默认选中 -->
+                        <a href="javascript:;" class="btn btn-primary active" onclick="setDateRange('30d')">
+                            <span>近30天(默认)</span>
+                        </a>
+                    </div>
+
+
+                    <table id="table" class="table table-striped table-bordered table-hover table-nowrap"
+
+                           width="100%">
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    // 获取当前日期
+    const today = new Date();
+
+    // 计算昨天的日期
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    // 计算7天前的日期
+    const sevenDaysAgo = new Date(today);
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    // 计算14天前的日期
+    const fourteenDaysAgo = new Date(today);
+    fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+
+    // 计算30天前的日期
+    const thirtyDaysAgo = new Date(today);
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    // 格式化日期为"YYYY-MM-DD"格式
+    const formattedYesterday = yesterday.toISOString().split('T')[0];
+    const formattedSevenDaysAgo = sevenDaysAgo.toISOString().split('T')[0];
+    const formattedFourteenDaysAgo = fourteenDaysAgo.toISOString().split('T')[0];
+    const formattedThirtyDaysAgo = thirtyDaysAgo.toISOString().split('T')[0];
+
+    // 设置输入框的默认值
+    document.getElementById('dateRange').value = `${formattedThirtyDaysAgo} - ${formattedYesterday}`;
+
+    // 添加日期范围设置函数
+    function setDateRange(days) {
+        let startDate, endDate;
+
+        switch (days) {
+            case '7d':
+                startDate = formattedSevenDaysAgo;
+                endDate = formattedYesterday;
+                break;
+            case '14d':
+                startDate = formattedFourteenDaysAgo;
+                endDate = formattedYesterday;
+                break;
+            case '30d':
+                startDate = formattedThirtyDaysAgo;
+                endDate = formattedYesterday;
+                break;
+            default:
+                startDate = formattedThirtyDaysAgo;
+                endDate = formattedYesterday;
+        }
+
+        // 更新日期范围输入框的值
+        document.getElementById('dateRange').value = `${startDate} - ${endDate}`;
+
+        // 移除其他按钮的active类，并给当前按钮添加active类
+        var buttons = document.querySelectorAll('#toolbar .btn-primary');
+        buttons.forEach(function(button) {
+            button.classList.remove('active');
+        });
+        document.querySelector(`#toolbar .btn-primary[onclick="setDateRange('${days}')"]`).classList.add('active');
+
+        // 可以在这里添加额外的逻辑，比如提交表单或刷新表格
+        document.getElementById('tj').click(); // 自动触发提交按钮
+    }
+
+    // 页面加载时默认设置近30天为选中
+    window.onload = function() {
+        setDateRange('30d');
+    };
+
+    document.getElementById('tj').addEventListener('click', function(event) {
+        document.getElementById('shuaxin').click();
+    });
+</script>
