@@ -83,7 +83,7 @@ class Company extends Backend
                 }
 
                 if (isset($filter_data["store_name"])){
-                    $store_id = Db::name("store")->where(["username" => $filter_data["store_name"]])->value("id");
+                    $store_id = Db::name("store")->where(["username" =>['like',"%". $filter_data["store_name"]."%"]])->value("id");
                     $whereOr['store_id'] = ['=', $store_id];
                 }
             }
@@ -110,13 +110,13 @@ class Company extends Backend
                 ->whereOr($whereOr)
                 ->count();
 
-
-            foreach ($list as $k => $v) {
-                $list[$k]['store'] = [];
-                if ($v['store_id']){
-                    $list[$k]['store'] = Db::name("store")->where("id",$v['store_id'])->field("id,username")->find();
-                }
-            }
+//            foreach ($list as $k => $v) {
+//
+//                $list[$k]['store'] = [];
+//                if ($v['store_id']){
+//                    $list[$k]['store'] = Db::name("store")->where("id",$v['store_id'])->field("id,username")->find();
+//                }
+//            }
 
             $result = array("total" => $count, "rows" => $list);
 
