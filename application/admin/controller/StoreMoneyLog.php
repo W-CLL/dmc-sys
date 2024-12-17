@@ -42,14 +42,20 @@ Class StoreMoneyLog extends Backend{
         if($account_id){
            $where['advertiser_id'] = $account_id;
         }
+
+        $sub_wallet_id = input('sub_wallet_id');
+        if($sub_wallet_id){
+            $where['explain'] =['like',"%".$sub_wallet_id."%"];
+        }
+
         $store_id = input('store_id');
         if($store_id){
             $where['store_id'] = $store_id;
         }
-        $id = input('id');
-        if($id){
-            $where['id'] = $id;
-        }
+//        $id = input('id');
+//        if($id){
+//            $where['id'] = $id;
+//        }
 //        $interval = $startDate->diff($endDate);
 //
 //        if ($interval->m > 1 || ($interval->m == 1 && $interval->d > 0)) {
@@ -102,8 +108,14 @@ Class StoreMoneyLog extends Backend{
             ->field("id,advertiser_id")
             ->group("advertiser_id")
             ->select();
+        $sub_wallet_data =Db::name("qc_share_wallet")
+            ->field("id,sub_wallet_id")
+            ->where(['bind_store_id'=>['gt',0]])
+//            ->group("advertiser_id")
+            ->select();
         $store_data = Db::name('store')->field("id,username")->select();
         $this->assign('account_data',$account_data?:[]);
+        $this->assign('sub_wallet_data',$sub_wallet_data?:[]);
         $this->assign('store_data',$store_data);
         return $this->view->fetch();
     }

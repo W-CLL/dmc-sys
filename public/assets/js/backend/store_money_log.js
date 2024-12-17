@@ -87,7 +87,8 @@ define(['jquery', 'bootstrap', 'company', 'table', 'form'], function ($, undefin
                     params.account_id = document.getElementById('account_id').value;
                     params.store_id = document.getElementById('store_id').value;
                     params.money = document.getElementById('money').value;
-                    params.id = document.getElementById('id').value;
+                    // params.id = document.getElementById('id').value;
+                    params.sub_wallet_id = document.getElementById('sub_wallet_id').value;
                     return params;
                 }
             });
