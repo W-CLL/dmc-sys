@@ -117,12 +117,6 @@ class SubWallet extends Store
                 if($result['code'] != 0 && $result['message'] != 'OK'){
                     throw new Exception($result['message']);
                 }
-                $update_data = [
-                    'record' => json_encode($result, JSON_UNESCAPED_UNICODE),
-                    'transfer_serial' => $result['data']['transfer_serial'],
-                    'update_time' => time()
-                ];
-                $this->TransferLogModel->where(['id' => $swtl_id])->update($update_data);
                 Db::commit();
             }catch (\Exception $e){
                 Db::rollback();
@@ -130,9 +124,17 @@ class SubWallet extends Store
                 \think\Log::write($e->getMessage(),'excMsg');
                 $this->error($e->getMessage());
             }
+            $update_data = [
+                'record' => json_encode($result, JSON_UNESCAPED_UNICODE),
+                'transfer_serial' => $result['data']['transfer_serial'],
+                'update_time' => time()
+            ];
+            if(!$this->TransferLogModel->where(['id' => $swtl_id])->update($update_data)){
+                \think\Log::write($result,'shareWalletTransferResult');
+            }
             // 等待1秒,等接口处理完成再查询
             sleep(1);
-            $bool = $this->checkTransferStatus($swtl_id,$post,$insert_data,$store);  // 改动此方法时，需要同步修改定时任务类的方法
+            $bool = $this->checkTransferStatus($swtl_id,$post,$insert_data,$store,$result['data']['transfer_serial']);  // 改动此方法时，需要同步修改定时任务类的方法
             if($bool){
                 //添加同步转账记录任务
                 //暂时转入才同步
@@ -343,13 +345,12 @@ class SubWallet extends Store
     /**
      * 查询转账状态
      */
-    private function checkTransferStatus($swtl_id,$post,$insert_data,$store){
+    private function checkTransferStatus($swtl_id,$post,$insert_data,$store,$transfer_serial){
         $return_bool = false;
         $token = $this->token;
         $account_id = $this->account_id;
         $account_type = $this->account_type;
         $biz_request_no = $this->generateRandomString();
-        $transfer_serial = $this->TransferLogModel->where(['id'=>$swtl_id])->value('transfer_serial');
         $data = FundManagement::check_transfer_detail($token, $account_id, $account_type, $biz_request_no, $transfer_serial);
         $swtl_info = $this->TransferLogModel->where(['id'=>$swtl_id])->find();
         Db::startTrans();

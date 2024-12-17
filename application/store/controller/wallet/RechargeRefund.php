@@ -10,6 +10,7 @@ use jlqc\FundManagement;
 use think\Cache;
 use think\Db;
 use think\Exception;
+use think\Log;
 
 
 class RechargeRefund extends Store
@@ -137,10 +138,6 @@ class RechargeRefund extends Store
                     throw new Exception("发起转账失败");
                 }
 
-                $transfer_records_data['transfer_serial'] = $data['data']['transfer_serial'];
-                $transfer_records_data['record'] = json_encode($data, JSON_UNESCAPED_UNICODE);
-                $transfer_records_data['update_time'] = time();
-                Db::name("transfer_records")->where(["id" => $transfer_records_id])->update($transfer_records_data);
                 Db::commit();
                 //添加同步转账记录任务
                 //暂时转入账户才同步
@@ -158,6 +155,12 @@ class RechargeRefund extends Store
             } catch (\Exception $e) {
                 Db::rollback();
                 $this->error($e->getMessage());
+            }
+            $transfer_records_data['transfer_serial'] = $data['data']['transfer_serial'];
+            $transfer_records_data['record'] = json_encode($data, JSON_UNESCAPED_UNICODE);
+            $transfer_records_data['update_time'] = time();
+            if(!Db::name("transfer_records")->where(["id" => $transfer_records_id])->update($transfer_records_data)){
+                \think\Log::write($data,"qcTransferResult");
             }
 
             $explain_record = [];
