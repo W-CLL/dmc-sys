@@ -99,6 +99,7 @@ class Operator extends Backend
             $data['id'] = input("id");
             $data['name'] = input("name");
             $data['type'] = input("type");
+            $data['status'] = input("status");
 
             if (empty($data['id'])) {
                 $this->error("数据异常，请刷新后重试");
@@ -109,8 +110,8 @@ class Operator extends Backend
                 $this->error('该角色已存在名称，请检查！');
             }
 
-            $store = $this->model->update($data);
-            if (!$store) {
+            $result = $this->model->update($data);
+            if (!$result) {
                 $this->error("更新失败");
             }
             $this->success('修改成功');

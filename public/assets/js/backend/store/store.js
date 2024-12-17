@@ -9,6 +9,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', 'bootstrap-table-fixe
                     add_url: 'store/store/add',
                     edit_url: 'store/store/edit',
                     multi_url: 'store/store/multi',
+                    del_url: 'store/store/del',
                     transfer_records_url :"transfer_records/index",
                     bind_url: 'store/store/bind_bank_sub_account',
                     table: 'store',

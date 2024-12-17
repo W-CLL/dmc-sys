@@ -8,7 +8,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', 'bootstrap-table-fixe
                     index_url: 'operate_monitor/operator/index',
                     add_url: 'operate_monitor/operator/add',
                     edit_url: 'operate_monitor/operator/edit',
-                    multi_url: 'operate_monitor/operator/multi',
+                    del_url: 'operate_monitor/operator/del',
                     table: 'operator',
                 }
             });
@@ -54,15 +54,6 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', 'bootstrap-table-fixe
             Controller.api.bindevent();
         },
         edit: function () {
-            Controller.api.bindevent();
-        },
-        bind_bank_sub_account: function () {
-            Controller.api.bindevent();
-        },
-        edit_sub_account: function () {
-            Controller.api.bindevent();
-        },
-        transfer_records: function () {
             Controller.api.bindevent();
         },
         api: {
