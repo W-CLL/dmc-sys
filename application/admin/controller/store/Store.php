@@ -12,6 +12,7 @@ use think\Db;
 
 
 use app\admin\model\ZhSubAccount;
+use think\Exception;
 
 /**
  * 商户管理
@@ -165,8 +166,8 @@ class Store extends Backend
             $data['public_discount_percentage'] = input("public_discount_percentage",0);
             $data['private_discount_percentage'] = input("private_discount_percentage",0);
             $data['status'] = input("status",0);
-            $data['public_credit_limit'] = input("public_credit_limit",0);
-            $data['private_credit_limit'] = input("private_credit_limit",0);
+//            $data['public_credit_limit'] = input("public_credit_limit",0);
+//            $data['private_credit_limit'] = input("private_credit_limit",0);
             if (empty($data['id'])){
                 $this->error("数据异常，请刷新后重试");
             }
@@ -174,11 +175,18 @@ class Store extends Backend
             if (empty($store)){
                 $this->error("数据异常，请刷新后重试");
             }
-
+            //加余额
             $public_add_money = input("public_add_money",0);
             $private_add_money = input("private_add_money",0);
+            //扣余额
             $public_deduct_money = input("public_deduct_money",0);
             $private_deduct_money = input("private_deduct_money",0);
+            //加额度（包含负数）
+            $public_add_credit_money = input("public_add_credit_money",0);
+            $private_add_credit_money= input("private_add_credit_money",0);
+            //手动清账（得大于零）
+            $public_clear_money = input("public_clear_money",0);
+            $private_clear_money = input("private_clear_money",0);
             $admin_list = input("adminList/a");
 
             $money_log = [];
@@ -201,6 +209,21 @@ class Store extends Backend
                     throw new \Exception('扣款失败,余额不足(私账)');
                 }
 
+                if (!$this->editCreditMoney($public_add_credit_money,$store,1,$money_log)){
+                    throw new \Exception('修改额度失败(公账)');
+                }
+
+                if (!$this->editCreditMoney($private_add_credit_money,$store,2,$money_log)){
+                    throw new \Exception('修改额度失败(私账)');
+                }
+
+                if(!$this->manualClearMoney($public_clear_money,$store,1)){
+                    throw new \Exception('手动清账失败(公账)');
+                }
+
+                if(!$this->manualClearMoney($private_clear_money,$store,2)){
+                    throw new \Exception('手动清账失败(私账)');
+                }
 
                 Db::name("store")->update($data);
                 if (!empty($money_log)){
@@ -237,20 +260,11 @@ class Store extends Backend
 
         $admin_model = model('Admin');
 
-
-//        $sales_data = $admin_model
-//            ->alias('a')
-//            ->join('AuthGroupAccess aga', 'a.id = aga.uid')
-//            ->join('AuthGroup ag', 'aga.group_id = ag.id')
-//            ->where('ag.name', 'like', '%销售%')
-//            ->column('a.id, a.nickname');
-
         $admin_data = $admin_model::admin_nickname();
         $admin_ids = Db::name("store_admin_access")->where("store_id",$ids)->column("admin_id");
         $this->view->assign('adminList', build_select('adminList[]', $admin_data, $admin_ids, ['class'=>'form-control selectpicker', 'data-rule'=>'required','data-live-search'=>'true']));
         $this->view->assign("row",$row);
         $this->view->assign('groupList', build_select('group_id', Db::name("store_group")->column('id,name'), $row['group_id'], ['class' => 'form-control selectpicker']));
-//        $this->view->assign('salesList', build_select('sale_id', $sales_data, $row['sale_id'], ['class' => 'form-control selectpicker','data-live-search'=>'true','data-rule'=>'required']));
 
         return $this->view->fetch();
     }
@@ -289,6 +303,135 @@ class Store extends Backend
         return true;
     }
 
+    private function editCreditMoney($money, $store, $account_type, &$money_log)
+    {
+        if (is_numeric($money) ){
+            // 判断额度是否足够扣
+            $account_type == 1?$updateField = 'public_credit_limit':$updateField='private_credit_limit';
+            if($money < 0 && (abs($money) > $store[$updateField]) ){
+                return false;
+            }
+            $data = [
+                'admin_id'=>$this->auth->id,
+                'admin_username'=>$this->auth->username,
+                'store_id' => $store['id'],
+                'money' => abs($money),
+                "account_type" => $account_type,
+                'type' => 2,
+                'explain' => '管理员'.$this->auth->username .($money>0?'增加':'扣除'). '额度'. abs($money) .'元' . ($account_type == 1?'(公账额度)':'(私账额度)'),
+                'create_time' => time(),
+            ];
+
+            $updateMoney = $money > 0 ? $store[$updateField] + $money : $store[$updateField] - abs($money);
+
+            if (!Db::name("store")->where('id',$store['id'])->update([$updateField=>$updateMoney])) {
+                return false;
+            }
+            if($money>0){
+                $data['credit_limit_surplus'] = round($store[$updateField] + $updateMoney,2);
+            }else{
+                $data['credit_limit_surplus'] = round($store[$updateField] - abs($money),2);
+            }
+
+            $money_log[] = $data;
+        }
+        return true;
+    }
+
+
+    /**
+     * 手动清账
+     * @param $money
+     * @param $store
+     * @param $account_type
+     * @return true
+     */
+    private function manualClearMoney($money, $store, $account_type){
+        if($money>0) {
+            Db::startTrans();
+            try {
+                $actual_money = $money;
+                $deduction_credit_limit = 0;
+                if ($account_type == 1) {
+                    $before_money_field = 'public_money';
+                    $before_limit_field = 'public_credit_limit';
+                    $handler_spending_field = 'public_spending_credit_limit';
+                    $explain_field = "公账";
+                } else {
+                    $before_money_field = 'private_money';
+                    $before_limit_field = 'private_credit_limit';
+                    $handler_spending_field = 'private_spending_credit_limit';
+                    $explain_field = "私账";
+                }
+
+                $before_money = $store[$before_money_field];
+                $before_limit = $store[$before_limit_field];
+                $explain = "充值" . $explain_field . "钱包" . $money . "元";
+                if ($store[$handler_spending_field] > 0) {
+                    $explain .= ",已使用" . $explain_field . "授信额度" . $store[$handler_spending_field] . "元,";
+                    if ($store[$handler_spending_field] >= $money) {
+                        if (!Db::name("store")->where(['id' => ["=", $store['id']], $handler_spending_field => ['>=', $money]])->setDec($handler_spending_field, $money)) {
+                            throw new \Exception('扣除授信额度失败');
+                        }
+                        $actual_money = 0;
+                        $deduction_credit_limit = $money;
+                        $explain .= "扣除" . $money . "元";
+                    } else {
+                        $actual_money = $money - $store[$handler_spending_field];
+                        $deduction_credit_limit = $store[$handler_spending_field];
+
+                        Db::name("store")->where('id', $store['id'])->update([$handler_spending_field => 0]);
+                        $explain .= "扣除" . $store[$handler_spending_field] . "元";
+                    }
+                    $explain .= "实际到账" . $actual_money . "元";
+                    Db::name("store")->where("id", $store['id'])->setInc($before_limit_field, $deduction_credit_limit);
+                }
+                if ($actual_money > 0) {
+                    Db::name("store")->where(['id' => $store['id']])->setInc($before_money_field, $actual_money);
+                }
+
+//            dump(floatval($before_money));
+//            die;
+                Db::name("store_money_log")->insert([
+                    "admin_id" => $this->auth->id,
+                    "admin_username" => $this->auth->username,
+                    "store_id" => $store["id"],
+                    "username" => $store["username"],
+                    "money" => $money,
+                    "actual_money" => $actual_money,
+                    "account_type" => $account_type,
+                    "deduction_credit_limit" => $deduction_credit_limit,
+                    "receipt_image" => '',
+                    "before_money" => $before_money,
+                    "today_money" => floatval($before_money) + floatval($actual_money),
+                    "order_number" => "manual" . round(microtime(true) * 1000),
+                    "type" => 3,
+                    "explain" => $explain,
+                    "create_time" => time(),
+                    "balance_surplus" => (float)$before_money + (float)$actual_money,
+                    "credit_limit_surplus" => (float)$before_limit + (float)$deduction_credit_limit
+                ]);
+
+                // 提交事务
+                Db::commit();
+
+            } catch (\Exception $e) {
+                // 回滚事务
+                Db::rollback();
+                throw  new Exception($e->getMessage());
+            }
+
+            $user_ids = Db::name("financial_staff")->where(["state" => 1])->column("user_id");
+            if (!empty($user_ids)) {
+                $media_id = Api::media_upload(ROOT_PATH . "public");
+                if (!empty($media_id)) {
+                    $user_ids = implode("|", $user_ids);
+                    Api::send_image_messages($user_ids, $media_id);
+                }
+            }
+        }
+        return true;
+    }
 
     public function deduct_money($deduct_money,$store,$account_type,&$money_log){
         if (is_numeric($deduct_money) && $deduct_money > 0){
@@ -472,6 +615,9 @@ class Store extends Backend
     }
 
 
+
+
+
     /**
      * 关闭子账户（招行）
      */
@@ -493,6 +639,7 @@ class Store extends Backend
             $this->error('关闭子账户失败');
         }
     }
+
 
 
 

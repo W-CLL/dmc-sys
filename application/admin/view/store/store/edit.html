@@ -2,94 +2,25 @@
     {:token()}
     <input type="hidden" name="id" value="{$row.id}">
 
+
     <div class="form-group">
         <label class="control-label col-xs-12 col-sm-2">业务员(录单):</label>
         <div class="col-xs-12 col-sm-4">
             {$adminList}
         </div>
-    </div>
-
-    <div class="form-group">
         <label class="control-label col-xs-12 col-sm-2">{:__('Group')}:</label>
         <div class="col-xs-12 col-sm-4">
             {$groupList}
         </div>
     </div>
 
-<!--    <div class="form-group">-->
-<!--        <label class="control-label col-xs-12 col-sm-2">销售员:</label>-->
-<!--        <div class="col-xs-12 col-sm-4">-->
-
-<!--        </div>-->
-<!--    </div>-->
-
     <div class="form-group">
         <label for="c-username" class="control-label col-xs-12 col-sm-2">用户名:</label>
         <div class="col-xs-12 col-sm-4">
             <input id="c-username"  class="form-control" name="username" type="text" value="{$row.username}" placeholder="用户名" />
         </div>
-    </div>
-
-    <div class="form-group">
-        <label for="c-public_credit_limit" class="control-label col-xs-12 col-sm-2">授信额度(公):</label>
-        <div class="col-xs-12 col-sm-4">
-            <input id="c-public_credit_limit"  class="form-control" name="public_credit_limit" type="number" value="{$row.public_credit_limit}" placeholder="授信额度(公)" />
-        </div>
-    </div>
-
-    <div class="form-group">
-        <label for="c-private_credit_limit" class="control-label col-xs-12 col-sm-2">授信额度(私):</label>
-        <div class="col-xs-12 col-sm-4">
-            <input id="c-private_credit_limit"  class="form-control" name="private_credit_limit" type="number" value="{$row.private_credit_limit}" placeholder="授信额度(私)" />
-        </div>
-    </div>
-
-    <div class="form-group">
-        <label for="c-public_discount_percentage" class="control-label col-xs-12 col-sm-2">折扣比例(公):</label>
-        <div class="col-xs-12 col-sm-4">
-            <input id="c-public_discount_percentage"  class="form-control" name="public_discount_percentage" type="number" value="{$row.public_discount_percentage}" placeholder="折扣比例(公)" />
-        </div>
-    </div>
-
-    <div class="form-group">
-        <label for="c-private_discount_percentage" class="control-label col-xs-12 col-sm-2">折扣比例(私):</label>
-        <div class="col-xs-12 col-sm-4">
-            <input id="c-private_discount_percentage"  class="form-control" name="private_discount_percentage" type="number" value="{$row.private_discount_percentage}" placeholder="折扣比例(私)" />
-        </div>
-    </div>
-
-    <div class="form-group">
-        <label for="c-public_add_money" class="control-label col-xs-12 col-sm-2">添加金额(公):</label>
-        <div class="col-xs-12 col-sm-4">
-            <input id="c-public_add_money"  class="form-control" name="public_add_money" type="number" value="" placeholder="添加金额(公)" />
-        </div>
-    </div>
-
-    <div class="form-group">
-        <label for="c-private_add_money" class="control-label col-xs-12 col-sm-2">添加金额(私):</label>
-        <div class="col-xs-12 col-sm-4">
-            <input id="c-private_add_money"  class="form-control" name="private_add_money" type="number" value="" placeholder="添加金额(私)" />
-        </div>
-    </div>
-
-    <div class="form-group">
-        <label for="c-public_deduct_money" class="control-label col-xs-12 col-sm-2">扣除金额(公):</label>
-        <div class="col-xs-12 col-sm-4">
-            <input id="c-public_deduct_money" class="form-control" name="public_deduct_money" type="number" value="" placeholder="扣除金额(公)"  />
-        </div>
-    </div>
-
-    <div class="form-group">
-        <label for="c-private_deduct_money" class="control-label col-xs-12 col-sm-2">扣除金额(私):</label>
-        <div class="col-xs-12 col-sm-4">
-            <input id="c-private_deduct_money" class="form-control" name="private_deduct_money" type="number" value="" placeholder="扣除金额(私)"  />
-        </div>
-    </div>
-
-
-    <div class="form-group">
         <label class="control-label col-xs-12 col-sm-2">{:__('Status')}:</label>
-        <div class="col-xs-12 col-sm-8">
+        <div class="col-xs-12 col-sm-4">
             <div class="radio">
                 <label>
                     <input name="status" {if $row.status == 0}checked{/if} type="radio" value="0"> 禁用
@@ -100,6 +31,97 @@
             </div>
         </div>
     </div>
+
+    <div class="form-group">
+        <label for="c-public_credit_limit" class="control-label col-xs-12 col-sm-2">现有额度(公):</label>
+        <div class="col-xs-12 col-sm-4">
+            <input id="c-public_credit_limit" class="form-control" name="public_credit_limit" type="number" disabled value="{$row.public_credit_limit}" placeholder="授信额度(公)" />
+        </div>
+        <label for="c-private_credit_limit" class="control-label col-xs-12 col-sm-2">现有额度(私):</label>
+        <div class="col-xs-12 col-sm-4">
+            <input id="c-private_credit_limit" class="form-control" name="private_credit_limit" type="number"  disabled value="{$row.private_credit_limit}" placeholder="授信额度(私)" />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="c-public_spending_credit_limit" class="control-label col-xs-12 col-sm-2">已用额度(公):</label>
+        <div class="col-xs-12 col-sm-4">
+            <input id="c-public_spending_credit_limit" class="form-control" name="public_spending_credit_limit" type="number" disabled value="{$row.public_spending_credit_limit}" placeholder="授信额度(公)" />
+        </div>
+        <label for="c-private_spending_credit_limit" class="control-label col-xs-12 col-sm-2">已用额度(私):</label>
+        <div class="col-xs-12 col-sm-4">
+            <input id="c-private_spending_credit_limit" class="form-control" name="private_spending_credit_limit" type="number" disabled value="{$row.private_spending_credit_limit}" placeholder="授信额度(私)" />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="c-public_discount_percentage" class="control-label col-xs-12 col-sm-2">折扣比例(公):</label>
+        <div class="col-xs-12 col-sm-4">
+            <input id="c-public_discount_percentage" class="form-control" name="public_discount_percentage" type="number" value="{$row.public_discount_percentage}" placeholder="折扣比例(公)" />
+        </div>
+        <label for="c-private_discount_percentage" class="control-label col-xs-12 col-sm-2">折扣比例(私):</label>
+        <div class="col-xs-12 col-sm-4">
+            <input id="c-private_discount_percentage" class="form-control" name="private_discount_percentage" type="number" value="{$row.private_discount_percentage}" placeholder="折扣比例(私)" />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="c-public_add_money" class="control-label col-xs-12 col-sm-2">添加金额(公):</label>
+        <div class="col-xs-12 col-sm-4">
+            <input id="c-public_add_money" class="form-control" name="public_add_money" type="number" value="" placeholder="添加金额(公)" />
+        </div>
+        <label for="c-private_add_money" class="control-label col-xs-12 col-sm-2">添加金额(私):</label>
+        <div class="col-xs-12 col-sm-4">
+            <input id="c-private_add_money" class="form-control" name="private_add_money" type="number" value="" placeholder="添加金额(私)" />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="c-public_deduct_money" class="control-label col-xs-12 col-sm-2">扣除金额(公):</label>
+        <div class="col-xs-12 col-sm-4">
+            <input id="c-public_deduct_money" class="form-control" name="public_deduct_money" type="number" value="" placeholder="扣除金额(公)" />
+        </div>
+        <label for="c-private_deduct_money" class="control-label col-xs-12 col-sm-2">扣除金额(私):</label>
+        <div class="col-xs-12 col-sm-4">
+            <input id="c-private_deduct_money" class="form-control" name="private_deduct_money" type="number" value="" placeholder="扣除金额(私)" />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="c-public_add_credit_money" class="control-label col-xs-12 col-sm-2">增加额度(公):</label>
+        <div class="col-xs-12 col-sm-4">
+            <input id="c-public_add_credit_money" class="form-control" name="public_add_credit_money" type="number" value="" placeholder="额度可填负数" />
+        </div>
+        <label for="c-private_add_credit_money" class="control-label col-xs-12 col-sm-2">增加额度(私):</label>
+        <div class="col-xs-12 col-sm-4">
+            <input id="c-private_add_credit_money" class="form-control" name="private_add_credit_money" type="number" value="" placeholder="额度可填负数" />
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-public_clear_money" class="control-label col-xs-12 col-sm-2">手动清账(公):</label>
+        <div class="col-xs-12 col-sm-4">
+            <input id="c-public_clear_money" class="form-control" name="public_clear_money" type="number" value="" placeholder="手动清账(公)" />
+        </div>
+        <label for="c-private_clear_money" class="control-label col-xs-12 col-sm-2">手动清账(私):</label>
+        <div class="col-xs-12 col-sm-4">
+            <input id="c-private_clear_money" class="form-control" name="private_clear_money" type="number" value="" placeholder="手动清账(私)" />
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">手动清账解释:</label>
+        <div class="col-xs-12 col-sm-10">
+            <i class="fa fa-question" data-toggle="tooltip" data-placement="top" title="当客户通过自助页面充值，充值不上的订单出现问题时，可手动清账，清除金额就是客户付款金额。
+清账逻辑：把充值的金额先还已经使用的额度，再把额度返还到总额度，如果超出则超出部分充到余额（钱包里）
+如：1、充值（清账）金额：101，已用额度：100，现有额度：50，钱包余额：0
+手动清账后：已使用额度：0，现有额度：150，钱包余额：1
+2、充值（清账）金额：90，已用额度：100，现有额度：50，钱包余额：0
+手动清账后：已使用额度：10，现有额度：140，钱包余额：0"></i>
+        </div>
+    </div>
+
+
+
+
     <div class="form-group layer-footer">
         <label class="control-label col-xs-12 col-sm-2"></label>
         <div class="col-xs-12 col-sm-8">
@@ -108,3 +130,10 @@
         </div>
     </div>
 </form>
+
+<script src="/assets/libs/jquery/dist/jquery.min.js"></script>
+<script>
+    $(document).ready(function(){
+        $('[data-toggle="tooltip"]').tooltip();
+    });
+</script>
