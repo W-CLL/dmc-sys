@@ -187,6 +187,13 @@ class Store extends Backend
             //手动清账（得大于零）
             $public_clear_money = input("public_clear_money",0);
             $private_clear_money = input("private_clear_money",0);
+            $clear_image = input("clear_image");
+            if($private_clear_money<0 || $public_clear_money<0 ){
+                $this->error("手动清账金额不能小于0");
+            }
+            if(($private_clear_money>0 || $public_clear_money>0) && empty($clear_image)){
+                $this->error("请上传转账截图");
+            }
             $admin_list = input("adminList/a");
 
             $money_log = [];
@@ -217,11 +224,11 @@ class Store extends Backend
                     throw new \Exception('修改额度失败(私账)');
                 }
 
-                if(!$this->manualClearMoney($public_clear_money,$store,1)){
+                if(!$this->manualClearMoney($public_clear_money,$store,1,$clear_image)){
                     throw new \Exception('手动清账失败(公账)');
                 }
 
-                if(!$this->manualClearMoney($private_clear_money,$store,2)){
+                if(!$this->manualClearMoney($private_clear_money,$store,2,$clear_image)){
                     throw new \Exception('手动清账失败(私账)');
                 }
 
@@ -344,9 +351,11 @@ class Store extends Backend
      * @param $money
      * @param $store
      * @param $account_type
+     * @param string $clear_image
      * @return true
+     * @throws Exception
      */
-    private function manualClearMoney($money, $store, $account_type){
+    private function manualClearMoney($money, $store, $account_type,$clear_image=''){
         if($money>0) {
             Db::startTrans();
             try {
@@ -390,8 +399,6 @@ class Store extends Backend
                     Db::name("store")->where(['id' => $store['id']])->setInc($before_money_field, $actual_money);
                 }
 
-//            dump(floatval($before_money));
-//            die;
                 Db::name("store_money_log")->insert([
                     "admin_id" => $this->auth->id,
                     "admin_username" => $this->auth->username,
@@ -401,7 +408,7 @@ class Store extends Backend
                     "actual_money" => $actual_money,
                     "account_type" => $account_type,
                     "deduction_credit_limit" => $deduction_credit_limit,
-                    "receipt_image" => '',
+                    "receipt_image" => $clear_image,
                     "before_money" => $before_money,
                     "today_money" => floatval($before_money) + floatval($actual_money),
                     "order_number" => "manual" . round(microtime(true) * 1000),
@@ -423,7 +430,8 @@ class Store extends Backend
 
             $user_ids = Db::name("financial_staff")->where(["state" => 1])->column("user_id");
             if (!empty($user_ids)) {
-                $media_id = Api::media_upload(ROOT_PATH . "public");
+                $media_id = Api::media_upload(ROOT_PATH . "public".$clear_image);
+
                 if (!empty($media_id)) {
                     $user_ids = implode("|", $user_ids);
                     Api::send_image_messages($user_ids, $media_id);
