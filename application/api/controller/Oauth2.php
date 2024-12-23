@@ -351,4 +351,36 @@ class Oauth2 extends Api {
 
 
 
+    // 获取广告主负责人名称
+    public function getKahuna(){
+        // 防止并发导致数据表锁死
+        $queueSum = Db::name("queue_record")->where(['queue_name'=>'updateObjStatus','status'=>0])->count();
+        if ($queueSum > 0){
+            echo "每日更新队列尚未消费完成";
+            return;
+        }
+
+        $advertiser_ids = Db::name("company")->where('kahuna', null)->column("advertiser_id");
+        if(empty($advertiser_ids)){
+            echo '无更新';
+            return;
+        }
+        $access_token = Cache::get("qc_access_token");
+        $advertiser_ids = array_map(function ($item){
+            return (int)$item;
+        },$advertiser_ids);
+        foreach ($advertiser_ids as $key => $split){
+            $res1 = FundManagement::get_ad_info($access_token,json_encode([$split],JSON_UNESCAPED_UNICODE));
+            if($res1['code'] == 0){
+                $arr['kahuna'] = $res1['data']['account_detail_list'][0]['optimizer_name'];
+                if(!Db::name('company')->where(['advertiser_id'=>$split])->update($arr)){
+                    throw new \Exception('出错');
+                }
+            }
+        }
+        echo '完成';
+    }
+
+
+
 }

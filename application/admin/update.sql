@@ -216,4 +216,7 @@ ALTER TABLE fa_qc_obj
     ADD COLUMN `marketing_goal` tinyint(1) DEFAULT 0 COMMENT '营销目标(0:未知 1:推商品  2:推直播间)',
     ADD COLUMN `ad_create_time` bigint(16) NOT NULL COMMENT '广告创建时间';
 
+ALTER TABLE fa_queue_record
+    ADD NORMAL INDEX queue_name (queue_name);
+
 
