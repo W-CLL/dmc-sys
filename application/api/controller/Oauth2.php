@@ -373,9 +373,11 @@ class Oauth2 extends Api {
             $res1 = FundManagement::get_ad_info($access_token,json_encode([$split],JSON_UNESCAPED_UNICODE));
             if($res1['code'] == 0){
                 $arr['kahuna'] = $res1['data']['account_detail_list'][0]['optimizer_name'];
-                if(!Db::name('company')->where(['advertiser_id'=>$split])->update($arr)){
-                    throw new \Exception('出错');
-                }
+            }else{
+                $arr['kahuna'] = '';
+            }
+            if(!Db::name('company')->where(['advertiser_id'=>$split])->update($arr)){
+                throw new \Exception('出错');
             }
         }
         echo '完成';
