@@ -159,7 +159,13 @@ define(['jquery', 'bootstrap', 'company', 'table', 'form'], function ($, undefin
                                 }
                             }], table: table, events: Table.api.events.operate, formatter: Table.api.formatter.operate},
                     ]
-                ]
+                ],
+                queryParams:function (params) {
+                    let time_data = document.getElementById('dateRange').value.split(' - ');
+                    params.start_date = time_data[0];
+                    params.end_date = time_data[1];
+                    return params;
+                }
             });
 
             // 为表格绑定事件

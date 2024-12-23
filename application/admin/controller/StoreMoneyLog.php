@@ -128,6 +128,10 @@ Class StoreMoneyLog extends Backend{
             $order = input("order","desc");
             $offset = input("offset",0);
             $limit = input("limit",10);
+            $start_date = input("start_date");
+            $end_date = input("end_date");
+            $startDate =strtotime($start_date);
+            $endDate = strtotime($end_date." 23:59:59");
             $where = ["type"=>["=",3]];
             $store_ids = $this->get_store_ids();
             if (is_array($store_ids)) {
@@ -135,6 +139,9 @@ Class StoreMoneyLog extends Backend{
                     return json(["total" => 0, "rows" => []]);
                 }
                 $where["store_id"] = ["in",$store_ids];
+            }
+            if($startDate && $endDate){
+                $where['create_time'] = ["between",[$startDate,$endDate]];
             }
 
             $list = StoreMoneyLogModel::with("StoreAdminAccess")
