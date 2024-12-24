@@ -177,11 +177,11 @@ Class StoreMoneyLog extends Backend{
             $auditing_explain = input("auditing_explain");
             if ($status == 1 || $status == 2){
                 if (Db::name("store_money_log")->where(["id"=>$ids,"status"=>0])->update(["auditing_admin_id"=>$this->auth->id,"auditing_explain"=>$auditing_explain,"status"=>$status,'update_time'=>time()])){
-                    $this->success("修改成功","store_money_log/recharge_list");
+                    $this->success("修改成功");
                 }
-                $this->error("该账单已审核","store_money_log/recharge_list");
+                $this->error("该账单已审核");
             }
-            $this->error("参数错误，请刷新后重试","store_money_log/recharge_list");
+            $this->error("参数错误，请重试");
         }
         $data = Db::name("store_money_log")->where(["id"=>$ids])->find();
         $this->assign("data",$data);

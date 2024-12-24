@@ -146,9 +146,9 @@ define(['jquery', 'bootstrap', 'company', 'table', 'form'], function ($, undefin
 
                         {field: 'create_time', title:"时间" ,formatter: Table.api.formatter.datetime},
                         {field: 'operate', title: __('Operate'), buttons: [{
-                                name: "transfer_records",
+                                name: "auditing",
                                 text: "审核",//按钮名称
-                                classname: 'btn btn-xs btn-success btn-magic ',
+                                classname: 'btn btn-xs btn-success btn-dialog',
                                 // classname: 'btn btn-xs btn-success btn-magic btn-dialog',
                                 icon: '',
                                 url: 'store_money_log/auditing',//指向控制器对应方法
@@ -170,6 +170,9 @@ define(['jquery', 'bootstrap', 'company', 'table', 'form'], function ($, undefin
 
             // 为表格绑定事件
             Table.api.bindevent(table);
+        },
+        auditing: function () {
+            Controller.api.bindevent();
         },
         api: {
             bindevent: function () {
