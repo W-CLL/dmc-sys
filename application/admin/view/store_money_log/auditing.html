@@ -104,13 +104,16 @@
         <label  class="control-label col-xs-12 col-sm-2">{:__('Status')}:</label>
         <div class="col-xs-12 col-sm-4">
             <div class="button">
-                <button type="button" class="btn btn-success btn-embossed disabled">
-                    {if $data.status == 1}
+                {if $data.status == 1}
+                    <button type="button" class="btn btn-success btn-embossed disabled">
                     已通过
-                    {else/}
+                    </button>
+                {else/}
+                    <button type="button" class="btn btn-danger btn-embossed disabled">
                     不通过
-                    {/if}
-                </button>
+                    </button>
+                {/if}
+
             </div>
         </div>
     </div>

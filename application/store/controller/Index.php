@@ -93,7 +93,7 @@ class Index extends Store
                 'password'  => $password,
 //                '__token__' => $token,
             ];
-            if (Config::get('fastadmin.login_captcha')) {
+            if (Config::get('store_fastadmin.login_captcha')) {
                 $rule['captcha'] = 'require|captcha';
                 $data['captcha'] = $this->request->post('captcha');
             }
@@ -114,7 +114,7 @@ class Index extends Store
             }
         }
 
-        $background = Config::get('fastadmin.login_background');
+        $background = Config::get('store_fastadmin.login_background');
         $background = $background ? (stripos($background, 'http') === 0 ? $background : config('site.cdnurl') . $background) : '';
         $this->view->assign('keeyloginhours', $keeyloginhours);
         $this->view->assign('background', $background);

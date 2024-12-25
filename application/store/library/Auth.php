@@ -48,7 +48,7 @@ class Auth extends \fast\Auth
             $this->setError('账号未启用');
             return false;
         }
-        if (Config::get('fastadmin.login_failure_retry') && $store_data['loginfailure'] >= 10 && time() - $store_data['update_time'] < 86400) {
+        if (Config::get('store_fastadmin.login_failure_retry') && $store_data['loginfailure'] >= 10 && time() - $store_data['update_time'] < 86400) {
             $this->setError('请在1天后重试');
             return false;
         }
@@ -474,7 +474,7 @@ class Auth extends \fast\Auth
         $menu = $nav = '';
         $showSubmenu = config('fastadmin.show_submenu');
 
-        if (Config::get('fastadmin.multiplenav')) {
+        if (Config::get('store_fastadmin.multiplenav')) {
 
             $topList = [];
             foreach ($ruleList as $index => $item) {

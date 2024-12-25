@@ -18,15 +18,15 @@
         .login-screen {
             max-width: 430px;
             padding: 0;
-            margin: 100px auto 0 auto;
+            margin: 250px auto 0 auto;
 
         }
 
         .login-screen .well {
-            border-radius: 3px;
+            border-radius: 7px;
             -webkit-box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
             box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
-            background: rgba(255, 255, 255, 1);
+            background: rgba(255, 255, 255, 0.7); /* 将背景颜色设置为半透明 */
             border: none;
             /*overflow: hidden;*/
             padding: 0;
@@ -39,23 +39,27 @@
         }
 
         .profile-img-card {
-            width: 100px;
-            height: 100px;
+            width: 50px;
+            height: 50px;
             display: block;
             -moz-border-radius: 50%;
             -webkit-border-radius: 50%;
             border-radius: 50%;
-            margin: -93px auto 30px;
+            margin: 0px auto 20px;
             border: 5px solid #fff;
         }
 
         .profile-name-card {
-            text-align: center;
+            margin: 10px auto 20px;
+            text-align: left;
+            font-size: 20px;
+            font-weight: bold;
+            color:#0d0d0d;
         }
 
         .login-head {
             background: #899fe1;
-            border-radius: 3px 3px 0 0;
+            border-radius: 7px 7px 0 0;
         }
 
         .login-form {
@@ -79,25 +83,41 @@
     </style>
     <!--@formatter:off-->
     {if $background}
-        <style type="text/css">
-            body{
-                background-image: url('{$background}');
-            }
-        </style>
+    <style type="text/css">
+        body {
+            color: #999;
+            background: #f1f4fd url('{$background}') no-repeat center center fixed;
+            background-size: cover;
+        }
+    </style>
     {/if}
     <!--@formatter:on-->
 </head>
 <body>
 <div class="container">
     <div class="login-wrapper">
-        <div class="login-screen">
+        <div class="col-xs-12 col-sm-8">
+
+        </div>
+        <div class="login-screen col-xs-12 col-sm-4">
+
             <div class="well">
+                <!--
                 <div class="login-head">
                     <img src="__CDN__/assets/img/login-head.png" style="width:100%;"/>
                 </div>
+                -->
                 <div class="login-form">
-                    <img id="profile-img" class="profile-img-card" src="__CDN__/assets/img/avatar.png"/>
-                    <p id="profile-name" class="profile-name-card"></p>
+                    <div class="col-xs-12 col-sm-12" style="padding-left: 0px;margin-bottom: 20px;">
+                        <div class="col-xs-12 col-sm-3" style="padding-left: 0px">
+                            <img id="profile-img" class="profile-img-card" src="__CDN__/assets/img/avatar.png"/>
+                        </div>
+                        <div class="col-xs-12 col-sm-9 pl-0" >
+                            <p id="profile-name" class="profile-name-card">{:$Think.config.site.name}</p>
+                        </div>
+                    </div>
+
+
 
                     <form action="" method="post" id="login-form">
                         <!--@AdminLoginFormBegin-->
@@ -125,21 +145,27 @@
                         <!--@CaptchaEnd-->
 <!--                        {if $keeyloginhours>0}-->
 <!--                        <div class="form-group checkbox">-->
-<!--                            <label class="inline" for="keeplogin" data-toggle="tooltip" title="设定会话有效时长为24小时">-->
+<!--                            <label class="inline" for="keeplogin" data-toggle="tooltip" title="{:__('The duration of the session is %s hours', $keeyloginhours)}">-->
 <!--                                <input type="checkbox" name="keeplogin" id="keeplogin" value="1"/>-->
-<!--                                保持会话-->
+<!--                                {:__('Keep login')}-->
 <!--                            </label>-->
 <!--                        </div>-->
 <!--                        {/if}-->
                         <div class="form-group">
-                            <button type="submit" class="btn btn-success btn-lg btn-block" style="background:#708eea;">登录</button>
+                            <button type="submit" class="btn btn-success btn-lg btn-block" style="background:#708eea;">{:__('Sign in')}</button>
                         </div>
                         <!--@AdminLoginFormEnd-->
                     </form>
                 </div>
+
             </div>
         </div>
     </div>
+
+
+</div>
+<div class="col-xs-12 col-sm-12 text-center"  style="margin-top: 200px">
+    <p style="color: white">Copyright © 2024 {:$Think.config.site.name} All Rights Reserved</p>
 </div>
 {include file="common/script" /}
 </body>
