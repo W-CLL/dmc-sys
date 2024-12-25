@@ -292,6 +292,24 @@ class RechargeRefund extends Store
                         usleep(500000 * $i);
                     } else if ($transfer_detail_data['data']['transfer_status'] == 'TRANSFER_FAILED') {
                         Db::name("transfer_records")->where(["id" => $transfer_records_id])->update(['status' => 2, 'explain' => $transfer_detail_data['data']['transfer_target_record_list'][0]['transfer_capital_record_list'][0]['fail_reason']]);
+                        // 退款处理
+                        $transfer_records_info = Db::name("transfer_records")->where(["id" => $transfer_records_id])->find();
+                        if ($transfer_records_info['transfer_direction'] == 1) {
+                            $sql = Db::name("store")->where("id", $this->auth->id);
+                            if ($transfer_records_info["account_type"] == 1) {
+                                //公
+                                $sql->inc("public_money", $transfer_records_info["deduction_balance"])
+                                    ->inc("public_credit_limit", $transfer_records_info["deduction_credit_limit"])
+                                    ->dec("public_spending_credit_limit", $transfer_records_info["deduction_credit_limit"])
+                                    ->update(["update_time" => time()]);
+                            } else {
+                                //私
+                                $sql->inc("private_money", $transfer_records_info["deduction_balance"])
+                                    ->inc("private_credit_limit", $transfer_records_info["deduction_credit_limit"])
+                                    ->dec("private_spending_credit_limit", $transfer_records_info["deduction_credit_limit"])
+                                    ->update(["update_time" => time()]);
+                            }
+                        }
                         //转账失败
                         $this->error("转账失败," . $transfer_detail_data['data']['transfer_target_record_list'][0]['transfer_capital_record_list'][0]['fail_reason']);
                     }
