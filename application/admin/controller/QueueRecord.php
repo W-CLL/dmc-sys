@@ -24,10 +24,8 @@ Class QueueRecord extends Backend{
             }
 
             list($where, $sort, $order, $offset, $limit) = $this->buildparams();
-
             $list = $this->model
                 ->where($where)
-//                ->where($where_str)
                 ->order('id desc')
                 ->paginate($limit);
             foreach ($list as $item){
@@ -49,7 +47,6 @@ Class QueueRecord extends Backend{
             $result = array("total" => $list->total(), "rows" => $list->items());
 
             return json($result);
-//            return json($result);
         }
 
         return $this->view->fetch();
