@@ -225,8 +225,9 @@ class SyncCharge
         }
         $money = $transferData['actual_money'];
         // 如果为退款账单，则金额取负
+        //减去返点金额
         if ($transferData['transfer_direction'] == 2) {
-            $money = -$transferData['actual_money'];
+            $money = -($transferData['money'] - $transferData['rebate']);
         }
 
         $data['customer_name'] = $transferData['username'];
