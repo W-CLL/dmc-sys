@@ -97,6 +97,8 @@ class HandleCrmData extends Frontend
      */
     public function fixCrmRefundMoneyData()
     {
+        echo '禁止访问!';
+        exit();
         $params = [
             'app' => 'commonfix_controller_dmcapi',
             'act' => 'get',
