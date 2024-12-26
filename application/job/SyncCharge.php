@@ -38,6 +38,8 @@ class SyncCharge
         $jobId = json_decode($job->getRawBody(), true)['id'];
         $queueModel = new \app\common\model\Queue();
         $queueData = $queueModel->where('job_id', $jobId)->find();
+        Log::info('testqueuedata:');
+        Log::info(json_encode($queueData));
         try {
             $beforeSync = $this->beforeSync($data, $queueData);
             if ($beforeSync) {
