@@ -38,10 +38,6 @@ class SyncCharge
         $jobId = json_decode($job->getRawBody(), true)['id'];
         $queueModel = new \app\common\model\Queue();
         $queueData = $queueModel->where('job_id', $jobId)->find();
-        Log::info('testqueuedata:');
-        Log::info(json_encode($queueData));
-        Log::info(json_encode($jobId));
-        Log::info($job->getRawBody());
         try {
             $beforeSync = $this->beforeSync($data, $queueData);
             if ($beforeSync) {
@@ -144,7 +140,7 @@ class SyncCharge
         ];
         $res = buildCrmRequest($params, 'POST');
 
-        if (isset($res['statusCode'])) {
+        if ($res && !empty($res['statusCode'])) {
             if ($res['statusCode'] != 200) {
 
                 $status = 2;
@@ -176,7 +172,7 @@ class SyncCharge
         } else {
             $status = 2;
             $msg = $res . json_encode($data);
-            Log::error('同步订单到crm失败：' . json_encode($res['msg']));
+            Log::error('同步订单到crm失败：crm返回数据为空' . json_encode($res));
             $job_status = false;
         }
         $queueData->save(['status' => $status, 'msg' => $msg]);
