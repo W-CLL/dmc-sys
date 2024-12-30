@@ -44,6 +44,16 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', 'jstree'], function (
                         {field: 'createtime', title: __('Createtime'), formatter: Table.api.formatter.datetime, operate: 'RANGE', addclass: 'datetimerange', sortable: true},
                         {field: 'updatetime', title: __('Updatetime'), formatter: Table.api.formatter.datetime, operate: 'RANGE', addclass: 'datetimerange', sortable: true},
                         {field: 'status', title: __('Status'), formatter: Table.api.formatter.status},
+                        {field: 'group_type', title: "组类型(仅用于显示，不作特殊处理)", formatter: function(value,row,index) {
+                                if (row.group_type==0){
+                                    return "无限制"
+                                }else if (row.group_type == 1){
+                                    return "对公组"
+                                }else if (row.group_type == 2){
+                                    return "对私组"
+                                }
+                            }},
+                        {field: 'discount_percentage',title: '设定比例(仅用于显示，不作特殊处理)'},
                         {field: 'operate', title: __('Operate'), table: table, events: Table.api.events.operate, formatter: Table.api.formatter.operate}
                     ]
                 ]

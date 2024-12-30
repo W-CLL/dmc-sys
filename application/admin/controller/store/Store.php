@@ -53,9 +53,13 @@ class Store extends Backend
             $offset = input("offset",0);
             $limit = input("limit",10);
             $search = input("search");
+            $group_id = input("group_id");
             $where = [];
             if ($search){
                 $where['username'] = ['like', "%{$search}%"];
+            }
+            if (!empty($group_id)){
+                $where['group_id'] = $group_id;
             }
 
 
@@ -91,6 +95,8 @@ class Store extends Backend
 
             return json($result);
         }
+        $group_list = Db::name("store_group")->field("id,name")->select();
+        $this->assign('user_group_list',$group_list);
         return $this->view->fetch();
     }
 

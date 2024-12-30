@@ -124,7 +124,11 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', 'bootstrap-table-fixe
                             }
                             ], table: table, events: Table.api.events.operate, formatter: Table.api.formatter.operate}
                     ]
-                ]
+                ],
+                queryParams:function (params) {
+                    params.group_id = document.getElementById('group_id').value;
+                    return params;
+                }
             });
 
             // 为表格绑定事件
