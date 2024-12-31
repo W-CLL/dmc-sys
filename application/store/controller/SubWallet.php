@@ -100,6 +100,9 @@ class SubWallet extends Store
             ->find();
         $out_res = FundManagement::get_max_transfer($this->token,$this->account_id,$this->account_type,$this->generateRandomString(),$wallet['main_wallet_id'],json_encode([(int)$wallet['sub_wallet_id']]),'TRANSFER_OUT');
         $in_res = FundManagement::get_max_transfer($this->token,$this->account_id,$this->account_type,$this->generateRandomString(),$wallet['main_wallet_id'],json_encode([(int)$wallet['sub_wallet_id']]),'TRANSFER_IN');
+        if($in_res['code'] != 0 || $out_res['code'] != 0){
+            $this->error('接口异常，请联系管理员');
+        }
         $max_transfer_out = $out_res['data']['can_transfer_detail_list'][0]['non_brand_max_transfer_balance'] / 100;
         $min_transfer = $in_res['data']['can_transfer_detail_list'][0]['payee_transfer_amount_detail_list'][0]['non_brand_min_transfer_balance'] / 100;
         if ($this->request->isPost()) {
