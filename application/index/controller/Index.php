@@ -364,5 +364,27 @@ class Index extends Frontend
     }
 
 
+    public function updatePolicy(){
+        $date = date('Y-m-d');
+        if($date != '2025-01-01'){
+            echo "非2025-01-01禁止访问";
+            return;
+        }
+        $info = Db::name('store_group')->select();
+        foreach ($info as $k=>$v){
+            if($v['group_type'] == 1){
+                if(!empty($v['discount_percentage'])){
+                    Db::name('store')->where('group_id',$v['id'])->update(['public_discount_percentage' => $v['discount_percentage']]);
+                }
+            }elseif ($v['group_type'] == 2){
+                if(!empty($v['discount_percentage'])){
+                    Db::name('store')->where('group_id',$v['id'])->update(['private_discount_percentage' => $v['discount_percentage']]);
+                }
+            }
+        }
+        echo "更新完成";
+    }
+
+
 
 }
