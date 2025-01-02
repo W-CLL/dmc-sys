@@ -17,7 +17,6 @@ class AdList extends Backend
     public function index()
     {
         $companyModel = new CompanyModel();
-        $objModel = new ObjModel();
         $operatorModel = new OperatorModel();
         $planOptLogModel = new PlanOptLogModel();
         $access_token = Cache::get("qc_access_token");
@@ -51,20 +50,15 @@ class AdList extends Backend
             foreach ($list as $k => $v){
                 $no_grant_sum = 0;
                 $grant_sum = 0;
-                $obj_ids = $objModel
-                    ->where('advertiser_id', $v['advertiser_id'])
-                    ->field('object_id')
-                    ->select();
-                $obj_ids = array_column($obj_ids, 'object_id');
                 $list[$k]['this_month_opt_sum'] = $planOptLogModel
                     ->where([
-                        'obj_id' => ['in', $obj_ids],
+                        'advertiser_id' => ['=', $v['advertiser_id']],
                         'opt_time' => ['between', [strtotime("first day of this month 00:00:00"), strtotime("last day of this month 23:59:59")]]
                     ])
                     ->count();
                 $list[$k]['this_month_bmopt_sum'] = $planOptLogModel
                     ->where([
-                        'obj_id' => ['in', $obj_ids],
+                        'advertiser_id' => ['=', $v['advertiser_id']],
                         'operator' => ['in', $bm_username],
                         'opt_time' => ['between', [strtotime("first day of this month 00:00:00"), strtotime("last day of this month 23:59:59")]]
                     ])
@@ -94,7 +88,6 @@ class AdList extends Backend
     public function sub_page()
     {
         $companyModel = new CompanyModel();
-        $objModel = new ObjModel();
         $operatorModel = new OperatorModel();
         $planOptLogModel = new PlanOptLogModel();
         $access_token = Cache::get("qc_access_token");
@@ -126,20 +119,15 @@ class AdList extends Backend
             foreach ($list as $k => $v){
                 $no_grant_sum = 0;
                 $grant_sum = 0;
-                $obj_ids = $objModel
-                    ->where('advertiser_id', $v['advertiser_id'])
-                    ->field('object_id')
-                    ->select();
-                $obj_ids = array_column($obj_ids, 'object_id');
                 $list[$k]['this_month_opt_sum'] = $planOptLogModel
                     ->where([
-                        'obj_id' => ['in', $obj_ids],
+                        'advertiser_id' => ['=', $v['advertiser_id']],
                         'opt_time' => ['between', [strtotime("first day of this month 00:00:00"), strtotime("last day of this month 23:59:59")]]
                     ])
                     ->count();
                 $list[$k]['this_month_bmopt_sum'] = $planOptLogModel
                     ->where([
-                        'obj_id' => ['in', $obj_ids],
+                        'advertiser_id' => ['=', $v['advertiser_id']],
                         'operator' => ['in', $bm_username],
                         'opt_time' => ['between', [strtotime("first day of this month 00:00:00"), strtotime("last day of this month 23:59:59")]]
                     ])
