@@ -39,6 +39,7 @@ define(['jquery', 'bootstrap', 'company', 'table', 'form'], function ($, undefin
                     params.start_date = time_data[0];
                     params.end_date = time_data[1];
                     params.kahuna = document.getElementById('kahuna').value;
+                    params.advertiser_id = document.getElementById('advertiser_id').value;
                     return params;
                 }
             });
@@ -84,6 +85,7 @@ define(['jquery', 'bootstrap', 'company', 'table', 'form'], function ($, undefin
                     params.start_date = time_data[0];
                     params.end_date = time_data[1];
                     params.kahuna = document.getElementById('kahuna').value;
+                    params.advertiser_id = document.getElementById('advertiser_id').value;
                     return params;
                 }
             });

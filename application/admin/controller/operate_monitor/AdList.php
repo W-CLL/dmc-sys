@@ -33,8 +33,12 @@ class AdList extends Backend
             $start_time = input("start_date")?:date("Y-m-d",strtotime("-30 day"));
             $end_time = input("end_date")?:date("Y-m-d",strtotime("-1 day"));
             $kahuna = input("kahuna");
+            $advertiser_id = input("advertiser_id");
             if (!empty($kahuna)){
                 $where['kahuna'] = ['like', "%$kahuna%"];
+            }
+            if (!empty($advertiser_id)){
+                $where['advertiser_id'] = ['=', $advertiser_id];
             }
 
 
@@ -107,6 +111,10 @@ class AdList extends Backend
             $start_time = input("start_date")?:date("Y-m-d",strtotime("-30 day"));
             $end_time = input("end_date")?:date("Y-m-d",strtotime("-1 day"));
             $where['kahuna'] = ['=', $admin_name];
+            $advertiser_id = input("advertiser_id");
+            if (!empty($advertiser_id)){
+                $where['advertiser_id'] = ['=', $advertiser_id];
+            }
 
 
             $list = $companyModel
