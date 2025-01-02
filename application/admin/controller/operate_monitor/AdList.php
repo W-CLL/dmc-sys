@@ -17,15 +17,11 @@ class AdList extends Backend
     public function index()
     {
         $companyModel = new CompanyModel();
-        $operatorModel = new OperatorModel();
-        $planOptLogModel = new PlanOptLogModel();
         $access_token = Cache::get("qc_access_token");
-        $bm_username = $operatorModel->field('name')->select();
-        $bm_username = array_column($bm_username, 'name');
         if ($this->request->isAjax()) {
             $where = [];
-            $sort = input("sort","id");
-            $order = input("order","desc");
+//            $sort = input("sort","this_month_opt_sum");
+//            $order = input("order","desc");
             $offset = input("offset",0);
             $limit = input("limit",10);
             $agent_id = Db::name("qc_config")->where("id",1)->value("advertiser_id");
@@ -43,26 +39,13 @@ class AdList extends Backend
 
             $list = $companyModel
                 ->where($where)
-                ->field("id,advertiser_id,company_name,name,kahuna")
-                ->order($sort, $order)
+                ->field("id,advertiser_id,company_name,name,kahuna,this_month_opt_sum,this_month_bmopt_sum")
+                ->order('this_month_opt_sum', 'desc')
                 ->limit($offset,$limit);
             $list = $list->select();
             foreach ($list as $k => $v){
                 $no_grant_sum = 0;
                 $grant_sum = 0;
-                $list[$k]['this_month_opt_sum'] = $planOptLogModel
-                    ->where([
-                        'advertiser_id' => ['=', $v['advertiser_id']],
-                        'opt_time' => ['between', [strtotime("first day of this month 00:00:00"), strtotime("last day of this month 23:59:59")]]
-                    ])
-                    ->count();
-                $list[$k]['this_month_bmopt_sum'] = $planOptLogModel
-                    ->where([
-                        'advertiser_id' => ['=', $v['advertiser_id']],
-                        'operator' => ['in', $bm_username],
-                        'opt_time' => ['between', [strtotime("first day of this month 00:00:00"), strtotime("last day of this month 23:59:59")]]
-                    ])
-                    ->count();
                 $data = FundManagement::get_agent_statement($access_token,$agent_id, $start_time, $end_time,1,100,(int)$v['advertiser_id']);
                 $total_page = ceil($data['data']['page_info']['total_number']/$data['data']['page_info']['page_size']);
                 for($i=1;$i<=$total_page;$i++){
@@ -88,16 +71,12 @@ class AdList extends Backend
     public function sub_page()
     {
         $companyModel = new CompanyModel();
-        $operatorModel = new OperatorModel();
-        $planOptLogModel = new PlanOptLogModel();
         $access_token = Cache::get("qc_access_token");
-        $bm_username = $operatorModel->field('name')->select();
-        $bm_username = array_column($bm_username, 'name');
         $admin_name = $this->auth->getUserInfo()['nickname'];
         if ($this->request->isAjax()) {
             $where = [];
-            $sort = input("sort","id");
-            $order = input("order","desc");
+//            $sort = input("sort","id");
+//            $order = input("order","desc");
             $offset = input("offset",0);
             $limit = input("limit",10);
             $agent_id = Db::name("qc_config")->where("id",1)->value("advertiser_id");
@@ -112,26 +91,13 @@ class AdList extends Backend
 
             $list = $companyModel
                 ->where($where)
-                ->field("id,advertiser_id,company_name,name,kahuna")
-                ->order($sort, $order)
+                ->field("id,advertiser_id,company_name,name,kahuna,this_month_opt_sum,this_month_bmopt_sum")
+                ->order('this_month_opt_sum', 'desc')
                 ->limit($offset,$limit);
             $list = $list->select();
             foreach ($list as $k => $v){
                 $no_grant_sum = 0;
                 $grant_sum = 0;
-                $list[$k]['this_month_opt_sum'] = $planOptLogModel
-                    ->where([
-                        'advertiser_id' => ['=', $v['advertiser_id']],
-                        'opt_time' => ['between', [strtotime("first day of this month 00:00:00"), strtotime("last day of this month 23:59:59")]]
-                    ])
-                    ->count();
-                $list[$k]['this_month_bmopt_sum'] = $planOptLogModel
-                    ->where([
-                        'advertiser_id' => ['=', $v['advertiser_id']],
-                        'operator' => ['in', $bm_username],
-                        'opt_time' => ['between', [strtotime("first day of this month 00:00:00"), strtotime("last day of this month 23:59:59")]]
-                    ])
-                    ->count();
                 $data = FundManagement::get_agent_statement($access_token,$agent_id, $start_time, $end_time,1,100,(int)$v['advertiser_id']);
                 $total_page = ceil($data['data']['page_info']['total_number']/$data['data']['page_info']['page_size']);
                 for($i=1;$i<=$total_page;$i++){
