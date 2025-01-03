@@ -46,13 +46,24 @@ class AdList extends Backend
             foreach ($list as $k => $v){
                 $no_grant_sum = 0;
                 $grant_sum = 0;
-                $data = FundManagement::get_agent_statement($access_token,$agent_id, $start_time, $end_time,1,100,(int)$v['advertiser_id']);
+//                $data = FundManagement::get_agent_statement($access_token,$agent_id, $start_time, $end_time,1,100,(int)$v['advertiser_id']);
+                $data = FundManagement::get_flow_info($access_token,$v['advertiser_id'],1,100,$start_time,$end_time);
                 $total_page = ceil($data['data']['page_info']['total_number']/$data['data']['page_info']['page_size']);
-                for($i=1;$i<=$total_page;$i++){
-                    $data = FundManagement::get_agent_statement($access_token,$agent_id, $start_time, $end_time,$i,100,(int)$v['advertiser_id']);
+                if($total_page == 1){
                     foreach ($data['data']['list'] as $value){
-                        $no_grant_sum += $value['no_grant_cost'] / 100000;
+//                        $no_grant_sum += $value['no_grant_cost'] / 100000;
+                        $no_grant_sum += $value['cash_cost'] / 100000;
                         $grant_sum += $value['cost'] / 100000;
+                    }
+                }else{
+                    for($i=1;$i<=$total_page;$i++){
+//                        $data = FundManagement::get_agent_statement($access_token,$agent_id, $start_time, $end_time,$i,100,(int)$v['advertiser_id']);
+                        $data = FundManagement::get_flow_info($access_token,$v['advertiser_id'],$i,100,$start_time,$end_time);
+                        foreach ($data['data']['list'] as $value){
+//                            $no_grant_sum += $value['no_grant_cost'] / 100000;
+                            $no_grant_sum += $value['cash_cost'] / 100000;
+                            $grant_sum += $value['cost'] / 100000;
+                        }
                     }
                 }
                 $list[$k]['no_grant_sum'] = floor(floatval($no_grant_sum) * 100) / 100;

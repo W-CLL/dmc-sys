@@ -396,7 +396,6 @@ class Oauth2 extends Api {
                 'opt_time' => ['between', [strtotime("first day of this month 00:00:00"), strtotime("last day of this month 23:59:59")]]
             ])->select();
 
-        // $a_count 取 advertiser_id为键 this_month_opt_sum为值 做一个二维数组
         $b_count = Db::name('plan_opt_log')
             ->field('advertiser_id,count(*) as this_month_bmopt_sum')
             ->group('advertiser_id')

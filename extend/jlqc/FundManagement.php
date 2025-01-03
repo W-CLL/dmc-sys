@@ -350,6 +350,16 @@ Class FundManagement{
         return Requests::get($url,$header);
     }
 
+
+    //获取流水信息
+    public static function get_flow_info($access_token,$advertiser_id,$page,$page_size,$start_date = '',$end_date = ''){
+        $header = array(
+            'Access-Token:'. $access_token,
+        );
+        $url = "https://ad.oceanengine.com/open_api/v1.0/qianchuan/finance/detail/get/?advertiser_id=".$advertiser_id."&page=".$page."&page_size=".$page_size."&start_date=".$start_date."&$end_date=".$end_date;
+        return Requests::get($url,$header);
+    }
+
 }
 
 
