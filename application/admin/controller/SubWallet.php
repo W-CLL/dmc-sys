@@ -36,7 +36,9 @@ class SubWallet extends Backend
             $list = $WalletModel
                 ->with('store')
                 ->where($where)
-                ->field("id,sub_wallet_id,bind_store_id,sub_wallet_type,sub_wallet_type,discount_percentage")
+                ->field("id,sub_wallet_id,bind_store_id,sub_wallet_type,sub_wallet_type,discount_percentage,
+                transfer_in_sum_public_cash,transfer_out_sum_public_cash,transfer_in_sum_private_cash,transfer_out_sum_private_cash,
+                transfer_in_sum_public_vr,transfer_out_sum_public_vr,transfer_in_sum_private_vr,transfer_out_sum_private_vr")
                 ->order($sort, $order)
                 ->limit($offset, $limit)
                 ->select();
