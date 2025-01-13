@@ -139,19 +139,6 @@ class RechargeRefund extends Store
                 }
 
                 Db::commit();
-                //添加同步转账记录任务
-                //暂时转入账户才同步
-                if ($transfer_records_data["transfer_direction"] == 1) {
-                    $name = "同步备款充值记录";
-                }else{
-                    $name = "同步备款退款记录";
-                }
-                $queueModel = new \app\common\model\Queue();
-                $queueModel->addQueue($name, "app\job\SyncCharge",
-                    "syncCharge",
-                    ["log_id" => $transfer_records_id, 'data' => $transfer_records_data],
-                    "transfer_records"
-                );
             } catch (\Exception $e) {
                 Db::rollback();
                 $this->error($e->getMessage());
@@ -273,6 +260,19 @@ class RechargeRefund extends Store
                             }
 
                             Db::commit();
+                            //添加同步转账记录任务
+                            //暂时转入账户才同步
+                            if ($transfer_records_data["transfer_direction"] == 1) {
+                                $name = "同步备款充值记录";
+                            }else{
+                                $name = "同步备款退款记录";
+                            }
+                            $queueModel = new \app\common\model\Queue();
+                            $queueModel->addQueue($name, "app\job\SyncCharge",
+                                "syncCharge",
+                                ["log_id" => $transfer_records_id, 'data' => $transfer_records_data],
+                                "transfer_records"
+                            );
                         } catch (\Exception $e) {
                             Db::rollback();
                             Db::name("transfer_records")->where(["id" => $transfer_records_id])->update(['status' => 6, 'explain' => $e->getMessage()]);

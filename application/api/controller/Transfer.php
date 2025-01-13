@@ -135,6 +135,19 @@ class Transfer extends Api
                         }
 
                         Db::commit();
+                        //添加同步转账记录任务
+                        //暂时转入账户才同步
+                        if ($v["transfer_direction"] == 1) {
+                            $name = "同步备款充值记录";
+                        }else{
+                            $name = "同步备款退款记录";
+                        }
+                        $queueModel = new \app\common\model\Queue();
+                        $queueModel->addQueue($name, "app\job\SyncCharge",
+                            "syncCharge",
+                            ["log_id" => $v['id'], 'data' => $v],
+                            "transfer_records"
+                        );
                     } catch (\Exception $e) {
                         Db::rollback();
                         Db::name("transfer_records")->where(["id" => $v['id']])->update(['status' => 6, 'explain' => $e->getMessage()]);
