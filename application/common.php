@@ -4,6 +4,7 @@
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use qywx\Api;
 use think\Env;
 use think\exception\HttpResponseException;
 use think\Response;
@@ -612,7 +613,7 @@ if (!function_exists('buildCrmRequest')) {
                 $query = [];
         }
         $query['headers'] = [
-          'Expect' => ''
+            'Expect' => ''
         ];
         $client = new Client();
         $response = $client->request($method, Env::get('crm_config.crm_url'), $query);
@@ -660,6 +661,19 @@ if (!function_exists('generate_random_string')) {
             $randomString .= $characters[rand(0, $charactersLength - 1)];
         }
         return $randomString;
+    }
+
+}
+
+if (!function_exists('send_work_wx_msg')) {
+    function send_work_wx_msg($content,$user = [])
+    {
+        if (empty($users)) {
+            $users = ['WangChunLong', 'WuZhongJie', 'MaYuTian'];
+        }
+        foreach ($users as $user) {
+            Api::send_application_messages($users, $content);
+        }
     }
 }
 
