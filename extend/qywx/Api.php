@@ -4,20 +4,34 @@ namespace qywx;
 
 use Requests;
 use think\Cache;
+use think\Env;
 
 class Api
 {
 
-    protected static $corp_id = "ww712125b580d4a5c1";
-    protected static $corp_secret = "UPhfM_lNkgv-cc_A_mi6Uby3E-OThxc_2aK1iUtJS_c";
-    protected static $agentid = 1000026;
+    protected static $corp_id = "";
+    protected static $corp_secret = '';
+    protected static $agentid ='';
 
+
+    private static function getConfig()
+    {
+        self::$corp_id = Env::get('work_wx.corp_id');
+        self::$corp_secret = Env::get('work_wx.secret');
+        self::$agentid = Env::get('work_wx.agent_id');
+
+        return Env::get('work_wx.corp_id');
+    }
 
     /**
      * 获取企业微信access_token
      */
     public static function get_access_token()
     {
+        $res = self::getConfig();
+        if(!$res){
+           return '';
+        }
         $access_token = Cache::get("qywx_access_token");
         if (!$access_token) {
             $url = "https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=" . self::$corp_id . "&corpsecret=" . self::$corp_secret;
