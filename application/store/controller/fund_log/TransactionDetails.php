@@ -45,6 +45,7 @@ class TransactionDetails extends Store
             $return_code = FundManagement::$auth_return_code;
 
             if(in_array($transaction_data['code'],$return_code)){
+                send_work_wx_msg('千川授权已失效，请尽快更新!');
                 $this->error('千川授权已失效，请联系管理员');
             }
             $data['rows'] = $transaction_data['data']['list'];
