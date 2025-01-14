@@ -38,6 +38,11 @@ class StoreRefund extends Model
             'store_id' => $transfer_records_data['store_id'],
             'wallet_type' => $wallet_type,
         ];
+        if($wallet_type == 1){
+            $where['platform_id'] = $transfer_records_data['advertiser_id'];
+        }else{
+            $where['platform_id'] = isset($transfer_records_data['swtl_id']) ? Db::name('share_wallet_transfer_log')->where('id',$transfer_records_data['swtl_id'])->value('sub_wallet_id') : $transfer_records_data['sub_wallet_id'];
+        }
         //千川账户的充值记录
         return self::where($where)
             ->where(function ($query) {
@@ -63,10 +68,14 @@ class StoreRefund extends Model
             'type' => $transfer_records_data['account_type'],
             'store_id' => $transfer_records_data['store_id'],
 //            'company_id' => $transfer_records_data['company_id'],
-//            'advertiser_id' => $transfer_records_data['advertiser_id'],
             'discount_percentage' => $transfer_records_data['discount_percentage'],
             'wallet_type' => $wallet_type,
         ];
+        if($wallet_type == 1){
+            $where['platform_id'] = $transfer_records_data['platform_id'] ?? $transfer_records_data['advertiser_id'];
+        }else{
+            $where['platform_id'] = $transfer_records_data['platform_id'] ?? $transfer_records_data['sub_wallet_id'];
+        }
         //千川账户的充值记录
         return self::where($where)->order('id desc')->find();
     }
@@ -174,16 +183,21 @@ class StoreRefund extends Model
             $record = $this->getStoreRefundRecord($transfer_records_data,$wallet_type);
             $res = '';
             if (!$record || $record['discount_percentage'] != $transfer_records_data['discount_percentage']) {
-                $res = self::insertGetId([
+                $ins = [
                     'type' => $transfer_records_data['account_type'],
                     'wallet' => $money['wallet'],
                     'credit' => $money['credit'],
                     'store_id' => $transfer_records_data['store_id'],
 //                    'company_id' => $transfer_records_data['company_id'],
-//                    'advertiser_id' => $transfer_records_data['advertiser_id'],
                     'discount_percentage' => $transfer_records_data['discount_percentage'],
                     'wallet_type' => $wallet_type,
-                    'create_time' => time()]);
+                    'create_time' => time()];
+                if($wallet_type == 1){
+                    $ins['platform_id'] = $transfer_records_data['platform_id'] ?? $transfer_records_data['advertiser_id'];
+                }else{
+                    $ins['platform_id'] = $transfer_records_data['platform_id'] ?? $transfer_records_data['sub_wallet_id'];
+                }
+                $res = self::insertGetId($ins);
             } elseif ($record['discount_percentage'] == $transfer_records_data['discount_percentage']) {
                 $res = self::where('id', $record['id'])
                     ->inc('wallet', $money['wallet'])

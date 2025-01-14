@@ -19,24 +19,31 @@ class HandleRefund extends Frontend
 
     public function handleMoneyLogData()
     {
-        echo "禁止访问";
-        die;
+//        echo "禁止访问";
+//        die;
+//        $records = Db::name('store_money_log')
+//            ->where('type', '=', 4)
+//            ->whereOr('type', '=', 5)
+//            ->order('store_id','asc')
+//            ->order('id', 'asc')
+//            ->select();
+//        $res = $this->updateRebateAndPercentage($records);
         $records = Db::name('store_money_log')
             ->where('type', '=', 4)
             ->whereOr('type', '=', 5)
             ->order('store_id','asc')
             ->order('id', 'asc')
             ->select();
-        $res = $this->updateRebateAndPercentage($records);
-        $records = Db::name('store_money_log')
-            ->where('type', '=', 4)
-            ->whereOr('type', '=', 5)
+        $res1 = $this->initRefundData($records,1);
+        $records1 = Db::name('store_money_log')
+            ->where('type', '=', 8)
+            ->whereOr('type', '=', 9)
             ->order('store_id','asc')
             ->order('id', 'asc')
             ->select();
-        $res1 = $this->initRefundData($records);
-        echo $res;
+        $res2 = $this->initRefundData($records1,2);
         echo $res1;
+        echo $res2;
         die;
     }
 
@@ -63,7 +70,7 @@ class HandleRefund extends Frontend
     }
 
 
-    public function initRefundData($records, $handleType = 'store_money_log')
+    public function initRefundData($records, $wallet_type = 1, $handleType = 'store_money_log')
     {
         $newRecords = [];
         $tempGroup = [];
@@ -94,14 +101,16 @@ class HandleRefund extends Frontend
 
         $storeRefundModel = new StoreRefund();
         foreach ($newRecords as $items) {
-            $rechargeWallet = 0;
-            $rechargeCredit = 0;
-            $refundWallet = 0;
-            $refundCredit = 0;
-
             foreach ($items as $item) {
+                $rechargeWallet = 0;
+                $rechargeCredit = 0;
                 if ($handleType == 'store_money_log') {
-                    $transferType = $item['type'] == 4 ? 1 : 2;
+                    if($wallet_type == 1){
+                        $transferType = $item['type'] == 4 ? 1 : 2;
+                    }else{
+                        $transferType = $item['type'] == 8 ? 1 : 2;
+                    }
+
                 } else {
                     $transferType = $item['transfer_direction'];
                 }
@@ -114,38 +123,42 @@ class HandleRefund extends Frontend
                         $rechargeWallet += $item['money'];
                         $rechargeCredit = 0;
                     }
+                    $realWallet = $rechargeWallet;
+                    $realCredit = $rechargeCredit;
+                    $realWallet < 0 ? $realWallet = 0 : '';
+                    $realCredit < 0 ? $realCredit = 0 : '';
+
+                    $money = [
+                        'wallet' => round($realWallet, 2),
+                        'credit' => round($realCredit, 2),
+                    ];
+                    $transferRecordsData = [
+                        'store_id' => $item['store_id'],
+                        'account_type' => $item['account_type'],
+                        'discount_percentage' => $item['discount_percentage'],
+                    ];
+                    if($wallet_type == 1){
+                        $transferRecordsData['platform_id'] = $item['advertiser_id'];
+                    }else{
+                        $transferRecordsData['platform_id'] = Db::name('share_wallet_transfer_log')->where('id',$item['swtl_id'])->value('sub_wallet_id');
+                    }
+                    try {
+                        $storeRefundModel->addStoreRefundRecord($money, $transferRecordsData,$wallet_type);
+                    }catch (Exception $e){
+                        dump($e->getMessage());
+                    }
                 }
                 if ($transferType == 2) {//转出（退款）
-                    if ($item['deduction_credit_limit'] > 0) {
-                        $refundWallet += $item['money'] - ($item['deduction_credit_limit'] + $item['rebate']);
-                        $refundCredit += $item['deduction_credit_limit'] + $item['rebate'];
-                    } else {
-                        $refundWallet += $item['money'];
-                        $refundCredit = 0;
+                    try {
+                        $storeRefundModel->getRealRefundRebate($item, $wallet_type);
+                    }catch (Exception $e){
+                        dump($e->getMessage());
                     }
                 }
             }
-            $realWallet = $rechargeWallet - $refundWallet;
-            $realCredit = $rechargeCredit - $refundCredit;
-            $realWallet < 0 ? $realWallet = 0 : '';
-            $realCredit < 0 ? $realCredit = 0 : '';
 
-            $money = [
-                'wallet' => round($realWallet, 2),
-                'credit' => round($realCredit, 2),
-            ];
-            $transferRecordsData = [
-                'store_id' => $items[0]['store_id'],
-                'account_type' => $items[0]['account_type'],
-                'discount_percentage' => $items[0]['discount_percentage'],
-            ];
 
-            try {
-                $storeRefundModel->addStoreRefundRecord($money, $transferRecordsData);
-            }catch (Exception $e){
-                dump($e->getMessage());
-//              $this->error($e->getMessage());
-            }
+
 
 //            if (!$res) {
 //                $this->error('更新失败');
