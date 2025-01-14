@@ -15,7 +15,7 @@
 
                                     <div class="col-xs-4 col-sm-4 col-md-4">
                                         <div class="form-group">
-                                            <label class="control-label">非赠款日期查询筛选</label>
+                                            <label class="control-label">消耗日期：</label>
                                             <div>
                                                 <input type="text"  class="form-control datetimerange" id="dateRange" data-locale='{"format":"YYYY-MM-DD"}' placeholder="指定日期" value="" />
                                             </div>
@@ -66,17 +66,17 @@
                         </a>
                         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                         <!-- 近7天按钮 -->
-                        <a href="javascript:;" class="btn btn-primary" onclick="setDateRange('7d')">
+                        <a href="javascript:;" class="btn btn-primary" onclick="setDateRange('7')">
                             <span>近7天</span>
                         </a>
                         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                         <!-- 近14天按钮 -->
-                        <a href="javascript:;" class="btn btn-primary" onclick="setDateRange('14d')">
+                        <a href="javascript:;" class="btn btn-primary" onclick="setDateRange('14')">
                             <span>近14天</span>
                         </a>
                         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                         <!-- 近30天按钮，默认选中 -->
-                        <a href="javascript:;" class="btn btn-primary active" onclick="setDateRange('30d')">
+                        <a href="javascript:;" class="btn btn-primary active" onclick="setDateRange('30')">
                             <span>近30天(默认)</span>
                         </a>
                     </div>
@@ -96,28 +96,13 @@
 <script type="text/javascript">
     // 获取当前日期
     const today = new Date();
-
-    // 计算昨天的日期
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    // 计算7天前的日期
-    const sevenDaysAgo = new Date(today);
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-    // 计算14天前的日期
-    const fourteenDaysAgo = new Date(today);
-    fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
-
     // 计算30天前的日期
     const thirtyDaysAgo = new Date(today);
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
 
     // 格式化日期为"YYYY-MM-DD"格式
-    const formattedYesterday = yesterday.toISOString().split('T')[0];
-    const formattedSevenDaysAgo = sevenDaysAgo.toISOString().split('T')[0];
-    const formattedFourteenDaysAgo = fourteenDaysAgo.toISOString().split('T')[0];
     const formattedThirtyDaysAgo = thirtyDaysAgo.toISOString().split('T')[0];
+    const formattedYesterday = today.toISOString().split('T')[0];
 
     // 设置输入框的默认值
     document.getElementById('dateRange').value = `${formattedThirtyDaysAgo} - ${formattedYesterday}`;
@@ -125,25 +110,16 @@
     // 添加日期范围设置函数
     function setDateRange(days) {
         let startDate, endDate;
-
-        switch (days) {
-            case '7d':
-                startDate = formattedSevenDaysAgo;
-                endDate = formattedYesterday;
-                break;
-            case '14d':
-                startDate = formattedFourteenDaysAgo;
-                endDate = formattedYesterday;
-                break;
-            case '30d':
-                startDate = formattedThirtyDaysAgo;
-                endDate = formattedYesterday;
-                break;
-            default:
-                startDate = formattedThirtyDaysAgo;
-                endDate = formattedYesterday;
+        const toDay = new Date();
+        if(days > 0){
+            const beforeDays = new Date(toDay);
+            beforeDays.setDate(toDay.getDate() - days);
+            startDate = beforeDays.toISOString().split('T')[0];
+            endDate = formattedYesterday;
+        } else {
+            startDate = formattedThirtyDaysAgo;
+            endDate = formattedYesterday;
         }
-
         // 更新日期范围输入框的值
         document.getElementById('dateRange').value = `${startDate} - ${endDate}`;
 
@@ -157,6 +133,7 @@
         // 可以在这里添加额外的逻辑，比如提交表单或刷新表格
         document.getElementById('tj').click(); // 自动触发提交按钮
     }
+
 
     // 页面加载时默认设置近30天为选中
     window.onload = function() {

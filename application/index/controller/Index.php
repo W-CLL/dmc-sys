@@ -2,12 +2,19 @@
 
 namespace app\index\controller;
 
+use app\admin\model\Company as CompanyModel;
+use app\admin\model\Operator as OperatorModel;
+use app\admin\model\QcObjOptLog as PlanOptLogModel;
+use app\admin\model\QcObj as ObjModel;
 use app\common\controller\Frontend;
 use app\common\model\Queue;
 use GuzzleHttp\Client;
+use GuzzleHttp\Pool;
+use GuzzleHttp\Psr7\Request;
 use jlqc\FundManagement;
 use MongoDB\BSON\Timestamp;
 use think\Cache;
+use think\cache\driver\Redis;
 use think\Db;
 
 class Index extends Frontend
@@ -109,7 +116,7 @@ class Index extends Frontend
     public function testGetAdplanOptList($object_ids = [])
     {
         $access_token = Cache::get("qc_access_token");
-        $object_ids =  ["1816571139155068","1816571119288555","1816571107958810","1813879845232724","1813879883040809","1814666911762522"];
+        $object_ids = ["1816571139155068", "1816571119288555", "1816571107958810", "1813879845232724", "1813879883040809", "1814666911762522"];
 
         $params = [
             'advertiser_id' => '1811064042732587',
@@ -228,7 +235,7 @@ class Index extends Frontend
                         'account' => '20240919001',
                         'add_time' => $logData['create_time']
                     ];
-                    $res =  buildCrmRequest($params);
+                    $res = buildCrmRequest($params);
                     dump($res);
                 }
             }
@@ -268,100 +275,157 @@ class Index extends Frontend
     }
 
     // 初始化obj表
-    public function firstRunGetVPGObj(){
+    public function firstRunGetVPGObj()
+    {
         $queueModel = new Queue();
         $company_info = Db::name('company')->field('id,advertiser_id')->select();
+
         $split_array = array_chunk($company_info, 20);
-        foreach ($split_array as $item){
+        foreach ($split_array as $item) {
             $data['marketing_goal'] = 'VIDEO_PROM_GOODS';  // 推商品
             $data['time_describe'] = ' -30 days';
             $data['data'] = $item;
-            $queueModel->addQueue('获取广告计划【推商品】','app\job\QcObj','createQcObj',$data,'');
+            $queueModel->addQueue('获取广告计划【推商品】', 'app\job\QcObj', 'createQcObj', $data, '');
         }
         echo "初始化队列已创建";
     }
 
-    public function firstRunGetLPGObj(){
+    public function firstRunGetLPGObj()
+    {
         $queueModel = new Queue();
         $company_info = Db::name('company')->field('id,advertiser_id')->select();
         $split_array = array_chunk($company_info, 20);
-        foreach ($split_array as $item){
+        foreach ($split_array as $item) {
             $data['marketing_goal'] = 'LIVE_PROM_GOODS';  // 推直播间
             $data['time_describe'] = ' -30 days';
             $data['data'] = $item;
-            $queueModel->addQueue('获取广告计划【推直播间】','app\job\QcObj','createQcObj',$data,'');
+            $queueModel->addQueue('获取广告计划【推直播间】', 'app\job\QcObj', 'createQcObj', $data, '');
         }
         echo "初始化队列已创建";
     }
 
 
     // 初始化负责人，定时任务
-    public function updateKahuna(){
-        if(Cache::get('kahuna_run_status') == 1){
+    public function updateKahuna()
+    {
+        if (Cache::get('kahuna_run_status') == 1) {
             echo "已经初始化完毕，请删除定时任务";
             return;
         }
         $i = 0;
         $access_token = Cache::get("qc_access_token");
         $advertiser_ids = Cache::get("ad_ids");
-        if (!$advertiser_ids){
-            $advertiser_ids = Db::name("company")->where('kahuna','Null')->column("advertiser_id");
+        if (!$advertiser_ids) {
+            $advertiser_ids = Db::name("company")->where('kahuna', 'Null')->column("advertiser_id");
         }
-        $advertiser_ids = array_map(function ($item){
+        $advertiser_ids = array_map(function ($item) {
             return (int)$item;
-        },$advertiser_ids);
-        foreach ($advertiser_ids as $key => $split){
-            if ($i == 50){
+        }, $advertiser_ids);
+        foreach ($advertiser_ids as $key => $split) {
+            if ($i == 50) {
                 break;
             }
-            $res1 = FundManagement::get_ad_info($access_token,json_encode([$split],JSON_UNESCAPED_UNICODE));
-            if($res1['code'] == 0){
+            $res1 = FundManagement::get_ad_info($access_token, json_encode([$split], JSON_UNESCAPED_UNICODE));
+            if ($res1['code'] == 0) {
                 $arr['kahuna'] = $res1['data']['account_detail_list'][0]['optimizer_name'];
-                if(!Db::name('company')->where(['advertiser_id'=>$split])->update($arr)){
+                if (!Db::name('company')->where(['advertiser_id' => $split])->update($arr)) {
                     throw new \Exception('出错');
                 }
             }
             unset($advertiser_ids[$key]);
             $i++;
         }
-        if($i < 50){
+        if ($i < 50) {
             Cache::rm('start_num');
             Cache::rm('ad_ids');
-            Cache::set('kahuna_run_status',1,3600 * 24);
+            Cache::set('kahuna_run_status', 1, 3600 * 24);
             echo "全部完成";
             return;
         }
-        Cache::set('ad_ids',$advertiser_ids);
+        Cache::set('ad_ids', $advertiser_ids);
         echo "本次更新完成";
     }
 
 
-    public function firstRunGetOpt(){
+    public function firstRunGetOpt()
+    {
         $queueModel = new Queue();
-        $obj_info = Db::name('qc_obj')->column('advertiser_id','object_id');  // 52000
-        foreach ($obj_info as $k=>$v){
-            if(!isset($data[$v])){
+        $obj_info = Db::name('qc_obj')->column('advertiser_id', 'object_id');  // 52000
+        foreach ($obj_info as $k => $v) {
+            if (!isset($data[$v])) {
                 $data[$v] = [];
             }
             $data[$v][] = $k;
         }
         $split_array = array_chunk($data, 1, true);
-        foreach ($split_array as $item){
+        foreach ($split_array as $item) {
             $queue_data['start_time'] = date('Y-m-d 00:00:00', strtotime("first day of this month"));
             $queue_data['end_time'] = date('Y-m-d 23:59:59', strtotime("yesterday"));
             $queue_data['data'] = $item;
-            $queueModel->addQueue('获取计划操作','app\job\QcOpt','createQcOpt',$queue_data,'');
+            $queueModel->addQueue('获取计划操作', 'app\job\QcOpt', 'createQcOpt', $queue_data, '');
         }
         echo "初始化队列已创建";
     }
 
 
-    public function checkRedisSet(){
+    public function checkRedisSet()
+    {
         $redis = Cache::store('redis_db2')->handler();
 //        Cache::store('redis_db2')->handler()->SADD('testasdgf',1);
         $set_info = $redis->SMEMBERS('obj_id');
         var_dump($set_info);
     }
+
+    public function updateObjStatus()
+    {
+        $start_time = time();
+        $access_token = Cache::get("qc_access_token");
+        $list = Db::name('qc_obj')->where('status', 1)->limit(1800)->select();
+        $guzzleClient = new Client();
+        $requests = function () use ($guzzleClient,$access_token,$list) {
+            foreach ($list as   $item){
+                $url = "https://ad.oceanengine.com/open_api/v1.0/qianchuan/ad/detail/get/?advertiser_id=".$item['advertiser_id']."&ad_id=".$item['object_id']."&request_material_url=false";
+                yield new Request('GET', $url, ['Access-Token'=>$access_token]);
+            }
+        };
+        $updateData = [];
+        $pool = new Pool($guzzleClient, $requests(), [
+            'concurrency' => 20, // 并发请求数量
+            'fulfilled' => function ($response, $index) use (&$adIds0,&$adIds2) {
+                // 请求成功时的回调
+//                echo "Request {$index} completed with status code: " . $response->getStatusCode() . "\n";
+//                echo "Response body: " . $response->getBody()->getContents() . "\n";
+                $resData = json_decode($response->getBody()->getContents(),true);
+                if(!empty($resData)) {
+                    if ($resData['code'] != 0 || in_array($resData['data']['status'], ['DELETE', 'FROZEN'])) {
+                        if(isset($resData['data'])){
+                            $adIds0[] = $resData['data']['ad_id'];
+//                            Db::name('qc_obj')->where('object_id', $resData['data']['ad_id'])->update(['status' => 0]);
+                        }
+                    } else {
+                        $adIds2[] = $resData['data']['ad_id'];
+//                        Db::name('qc_obj')->where('object_id', $resData['data']['ad_id'])->update(['status' => 2]);
+                    }
+                }
+
+            },
+            'rejected' => function ($reason, $index) {
+                // 请求失败时的回调
+                echo "Request {$index} failed: " . $reason->getMessage() . "\n";
+            },
+        ]);
+// 发送请求并等待所有请求完成
+        $promise = $pool->promise();
+        $promise->wait();
+        Db::name('qc_obj')->where(['object_id'=>['in',$adIds0]])->update(['status' => 0]);
+        Db::name('qc_obj')->where(['object_id'=>['in',$adIds2]])->update(['status' => 2]);
+        $count = Db::name('qc_obj')->where('status',1)->count();
+        $time = time() - $start_time;
+        echo $count;
+        echo '执行成功，执行时间：' . $time . '秒';
+    }
+
+
 
 
     public function updatePolicy(){

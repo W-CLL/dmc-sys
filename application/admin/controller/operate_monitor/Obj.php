@@ -5,7 +5,7 @@ namespace app\admin\controller\operate_monitor;
 use app\common\controller\Backend;
 use app\admin\model\QcObj as ObjModel;
 use app\admin\model\Operator as OperatorModel;
-use app\admin\model\PlanOptLog as PlanOptLogModel;
+use app\admin\model\QcObjOptLog as PlanOptLogModel;
 
 class Obj extends Backend
 {
