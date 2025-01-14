@@ -482,10 +482,11 @@ class RechargeRefund extends Store
             'transfer_direction' => 2,
             'discount_percentage' => $wallet['wallet_discount'],
             'store_id' => $this->auth->id,
-            'account_type' => $company['account_type']
+            'account_type' => $company['account_type'],
+            'advertiser_id' => $advertiser_id
         ];
         $RefundModel = new StoreRefund();
-        $rebate = $RefundModel->getRealRefundRebate($data,2,false);
+        $rebate = $RefundModel->getRealRefundRebate($data,1,false);
         if (empty($rebate) && $wallet['wallet_discount'] != 0) {
             $rebate = round($money - ($money * 100) / ($wallet['wallet_discount'] * 100), 2);
         }

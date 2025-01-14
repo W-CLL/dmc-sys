@@ -602,7 +602,8 @@ class SubWallet extends Store
                     'transfer_direction' => 2,
                     'discount_percentage' => $wallet['wallet_discount'],
                     'store_id' => $this->auth->id,
-                    'account_type' => $wallet_info['sub_wallet_type']
+                    'account_type' => $wallet_info['sub_wallet_type'],
+                    'sub_wallet_id' => $request->param('sub_wallet_id')
                 ];
                 $rebate = $this->RefundModel->getRealRefundRebate($data,2,false);
                 if (empty($rebate)) {
