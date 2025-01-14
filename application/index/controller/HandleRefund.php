@@ -19,8 +19,8 @@ class HandleRefund extends Frontend
 
     public function handleMoneyLogData()
     {
-//        echo "禁止访问";
-//        die;
+        echo "禁止访问";
+        die;
 //        $records = Db::name('store_money_log')
 //            ->where('type', '=', 4)
 //            ->whereOr('type', '=', 5)
