@@ -41,12 +41,12 @@ class InitObjOptLog extends Controller
 //        dump($redis->get('empty_adv_id_'.$day));
 ////        die;
         $where = '';
-        if ($day == 1) {
-            $comFun = new ComFun();
-            //筛选已经处理了时间区间（前60天-前30天的）
-            list($start_date, $end_date) = $comFun->getSearchDate(2);
-            $where = 'opt_time not between ' . strtotime($start_date . " 00:00:00") . " and " . strtotime($end_date . " 23:59:59");
-        }
+//        if ($day == 1) {
+//            $comFun = new ComFun();
+//            //筛选已经处理了时间区间（前60天-前30天的）
+//            list($start_date, $end_date) = $comFun->getSearchDate(2);
+//            $where = 'opt_time not between ' . strtotime($start_date . " 00:00:00") . " and " . strtotime($end_date . " 23:59:59");
+//        }
         //检查已处理的广告账户
         $objModel = new QcObj();
         $emptyAdvId = $redis->get('empty_adv_id_'.$day, ''); // 获取空广告账户缓存
