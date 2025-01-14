@@ -3,13 +3,9 @@
 namespace app\admin\controller\operate_monitor;
 
 use app\common\controller\Backend;
-use app\admin\model\Operator as OperatorModel;
-use app\admin\model\PlanOptLog as PlanOptLogModel;
-use app\admin\model\QcObj as ObjModel;
 use app\admin\model\Company as CompanyModel;
-use jlqc\FundManagement;
-use think\Cache;
-use think\Db;
+use app\common\model\QcAdvDayCost;
+
 
 
 class AdList extends Backend
@@ -17,16 +13,14 @@ class AdList extends Backend
     public function index()
     {
         $companyModel = new CompanyModel();
-        $access_token = Cache::get("qc_access_token");
         if ($this->request->isAjax()) {
             $where = [];
-//            $sort = input("sort","this_month_opt_sum");
-//            $order = input("order","desc");
+            $sort = input("sort","mon_cost");
+            $order = input("order","desc");
             $offset = input("offset",0);
             $limit = input("limit",10);
-            $agent_id = Db::name("qc_config")->where("id",1)->value("advertiser_id");
-            $start_time = input("start_date")?:date("Y-m-d",strtotime("-30 day"));
-            $end_time = input("end_date")?:date("Y-m-d",strtotime("-1 day"));
+            $start_time = strtotime(input("start_date")?:date("Y-m-d",strtotime("-30 day")));
+            $end_time = strtotime(input("end_date")?:date("Y-m-d",time()));
             $kahuna = input("kahuna");
             $advertiser_id = input("advertiser_id");
             if (!empty($kahuna)){
@@ -35,92 +29,41 @@ class AdList extends Backend
             if (!empty($advertiser_id)){
                 $where['advertiser_id'] = ['=', $advertiser_id];
             }
+            $qcAdvModel = new QcAdvDayCost();
+            $list = $qcAdvModel
+                ->alias('adv_c')
+                ->join('company com', 'adv_c.adv_id = com.advertiser_id', 'left')
+                ->join(
+                    "(SELECT adv_id, COUNT(*) AS total_num FROM fa_qc_obj_opt_log WHERE opt_time BETWEEN ".$start_time." AND ".$end_time." GROUP BY adv_id) AS total_stats",
+                    'adv_c.adv_id = total_stats.adv_id',
+                    'left'
+                )
+                ->join(
+                    "(SELECT adv_id, COUNT(*) AS company_num FROM fa_qc_obj_opt_log WHERE opt_time BETWEEN ".$start_time." AND ".$end_time." AND operator IN (SELECT name FROM fa_ad_operator WHERE status = 1) GROUP BY adv_id) AS company_stats",
+                    'adv_c.adv_id = company_stats.adv_id',
+                    'left'
+                )
+                ->where(['adv_c.cost_date' => ['between', [$start_time, $end_time]]])
+                ->field("adv_c.*, SUM(cost) AS mon_cost, com.company_name, com.kahuna, total_stats.total_num, company_stats.company_num")
+                ->group('adv_c.adv_id')
+                ->order($sort, $order)
+                ->limit($offset, $limit)
+//                ->fetchSql(true)
+                ->select();
+//            dump($list);
+//            die;
 
-
-            $list = $companyModel
-                ->where($where)
-                ->field("id,advertiser_id,company_name,name,kahuna,this_month_opt_sum,this_month_bmopt_sum")
-                ->order('this_month_opt_sum', 'desc')
-                ->limit($offset,$limit);
-            $list = $list->select();
-            foreach ($list as $k => $v){
-                $no_grant_sum = 0;
-                $grant_sum = 0;
-//                $data = FundManagement::get_agent_statement($access_token,$agent_id, $start_time, $end_time,1,100,(int)$v['advertiser_id']);
-                $data = FundManagement::get_flow_info($access_token,$v['advertiser_id'],1,100,$start_time,$end_time);
-                $total_page = ceil($data['data']['page_info']['total_number']/$data['data']['page_info']['page_size']);
-                if($total_page == 1){
-                    foreach ($data['data']['list'] as $value){
-//                        $no_grant_sum += $value['no_grant_cost'] / 100000;
-                        $no_grant_sum += $value['cash_cost'] / 100000;
-                        $grant_sum += $value['cost'] / 100000;
-                    }
+            foreach ($list as &$item){
+                $item['cus_num'] = $item['total_num'] - $item['company_num'];
+                if($item['company_num'] > 0 && $item['cus_num'] > 0){
+                    $item['percentage'] = number_format($item['company_num']/ $item['cus_num'], 2) * 100 ;
+                    $item['percentage'] = $item['percentage'].'%';
                 }else{
-                    for($i=1;$i<=$total_page;$i++){
-//                        $data = FundManagement::get_agent_statement($access_token,$agent_id, $start_time, $end_time,$i,100,(int)$v['advertiser_id']);
-                        $data = FundManagement::get_flow_info($access_token,$v['advertiser_id'],$i,100,$start_time,$end_time);
-                        foreach ($data['data']['list'] as $value){
-//                            $no_grant_sum += $value['no_grant_cost'] / 100000;
-                            $no_grant_sum += $value['cash_cost'] / 100000;
-                            $grant_sum += $value['cost'] / 100000;
-                        }
-                    }
+                    $item['percentage'] = "0%";
                 }
-                $list[$k]['no_grant_sum'] = floor(floatval($no_grant_sum) * 100) / 100;
-                $list[$k]['grant_sum'] = floor(floatval($grant_sum) * 100) / 100;
-            }
-            // 查询总数
-            $countQuery = $companyModel->where($where);
-            $count = $countQuery->count();
-            $result = array("total" => $count, "rows" => $list);
-            return json($result);
-        }
-        return $this->view->fetch();
-    }
 
-
-    public function sub_page()
-    {
-        $companyModel = new CompanyModel();
-        $access_token = Cache::get("qc_access_token");
-        $admin_name = $this->auth->getUserInfo()['nickname'];
-        if ($this->request->isAjax()) {
-            $where = [];
-//            $sort = input("sort","id");
-//            $order = input("order","desc");
-            $offset = input("offset",0);
-            $limit = input("limit",10);
-            $agent_id = Db::name("qc_config")->where("id",1)->value("advertiser_id");
-            $start_time = input("start_date")?:date("Y-m-d",strtotime("-30 day"));
-            $end_time = input("end_date")?:date("Y-m-d",strtotime("-1 day"));
-            $where['kahuna'] = ['=', $admin_name];
-            $advertiser_id = input("advertiser_id");
-            if (!empty($advertiser_id)){
-                $where['advertiser_id'] = ['=', $advertiser_id];
             }
 
-
-            $list = $companyModel
-                ->where($where)
-                ->field("id,advertiser_id,company_name,name,kahuna,this_month_opt_sum,this_month_bmopt_sum")
-                ->order('this_month_opt_sum', 'desc')
-                ->limit($offset,$limit);
-            $list = $list->select();
-            foreach ($list as $k => $v){
-                $no_grant_sum = 0;
-                $grant_sum = 0;
-                $data = FundManagement::get_agent_statement($access_token,$agent_id, $start_time, $end_time,1,100,(int)$v['advertiser_id']);
-                $total_page = ceil($data['data']['page_info']['total_number']/$data['data']['page_info']['page_size']);
-                for($i=1;$i<=$total_page;$i++){
-                    $data = FundManagement::get_agent_statement($access_token,$agent_id, $start_time, $end_time,$i,100,(int)$v['advertiser_id']);
-                    foreach ($data['data']['list'] as $value){
-                        $no_grant_sum += $value['no_grant_cost'] / 100000;
-                        $grant_sum += $value['cost'] / 100000;
-                    }
-                }
-                $list[$k]['no_grant_sum'] = floor(floatval($no_grant_sum) * 100) / 100;
-                $list[$k]['grant_sum'] = floor(floatval($grant_sum) * 100) / 100;
-            }
             // 查询总数
             $countQuery = $companyModel->where($where);
             $count = $countQuery->count();

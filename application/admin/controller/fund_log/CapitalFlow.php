@@ -7,6 +7,7 @@ use DateTime;
 use jlqc\FundManagement;
 use think\Cache;
 use think\Db;
+use think\Exception;
 
 
 class CapitalFlow extends Backend
@@ -14,8 +15,9 @@ class CapitalFlow extends Backend
 
 
     /**
-     * @return string|\think\response\Json
-     * @throws \think\Exception
+     * @return array|string
+     * @throws Exception
+     * @throws \Exception
      * 消耗流水
      */
     public function index()
@@ -47,6 +49,7 @@ class CapitalFlow extends Backend
         $return_code = FundManagement::$auth_return_code;
 
         if(in_array($finance_data['code'],$return_code)){
+            send_work_wx_msg('千川授权已失效!请尽快更新');
             $this->error('千川授权已失效，请联系管理员');
         }
 

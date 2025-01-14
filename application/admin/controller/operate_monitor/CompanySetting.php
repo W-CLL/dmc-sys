@@ -1,0 +1,112 @@
+<?php
+
+namespace app\admin\controller\operate_monitor;
+
+
+use app\admin\model\Company;
+use app\admin\model\QcObjOptLog;
+use app\admin\model\QcObj;
+use app\common\controller\Backend;
+use app\common\model\QcObjOptStats;
+use think\Db;
+
+
+class CompanySetting extends Backend
+{
+    /**
+     * @var QcObjOptStats
+     */
+    private $optStatsModel;
+    /**
+     * @var QcObj
+     */
+    private $objModel;
+    /**
+     * @var QcObjOptLog
+     */
+    private $optLogModel;
+
+    public function _initialize()
+    {
+        parent::_initialize();
+        $this->optStatsModel = new QcObjOptStats();
+        $this->objModel = new QcObj();
+        $this->optLogModel = new QcObjOptLog();
+        $this->companyModel = new Company();
+    }
+
+
+    /**
+     * 公司列表
+     */
+    public function index()
+    {
+        if ($this->request->isAjax()) {
+            $offset = input("offset", 0);
+            $limit = input("limit", 10);
+            $list = $this->companyModel
+                ->alias('c')
+                ->join('company_setting cs', 'c.company_name = cs.company_name', 'left')
+                ->field("c.company_name,cs.is_white,cs.percentage,cs.id,count(c.id) as adv_num")
+                ->group('c.company_name')
+                ->order('adv_num desc')
+                ->limit($offset, $limit)
+//                ->fetchSql(true)
+                ->select();
+            foreach ($list as &$item){
+                $item['percentage'] = $item['percentage']."%";
+            }
+
+            $count = $this->companyModel->group('company_name')->count();
+            $result = array("total" => $count, "rows" => $list);
+            return json($result);
+        }
+        return $this->view->fetch('index');
+    }
+
+
+    public function checkSettingParams($data)
+    {
+        if(!isset($data['is_white'])){
+            $this->error('请选择是否加入白名单');
+        }
+        if(!isset($data['percentage'])){
+            $this->error('请输入百分比');
+        }else{
+            if(!is_numeric($data['percentage']) || $data['percentage'] < 0 || $data['percentage'] > 100){
+                $this->error('百分比填写有误, 请填写0-100之间的数字');
+            }
+        }
+        if(empty($data['ids'])){
+            $this->error('请选择要设置的数据');
+        }
+    }
+    /**
+     * 设置公司下广告计划监测百分比、是否加入白名单
+     */
+    public function edit($ids='')
+    {
+        $companySetting = new \app\admin\model\CompanySetting();
+        if ($this->request->isPost()) {
+            $data = $this->request->post();
+            $this->checkSettingParams($data);
+        }
+        $this->assign('info',$companySetting->where('id',$ids)->find());
+        return $this->view->fetch('edit');
+
+    }
+
+    public function setting($ids='')
+    {
+        $companySetting = new \app\admin\model\CompanySetting();
+        if ($this->request->isPost()) {
+            $data = $this->request->post();
+            $this->checkSettingParams($data);
+        }
+        $this->assign('info',$companySetting->where('id',$ids)->find());
+        return $this->view->fetch('');
+    }
+
+
+
+}

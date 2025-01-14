@@ -81,6 +81,7 @@ Class FundManagement{
         $params['fields'] = ['cpm_platform','stat_cost','show_cnt','ctr','click_cnt'];
         $params['filtering'] = [
             'marketing_goal'=>"ALL",
+            'time_granularity'=>'TIME_GRANULARITY_DAILY'
         ];
         $base_url = "https://ad.oceanengine.com/open_api/v1.0/qianchuan/report/ad/get";
         $url = buildUrlWithParams($base_url,$params);
@@ -357,6 +358,25 @@ Class FundManagement{
             'Access-Token:'. $access_token,
         );
         $url = "https://ad.oceanengine.com/open_api/v1.0/qianchuan/finance/detail/get/?advertiser_id=".$advertiser_id."&page=".$page."&page_size=".$page_size."&start_date=".$start_date."&$end_date=".$end_date;
+        return Requests::get($url,$header);
+    }
+
+    /**
+     * 获取千川广告账户全量信息
+     * 如果包含没有访问权限的ID,将返回no permission error
+     * @param $access_token
+     * @param $advertiser_ids
+     * @return mixed
+     */
+    public static function get_adv_info($access_token,$advertiser_ids)
+    {
+        $header = array(
+            'Access-Token:'. $access_token,
+        );
+
+        $url = "https://ad.oceanengine.com/open_api/2/advertiser/info?advertiser_ids=".$advertiser_ids;
+//        dump($url);
+//        die;
         return Requests::get($url,$header);
     }
 
