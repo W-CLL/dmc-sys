@@ -73,6 +73,7 @@ class InitQcAdvCost extends Controller
         // 获取当前的时间区间
         $comFun = new ComFun();
         list($start_date, $end_date) = $comFun->getSearchDate($day);
+        echo $start_date."--".$end_date.'</n>';
         $access_token = Cache::get("qc_access_token");
         $url = "https://ad.oceanengine.com/open_api/v1.0/qianchuan/report/advertiser/get/";
         $headers = [
