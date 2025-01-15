@@ -29,7 +29,7 @@ class QcObjOptLog extends Api
             $currDay = date('Y-m-d',time()) ;
             $currTime = time();
             $dayHalfTime = strtotime($currDay.' 11:59:00');
-            $dayEndTime = strtotime($currDay.' 23:59:00');
+            $dayEndTime = strtotime($currDay.' 23:49:00');
             if($currTime > $dayHalfTime && $currTime<$dayEndTime){
                 $startTime = $currDay . ' 00:00:00';
                 $endTime = $currDay.' 11:59:59';
