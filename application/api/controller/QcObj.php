@@ -89,7 +89,6 @@ class QcObj extends Api
     /**
      * 推商品
      * @return void
-     * @throws Exception
      */
     public function initInsertVideoObj()
     {
@@ -99,7 +98,6 @@ class QcObj extends Api
     /**
      * 推直播间
      * @return void
-     * @throws Exception
      */
     public function initInsertLiveObj()
     {
