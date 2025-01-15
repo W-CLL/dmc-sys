@@ -66,7 +66,7 @@ class UpdateAdvDayCost
                 echo "插入";
                 $res = $costModel->save($data);
             }
-            if (!$res) {
+            if (!$res && $res != 0) {
                 throw  new Exception($res);
             }
         }
