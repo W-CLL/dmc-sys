@@ -34,6 +34,8 @@ class InitObjOptLog extends Controller
 
     public function intObjOptLog($day)
     {
+        dump('初始化完了，禁止访问!');
+        die;
         // 设置超时时间
         set_time_limit(360);
         $redis = Cache::store('redis');

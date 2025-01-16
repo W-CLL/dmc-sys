@@ -43,14 +43,15 @@
                 </div>
                 <div class="col-xs-6 col-sm-2 col-md-3">
                     <div class="form-group">
-                        <label class="control-label">任务类名</label>
+                        <label class="control-label">任务名</label>
                         <!--隐式的operate操作符，必须携带一个class为operate隐藏的文本框,且它的data-name="字段",值为操作符-->
                         <input class="operate" type="hidden" data-name="class_name" value="LIKE" />
-                        <div>
-                            <label>
-                                <input class="form-control" type="text" name="class_name"  value=""/>
-                            </label>
-                        </div>
+<!--                        <div>-->
+<!--                            <label>-->
+<!--                                <input class="form-control" type="text" name="class_name"  value=""/>-->
+<!--                            </label>-->
+<!--                        </div>-->
+                        {$class_name_list}
                     </div>
                 </div>
                 <div class="col-xs-12 col-sm-6 col-md-3">
