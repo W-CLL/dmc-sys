@@ -46,8 +46,6 @@ class RechargeRefund extends Store
             'store_id' => $this->auth->id,
             'advertiser_id' => $company_advertiser_id
         ],1);
-        var_dump($last_transfer_info);
-        die;
         if(!empty($last_transfer_info)){
             $maxTTO = $last_transfer_info['wallet'] + $last_transfer_info['credit'];
         }
