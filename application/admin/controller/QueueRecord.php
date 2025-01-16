@@ -3,6 +3,7 @@
 namespace app\admin\controller;
 
 use app\common\controller\Backend;
+use app\common\model\Queue;
 use think\Db;
 
 Class QueueRecord extends Backend{
@@ -48,7 +49,18 @@ Class QueueRecord extends Backend{
 
             return json($result);
         }
+        $queue = new Queue();
+        $class_list = $queue->group('class_name')->column('job_name','class_name');
 
+        $result = array_combine(
+            array_map(function($key) {
+                return basename($key);
+            }, array_keys($class_list)),
+            $class_list
+        );
+        $select = build_select('class_name', $result, 0, ['class'=>'form-control selectpicker', 'data-rule'=>'required']);
+
+        $this->assign('class_name_list',$select);
         return $this->view->fetch();
     }
     //重启任务的逻辑就是删掉原来失败的重新构建

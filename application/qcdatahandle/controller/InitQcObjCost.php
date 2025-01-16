@@ -32,6 +32,8 @@ class InitQcObjCost extends Frontend
      */
     public function initQcAdvConstWithMon()
     {
+        dump('初始化完了，禁止访问!');
+        die;
         set_time_limit(360);
         $qcObjDayCostModel = new QcAdvDayCost();
 //        $existedIds = $qcObjDayCostModel->group('obj_id')->column('obj_id');

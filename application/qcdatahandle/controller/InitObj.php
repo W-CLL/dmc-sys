@@ -24,6 +24,8 @@ class InitObj extends Controller
      */
     public function initInsertObj($marketingGoal, $cacheKeyPrefix, $day)
     {
+        dump('初始化完了，禁止访问!');
+        die;
         set_time_limit(360);
         $redis = Cache::store('redis');
 //        dump($redis->rm("{$cacheKeyPrefix}_page_".$day));
