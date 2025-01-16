@@ -52,12 +52,20 @@ Class QueueRecord extends Backend{
         $queue = new Queue();
         $class_list = $queue->group('class_name')->column('job_name','class_name');
 
+//        $result = array_combine(
+//            array_map(function($key) {
+//                return basename($key);
+//            }, array_keys($class_list)),
+//            $class_list
+//        );
         $result = array_combine(
             array_map(function($key) {
-                return basename($key);
+                // 去除前缀部分
+                return str_replace('app\\job\\', '', $key);
             }, array_keys($class_list)),
             $class_list
         );
+
         $select = build_select('class_name', $result, 0, ['class'=>'form-control selectpicker', 'data-rule'=>'required']);
 
         $this->assign('class_name_list',$select);

@@ -95,3 +95,7 @@ CREATE TABLE `fa_company_setting`
     PRIMARY KEY (`id`),
     KEY            `name` (`company_name`(250)) USING BTREE COMMENT '公司名字'
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COMMENT='公司主体设置表';
+
+
+ALTER TABLE fa_company
+    ADD COLUMN `adv_status` TINYINT(2) DEFAULT 1 COMMENT '广告账号状态';
