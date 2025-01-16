@@ -40,6 +40,20 @@ class RechargeRefund extends Store
         if (!is_numeric($money) || $money < 0) {
             $this->error("请输入正确金额");
         }
+        $StoreRefund = new StoreRefund();
+        $last_transfer_info = $StoreRefund->getSingleItem([
+            'account_type' => $company['account_type'],
+            'store_id' => $this->auth->id,
+            'advertiser_id' => $company_advertiser_id
+        ],1);
+        var_dump($last_transfer_info);
+        die;
+        if(!empty($last_transfer_info)){
+            $maxTTO = $last_transfer_info['wallet'] + $last_transfer_info['credit'];
+        }
+        if(isset($maxTTO) && $money > $maxTTO && $transaction_type == 2){
+            $this->error('超出本次同比可退最大值，本次转出金额最大值：'.$maxTTO);
+        }
 
         $transfer_records_data = [
             "store_id" => $this->auth->id,
