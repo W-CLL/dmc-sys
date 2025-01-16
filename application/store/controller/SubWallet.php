@@ -105,8 +105,19 @@ class SubWallet extends Store
         }
         $max_transfer_out = $out_res['data']['can_transfer_detail_list'][0]['non_brand_max_transfer_balance'] / 100;
         $min_transfer = $in_res['data']['can_transfer_detail_list'][0]['payee_transfer_amount_detail_list'][0]['non_brand_min_transfer_balance'] / 100;
+        $last_transfer_info = $this->RefundModel->getSingleItem([
+            'account_type' => $wallet['sub_wallet_type'],
+            'store_id' => $wallet['bind_store_id'],
+            'sub_wallet_id' => $wallet['sub_wallet_id']
+        ],2);
+        if(!empty($last_transfer_info)){
+            $maxTTO = $last_transfer_info['wallet'] + $last_transfer_info['credit'];
+        }
         if ($this->request->isPost()) {
             $post = $this->request->post();
+            if(isset($maxTTO) && $post['transfer_amount'] > $maxTTO && $post['transfer_direction'] == 'TRANSFER_OUT'){
+                $this->error('超出本次同比可退最大值，本次转出金额最大值：'.$maxTTO);
+            }
             $wallet_info = $this->checkParam($wallet,$store,$post,$max_transfer_out,$min_transfer);
             Db::startTrans();
             try {

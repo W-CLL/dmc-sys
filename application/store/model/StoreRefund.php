@@ -213,4 +213,42 @@ class StoreRefund extends Model
     }
 
 
+    /**
+     * 获取最新单条广告商的退款百分比
+     * @param $data
+     * data基础构成[
+     *      'account_type' => 目标账户类型【1：公   2：私】
+     *      'store_id' => 绑定的商户id
+     *      'advertiser_id' => 广告商id  || ’sub_wallet_id‘ => 子钱包id     【根据$wallet_type去传，当$wallet_type=1传广告商id，否则传子钱包id】
+     * ]
+     * @param $wallet_type
+     * @return bool|string|Collection
+     * @throws DataNotFoundException
+     * @throws DbException
+     * @throws ModelNotFoundException
+     */
+    public function getSingleItem($data,$wallet_type)
+    {
+        $where = [
+            'type' => $data['account_type'],
+            'store_id' => $data['store_id'],
+            'wallet_type' => $wallet_type,
+        ];
+        if($wallet_type == 1){
+            $where['platform_id'] = $data['advertiser_id'];
+        }else{
+            $where['platform_id'] = isset($data['swtl_id']) ? Db::name('share_wallet_transfer_log')->where('id',$data['swtl_id'])->value('sub_wallet_id') : $data['sub_wallet_id'];
+        }
+        //千川账户的充值记录
+        return self::where($where)
+            ->where(function ($query) {
+                $query->where('credit > 0 OR wallet > 0');
+            })
+            ->order('id desc')
+            ->order('update_time desc')
+//            ->fetchSql(true)
+            ->find();
+    }
+
+
 }
