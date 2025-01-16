@@ -22,29 +22,33 @@ class InitObj extends Controller
      * @return void
      * @throws Exception
      */
-    public function initInsertObj($marketingGoal, $cacheKeyPrefix, $day = 2)
+    public function initInsertObj($marketingGoal, $cacheKeyPrefix, $day)
     {
+        dump('初始化完了，禁止访问!');
+        die;
         set_time_limit(360);
         $redis = Cache::store('redis');
 //        dump($redis->rm("{$cacheKeyPrefix}_page_".$day));
 //        dump($redis->rm("empty_{$cacheKeyPrefix}_list_".$day));
 //        die;
-        $page = $redis->get("{$cacheKeyPrefix}_page_".$day,1);; // 动态生成缓存键
+        $page = $redis->get("{$cacheKeyPrefix}_page_" . $day, 1);; // 动态生成缓存键
         $companyModel = new Company();
         $comFun = new ComFun();
-        $where = "NOT EXISTS (SELECT 1 FROM fa_qc_obj f WHERE f.adv_id = c.advertiser_id AND f.marketing_goal ='".$marketingGoal."'";
-        if ($day == 1) {
-            $newDay = $day + 1; // 不直接修改外部传入的 $day
-            list($start_date, $end_date) = $comFun->getSearchDate($newDay);
-            $where .= ' AND f.obj_create_time NOT BETWEEN '. strtotime($start_date).' AND '. strtotime($end_date).')';
-        }else{
-            $where .=" )";
-        }
+//        $where = " advertiser_id NOT IN (SELECT advertiser_id FROM fa_qc_obj f WHERE f.adv_id = c.advertiser_id AND f.marketing_goal ='".$marketingGoal."'";
+//        if ($day == 1) {
+//            $newDay = $day + 1; // 不直接修改外部传入的 $day
+//            list($start_date, $end_date) = $comFun->getSearchDate($newDay);
+//            $where .= ' AND f.obj_create_time < '. strtotime($end_date).')';
+//        }else{
+//            $where .=" )";
+//        }
 
         // 查询公司列表，过滤没有处理过的广告商
-        $list = $companyModel->alias('c')
-            ->where($where)
-            ->order('c.advertiser_id desc')
+        $list = $companyModel
+//            ->alias('c')
+//            ->where($where)
+            ->where(['adv_status' => 1])
+            ->order('advertiser_id desc')
             ->page($page)
             ->limit(100)
 //            ->fetchSql(true)  // 仅用于调试，生产环境可以去掉
@@ -52,19 +56,21 @@ class InitObj extends Controller
             ->column('advertiser_id');
 
         // 如果空数据超过15次且分页已超过100，停止处理
-        if ( $redis->get("empty_{$cacheKeyPrefix}_list_".$day,0) > 15 && $page > 100) {
+        if ($redis->get("empty_{$cacheKeyPrefix}_list_" . $day, 0) > 15 && $page > 100) {
             echo "{$marketingGoal} 数据已经全部处理完";
 //            $redis->rm("{$cacheKeyPrefix}_page_".$day);
             die;
         }
         // 获取日期范围
         list($start_date, $end_date) = $comFun->getSearchDate($day);
+        echo $start_date."--".$end_date.'</br>';
         // 构建请求过滤条件
         $filter = [
-            "status"=>"ALL_INCLUDE_DELETED",//全部（包含已删除）
+            "status" => "ALL_INCLUDE_DELETED",//全部（包含已删除）
             "marketing_goal" => $marketingGoal,
             "ad_create_start_date" => $start_date,
             "ad_create_end_date" => $end_date,
+            "marketing_scene" => "ALL"
         ];
 
         // 构建请求并发送
@@ -76,15 +82,16 @@ class InitObj extends Controller
             $objModel = new QcObj();
             $res = $objModel->saveAll($insertData);
             if ($res) {
-                $redis->set("{$cacheKeyPrefix}_page_".$day,$page + 1);
+                $redis->set("{$cacheKeyPrefix}_page_" . $day, $page + 1);
                 echo "成功插入 " . count($insertData) . " 条数据， 第 " . $page . " 页";
             } else {
                 echo "插入失败";
             }
         } else {
             echo '这一批为空，转到下一页';
-            $redis->set("empty_{$cacheKeyPrefix}_list_".$day,$redis->get("empty_{$cacheKeyPrefix}_list_".$day) + 1);
-            $redis->set("{$cacheKeyPrefix}_page_".$day,$page+1);
+            echo " 第 " . $page . " 页";
+            $redis->set("empty_{$cacheKeyPrefix}_list_" . $day, $redis->get("empty_{$cacheKeyPrefix}_list_" . $day) + 1);
+            $redis->set("{$cacheKeyPrefix}_page_" . $day, $page + 1);
             die;
         }
     }

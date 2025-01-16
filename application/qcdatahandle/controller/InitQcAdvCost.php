@@ -33,6 +33,8 @@ class InitQcAdvCost extends Controller
      */
     public function initQcAdvConstWithMon(int $day=2)
     {
+        dump('初始化完了，禁止访问!');
+        die;
         set_time_limit(360); // 延长执行时间
         $redis = Cache::store('redis');
         // 初始化模型
@@ -73,6 +75,7 @@ class InitQcAdvCost extends Controller
         // 获取当前的时间区间
         $comFun = new ComFun();
         list($start_date, $end_date) = $comFun->getSearchDate($day);
+        echo $start_date."--".$end_date.'</n>';
         $access_token = Cache::get("qc_access_token");
         $url = "https://ad.oceanengine.com/open_api/v1.0/qianchuan/report/advertiser/get/";
         $headers = [

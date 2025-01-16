@@ -13,13 +13,26 @@ class QcObjOptLog extends Api
     protected $noNeedLogin = '*';
     protected $noNeedRight = '*';
 
-    public function index()
+    /**
+     * @param $date
+     * 格式2025-01-15,处理特殊情况，一般不传
+     * @return void
+     */
+    public function index($date='')
     {
         $objModel = new \app\admin\model\QcObj();
         $queue = new Queue();
         $advIds = $objModel->group('adv_id')->column('adv_id');
+        $where['obj_status'] = ['not in', ["DELETE", "TIME_DONE","FROZEN"]];
+
+        if($date){
+            $startTime = $date.' 00:00:00';
+            $endTime = $date.' 23:59:59';
+            $where['obj_create_time'] = ['between',[strtotime($startTime),strtotime($endTime)]];
+        }
         foreach ($advIds as $id) {
-            $objIds = $objModel->where(['obj_status' => ['not in', ["DELETE", "TIME_DONE","FROZEN"]], 'adv_id' => $id])->column('obj_id');
+            $where['adv_id'] = $id;
+            $objIds = $objModel->where($where)->column('obj_id');
             $count = count($objIds);
             if ($count == 0) {
                 continue;
@@ -27,9 +40,12 @@ class QcObjOptLog extends Api
             $count = ceil($count / 20); // 计算分页数
             // 分页处理
             $currDay = date('Y-m-d',time()) ;
+            if($date){
+                $currDay = $date;
+            }
             $currTime = time();
             $dayHalfTime = strtotime($currDay.' 11:59:00');
-            $dayEndTime = strtotime($currDay.' 23:59:00');
+            $dayEndTime = strtotime($currDay.' 23:49:00');
             if($currTime > $dayHalfTime && $currTime<$dayEndTime){
                 $startTime = $currDay . ' 00:00:00';
                 $endTime = $currDay.' 11:59:59';
@@ -37,6 +53,11 @@ class QcObjOptLog extends Api
                 $startTime = $currDay . ' 12:00:00';
                 $endTime = $currDay.' 23:59:59';
             }else{
+                $startTime = $currDay.' 00:00:00';
+                $endTime = $currDay.' 23:59:59';
+            }
+
+            if($date){
                 $startTime = $currDay.' 00:00:00';
                 $endTime = $currDay.' 23:59:59';
             }

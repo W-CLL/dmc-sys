@@ -34,6 +34,8 @@ class InitObjOptLog extends Controller
 
     public function intObjOptLog($day)
     {
+        dump('初始化完了，禁止访问!');
+        die;
         // 设置超时时间
         set_time_limit(360);
         $redis = Cache::store('redis');
@@ -90,7 +92,7 @@ class InitObjOptLog extends Controller
             // 记录异常
             Log::error("Error in processing AdvId: {$advId}. Message: {$e->getMessage()}");
         }
-        echo "处理了" . count($allProcessedAdvIds) . '个,还剩下' . $objModel->distinct('adv_id')->where(['adv_id' => ['not in', $allProcessedAdvIds]])->count();
+        echo "处理了" . count($allProcessedAdvIds) . '个,还剩下' . $objModel->where(['adv_id' => ['not in', $allProcessedAdvIds]])->group('adv_id')->count();
         echo '</br>';
     }
 
@@ -108,6 +110,7 @@ class InitObjOptLog extends Controller
         // 获取需要处理的区间
         $comFun = new ComFun();
         list($start_date, $end_date) = $comFun->getSearchDate($day);
+        echo $start_date."--".$end_date.'</br>';
         $requests = [];
         $count = ceil($count / 20); // 计算分页数
         // 分页处理

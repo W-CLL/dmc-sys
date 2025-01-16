@@ -66,7 +66,7 @@ class UpdateAdvDayCost
                 echo "插入";
                 $res = $costModel->save($data);
             }
-            if (!$res) {
+            if (!$res && $res != 0) {
                 throw  new Exception($res);
             }
         }
@@ -110,7 +110,7 @@ class UpdateAdvDayCost
 
     protected function sendGuzzleRequest($requests)
     {
-        sleep(3);
+        sleep(2);
         $insertData = [];
         $guzzleClient = new Client();
         $pool = new Pool($guzzleClient, array_column($requests, 'request'), [

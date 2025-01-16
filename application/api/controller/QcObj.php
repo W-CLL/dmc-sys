@@ -54,6 +54,7 @@ class QcObj extends Api
             }
             foreach ($advList as $id) {
                 //查询广告账号当天已经存在的计划
+                //查询状态不为删除的，因为接口默认不查找已经删除的计划
                 $objIds = $objModel
                     ->where([
                         'adv_id' => $id,
@@ -88,7 +89,6 @@ class QcObj extends Api
     /**
      * 推商品
      * @return void
-     * @throws Exception
      */
     public function initInsertVideoObj()
     {
@@ -98,7 +98,6 @@ class QcObj extends Api
     /**
      * 推直播间
      * @return void
-     * @throws Exception
      */
     public function initInsertLiveObj()
     {
