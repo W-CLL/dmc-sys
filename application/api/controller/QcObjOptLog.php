@@ -14,8 +14,9 @@ class QcObjOptLog extends Api
     protected $noNeedRight = '*';
 
     /**
+     * 获取前一天的所有计划的操作日志
      * @param $date
-     * 格式2025-01-15,处理特殊情况，一般不传
+     * 格式2025-01-15,处理特殊情况，比如漏掉的日期，一般不传
      * @return void
      */
     public function index($date='')
@@ -39,28 +40,29 @@ class QcObjOptLog extends Api
             }
             $count = ceil($count / 20); // 计算分页数
             // 分页处理
-            $currDay = date('Y-m-d',time()) ;
-            if($date){
+            //每天凌晨获取前一天的操作次数
+            $currDay = date('Y-m-d',  strtotime('-1 day')) ;
+            if($date){//如果传入具体值，则获取具体日期一整天的操作次数
                 $currDay = $date;
             }
-            $currTime = time();
-            $dayHalfTime = strtotime($currDay.' 11:59:00');
-            $dayEndTime = strtotime($currDay.' 23:49:00');
-            if($currTime > $dayHalfTime && $currTime<$dayEndTime){
-                $startTime = $currDay . ' 00:00:00';
-                $endTime = $currDay.' 11:59:59';
-            }else if($currTime > $dayEndTime){
-                $startTime = $currDay . ' 12:00:00';
-                $endTime = $currDay.' 23:59:59';
-            }else{
-                $startTime = $currDay.' 00:00:00';
-                $endTime = $currDay.' 23:59:59';
-            }
+//            $currTime = time();
+//            $dayHalfTime = strtotime($currDay.' 11:59:00');
+//            $dayEndTime = strtotime($currDay.' 23:49:00');
+//            if($currTime > $dayHalfTime && $currTime<$dayEndTime){
+//                $startTime = $currDay . ' 00:00:00';
+//                $endTime = $currDay.' 11:59:59';
+//            }else if($currTime > $dayEndTime){
+//                $startTime = $currDay . ' 12:00:00';
+//                $endTime = $currDay.' 23:59:59';
+//            }else{
+//                $startTime = $currDay.' 00:00:00';
+//                $endTime = $currDay.' 23:59:59';
+//            }
 
-            if($date){
+//            if($date){
                 $startTime = $currDay.' 00:00:00';
                 $endTime = $currDay.' 23:59:59';
-            }
+//            }
             for ($i = 0; $i < $count; $i++) {
                 $start = $i * 20;
                 $object_ids = array_slice($objIds, $start, 20);
