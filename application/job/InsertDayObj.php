@@ -26,6 +26,7 @@ class InsertDayObj
         }
         try {
             $isJobDone = $this->doJob($data, $queueData);
+            Log::info('is_done?'.$isJobDone);
             if ($isJobDone) {
                 $queueData->save(['id' => $queueData['id'], 'status' => 1, 'msg' => "处理完成"]);
                 $job->delete();
@@ -65,6 +66,8 @@ class InsertDayObj
                     if(!$res){
                         return false;
                     }
+                  }else{
+                      throw new Exception($resData['message']);
                   }
               }
             }elseif($totalPage==1){
