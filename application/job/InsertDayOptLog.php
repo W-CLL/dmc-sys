@@ -80,7 +80,7 @@ class InsertDayOptLog
                 //从第二页开始用队列进行写入
                 $queue->addQueue('插入计划操作日志', 'app\job\InsertObjOptLog', 'insertObjOptLog', $queueData);
             }
-
+            return true;
         } else {
             throw new Exception($resData['message']);
         }
