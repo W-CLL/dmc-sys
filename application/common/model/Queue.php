@@ -83,9 +83,9 @@ class Queue extends Model
         }
 
 //        \think\Log::info('restart_string:');
-        \think\Log::info($isPushed);
+        \think\Log::info('job_test_id:'.$isPushed);
         // database 驱动时，返回值为 1|false  ; redis 驱动时，返回值为 随机字符串|false
-        if ($isPushed !== false) {
+        if ($isPushed) {
             $queueModel = new static();
             $queueModel->job_name = $jobName;
             $queueModel->job_id = $isPushed;
