@@ -6,6 +6,7 @@ use app\admin\model\QcObj;
 use jlqc\FundManagement;
 use think\Cache;
 use think\Exception;
+use think\Log;
 use think\queue\Job;
 
 
@@ -15,8 +16,10 @@ class InsertDayObj
     public function fire(Job $job, $data)
     {
         $jobId = json_decode($job->getRawBody(), true)['id'];
+        Log::info('in_job_id:'.$jobId);
         $queueModel = new \app\common\model\Queue();
-        $queueData = $queueModel->where('job_id', $jobId)->find();
+        $queueData = $queueModel->where(['job_id'=> $jobId])->find();
+        Log::info('in_job_id:'.json_encode($queueData));
         if (!$queueData) {
             $job->delete();
             die;
