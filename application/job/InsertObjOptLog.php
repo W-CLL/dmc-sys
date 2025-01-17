@@ -113,6 +113,9 @@ class InsertObjOptLog
         return true;
     }
 
+    /**
+     * @throws \Exception
+     */
     protected function handleInsertData($data, $advId)
     {
         $insertData = [];
@@ -130,8 +133,10 @@ class InsertObjOptLog
                 'opt_time' => strtotime($item['create_time']),
             ];
         }
-
-        $objOptLogModel = new QcObjOptLog();
-        return $objOptLogModel->saveAll($insertData);
+        if($insertData){
+            $objOptLogModel = new QcObjOptLog();
+            return $objOptLogModel->saveAll($insertData);
+        }
+       return true;
     }
 }
