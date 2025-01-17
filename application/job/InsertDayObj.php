@@ -16,17 +16,14 @@ class InsertDayObj
     public function fire(Job $job, $data)
     {
         $jobId = json_decode($job->getRawBody(), true)['id'];
-        Log::info('in_job_id:'.$jobId);
         $queueModel = new \app\common\model\Queue();
         $queueData = $queueModel->where(['job_id'=> $jobId])->find();
-        Log::info('in_job_id:'.json_encode($queueData));
         if (!$queueData) {
             $job->delete();
             die;
         }
         try {
             $isJobDone = $this->doJob($data, $queueData);
-            Log::info('is_done?'.$isJobDone);
             if ($isJobDone) {
                 $queueData->save(['id' => $queueData['id'], 'status' => 1, 'msg' => "处理完成"]);
                 $job->delete();
@@ -43,6 +40,7 @@ class InsertDayObj
 
     /**
      * @throws Exception
+     * @throws \Exception
      */
     protected function doJob($data, $queueData)
     {
@@ -53,6 +51,7 @@ class InsertDayObj
         if($resData['code'] == 0){
             if(empty($resData['data']['list'])){
                 echo $data['advertiser_id']."当天没有新建计划";
+                return true;
             }
             $totalPage = $resData['data']['page_info']['total_page'];
             if($totalPage>2){
@@ -123,7 +122,7 @@ class InsertDayObj
                 return false;
             }
         }
-        return false;
+        return true;
     }
 
 }
