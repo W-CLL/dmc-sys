@@ -30,7 +30,6 @@ class CompanyAdvObj extends Backend
     public function _initialize()
     {
         parent::_initialize();
-        $this->optStatsModel = new QcObjOptStats();
         $this->objModel = new QcObj();
         $this->optLogModel = new QcObjOptLog();
         $this->companyModel = new Company();
@@ -41,32 +40,27 @@ class CompanyAdvObj extends Backend
         if ($this->request->isAjax()) {
             $offset = input("offset", 0);
             $limit = input("limit", 10);
+            $filter = input("filter");
+            $inputData =  json_decode($filter,true);
+            $list = $this->objModel
+                ->alias('obj')
+                ->join('company cs', 'obj.adv_id = cs.advertiser_id', 'left')
+                ->field("cs.company_name,obj.adv_id,cs.is_white,cs.monitor_percentage,obj.obj_id")
+                ->where(function ($query) use ($inputData){
+                    if(isset($inputData['adv_id'])){
+                        $query->where('obj.adv_id',$inputData['adv_id']);
+                    }
+                })
+                ->order('cs.company_name', 'asc')
+                ->limit($offset, $limit)
+                ->select();
 
-            $list = $this->optStatsModel // 主表 fa_qc_obj
-            ->alias('obj')  // 别名 fqo
-            ->join('company fco', 'obj.adv_id = fco.advertiser_id', 'LEFT')  // 左连接 fa_company 表
-            ->join('company_setting fcs', 'fco.company_name = fcs.company_name', 'LEFT')  // 通过 company_name 字段连接
-            ->field('fco.company_name,  
-        fcs.is_white, 
-        fcs.percentage,
-        obj.*')  // 选择字段
-//            ->where('obj.status', 1)  // 仅查询可操作的计划
-                ->order('obj.total_opt_num', 'desc')
-            ->limit($offset, $limit)
-            ->select();  // 执行查询并获取结果
 
-//dump($list);
-//die;
-//            $list =
-//                $this->objModel
-//                ->alias('o')
-//                ->join('company_setting cs', 'c.company_name = cs.company_name', 'left')
-//                ->field("c.company_name,cs.is_white,cs.percentage")
-////            ->group('c.company_name')
-//                ->where('c.company_name', $company_name)
-//                ->limit($offset, $limit)
-//                ->select();
-            $count = $this->optStatsModel->count();//还有where条件
+            $count = $this->objModel->where(function ($query) use ($inputData){
+                if(isset($inputData['adv_id'])){
+                    $query->where('adv_id',$inputData['adv_id']);
+                }
+            })->count();
             $result = array("total" => $count, "rows" => $list);
             return json($result);
         }

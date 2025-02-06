@@ -9,6 +9,7 @@ use app\qcdatahandle\controller\ComFun;
 use fast\Random;
 use jlqc\FundManagement;
 use qywx\Api;
+use thiagoalessio\TesseractOCR\TesseractOCR;
 use think\Cache;
 
 
@@ -87,16 +88,31 @@ class Test extends Frontend
                 continue;
             }
             $data = FundManagement::get_ad_detail($token, 1816613270435852, $item['ad_id']);
-            $result = $this->generateRandomCharacter();
+//            dump($data);
+//            die;
+//            $result = $this->generateRandomCharacter();
             $objDetail = $data['data'];
             $this->removeEmptyValues($objDetail);
             unset($objDetail['ad_create_time']);
             unset($objDetail['ad_modify_time']);
             $updateData = $objDetail;
             $updateData['advertiser_id'] = 1816613270435852;
-            $updateData['name'] = $data['data']['name'] . $result;
-            if (preg_match('/^0+$/', $updateData['delivery_setting']['schedule_time']) || preg_match('/^1+$/', $updateData['delivery_setting']['schedule_time'])) {
-                unset($updateData['delivery_setting']['schedule_time']);
+            $pattern = '/\(\.\d+_\d+\.\)/';
+            // 获取当前时间，精确到秒
+            $current_time = "(.".date('md_His').".)";
+            if (preg_match($pattern, $objDetail['name'])) {
+                // 如果找到了匹配的内容，进行替换
+                $newName = preg_replace($pattern, $current_time, $objDetail['name']);
+            } else {
+                // 如果没有找到匹配，拼接新的内容
+                $newName =  $objDetail['name'] . $current_time;
+            }
+            // 将提取的中文字符拼接当前时间
+            $updateData['name'] =$newName;
+            if(isset($updateData['delivery_setting']['schedule_time'])) {
+                if (preg_match('/^0+$/', $updateData['delivery_setting']['schedule_time']) || preg_match('/^1+$/', $updateData['delivery_setting']['schedule_time'])) {
+                    unset($updateData['delivery_setting']['schedule_time']);
+                }
             }
 //            dump($updateData);
             $url = "https://ad.oceanengine.com/open_api/v1.0/qianchuan/ad/update/";
@@ -106,6 +122,7 @@ class Test extends Frontend
             );
             $res = \Requests::post($url, json_encode($updateData, JSON_UNESCAPED_UNICODE), $header);
             dump($res);
+            die;
         }
 
 
@@ -143,19 +160,34 @@ class Test extends Frontend
         $char = '';
         // 生成字母或符号，字母范围：A-Z, a-z，符号范围：非中文符号
         $ascii = rand(33, 126); // ASCII 值范围（33 到 126 是大部分可打印字符）
-
         // 排除中文字符的范围（ASCII 值：\x{4e00}-\x{9fa5}），检查是否是非中文字符
         while (($ascii >= 0x4e00 && $ascii <= 0x9fff) || ($ascii >= 0x3400 && $ascii <= 0x4DBF)) {
             $ascii = rand(33, 126); // 如果是中文字符，重新随机
         }
-
         $char = chr($ascii); // 将 ASCII 值转换为字符
-
         // 生成随机数字（0-9）
         $randomDigit = rand(0, 9);
-
         // 返回字符+数字
         return $char . $randomDigit;
+    }
+
+    public function testOcr()
+    {
+        putenv('Path=D:\ShadowBot;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files\dotnet\;D:\nvm;C:\Program Files\nodejs;C:\Program Files\Git\cmd;D:\phpstudy_pro\Extensions\php\php7.4.3nts;D:\phpstudy_pro\Extensions\composer2.5.8;C:\Users\A\AppData\Local\Programs\Python\Python312;C:\Users\A\AppData\Local\Programs\Python\Python312\Scripts;D:\project\AAVT_0.8.5_full\ffmpeg\bin;;C:\Program Files\Docker\Docker\resources\bin;D:\΢��web�����߹���\dll;C:\Program Files\python;C:\Program Files\python\Scripts;;D:\BtSoft\panel\script;C:\Users\A\AppData\Local\Programs\Python\Launcher\;C:\Users\A\AppData\Local\Microsoft\WindowsApps;D:\VsCode\bin;D:\PhpStorm 2024.1.4\bin;D:\cpplar\;C:\Program Files\Tesseract-OCR\\');
+
+        $ocr = new TesseractOCR();
+        $path = ROOT_PATH.'/public/transfer_images/20241129/e398b1a8e07d01518c70e6195716c68(1).jpg';
+
+       dump( base64_encode($path));
+//        dump(ROOT_PATH.'public\upload\20240816\b356ed8f3116ff6a5ca0ae99b44ce549.png');
+        if(file_exists($path)){
+            echo "存在";
+        }
+        $ocr->image($path)->format('json');
+        $res = $ocr->lang('chi_sim')->run();
+//        foreach((new TesseractOCR())->availableLanguages() as $lang) echo $lang;
+        dump($res);
+        die;
     }
 
 

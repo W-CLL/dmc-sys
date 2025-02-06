@@ -9,6 +9,7 @@ use app\admin\model\QcObj;
 use app\common\controller\Backend;
 use app\common\model\QcObjOptStats;
 use think\Db;
+use think\Exception;
 
 
 class CompanyAdv extends Backend
@@ -48,6 +49,10 @@ class CompanyAdv extends Backend
                 ->limit($offset, $limit)
 
                 ->select();
+
+            foreach ($list as &$item){
+                $item['obj_num'] = $this->objModel->where(['adv_id'=>$item['advertiser_id']])->count();
+            }
             $count = $this->companyModel->where(function ($query) use ($inputData){
                 if(isset($inputData['company_name'])){
                     $query->where('company_name',$inputData['company_name']);
@@ -64,7 +69,74 @@ class CompanyAdv extends Backend
      * 设置白名单，百分比
      * @param $advId
      */
-    public function setting($advId = '')
+    public function checkSettingParams($data)
     {
+        if(!isset($data['is_white'])){
+            $this->error('请选择是否加入白名单');
+        }
+        if(!isset($data['percentage'])){
+            $this->error('请输入百分比');
+        }else{
+            if(!is_numeric($data['percentage']) || $data['percentage'] < 0 || $data['percentage'] > 100){
+                $this->error('百分比填写有误, 请填写0-100之间的数字');
+            }
+        }
+        if(empty($data['ids'])){
+            $this->error('请选择要设置的数据');
+        }
     }
+    /**
+     * 设置公司下广告计划监测百分比、是否加入白名单
+     */
+    public function edit($ids='')
+    {
+        $companySetting = new \app\admin\model\CompanySetting();
+        if ($this->request->isPost()) {
+            $data = $this->request->post();
+            $this->checkSettingParams($data);
+            $ids = explode(',',$data['ids']);
+            $comName= $companySetting->where(['id'=>['in',$ids]])->column('company_name');
+            Db::startTrans();
+            try {
+                $companySetting->where(['id'=>['in',$ids]])->update(['is_white'=>$data['is_white']]);
+                //设置公司下的广告主为白名单
+                $this->companyModel->where(['company_name'=>['in',$comName]])->update(['is_white'=>$data['is_white']]);
+                Db::commit();
+                $this->success('设置成功!');
+            }catch (Exception $e){
+                Db::rollback();
+                $this->error('设置失败，联系管理员');
+            }
+
+        }
+        $this->assign('info',$this->companyModel->where('advertiser_id',$ids)->find());
+        return $this->view->fetch('edit');
+
+    }
+
+    public function setting($ids='')
+    {
+        $companySetting = new \app\admin\model\CompanySetting();
+        if ($this->request->isPost()) {
+            $data = $this->request->post();
+            $this->checkSettingParams($data);
+            $comInfo = $companySetting->where('id',$data['ids'])->find();
+            Db::startTrans();
+            try {
+                $companySetting->where('id',$data['ids'])->update(['is_white'=>$data['is_white']]);
+                //设置公司下的广告主为白名单
+                $this->companyModel->where(['company_name'=>$comInfo['company_name']])->update(['is_white'=>$data['is_white']]);
+                Db::commit();
+                $this->success('设置成功!');
+            }catch (Exception $e){
+                Db::rollback();
+                $this->error('设置失败，联系管理员');
+            }
+
+        }
+        $this->assign('info',$this->companyModel->where('advertiser_id',$ids)->find());
+        return $this->view->fetch('');
+    }
+
+
 }

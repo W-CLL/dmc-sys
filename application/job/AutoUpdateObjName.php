@@ -41,9 +41,56 @@ class AutoUpdateObjName
         }
     }
 
-    protected function doJon($data,$queueData)
+    /**
+     * @throws Exception
+     */
+    protected function doJob($data, $queueData)
     {
-
+        sleep($data['delay']);
+        $token = Cache::get('qc_access_token');
+        $objInfo = FundManagement::get_ad_detail($token, $data['adv_id'],$data['obj_id']);
+        $objDetail = $objInfo['data'];
+        $this->removeEmptyValues($objDetail);
+        unset($objDetail['ad_create_time']);
+        unset($objDetail['ad_modify_time']);
+        $updateData = $objDetail;
+        $updateData['advertiser_id'] = $data['adv_id'];
+        $pattern = '/\(\.\d+_\d+\.\)/';
+        // 获取当前时间，精确到秒
+        $current_time = "(.".date('md_His').".)";
+        $newName = preg_replace($pattern, $current_time, $objDetail['name']);
+        // 将提取的中文字符拼接当前时间
+        $updateData['name'] =$newName;
+        if (preg_match('/^0+$/', $updateData['delivery_setting']['schedule_time']) || preg_match('/^1+$/', $updateData['delivery_setting']['schedule_time'])) {
+            unset($updateData['delivery_setting']['schedule_time']);
+        }
+        $url = "https://ad.oceanengine.com/open_api/v1.0/qianchuan/ad/update/";
+        $header = array(
+            'Access-Token:' . $token,
+            'Content-Type:application/json',
+        );
+       $res = \Requests::post($url, json_encode($updateData, JSON_UNESCAPED_UNICODE), $header);
+       if($res['code'] == 0 && $res['message'] == "OK"){
+           return true;
+       }else{
+           throw new Exception($res['message']);
+       }
     }
+
+    protected function removeEmptyValues(&$array) {
+        foreach ($array as $key => &$value) {
+            // 如果值是数组，则递归处理
+            if (is_array($value)) {
+                $this->removeEmptyValues($value);
+            }
+
+            // 如果值为空且不是数组，则删除该键
+            if (empty($value)) {
+                unset($array[$key]);
+            }
+        }
+    }
+
+
 
 }

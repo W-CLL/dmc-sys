@@ -332,6 +332,15 @@ Class FundManagement{
     }
 
 
+    /**
+     * 获取计划详情
+     * @param $access_token
+     * @param $advertiser_id
+     * 广告主id
+     * @param $ad_id
+     * 计划id
+     * @return mixed
+     */
     public static function get_ad_detail($access_token,$advertiser_id,$ad_id){
         $header = array(
             'Access-Token:'. $access_token,
