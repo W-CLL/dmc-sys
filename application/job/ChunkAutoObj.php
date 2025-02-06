@@ -44,14 +44,14 @@ class ChunkAutoObj
     protected function doJob($data, $queueData)
     {
         $queue = new Queue();
-        //平均分开到每个账号需要更新多少次
+        //平均分开到每个计划需要更新多少次
         $needNum = $data['need_opt_num'];
         $accountNum = count($data['obj_list']);
         $singleAccountNeedNum = round($needNum / $accountNum);
 
         for($i = 0;$i<$singleAccountNeedNum;$i++){
             foreach ($data['obj_list'] as $item){
-                $seconds = rand(1,10);
+                $seconds = rand(1,5);
                 $upData = [
                     'adv_id'=>$data['adv_id'],
                     'obj_id'=>$item,

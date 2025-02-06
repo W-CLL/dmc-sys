@@ -9,6 +9,7 @@ use app\admin\model\QcObj;
 use app\common\controller\Backend;
 use app\common\model\QcObjOptStats;
 use think\Db;
+use think\Exception;
 
 
 class CompanySetting extends Backend
@@ -90,6 +91,20 @@ class CompanySetting extends Backend
         if ($this->request->isPost()) {
             $data = $this->request->post();
             $this->checkSettingParams($data);
+            $ids = explode(',',$data['ids']);
+            $comName= $companySetting->where(['id'=>['in',$ids]])->column('company_name');
+            Db::startTrans();
+            try {
+                $companySetting->where(['id'=>['in',$ids]])->update(['is_white'=>$data['is_white'],'percentage'=>$data['percentage']]);
+                //设置公司下的广告主为白名单
+                $this->companyModel->where(['company_name'=>['in',$comName]])->update(['is_white'=>$data['is_white'],'monitor_percentage'=>$data['percentage']]);
+                Db::commit();
+                $this->success('设置成功!');
+            }catch (Exception $e){
+                Db::rollback();
+                $this->error('设置失败，联系管理员');
+            }
+
         }
         $this->assign('info',$companySetting->where('id',$ids)->find());
         return $this->view->fetch('edit');
@@ -102,6 +117,19 @@ class CompanySetting extends Backend
         if ($this->request->isPost()) {
             $data = $this->request->post();
             $this->checkSettingParams($data);
+            $comInfo = $companySetting->where('id',$data['ids'])->find();
+            Db::startTrans();
+            try {
+                $companySetting->where('id',$data['ids'])->update(['is_white'=>$data['is_white']]);
+                //设置公司下的广告主为白名单
+                $this->companyModel->where(['company_name'=>$comInfo['company_name']])->update(['is_white'=>$data['is_white']]);
+                Db::commit();
+                $this->success('设置成功!');
+            }catch (Exception $e){
+                Db::rollback();
+                $this->error('设置失败，联系管理员');
+            }
+
         }
         $this->assign('info',$companySetting->where('id',$ids)->find());
         return $this->view->fetch('');

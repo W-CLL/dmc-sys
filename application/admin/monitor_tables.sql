@@ -88,7 +88,7 @@ CREATE TABLE `fa_company_setting`
 (
     `id`           int(11) NOT NULL AUTO_INCREMENT,
     `company_name` varchar(255) NOT NULL DEFAULT '' COMMENT '公司名称',
-    `is_white`     tinyint(1) NOT NULL DEFAULT '1' COMMENT '0白名单，1正常监测，默认1',
+    `is_white`     tinyint(1) NOT NULL DEFAULT '0' COMMENT '1白名单，0正常监测，默认0',
     `percentage`   int(11) NOT NULL DEFAULT '0' COMMENT '百分比 斑马的操作次数要占总的百分几',
     `create_time`  int(11) NOT NULL DEFAULT '0' COMMENT '0',
     `update_time`  int(11) NOT NULL DEFAULT '0' COMMENT '0',

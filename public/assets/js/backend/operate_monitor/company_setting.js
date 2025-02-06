@@ -23,7 +23,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', 'bootstrap-table-fixe
                         {field: 'company_name', title: "公司名称"},
                         {
                             field: 'is_white', title: "是否白名单", formatter: function (value, row, index) {
-                                return row.is_white == 0 ? "是" : "否";
+                                return row.is_white == 1 ? "是" : "否";
                             }
                         },
                         {field: 'percentage', title: "百分比"},
