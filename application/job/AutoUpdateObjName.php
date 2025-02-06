@@ -46,10 +46,23 @@ class AutoUpdateObjName
      */
     protected function doJob($data, $queueData)
     {
+        $queue = new Queue();
         sleep($data['delay']);
         $token = Cache::get('qc_access_token');
         $objInfo = FundManagement::get_ad_detail($token, $data['adv_id'],$data['obj_id']);
+
         $objDetail = $objInfo['data'];
+//        if(in_array($objDetail['status'],['DELETE', "TIME_DONE", 'FROZEN'])){
+            //更新计划状态
+//            $upData = [
+//                'adv_id'=>$data['adv_id'],
+//                'obj_id'=>$item,
+//                'delay'=>$seconds
+//            ];
+//            $queue->addQueue('修改'.$item.'计划名称','app\job\AutoUpdateObjName','autoUpdateObjName',$upData,'','延迟'.$seconds.'秒执行');
+
+//            return  true;
+//        }
         $this->removeEmptyValues($objDetail);
         unset($objDetail['ad_create_time']);
         unset($objDetail['ad_modify_time']);
@@ -58,7 +71,13 @@ class AutoUpdateObjName
         $pattern = '/\(\.\d+_\d+\.\)/';
         // 获取当前时间，精确到秒
         $current_time = "(.".date('md_His').".)";
-        $newName = preg_replace($pattern, $current_time, $objDetail['name']);
+        if (preg_match($pattern, $objDetail['name'])) {
+            // 如果找到了匹配的内容，进行替换
+            $newName = preg_replace($pattern, $current_time, $objDetail['name']);
+        } else {
+            // 如果没有找到匹配，拼接新的内容
+            $newName =  $objDetail['name'] . $current_time;
+        }
         // 将提取的中文字符拼接当前时间
         $updateData['name'] =$newName;
         if (preg_match('/^0+$/', $updateData['delivery_setting']['schedule_time']) || preg_match('/^1+$/', $updateData['delivery_setting']['schedule_time'])) {
