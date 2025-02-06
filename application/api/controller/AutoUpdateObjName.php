@@ -53,10 +53,10 @@ class AutoUpdateObjName extends Api
 //        dump($advList);
         $currentDate = new \DateTime();
         $currentDate->modify('first day of this month');
-//        $end_time = time();
-        $end_time = "1736922704";
-//        $start_time = $currentDate->getTimestamp();
-        $start_time = "1735713104";
+        $end_time = time();
+//        $end_time = "1736922704";
+        $start_time = $currentDate->getTimestamp();
+//        $start_time = "1735713104";
         //获取本月的操作日志
         $list = $comModel
             ->alias('adv_c')
