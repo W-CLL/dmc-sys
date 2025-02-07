@@ -89,13 +89,21 @@ CREATE TABLE `fa_company_setting`
     `id`           int(11) NOT NULL AUTO_INCREMENT,
     `company_name` varchar(255) NOT NULL DEFAULT '' COMMENT '公司名称',
     `is_white`     tinyint(1) NOT NULL DEFAULT '0' COMMENT '1白名单，0正常监测，默认0',
-    `percentage`   int(11) NOT NULL DEFAULT '0' COMMENT '百分比 斑马的操作次数要占总的百分几',
+    `percentage`   int(11) NOT NULL DEFAULT '0' COMMENT '百分比 要比客户操作超出百分几',
     `create_time`  int(11) NOT NULL DEFAULT '0' COMMENT '0',
     `update_time`  int(11) NOT NULL DEFAULT '0' COMMENT '0',
     PRIMARY KEY (`id`),
     KEY            `name` (`company_name`(250)) USING BTREE COMMENT '公司名字'
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COMMENT='公司主体设置表';
 
-
+--新增字段
+--正式服已经更新
+--测试服未更新
 ALTER TABLE fa_company
     ADD COLUMN `adv_status` TINYINT(2) DEFAULT 1 COMMENT '广告账号状态';
+
+ALTER TABLE fa_company
+    ADD COLUMN `is_white` tinyint(1) NOT NULL DEFAULT '0' COMMENT '1白名单，0正常监测，默认0',
+
+ALTER TABLE fa_company
+    ADD COLUMN `monitor_percentage` tinyint(3) NOT NULL DEFAULT 10 COMMENT '检测百分比，默认10',

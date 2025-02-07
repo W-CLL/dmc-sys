@@ -26,9 +26,9 @@ class AutoUpdateObjName
             die;
         }
         try {
-            $isJobDone = $this->doJob($data, $queueData);
+            list($isJobDone,$msg) = $this->doJob($data, $queueData);
             if ($isJobDone) {
-                $queueData->save(['id' => $queueData['id'], 'status' => 1, 'msg' => "处理完成"]);
+                $queueData->save(['id' => $queueData['id'], 'status' => 1, 'msg' => $msg]);
                 $job->delete();
             } else {
                 if ($job->attempts() > 3) {
@@ -46,7 +46,7 @@ class AutoUpdateObjName
      */
     protected function doJob($data, $queueData)
     {
-        $queue = new Queue();
+//        $queue = new Queue();
         sleep($data['delay']);
         $token = Cache::get('qc_access_token');
         $objInfo = FundManagement::get_ad_detail($token, $data['adv_id'],$data['obj_id']);
@@ -61,7 +61,7 @@ class AutoUpdateObjName
 //            ];
 //            $queue->addQueue('修改'.$item.'计划名称','app\job\AutoUpdateObjName','autoUpdateObjName',$upData,'','延迟'.$seconds.'秒执行');
 
-//            return  true;
+//            return [true,'处理成功,计划状态不符合更新'];
 //        }
         $this->removeEmptyValues($objDetail);
         unset($objDetail['ad_create_time']);
@@ -80,8 +80,10 @@ class AutoUpdateObjName
         }
         // 将提取的中文字符拼接当前时间
         $updateData['name'] =$newName;
-        if (preg_match('/^0+$/', $updateData['delivery_setting']['schedule_time']) || preg_match('/^1+$/', $updateData['delivery_setting']['schedule_time'])) {
-            unset($updateData['delivery_setting']['schedule_time']);
+        if(isset($updateData['delivery_setting']['schedule_time'])) {
+            if (preg_match('/^0+$/', $updateData['delivery_setting']['schedule_time']) || preg_match('/^1+$/', $updateData['delivery_setting']['schedule_time'])) {
+                unset($updateData['delivery_setting']['schedule_time']);
+            }
         }
         $url = "https://ad.oceanengine.com/open_api/v1.0/qianchuan/ad/update/";
         $header = array(
@@ -90,7 +92,7 @@ class AutoUpdateObjName
         );
        $res = \Requests::post($url, json_encode($updateData, JSON_UNESCAPED_UNICODE), $header);
        if($res['code'] == 0 && $res['message'] == "OK"){
-           return true;
+           return [true,'处理成功'];
        }else{
            throw new Exception($res['message']);
        }
