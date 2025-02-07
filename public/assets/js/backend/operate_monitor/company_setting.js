@@ -16,6 +16,8 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', 'bootstrap-table-fixe
             table.bootstrapTable({
                 url: $.fn.bootstrapTable.defaults.extend.index_url,
                 pk: 'id',
+                searchFormVisible: true,
+                searchFormTemplate: 'customformtpl',
                 columns: [
                     [
                         {checkbox: true},
