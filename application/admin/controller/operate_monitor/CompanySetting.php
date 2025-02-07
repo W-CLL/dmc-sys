@@ -41,14 +41,23 @@ class CompanySetting extends Backend
             $offset = input("offset", 0);
             $limit = input("limit", 10);
             $input = json_decode(input('filter'),true);
-
+            $is_white = input('is_white');
+//dump($input);
+//die;
             $list = $this->companyModel
                 ->alias('c')
                 ->join('company_setting cs', 'c.company_name = cs.company_name', 'left')
-                ->where(function ($query) use ($input){
+                ->where(function ($query) use ($input,$is_white){
+                    $where = [];
                     if(isset($input['company_name'])){
-                        $query->where(['c.company_name'=>['like',"%".$input['company_name']."%"]]);
+                        $where['c.company_name'] = ['like',"%".$input['company_name']."%"];
+//                        $query->where(['c.company_name'=>['like',"%".$input['company_name']."%"]]);
                     }
+                    if(strlen($is_white)>0){
+                        $where['cs.is_white'] = $is_white;
+//                        $query->where(['cs.is_white'=>$input['is_white']]);
+                    }
+                    $query->where($where);
                 })
                 ->field("c.company_name,cs.is_white,cs.percentage,cs.id,count(c.id) as adv_num")
                 ->group('c.company_name')
@@ -61,12 +70,22 @@ class CompanySetting extends Backend
             }
 
             $count = $this->companyModel
-                ->where(function ($query) use ($input){
+                ->alias('c')
+                ->join('company_setting cs', 'c.company_name = cs.company_name', 'left')
+                ->where(function ($query) use ($input,$is_white){
+                    $where = [];
                     if(isset($input['company_name'])){
-                        $query->where(['company_name'=>['like',"%".$input['company_name']."%"]]);
+                        $where['c.company_name'] = ['like',"%".$input['company_name']."%"];
+//                        $query->where(['c.company_name'=>['like',"%".$input['company_name']."%"]]);
                     }
+                    if(strlen($is_white)>0){
+                        $where['cs.is_white'] = $is_white;
+//                        $query->where(['cs.is_white'=>$input['is_white']]);
+                    }
+                    $query->where($where);
                 })
-                ->group('company_name')->count();
+                ->group('c.company_name')
+                ->count();
             $result = array("total" => $count, "rows" => $list);
             return json($result);
         }
