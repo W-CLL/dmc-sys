@@ -7,17 +7,12 @@ use app\admin\model\Company;
 use app\admin\model\QcObjOptLog;
 use app\admin\model\QcObj;
 use app\common\controller\Backend;
-use app\common\model\QcObjOptStats;
+
 use think\Db;
 
 
 class CompanyAdvObj extends Backend
 {
-
-    /**
-     * @var QcObjOptStats
-     */
-    private $optStatsModel;
     /**
      * @var QcObj
      */

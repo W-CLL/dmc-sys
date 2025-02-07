@@ -15,10 +15,6 @@ use think\Exception;
 class CompanySetting extends Backend
 {
     /**
-     * @var QcObjOptStats
-     */
-    private $optStatsModel;
-    /**
      * @var QcObj
      */
     private $objModel;
@@ -30,7 +26,6 @@ class CompanySetting extends Backend
     public function _initialize()
     {
         parent::_initialize();
-        $this->optStatsModel = new QcObjOptStats();
         $this->objModel = new QcObj();
         $this->optLogModel = new QcObjOptLog();
         $this->companyModel = new Company();

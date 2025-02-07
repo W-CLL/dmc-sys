@@ -7,7 +7,6 @@ use app\admin\model\Company;
 use app\admin\model\QcObjOptLog;
 use app\admin\model\QcObj;
 use app\common\controller\Backend;
-use app\common\model\QcObjOptStats;
 use think\Db;
 use think\Exception;
 
@@ -23,7 +22,6 @@ class CompanyAdv extends Backend
     public function _initialize()
     {
         parent::_initialize();
-        $this->optStatsModel = new QcObjOptStats();
         $this->objModel = new QcObj();
         $this->optLogModel = new QcObjOptLog();
         $this->companyModel = new Company();
