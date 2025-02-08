@@ -44,6 +44,16 @@ class AdList extends Backend
                     'left'
                 )
                 ->where(['adv_c.cost_date' => ['between', [$start_time, $end_time]]])
+                ->where(function ($query) use ($advertiser_id,$kahuna){
+                    $whereStr = [];
+                    if($advertiser_id){
+                        $whereStr['com.advertiser_id'] = $advertiser_id;
+                    }
+                    if($kahuna){
+                        $whereStr['com.kahuna'] = ['like', "%$kahuna%"];
+                    }
+                    $query->where($whereStr);
+                })
                 ->field("adv_c.*, SUM(cost) AS mon_cost, com.company_name, com.kahuna, total_stats.total_num, company_stats.company_num")
                 ->group('adv_c.adv_id')
                 ->order($sort, $order)
