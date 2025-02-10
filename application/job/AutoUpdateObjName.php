@@ -50,19 +50,19 @@ class AutoUpdateObjName
         sleep($data['delay']);
         $token = Cache::get('qc_access_token');
         $objInfo = FundManagement::get_ad_detail($token, $data['adv_id'],$data['obj_id']);
+        $qcObj = new QcObj();
 
         $objDetail = $objInfo['data'];
-//        if(in_array($objDetail['status'],['DELETE', "TIME_DONE", 'FROZEN'])){
-            //更新计划状态
-//            $upData = [
-//                'adv_id'=>$data['adv_id'],
-//                'obj_id'=>$item,
-//                'delay'=>$seconds
-//            ];
-//            $queue->addQueue('修改'.$item.'计划名称','app\job\AutoUpdateObjName','autoUpdateObjName',$upData,'','延迟'.$seconds.'秒执行');
-
-//            return [true,'处理成功,计划状态不符合更新'];
-//        }
+        if(in_array($objDetail['opt_status'],['DELETE', "TIME_DONE", 'FROZEN']) ){
+//            更新计划状态
+           $qcObj->where(['obj_id',$data['obj_id']])->update(['opt_status'=>$objDetail['opt_status']]);
+            return [true,'处理成功,计划状态不符合更新'];
+        }
+        if(in_array($objDetail['status'],['DELETE', "TIME_DONE", 'FROZEN']) ){
+//            更新计划状态
+            $qcObj->where(['obj_id',$data['obj_id']])->update(['status'=>$objDetail['status']]);
+            return [true,'处理成功,计划状态不符合更新'];
+        }
         $this->removeEmptyValues($objDetail);
         unset($objDetail['ad_create_time']);
         unset($objDetail['ad_modify_time']);
