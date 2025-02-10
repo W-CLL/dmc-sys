@@ -124,7 +124,7 @@ class Oauth2 extends Api
         foreach ($public_info_data['data'] as $item) {
             $info = $companyModel->where('advertiser_id', $item['id'])->find();
             if ($info) {
-                if ($item['id'] != $info['name']) {
+                if ($item['name'] != $info['name']) {
                     $companyModel->where(["advertiser_id" => $item["id"]])->update([
                         "name" => $item["name"],
                         "update_time" => time()

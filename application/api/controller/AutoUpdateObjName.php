@@ -74,10 +74,10 @@ class AutoUpdateObjName extends Api
             ->field("adv_c.*, total_stats.total_num, company_stats.company_num")
             ->order('total_stats.total_num desc')
             ->select();
-
         if (empty($list)) {
             echo "全部处理完了";
             Cache::rm('chunk_obj_page');
+            $redis->rm('company_setting_list');
             die;
         }
         $queue = new Queue();
