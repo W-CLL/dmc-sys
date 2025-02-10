@@ -55,8 +55,13 @@ class ChunkAutoObj
                 $upData = [
                     'adv_id'=>$data['adv_id'],
                     'obj_id'=>$item,
-                    'delay'=>$seconds
+                    'delay'=>$seconds,
+                    'last_one' => false
                 ];
+                if($i == $singleAccountNeedNum - 1){
+                    $upData['last_one']= true;
+                }
+
              $queue->addQueue('修改'.$item.'计划名称','app\job\AutoUpdateObjName','autoUpdateObjName',$upData,'','延迟'.$seconds.'秒执行');
             }
         }
