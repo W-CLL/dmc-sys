@@ -73,13 +73,17 @@ class AutoUpdateObjName
         $current_time = "(.".date('md_His').".)";
         if (preg_match($pattern, $objDetail['name'])) {
             // 如果找到了匹配的内容，进行替换
-            $newName = preg_replace($pattern, $current_time, $objDetail['name']);
+            if($data['last_one']){//如果是最后一次，还原计划名字
+                $newName = preg_replace($pattern, '', $objDetail['name']);
+            }else{
+                $newName = preg_replace($pattern, $current_time, $objDetail['name']);
+            }
         } else {
             // 如果没有找到匹配，拼接新的内容
             $newName =  $objDetail['name'] . $current_time;
         }
         // 将提取的中文字符拼接当前时间
-        $updateData['name'] =$newName;
+        $updateData['name'] = $newName;
         if(isset($updateData['delivery_setting']['schedule_time'])) {
             if (preg_match('/^0+$/', $updateData['delivery_setting']['schedule_time']) || preg_match('/^1+$/', $updateData['delivery_setting']['schedule_time'])) {
                 unset($updateData['delivery_setting']['schedule_time']);

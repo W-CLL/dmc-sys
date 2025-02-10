@@ -87,7 +87,7 @@ class AutoUpdateObjName extends Api
             $totalNum = (int)$item['total_num'];
             $companyNum = (int)$item['company_num'];
             $cusNum = $totalNum - $companyNum;
-            $actualComNum = $cusNum + ($cusNum * $notWhiteCom[$item['company_name']]);
+            $actualComNum = $cusNum + ($cusNum * ($notWhiteCom[$item['company_name']]/100));
             if ($cusNum <= 0) {
                 continue;
             }
@@ -98,6 +98,7 @@ class AutoUpdateObjName extends Api
             } else {
                 $needComNum = $actualComNum;
             }
+            $needComNum = (int)ceil($needComNum);
             //只查托管的计划
             $list = $objModel->where([
                 'obj_status' => ['not in', ['DELETE', "TIME_DONE", 'FROZEN']],
