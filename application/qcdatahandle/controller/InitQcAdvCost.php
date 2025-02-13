@@ -2,11 +2,13 @@
 
 namespace app\qcdatahandle\controller;
 
+use app\admin\model\Company;
 use app\common\model\QcAdvDayCost;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Pool;
 use GuzzleHttp\Psr7\Request;
+use jlqc\FundManagement;
 use think\Cache;
 use think\cache\driver\Redis;
 use think\Controller;
@@ -16,7 +18,7 @@ use think\Db;
 class InitQcAdvCost extends Controller
 {
 
-    public function moreExcute($day=2)
+    public function moreExcute($day = 2)
     {
         // 直接循环5次处理任务
         for ($i = 0; $i < 5; $i++) {
@@ -31,7 +33,7 @@ class InitQcAdvCost extends Controller
      * @return void
      * @throws Exception
      */
-    public function initQcAdvConstWithMon(int $day=2)
+    public function initQcAdvConstWithMon(int $day = 2)
     {
         dump('初始化完了，禁止访问!');
         die;
@@ -40,7 +42,7 @@ class InitQcAdvCost extends Controller
         // 初始化模型
         $qcAdvDayCostModel = new QcAdvDayCost();
         // 缓存已处理广告账户ID列表
-        $existedIds = array_unique(explode(',', trim($redis->get('qc_handle_adv_ids_'.$day,''), ',')));
+        $existedIds = array_unique(explode(',', trim($redis->get('qc_handle_adv_ids_' . $day, ''), ',')));
         // 查询未处理的广告账户
         $advIds = Db::name('company')
             ->where(['advertiser_id' => ['not in', $existedIds]])
@@ -66,7 +68,7 @@ class InitQcAdvCost extends Controller
             echo "插入成功\n";
         }
         // 更新已处理的广告账户ID
-        $redis->set('qc_handle_adv_ids_'.$day,implode(',', array_merge($existedIds, $advIds)));
+        $redis->set('qc_handle_adv_ids_' . $day, implode(',', array_merge($existedIds, $advIds)));
         echo "处理了 " . (count($existedIds) + count($advIds)) . " 个广告账户\n";
     }
 
@@ -75,7 +77,7 @@ class InitQcAdvCost extends Controller
         // 获取当前的时间区间
         $comFun = new ComFun();
         list($start_date, $end_date) = $comFun->getSearchDate($day);
-        echo $start_date."--".$end_date.'</n>';
+        echo $start_date . "--" . $end_date . '</n>';
         $access_token = Cache::get("qc_access_token");
         $url = "https://ad.oceanengine.com/open_api/v1.0/qianchuan/report/advertiser/get/";
         $headers = [
@@ -136,6 +138,78 @@ class InitQcAdvCost extends Controller
         $promise->wait();
 
         return $insertData;
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function initGlobalAdvCost($date)
+    {
+
+        set_time_limit(360); // 延长执行时间
+        $model = new Company();
+        $page = Cache::get('global_cost_page',1);
+
+        $adv_list = $model->page($page)->limit(80)->order('id desc')->column('advertiser_id');
+
+        $token = Cache::get("qc_access_token");
+        $start_date = $date . ' 00:00:00';
+        $end_date = $date . ' 23:59:59';
+        $insert_data = [];
+
+        if(empty($adv_list)){
+            echo "已经全部处理完{$date}的数据";
+            echo "记得清理页数缓存";
+            die;
+        }
+        //八千多条
+        foreach ($adv_list as $item){
+            $params = [
+                'advertiser_id' => $item,
+                'start_date' => $start_date,
+                'end_date' => $end_date,
+                'marketing_goal' => 'LIVE_PROM_GOODS'//直播间
+            ];
+
+            $live_cost = FundManagement::get_global_adv_cost($token, $params);
+            $params['marketing_goal'] = 'VIDEO_PROM_GOODS';//商品
+            $goods_cost = FundManagement::get_global_adv_cost($token, $params);
+            $l_cost = 0;
+            $g_cost = 0;
+            if ($live_cost['code'] == 0 && $live_cost['message'] == "OK") {
+                $l_cost = $live_cost['data']['stat_cost'];
+            }
+            if ($goods_cost['code'] == 0 && $goods_cost['message'] == "OK") {
+                $g_cost = $goods_cost['data']['stat_cost'];
+            }
+            if($l_cost>0 || $g_cost>0) {
+                $total_cost = $l_cost + $g_cost;
+                $insert_data[] = [
+                    'adv_id' => $item,
+                    'cost' => $total_cost,
+                    'cost_date' => strtotime($date),
+                    'type' => 2,
+                ];
+            }
+        }
+        $count = count($insert_data);
+        if($insert_data) {
+            $costModel = new QcAdvDayCost();
+            $res = $costModel->saveAll($insert_data);
+            if ($res) {
+                echo "第{$page}页成功写进{$count}条数据";
+                Cache::set('global_cost_page', $page + 1);
+            }
+        }else {
+            echo "第{$page}页成功写进{$count}条数据";
+            Cache::set('global_cost_page', $page + 1);
+        }
+    }
+
+    public function rmGlobalCostPageCache()
+    {
+        dump(Cache::rm('global_cost_page'));
+        die;
     }
 
 }
