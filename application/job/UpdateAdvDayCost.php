@@ -56,7 +56,7 @@ class UpdateAdvDayCost
 //        die;
         $costModel = new QcAdvDayCost();
         foreach ($allData as $data) {
-            $dayCost = $costModel->where(['adv_id' => $data['adv_id'], 'cost_date' => $data['cost_date']])->find();
+            $dayCost = $costModel->where(['adv_id' => $data['adv_id'], 'cost_date' => $data['cost_date'],'type'=>1])->find();
             if ($dayCost) {
                 echo "更新";
                 $upData['id']=$dayCost['id'];

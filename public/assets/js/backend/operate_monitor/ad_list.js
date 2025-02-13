@@ -30,6 +30,8 @@ define(['jquery', 'bootstrap', 'company', 'table', 'form'], function ($, undefin
                         {field: 'total_num', title: "总操作次数"},
                         {field: 'company_num', title: "斑马操作次数",sortable:true},
                         {field: 'cus_num', title: "客户操作次数"},
+                        {field: 'stand_cost', title: "标准消耗",sortable:true},
+                        {field: 'global_cost', title: "全域消耗",sortable:true},
                         {field: 'mon_cost', title: "总消耗",sortable:true},
                         {field: 'percentage', title: "百分比(斑马/客户)"},
                         {field: 'kahuna', title: "负责人"},

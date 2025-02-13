@@ -107,3 +107,8 @@ ALTER TABLE fa_company
 
 ALTER TABLE fa_company
     ADD COLUMN `monitor_percentage` tinyint(3) NOT NULL DEFAULT 10 COMMENT '检测百分比，默认10',
+--新增字段
+--正式服已经更新
+--测试服未更新
+ALTER TABLE fa_qc_adv_day_cost
+    ADD COLUMN `type` tinyint(2) NOT NULL DEFAULT 1 COMMENT '类型,默认1,1标准推广,2全域推广',
