@@ -144,12 +144,12 @@ class InitQcAdvCost extends Controller
     public function initGetGlobalCost($marketing_goal = "LIVE_PROM_GOODS")
     {
         $redis = Cache::store('redis');
-        $date = $redis->get('global_cost_date', '2025-01-01');
+        $date = $redis->get('global_cost_date', '2025-02-01');
         $page = Cache::get('global_cost_page_' . $date, 1);
         $model = new Company();
         $adv_list = $model->page($page)->limit(20)->order('id desc')->column('advertiser_id');
-        if($date == '2025-02-15'){
-            echo "一月到2月14的数据宜家全部获取完了";
+        if($date == '2025-02-15' || $date == '2025-2-15'){
+            echo "一月到2月14的数据已经全部获取完了";
             die;
         }
         if (empty($adv_list)) {
@@ -194,12 +194,13 @@ class InitQcAdvCost extends Controller
             if ($res) {
                 $final_cost = $cost + $res['cost'];
                 $costModel->where(['id' => $res['id']])->update(['cost' => $final_cost]);
+                echo "更新".$res['id'];
             } else {
                 $data['cost'] = $cost;
                 $costModel->save($data);
+                echo "插入";
             }
         }
-
         return true;
     }
 
@@ -237,8 +238,6 @@ class InitQcAdvCost extends Controller
 
     protected function sendGlobalGuzzleRequest($requests)
     {
-//        dump($requests);
-//        die;
         $insertData = [];
         $guzzleClient = new Client();
         // 并发请求
@@ -246,11 +245,9 @@ class InitQcAdvCost extends Controller
             'concurrency' => 1,  // 控制并发数
             'fulfilled' => function ($response, $index) use (&$insertData, $requests) {
                 $resData = json_decode($response->getBody()->getContents(), true);
-
                 $requestInfo = $requests[$index]['params'];
                 $requestAdvId = $requestInfo['advertiser_id'];
                 if (!empty($resData) && $resData['code'] == 0 && $resData['message'] == "OK") {
-                    echo $resData['data']['stat_cost'];
                     if ($resData['data']['stat_cost'] != 0) {
                         $insertData[] = [
                             'adv_id' => $requestAdvId,
@@ -265,7 +262,6 @@ class InitQcAdvCost extends Controller
                 echo "Request {$index} failed: " . $reason->getMessage() . "\n";
             },
         ]);
-
         // 等待所有请求完成
         $promise = $pool->promise();
         $promise->wait();
