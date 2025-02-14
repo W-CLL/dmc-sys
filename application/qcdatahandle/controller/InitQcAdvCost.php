@@ -140,76 +140,137 @@ class InitQcAdvCost extends Controller
         return $insertData;
     }
 
-    /**
-     * @throws Exception
-     */
-    public function initGlobalAdvCost($date)
+
+    public function initGetGlobalCost($marketing_goal = "LIVE_PROM_GOODS")
     {
-
-        set_time_limit(360); // 延长执行时间
+        $redis = Cache::store('redis');
+        $date = $redis->get('global_cost_date', '2025-01-01');
+        $page = Cache::get('global_cost_page_' . $date, 1);
         $model = new Company();
-        $page = Cache::get('global_cost_page',1);
-
-        $adv_list = $model->page($page)->limit(80)->order('id desc')->column('advertiser_id');
-
-        $token = Cache::get("qc_access_token");
-        $start_date = $date . ' 00:00:00';
-        $end_date = $date . ' 23:59:59';
-        $insert_data = [];
-
-        if(empty($adv_list)){
-            echo "已经全部处理完{$date}的数据";
-            echo "记得清理页数缓存";
+        $adv_list = $model->page($page)->limit(20)->order('id desc')->column('advertiser_id');
+        if($date == '2025-02-15'){
+            echo "一月到2月14的数据宜家全部获取完了";
             die;
         }
-        //八千多条
-        foreach ($adv_list as $item){
-            $params = [
-                'advertiser_id' => $item,
-                'start_date' => $start_date,
-                'end_date' => $end_date,
-                'marketing_goal' => 'LIVE_PROM_GOODS'//直播间
-            ];
-
-            $live_cost = FundManagement::get_global_adv_cost($token, $params);
-            $params['marketing_goal'] = 'VIDEO_PROM_GOODS';//商品
-            $goods_cost = FundManagement::get_global_adv_cost($token, $params);
-            $l_cost = 0;
-            $g_cost = 0;
-            if ($live_cost['code'] == 0 && $live_cost['message'] == "OK") {
-                $l_cost = $live_cost['data']['stat_cost'];
-            }
-            if ($goods_cost['code'] == 0 && $goods_cost['message'] == "OK") {
-                $g_cost = $goods_cost['data']['stat_cost'];
-            }
-            if($l_cost>0 || $g_cost>0) {
-                $total_cost = $l_cost + $g_cost;
-                $insert_data[] = [
-                    'adv_id' => $item,
-                    'cost' => $total_cost,
-                    'cost_date' => strtotime($date),
-                    'type' => 2,
-                ];
-            }
+        if (empty($adv_list)) {
+            $start_date = new \DateTime($date);
+            $next_day = $start_date->modify('+1 day')->format('Y-m-d');
+            $redis->set('global_cost_date', $next_day, 3600);
+            Cache::rm('global_cost_page_' . $date);
+            echo $date . $marketing_goal . "数据全部获取完";
+            die;
         }
-        $count = count($insert_data);
-        if($insert_data) {
-            $costModel = new QcAdvDayCost();
-            $res = $costModel->saveAll($insert_data);
-            if ($res) {
+        $requests = $this->buildGlobalGuzzleRequest($adv_list, $marketing_goal, $date);
+        $insertData = $this->sendGlobalGuzzleRequest($requests);
+        $count = count($insertData);
+        try {
+            if ($insertData) {
+                $costModel = new QcAdvDayCost();
+                if($marketing_goal == "VIDEO_PROM_GOODS"){
+                    $res =  $this->updateCost($insertData,$costModel);
+                }else{
+                    $res = $costModel->saveAll($insertData);
+                }
+                if ($res) {
+                    echo "第{$page}页成功写进{$count}条数据";
+                    Cache::set('global_cost_page_' . $date, $page + 1, 3600);
+                }
+            } else {
                 echo "第{$page}页成功写进{$count}条数据";
-                Cache::set('global_cost_page', $page + 1);
+                Cache::set('global_cost_page_' . $date, $page + 1, 3600);
             }
-        }else {
-            echo "第{$page}页成功写进{$count}条数据";
-            Cache::set('global_cost_page', $page + 1);
+        }catch (\think\Exception $e){
+            throw new Exception($e->getMessage());
         }
+
     }
 
-    public function rmGlobalCostPageCache()
+    public function updateCost($insertData, $costModel)
     {
-        dump(Cache::rm('global_cost_page'));
-        die;
+        foreach ($insertData as $data) {
+            $cost = $data['cost'];
+            unset($data['cost']);
+            $res = $costModel->where($data)->find();
+            if ($res) {
+                $final_cost = $cost + $res['cost'];
+                $costModel->where(['id' => $res['id']])->update(['cost' => $final_cost]);
+            } else {
+                $data['cost'] = $cost;
+                $costModel->save($data);
+            }
+        }
+
+        return true;
+    }
+
+
+    protected function buildGlobalGuzzleRequest($advIds, $marketing_goal, $date): array
+    {
+        $access_token = Cache::get("qc_access_token");
+        $url = "https://api.oceanengine.com/open_api/v1.0/qianchuan/report/uni_promotion/get";
+        $headers = [
+            'Access-Token' => $access_token,
+            'Content-Type' => 'application/json'
+        ];
+        $start_date = $date . ' 00:00:00';
+        $end_date = $date . ' 23:59:59';
+        $requests = [];
+
+        foreach ($advIds as $advId) {
+            $params = [
+                'advertiser_id' => intval($advId),
+                'lab_ad_type' => 'LAB_AD',
+                'fields' => [
+                    'stat_cost'
+                ],
+                'start_date' => $start_date,
+                'end_date' => $end_date,
+                'marketing_goal' => $marketing_goal
+            ];
+            $res_url = buildUrlWithParams($url, $params);
+            $request = new Request('GET', $res_url, $headers);
+            $requests[] = ['request' => $request, 'params' => $params];
+        }
+        return $requests;
+    }
+
+
+    protected function sendGlobalGuzzleRequest($requests)
+    {
+//        dump($requests);
+//        die;
+        $insertData = [];
+        $guzzleClient = new Client();
+        // 并发请求
+        $pool = new Pool($guzzleClient, array_column($requests, 'request'), [
+            'concurrency' => 1,  // 控制并发数
+            'fulfilled' => function ($response, $index) use (&$insertData, $requests) {
+                $resData = json_decode($response->getBody()->getContents(), true);
+
+                $requestInfo = $requests[$index]['params'];
+                $requestAdvId = $requestInfo['advertiser_id'];
+                if (!empty($resData) && $resData['code'] == 0 && $resData['message'] == "OK") {
+                    echo $resData['data']['stat_cost'];
+                    if ($resData['data']['stat_cost'] != 0) {
+                        $insertData[] = [
+                            'adv_id' => $requestAdvId,
+                            'cost' => $resData['data']['stat_cost'],
+                            'type' => 2,
+                            'cost_date' => strtotime($requestInfo['start_date'])
+                        ];
+                    }
+                }
+            },
+            'rejected' => function ($reason, $index) {
+                echo "Request {$index} failed: " . $reason->getMessage() . "\n";
+            },
+        ]);
+
+        // 等待所有请求完成
+        $promise = $pool->promise();
+        $promise->wait();
+
+        return $insertData;
     }
 
 }
