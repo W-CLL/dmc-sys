@@ -39,13 +39,18 @@ class QcAdv extends Api
             die;
         }
         $res = FundManagement::get_adv_info($token, urlencode(json_encode($all)));
+        $numbers = [];
         if ($res['code'] == 40002) {
+            //将一些没权限的账号设置为0
             preg_match_all('/\d+/', $res['message'], $matches);
             $numbers = $matches[0];
             $companyModel->where(['advertiser_id' => ['IN', $numbers]])->update(['adv_status' => 0]);
         } else {
             echo '没问题';
         }
+        //防止一些户恢复了权限
+        $normalAdvIds = array_diff($all, $numbers);
+        $companyModel->where(['advertiser_id' => ['IN', $normalAdvIds]])->update(['adv_status' => 1]);
         $page++;
         Cache::set('qc_adv_status_page', $page);
         $this->index();
