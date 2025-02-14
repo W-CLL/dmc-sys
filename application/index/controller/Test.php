@@ -200,10 +200,12 @@ class Test extends Frontend
 
     public function testGetGlobalCost($marketing_goal = "LIVE_PROM_GOODS")
     {
-
         $redis = Cache::store('redis');
         $date = $redis->get('global_cost_date', '2024-12-14');
         $page = Cache::get('global_cost_page_' . $date, 1);
+//        dump($date);
+//        dump($page);
+//        die;
         $model = new Company();
         $adv_list = $model->page($page)->limit(20)->order('id desc')->column('advertiser_id');
         if (empty($adv_list)) {
@@ -248,9 +250,11 @@ class Test extends Frontend
             if ($res) {
                 $final_cost = $cost + $res['cost'];
                 $costModel->where(['id' => $res['id']])->update(['cost' => $final_cost]);
+                echo "更新了".$res['id'];
             } else {
                 $data['cost'] = $cost;
                 $costModel->save($data);
+                echo "插入了";
             }
         }
 
