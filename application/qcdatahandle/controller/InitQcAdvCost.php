@@ -132,11 +132,9 @@ class InitQcAdvCost extends Controller
                 echo "请求 {$index} 失败: " . $reason->getMessage() . "\n";
             },
         ]);
-
         // 发送请求并等待所有请求完成
         $promise = $pool->promise();
         $promise->wait();
-
         return $insertData;
     }
 
@@ -148,8 +146,8 @@ class InitQcAdvCost extends Controller
         $page = Cache::get('global_cost_page_' . $date, 1);
         $model = new Company();
         $adv_list = $model->page($page)->limit(20)->order('id desc')->column('advertiser_id');
-        if($date == '2025-02-15' || $date == '2025-2-15'){
-            echo "一月到2月14的数据已经全部获取完了";
+        if ($date == '2025-02-15' || $date == '2025-2-15') {
+            echo "2月1到2月14的数据已经全部获取完了";
             die;
         }
         if (empty($adv_list)) {
@@ -166,11 +164,7 @@ class InitQcAdvCost extends Controller
         try {
             if ($insertData) {
                 $costModel = new QcAdvDayCost();
-                if($marketing_goal == "VIDEO_PROM_GOODS"){
-                    $res =  $this->updateCost($insertData,$costModel);
-                }else{
-                    $res = $costModel->saveAll($insertData);
-                }
+                $res = $costModel->saveAll($insertData);
                 if ($res) {
                     echo "第{$page}页成功写进{$count}条数据";
                     Cache::set('global_cost_page_' . $date, $page + 1, 3600);
@@ -179,7 +173,48 @@ class InitQcAdvCost extends Controller
                 echo "第{$page}页成功写进{$count}条数据";
                 Cache::set('global_cost_page_' . $date, $page + 1, 3600);
             }
-        }catch (\think\Exception $e){
+        } catch (\think\Exception $e) {
+            throw new Exception($e->getMessage());
+        }
+
+    }
+
+
+    public function initGetGlobalCostVideo($marketing_goal = "VIDEO_PROM_GOODS")
+    {
+        $redis = Cache::store('redis');
+        $date = $redis->get('global_cost_date_' . $marketing_goal, '2025-02-01');
+        $page = Cache::get('global_cost_page_' . $marketing_goal . '_' . $date, 1);
+        $model = new Company();
+        $adv_list = $model->page($page)->limit(20)->order('id desc')->column('advertiser_id');
+        if ($date == '2025-02-15' || $date == '2025-2-15') {
+            echo "2月1到2月14的数据已经全部获取完了";
+            die;
+        }
+        if (empty($adv_list)) {
+            $start_date = new \DateTime($date);
+            $next_day = $start_date->modify('+1 day')->format('Y-m-d');
+            $redis->set('global_cost_date_' . $marketing_goal, $next_day, 3600);
+            Cache::rm('global_cost_page_' . $marketing_goal . '_' . $date);
+            echo $date . $marketing_goal . "数据全部获取完";
+            die;
+        }
+        $requests = $this->buildGlobalGuzzleRequest($adv_list, $marketing_goal, $date);
+        $insertData = $this->sendGlobalGuzzleRequest($requests);
+        $count = count($insertData);
+        try {
+            if ($insertData) {
+                $costModel = new QcAdvDayCost();
+                $res = $this->updateCost($insertData, $costModel);
+                if ($res) {
+                    echo "第{$page}页成功写进{$count}条数据";
+                    Cache::set('global_cost_page_' . $marketing_goal . '_' . $date, $page + 1, 3600);
+                }
+            } else {
+                echo "第{$page}页成功写进{$count}条数据";
+                Cache::set('global_cost_page_' . $marketing_goal . '_' . $date, $page + 1, 3600);
+            }
+        } catch (\think\Exception $e) {
             throw new Exception($e->getMessage());
         }
 
@@ -194,7 +229,7 @@ class InitQcAdvCost extends Controller
             if ($res) {
                 $final_cost = $cost + $res['cost'];
                 $costModel->where(['id' => $res['id']])->update(['cost' => $final_cost]);
-                echo "更新".$res['id'];
+                echo "更新" . $res['id'];
             } else {
                 $data['cost'] = $cost;
                 $costModel->save($data);
