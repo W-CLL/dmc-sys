@@ -229,7 +229,7 @@ class InitQcAdvCost extends Controller
             if ($res) {
                 $final_cost = $cost + $res['cost'];
                 $costModel->where(['id' => $res['id']])->update(['cost' => $final_cost]);
-                echo "更新" . $res['id'];
+                echo "更新" . $res['id'].$cost.'+'.$res['cost'].'='.$final_cost;
             } else {
                 $data['cost'] = $cost;
                 $costModel->save($data);
