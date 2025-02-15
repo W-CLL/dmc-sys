@@ -141,6 +141,8 @@ class InitQcAdvCost extends Controller
 
     public function initGetGlobalCost($marketing_goal = "LIVE_PROM_GOODS")
     {
+        dump('初始化完了,禁止访问');
+        die;
         $redis = Cache::store('redis');
         $date = $redis->get('global_cost_date', '2025-02-01');
         $page = Cache::get('global_cost_page_' . $date, 1);
@@ -182,11 +184,18 @@ class InitQcAdvCost extends Controller
 
     public function initGetGlobalCostVideo($marketing_goal = "VIDEO_PROM_GOODS")
     {
+        dump('初始化完了,禁止访问');
+        die;
         $redis = Cache::store('redis');
+        if( !$redis->get('global_cost_date_' . $marketing_goal)){
+            echo "2月1到2月14的数据已经全部获取完了";
+            die;
+        }
         $date = $redis->get('global_cost_date_' . $marketing_goal, '2025-02-01');
         $page = Cache::get('global_cost_page_' . $marketing_goal . '_' . $date, 1);
         $model = new Company();
         $adv_list = $model->page($page)->limit(20)->order('id desc')->column('advertiser_id');
+
         if ($date == '2025-02-15' || $date == '2025-2-15') {
             echo "2月1到2月14的数据已经全部获取完了";
             die;
