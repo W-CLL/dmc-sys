@@ -65,7 +65,8 @@ Class Recharge extends Store{
         "收款户名",
         "收款人姓名",
         "收款人户名",
-//        "姓名", // ocr识别失败?返回一个"姓名"键
+        "户名",
+        "姓名", // ocr识别失败?返回一个"姓名"键
     ];
 
 
@@ -223,6 +224,9 @@ Class Recharge extends Store{
                     }
 
                 }
+            }
+            if($account_type == 0){
+                $payee = '';
             }
             if (!$order_number){
                 foreach (self::$unique_identifier as $key=>$vel) {
