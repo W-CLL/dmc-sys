@@ -45,9 +45,32 @@ class QcAdvCost extends Api
         $offset = ($page - 1) * $pageSize;
         // 查询某一页的数据
         return Db::name('company')
+            ->where(['adv_status'=>1])
             ->order('advertiser_id', 'desc')
             ->limit($offset, $pageSize) // 通过offset和pageSize控制查询范围
             ->column('advertiser_id');
+    }
+
+
+    public function getGlobalCost()
+    {
+        $page = 1;
+        $pageSize = 50;
+        while (true) {
+            // 获取当前页的数据
+            $advIdList = $this->getAdvByPage($page, $pageSize);
+            if (empty($advIdList)) {
+                echo "已经全部处理完了";
+                break;
+            }
+            $data = [
+                'adv_list'=>$advIdList,
+                'date'=>date('Y-m-d')
+//                'date'=>"2024-12-14"
+            ];
+            \think\Queue::push('app\job\UpdateAdvDayGlobalCost', $data, 'upAdvDayGlobalCost');
+            $page++;
+        }
     }
 
 
