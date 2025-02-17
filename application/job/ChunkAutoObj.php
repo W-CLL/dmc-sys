@@ -48,10 +48,14 @@ class ChunkAutoObj
         $needNum = $data['need_opt_num'];
         $accountNum = count($data['obj_list']);
         $singleAccountNeedNum = round($needNum / $accountNum);
-
+        $list_count = count($data['obj_list']);
         for($i = 0;$i<$singleAccountNeedNum;$i++){
             foreach ($data['obj_list'] as $item){
-                $seconds = rand(1,5);
+                if($list_count <3){
+                    $seconds = rand(10,30);
+                }else{
+                    $seconds = rand(5,10);
+                }
                 $upData = [
                     'adv_id'=>$data['adv_id'],
                     'obj_id'=>$item,

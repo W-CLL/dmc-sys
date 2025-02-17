@@ -55,12 +55,12 @@ class AutoUpdateObjName
         $objDetail = $objInfo['data'];
         if(in_array($objDetail['opt_status'],['DELETE', "TIME_DONE", 'FROZEN']) ){
 //            更新计划状态
-           $qcObj->where(['obj_id',$data['obj_id']])->update(['opt_status'=>$objDetail['opt_status']]);
+           $qcObj->where(['obj_id'=>$data['obj_id']])->update(['opt_status'=>$objDetail['opt_status']]);
             return [true,'处理成功,计划状态不符合更新'];
         }
         if(in_array($objDetail['status'],['DELETE', "TIME_DONE", 'FROZEN']) ){
 //            更新计划状态
-            $qcObj->where(['obj_id',$data['obj_id']])->update(['status'=>$objDetail['status']]);
+            $qcObj->where(['obj_id'=>$data['obj_id']])->update(['opt_status'=>$objDetail['status']]);
             return [true,'处理成功,计划状态不符合更新'];
         }
         $this->removeEmptyValues($objDetail);
@@ -98,7 +98,7 @@ class AutoUpdateObjName
        if($res['code'] == 0 && $res['message'] == "OK"){
            return [true,'处理成功'];
        }else{
-           throw new Exception($res['message']);
+           throw new Exception($res['message'].json_encode($updateData));
        }
     }
 
