@@ -25,32 +25,9 @@ class AutoUpdateObjName extends Api
     public function index()
     {
         $page = Cache::get('chunk_obj_page', 1);
-//        if($page==25){
-//            echo "加入了一部分";
-//            echo $page;
-//            die;
-//        }
-        //1、先查询不是白名单的 公司下的广告账户
-        $comSettingModel = new CompanySetting();
-        $comModel = new Company();
         $redis = Cache::store('redis');
-        if ($redis->get('company_setting_list')) {
-            $notWhiteCom = unserialize($redis->get('company_setting_list'));
-        } else {
-            //获取非白名单公司
-            $notWhiteCom = $comSettingModel->where(['is_white' => 0])->column('percentage', 'company_name');
-            $redis->set('company_setting_list', serialize($notWhiteCom));
-        }
-        //提取公司名
-        $companyNames = array_keys($notWhiteCom);
-        //获取公司下的广告主账户，每页100条
-        $advList = $comModel->where(['company_name' => ['in', $companyNames]])
-            ->order('advertiser_id desc')
-            ->page($page)
-            ->limit(100)
-            ->column('advertiser_id');
-//        dump($page);
-//        dump($advList);
+        list($advList, $notWhiteCom) = $this->getAdvList($page, $redis,$type='normal');
+        $comModel = new Company();
         $currentDate = new \DateTime();
         $currentDate->modify('first day of this month');
         $end_time = time();
@@ -77,7 +54,7 @@ class AutoUpdateObjName extends Api
         if (empty($list)) {
             echo "全部处理完了";
             Cache::rm('chunk_obj_page');
-            $redis->rm('company_setting_list');
+            $redis->rm('company_setting_list_'.$type);
             die;
         }
         $queue = new Queue();
@@ -87,7 +64,7 @@ class AutoUpdateObjName extends Api
             $totalNum = (int)$item['total_num'];
             $companyNum = (int)$item['company_num'];
             $cusNum = $totalNum - $companyNum;
-            $actualComNum = $cusNum + ($cusNum * ($notWhiteCom[$item['company_name']]/100));
+            $actualComNum = $cusNum + ($cusNum * ($notWhiteCom[$item['company_name']] / 100));
             if ($cusNum <= 0) {
                 continue;
             }
@@ -123,5 +100,116 @@ class AutoUpdateObjName extends Api
         $this->index();
     }
 
+
+    /**
+     * 获取公司设置
+     * @return array|string
+     */
+    protected function getAdvList($page, $redis,$type='normal')
+    {
+        //1、先查询不是白名单的 公司下的广告账户
+        $comSettingModel = new CompanySetting();
+        $comModel = new Company();
+
+        if ($redis->get('company_setting_list_'.$type)) {
+            $notWhiteCom = unserialize($redis->get('company_setting_list_'.$type));
+        } else {
+            //获取非白名单公司
+            $notWhiteCom = $comSettingModel->where(['is_white' => 0])->column('percentage', 'company_name');
+            $redis->set('company_setting_list_'.$type, serialize($notWhiteCom));
+        }
+        //提取公司名
+        $companyNames = array_keys($notWhiteCom);
+        //获取公司下的广告主账户，每页100条
+        $adv_list = $comModel->where(['company_name' => ['in', $companyNames]])
+            ->order('advertiser_id desc')
+            ->page($page)
+            ->limit(1000)
+            ->column('advertiser_id');
+
+        return [$adv_list, $notWhiteCom];
+    }
+
+    /**
+     * 分割当天全域消耗下的广告计划
+     * @return void
+     */
+    public function chunkGlobalComAdv()
+    {
+        $page = Cache::get('chunk_obj_global_page', 1);
+        $redis = Cache::store('redis');
+        list($advList, $notWhiteCom) = $this->getAdvList($page, $redis,$type='global');
+        $cost_model = new QcAdvDayCost();
+        $adv_list = $cost_model->where([
+            'adv_id' => ['in', $advList],
+            'cost_date' => strtotime('2024-12-14'),
+            'type' => 2,//全域
+        ])->field('*,SUM(cost) as day_cost ')
+            ->group('adv_id')
+            ->select();
+
+        if (empty($adv_list)) {
+            echo "全部处理完了";
+            Cache::rm('chunk_obj_global_page');
+            $redis->rm('company_setting_list_'.$type);
+            die;
+        }
+
+        $queue = new Queue();
+        $objModel = new ObjModel();
+        foreach ($adv_list as $item) {
+            if ($item['day_cost'] > 0) {
+                $need_num = $this->getDailyOperationLimit($item['day_cost']);
+                $list = $objModel->where([
+                    'obj_status' => ['not in', ['DELETE', "TIME_DONE", 'FROZEN']],
+                    'lab_ad_type' => "LAB_AD",
+                    'opt_status' => ['not in', ['DELETE', "TIME_DONE", 'FROZEN']],
+                    'adv_id' => $item['adv_id']
+                ])
+                    ->field('obj_id,adv_id')
+                    ->limit($need_num)
+                    ->column('obj_id');
+                $queueData = [
+                    'need_opt_num' => $need_num,
+                    'adv_id' => $item['adv_id'],
+                    'obj_list' => $list
+                ];
+//                dump($queueData);
+                //一个广告主下的托管计划，总的操作次数，写入任务再平分次数到每个计划，进行延时修改
+                $queue->addQueue('分块处理自动化', 'app\job\ChunkAutoObj', 'chunkAutoObj', $queueData);
+            }
+        }
+//        die;
+        $page++;
+        Cache::set('chunk_obj_global_page', $page);
+        $this->chunkGlobalComAdv();
+    }
+
+    /**
+     * 获取次数限制
+    * 全域的 5000以下含5000的一天操作50次
+    * 全域的1w以下含1w的一天操作80次
+    * 全域的2w以下含2w的一天操作120次
+    * 全域的3w以下含3w的一天操作160次
+    * 全域的4w以下含4w的一天操作200次
+    * 每叠加1万增加操作40次
+     */
+    protected function getDailyOperationLimit($value)
+    {
+        $limits = [
+            5000 => 50,
+            10000 => 80,
+            20000 => 120,
+            30000 => 160,
+            40000 => 200,
+        ];
+        foreach ($limits as $threshold => $limit) {
+            if ($value <= $threshold) {
+                return $limit;
+            }
+        }
+        // 如果超过 40000，每叠加 1 万增加 40 次
+        return 200 + intval(($value - 40000) / 10000) * 40;
+    }
 
 }
