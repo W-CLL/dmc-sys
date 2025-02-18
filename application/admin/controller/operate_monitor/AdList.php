@@ -9,7 +9,7 @@ use app\common\model\QcAdvDayCost;
 
 class AdList extends Backend
 {
-    public function index()
+    public function index($user_name='')
     {
         $companyModel = new CompanyModel();
         if ($this->request->isAjax()) {
@@ -22,7 +22,8 @@ class AdList extends Backend
             $end_time = strtotime(input("end_date") . ' 23:59:59' ?: date("Y-m-d", time()) . ' 23:59:59');
             $kahuna = input("kahuna");
             $advertiser_id = input("advertiser_id");
-            if (!empty($kahuna)) {
+            if (!empty($kahuna) || $user_name) {
+                $kahuna = $user_name;
                 $where['kahuna'] = ['like', "%$kahuna%"];
             }
             if (!empty($advertiser_id)) {
@@ -51,6 +52,7 @@ class AdList extends Backend
                     if ($kahuna) {
                         $whereStr['com.kahuna'] = ['like', "%$kahuna%"];
                     }
+
                     $query->where($whereStr);
                 })
                 ->field("adv_c.*, SUM(cost) AS mon_cost,
@@ -60,20 +62,9 @@ class AdList extends Backend
                 ->group('adv_c.adv_id')
                 ->order($sort, $order)
                 ->limit($offset, $limit)
-//                ->fetchSql(true)
                 ->select();
-//            dump($list);
-//            die;
 
             foreach ($list as &$item) {
-//                $where_str = [
-//                    'cost_date'=>['between', [$start_time, $end_time]],
-//                    'type'=>1,
-//                    'adv_id'=>$item['adv_id']
-//                ];
-//                $item['stand_cost'] = $qcAdvModel->where($where_str)->sum('cost');
-//                $where_str['type'] = 2;
-//                $item['global_cost'] = $qcAdvModel->where($where_str)->sum('cost');
                 $item['cus_num'] = $item['total_num'] - $item['company_num'];
                 if ($item['company_num'] > 0 && $item['cus_num'] > 0) {
                     $item['percentage'] = number_format($item['company_num'] / $item['cus_num'], 2) * 100;
@@ -91,6 +82,12 @@ class AdList extends Backend
             return json($result);
         }
         return $this->view->fetch();
+    }
+
+    public function charge_page()
+    {
+        $user_name = $this->auth->getUserInfo()['nickname'];
+       return $this->index($user_name);
     }
 
 }
