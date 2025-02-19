@@ -288,7 +288,7 @@ class Transfer extends Api
         $account_type = 'AGENT';
         $biz_request_no = generate_random_string(10, true);
         $list = Db::name('share_wallet_transfer_log')
-            ->where(['status' => ['=', 0], 'transfer_serial' => ['neq', '']])
+            ->where(['status' => ['=', 0], 'transfer_serial' => ['neq', ''], 'create_time' => ['<', time() - 60]])
             ->select();
         Db::startTrans();
         try {
