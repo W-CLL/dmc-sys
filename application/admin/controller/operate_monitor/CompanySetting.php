@@ -93,7 +93,7 @@ class CompanySetting extends Backend
     }
 
 
-    public function checkSettingParams($data)
+    public function checkSettingParams($data,$is_id=true)
     {
         if(!isset($data['is_white'])){
             $this->error('请选择是否加入白名单');
@@ -105,7 +105,7 @@ class CompanySetting extends Backend
                 $this->error('百分比填写有误, 请填写0-100之间的数字');
             }
         }
-        if(empty($data['ids'])){
+        if(empty($data['ids']) && $is_id){
             $this->error('请选择要设置的数据');
         }
     }
@@ -162,6 +162,37 @@ class CompanySetting extends Backend
         return $this->view->fetch('');
     }
 
+    public function edit_text($ids='')
+    {
+        $companySetting = new \app\admin\model\CompanySetting();
+        if ($this->request->isPost()) {
+            $data = $this->request->post();
+            $this->checkSettingParams($data,false);
+            $company_list= explode(',',rtrim(str_replace(["\n", "\r", "\t", " "], "", $data['company_text']),','));
+//            $company_list = array_map(function($item) {
+//                return trim($item, " ,"); // 清除空格和逗号
+//            }, explode(',', $data['company_text']));
+//
+//// 过滤空值
+//            $company_list = array_filter($company_list);
+//            dump($company_list);
+//            die;
+            Db::startTrans();
+            try {
+                $companySetting->where(['company_name'=>['in',$company_list]])->update(['is_white'=>$data['is_white'],'percentage'=>$data['percentage']]);
+                //设置公司下的广告主为白名单
+                $this->companyModel->where(['company_name'=>['in',$company_list]])->update(['is_white'=>$data['is_white'],'monitor_percentage'=>$data['percentage']]);
+                Db::commit();
+                $this->success('设置成功!');
+            }catch (Exception $e){
+                Db::rollback();
+                $this->error('设置失败，联系管理员');
+            }
 
+        }
+        $this->assign('info',$companySetting->where('id',$ids)->find());
+        return $this->view->fetch('edit_text');
+
+    }
 
 }
