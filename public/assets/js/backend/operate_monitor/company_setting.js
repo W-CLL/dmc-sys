@@ -134,11 +134,40 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', 'bootstrap-table-fixe
                 });
 
             })
+
+            $(".btn-edits-text").on('click', function () {
+                layer.open({
+                    type: 2,
+                    area: ['600px', '600px'],
+                    content: 'edit_text',
+                    fixed: false, // 不固定
+                    maxmin: true,
+                    shadeClose: true,
+                    title: "批量设置",
+                    btnAlign: 'c',
+                    success: function (layero, index) {
+                        var iframe = layero.find('iframe')[0];
+                        var iframeWindow = iframe.contentWindow || iframe.contentDocument || iframe;
+
+                        // 获取 iframe 中的输入框，并赋值
+                        var hiddenInput = $(iframeWindow.document).find("input[name='ids']");
+                        hiddenInput.val(checkids.join(','));
+                    }
+                });
+
+            })
+
+
+
+
         },
         add: function () {
             Controller.api.bindevent();
         },
         edit: function () {
+            Controller.api.bindevent();
+        },
+        edit_text: function () {
             Controller.api.bindevent();
         },
         setting: function () {
