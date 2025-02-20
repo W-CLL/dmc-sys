@@ -11,6 +11,7 @@ use jlqc\FundManagement;
 use think\Cache;
 use think\Db;
 use app\admin\model\Company as CompanyModel;
+use think\Env;
 
 /**
  * 商户管理
@@ -246,7 +247,8 @@ class Company extends Backend
 
             $access_token = Cache::get("qc_access_token");
             $advertiser_id = Db::name("company")->where("id",$ids)->value("advertiser_id");
-            $agent_id = Db::name("qc_config")->where("id",1)->value("advertiser_id");
+//            $agent_id = Db::name("qc_config")->where("id",1)->value("advertiser_id");
+            $agent_id = Env::get('dmc_ad_config.advertiser_id');
             $data = FundManagement::get_agent_statement($access_token,$agent_id, date("Y-m-d",$stare_time), date("Y-m-d",$end_time),1,100,(int)$advertiser_id);
             $total_page = ceil($data['data']['page_info']['total_number']/$data['data']['page_info']['page_size']);
             for($i=1;$i<=$total_page;$i++){

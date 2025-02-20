@@ -9,6 +9,7 @@ use app\store\model\StoreRefund;
 use jlqc\FundManagement;
 use think\Cache;
 use think\Db;
+use think\Env;
 use think\Exception;
 use think\Log;
 
@@ -100,7 +101,8 @@ class RechargeRefund extends Store
         if (request()->isAjax()) {
             list($money, $balance, $credit_limit, $company, $company_advertiser_id, $transfer_records_data) = $this->checkParam();
             $access_token = Cache::get("qc_access_token");
-            $advertiser_id = Db::name("qc_config")->where("id", 1)->value("advertiser_id");
+//            $advertiser_id = Db::name("qc_config")->where("id", 1)->value("advertiser_id");
+            $advertiser_id = Env::get('dmc_ad_config.advertiser_id');
             $transfer_direction = '';
             $remark = "";
             $this->calculate_deductions($balance, $credit_limit, $transfer_records_data, $transfer_direction, $remark);

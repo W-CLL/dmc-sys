@@ -7,6 +7,7 @@ use app\common\controller\Company;
 use jlqc\FundManagement;
 use think\Cache;
 use think\Db;
+use think\Env;
 
 
 Class RechargeRefund extends Company{
@@ -23,8 +24,8 @@ Class RechargeRefund extends Company{
             $transaction_type = input("transaction_type");
             $money = input("money");
             $access_token = Cache::get("qc_access_token");
-            $advertiser_id = Db::name("qc_config")->where("id",1)->value("advertiser_id");
-
+//            $advertiser_id = Db::name("qc_config")->where("id",1)->value("advertiser_id");
+            $advertiser_id = Env::get('dmc_ad_config.advertiser_id');
 
             $transfer_records_data = [
                 "company_id"    =>  $this->auth->id,
