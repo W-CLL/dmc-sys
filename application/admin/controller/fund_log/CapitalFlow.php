@@ -7,6 +7,7 @@ use DateTime;
 use jlqc\FundManagement;
 use think\Cache;
 use think\Db;
+use think\Env;
 use think\Exception;
 
 
@@ -26,7 +27,8 @@ class CapitalFlow extends Backend
 
             return $this->view->fetch();
         }
-        $advertiser_id = Db::name("qc_config")->where("id",1)->value('advertiser_id');
+//        $advertiser_id = Db::name("qc_config")->where("id",1)->value('advertiser_id');
+        $advertiser_id = Env::get('dmc_ad_config.advertiser_id');
         $access_token = Cache::get("qc_access_token");
         $start_date = input("start_date");
         $end_date = input("end_date");

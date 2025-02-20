@@ -13,6 +13,7 @@ use jlqc\UserInfo;
 use Requests;
 use think\Cache;
 use think\Db;
+use think\Env;
 
 
 class Oauth2 extends Api
@@ -33,8 +34,11 @@ class Oauth2 extends Api
         $auth_code = input("auth_code");
         $state = input("state");
         if (!empty($auth_code)) {
-            $data = Db::name("qc_config")->where("id", 1)->find();
-            $data = \jlqc\AccessToken::get_access_token($data['app_id'], $data['secret'], $auth_code);
+//            $data = Db::name("qc_config")->where("id", 1)->find();
+            $app_id = Env::get('dmc_ad_config.app_id');
+            $secret = Env::get('dmc_ad_config.secret');
+//            $data = Env::get('dmc_ad_config');
+            $data = \jlqc\AccessToken::get_access_token($app_id, $secret, $auth_code);
             if ($data["code"] == 0 && $data["message"] === "OK") {
                 Cache::set("qc_access_token", $data['data']['access_token'], 0);
                 Cache::set("qc_refresh_token", $data['data']['refresh_token'], 0);
@@ -48,8 +52,11 @@ class Oauth2 extends Api
     public function access_token_save()
     {
 //        dump(Cache::get("qc_access_token"));
-        $data = Db::name("qc_config")->where("id", 1)->find();
-        $data = \jlqc\AccessToken::refresh_token_save($data['app_id'], $data['secret']);
+//        $data = Db::name("qc_config")->where("id", 1)->find();
+        $app_id = Env::get('dmc_ad_config.app_id');
+        $secret = Env::get('dmc_ad_config.secret');
+//        $data = Env::get('dmc_ad_config');
+        $data = \jlqc\AccessToken::refresh_token_save($app_id, $secret);
         if ($data['code'] == 0 && $data['message'] == "OK") {
             Cache::set("qc_access_token", $data['data']['access_token'], 0);
             Cache::set("qc_refresh_token", $data['data']['refresh_token'], 0);
@@ -75,18 +82,19 @@ class Oauth2 extends Api
     //获取千川所有绑定账户并写入
     public function synchronous1()
     {
-        $config_data = Db::name("qc_config")->where("id", 1)->find();
+//        $config_data = Db::name("qc_config")->where("id", 1)->find();
+        $advertiser_id = Env::get('dmc_ad_config.advertiser_id');
         $access_token = Cache::get("qc_access_token");
 
         $data = [];
-        $advertiser_data = AccountRelationship::advertiser_select($access_token, $config_data['advertiser_id'], 1, 100);
+        $advertiser_data = AccountRelationship::advertiser_select($access_token, $advertiser_id, 1, 100);
 //        var_dump($advertiser_data['data']['advertiser_ids']);die();
         $total_page = $advertiser_data['data']['page_info']['total_page'];
         $public_info_data = UserInfo::public_info($access_token, json_encode($advertiser_data['data']['advertiser_ids']));
 
         for ($i = 1; $i <= $total_page; $i++) {
             if ($i > 1) {
-                $advertiser_data = AccountRelationship::advertiser_select($access_token, $config_data['advertiser_id'], $i, 100);
+                $advertiser_data = AccountRelationship::advertiser_select($access_token, $advertiser_id, $i, 100);
                 $public_info_data = UserInfo::public_info($access_token, json_encode($advertiser_data['data']['advertiser_ids']));
             }
             foreach ($public_info_data['data'] as $k => $v) {
@@ -115,9 +123,10 @@ class Oauth2 extends Api
     {
         $companyModel = new Company();
         $time = time();
-        $config_data = Db::name("qc_config")->where("id", 1)->find();
+//        $config_data = Db::name("qc_config")->where("id", 1)->find();
+        $advertiser_id = Env::get('dmc_ad_config.advertiser_id');
         $access_token = Cache::get("qc_access_token");
-        $advertiser_data = AccountRelationship::advertiser_select($access_token, $config_data['advertiser_id'], 1, 100);
+        $advertiser_data = AccountRelationship::advertiser_select($access_token, $advertiser_id, 1, 100);
         $total_page = $advertiser_data['data']['page_info']['total_page'];
         $public_info_data = UserInfo::public_info($access_token, json_encode($advertiser_data['data']['advertiser_ids']));
         $company_add_data = [];
@@ -152,7 +161,7 @@ class Oauth2 extends Api
             if ($total_page > 1) {
                 for ($i = 2; $i <= $total_page; $i++) {
                     $queue_data = [
-                        'advertiser_id' => $config_data['advertiser_id'],
+                        'advertiser_id' => $advertiser_id,
                         'page' => $i
                     ];
                     $queue->addQueue('检查更新广告账户', 'app\job\SyncAdv', 'syncAdv', $queue_data);
@@ -380,7 +389,7 @@ class Oauth2 extends Api
             return;
         }
 
-        $advertiser_ids = Db::name("company")->where('kahuna', null)->column("advertiser_id");
+        $advertiser_ids = Db::name("company")->where('kahuna', null)->limit(100)->column("advertiser_id");
         if (empty($advertiser_ids)) {
             echo '无更新';
             return;
@@ -393,11 +402,8 @@ class Oauth2 extends Api
             $res1 = FundManagement::get_ad_info($access_token, json_encode([$split], JSON_UNESCAPED_UNICODE));
             if ($res1['code'] == 0) {
                 $arr['kahuna'] = $res1['data']['account_detail_list'][0]['optimizer_name'];
-            } else {
-                $arr['kahuna'] = '';
-            }
-            if (!Db::name('company')->where(['advertiser_id' => $split])->update($arr)) {
-                throw new \Exception('出错');
+                $arr['update_time'] = time();
+                $res =  Db::name('company')->where(['advertiser_id' => $split])->update($arr);
             }
         }
         echo '完成';

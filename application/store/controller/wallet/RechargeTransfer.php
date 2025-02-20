@@ -7,6 +7,7 @@ use app\common\controller\Store;
 use jlqc\FundManagement;
 use think\Cache;
 use think\Db;
+use think\Env;
 use think\Exception;
 
 
@@ -61,7 +62,8 @@ class RechargeTransfer extends Store
             list($money, $transfer_records_data, $advertiser_id_initiate, $advertiser_id_target) = $this->checkParam();
 
             $access_token = Cache::get("qc_access_token");
-            $advertiser_id = Db::name("qc_config")->where("id", 1)->value("advertiser_id");
+//            $advertiser_id = Db::name("qc_config")->where("id", 1)->value("advertiser_id");
+            $advertiser_id = Env::get('dmc_ad_config.advertiser_id');
             $transfer_direction = 'TRANSFER_IN';
             $remark = "抖秒冲转账";
             $target_account_detail_list[] = [

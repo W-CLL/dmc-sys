@@ -9,6 +9,7 @@ use jlqc\FundManagement;
 use think\Cache;
 use think\Db;
 use app\store\model\StoreRefund;
+use think\Env;
 use think\Exception;
 
 
@@ -25,7 +26,8 @@ class Transfer extends Api
             return "暂无更新";
         }
 
-        $advertiser_id = Db::name("qc_config")->where("id", 1)->value("advertiser_id");
+//        $advertiser_id = Db::name("qc_config")->where("id", 1)->value("advertiser_id");
+        $advertiser_id = Env::get('dmc_ad_config.advertiser_id');
         $access_token = Cache::get("qc_access_token");
         foreach ($transfer_records_data as $k => $v) {
             $transfer_detail_data = FundManagement::transfer_detail($access_token, $v['id'], $advertiser_id, $v['transfer_serial']);
@@ -259,7 +261,9 @@ class Transfer extends Api
     public function check_sub_wallet_list()
     {
         $token = Cache::get("qc_access_token");
-        $account_id = Db::name("qc_config")->where("id", 1)->value("advertiser_id");
+//        $account_id = Db::name("qc_config")->where("id", 1)->value("advertiser_id");
+        $account_id = Env::get('dmc_ad_config.advertiser_id');
+
         $account_type = 'AGENT';
         $data = FundManagement::get_wallet_info($token, $account_id, $account_type);
         $info = Db::name('qc_share_wallet')->where(['id' => [">", 0]])->field('sub_wallet_id')->select();
@@ -284,7 +288,8 @@ class Transfer extends Api
     public function update_sub_wallet_transfer_log()
     {
         $token = Cache::get("qc_access_token");
-        $account_id = Db::name("qc_config")->where("id", 1)->value("advertiser_id");
+//        $account_id = Db::name("qc_config")->where("id", 1)->value("advertiser_id");
+        $account_id = Env::get('dmc_ad_config.advertiser_id');
         $account_type = 'AGENT';
         $biz_request_no = generate_random_string(10, true);
         $list = Db::name('share_wallet_transfer_log')

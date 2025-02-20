@@ -11,7 +11,10 @@ use app\common\model\Queue;
 use GuzzleHttp\Psr7\Request;
 use think\Cache;
 use think\Db;
+use think\db\exception\DataNotFoundException;
+use think\db\exception\ModelNotFoundException;
 use think\Exception;
+use think\exception\DbException;
 
 
 /**
@@ -22,16 +25,18 @@ class AutoUpdateObjName extends Api
     protected $noNeedLogin = '*';
     protected $noNeedRight = '*';
 
-    public function index()
+    public function index($user_name='')
     {
         $page = Cache::get('chunk_obj_page', 1);
         $redis = Cache::store('redis');
-        list($advList, $notWhiteCom) = $this->getAdvList($page, $redis,$type='normal');
+        list($advList, $notWhiteCom) = $this->getAdvList($page, $redis,$type='normal',$user_name);
         $comModel = new Company();
         $currentDate = new \DateTime();
-        $currentDate->modify('first day of this month');
+        $currentDate->modify('yesterday');
         $end_time = time();
 //        $end_time = "1736922704";
+//        $start_time = strtotime(date('Y-m-d',time()));
+        //获取昨天的操作次数
         $start_time = $currentDate->getTimestamp();
 //        $start_time = "1735713104";
         //获取本月的操作日志
@@ -100,12 +105,16 @@ class AutoUpdateObjName extends Api
         $this->index();
     }
 
-
     /**
      * 获取公司设置
-     * @return array|string
+     * @param $page
+     * @param $redis
+     * @param string $type
+     * @param string $charge_name
+     * 负责人名字
+     * @return array
      */
-    protected function getAdvList($page, $redis,$type='normal')
+    protected function getAdvList($page, $redis, string $type='normal', string $charge_name=''): array
     {
         //1、先查询不是白名单的 公司下的广告账户
         $comSettingModel = new CompanySetting();
@@ -122,6 +131,11 @@ class AutoUpdateObjName extends Api
         $companyNames = array_keys($notWhiteCom);
         //获取公司下的广告主账户，每页100条
         $adv_list = $comModel->where(['company_name' => ['in', $companyNames]])
+            ->where(function ($query) use ($charge_name){
+                if($charge_name){
+                    $query->where(['kahuna'=>$charge_name]);
+                }
+            })
             ->order('advertiser_id desc')
             ->page($page)
             ->limit(1000)
@@ -133,16 +147,23 @@ class AutoUpdateObjName extends Api
     /**
      * 分割当天全域消耗下的广告计划
      * @return void
+     * @throws DataNotFoundException
+     * @throws ModelNotFoundException
+     * @throws DbException
      */
-    public function chunkGlobalComAdv()
+    public function chunkGlobalComAdv($user_name = '')
     {
         $page = Cache::get('chunk_obj_global_page', 1);
         $redis = Cache::store('redis');
-        list($advList, $notWhiteCom) = $this->getAdvList($page, $redis,$type='global');
+        list($advList, $notWhiteCom) = $this->getAdvList($page, $redis,$type='global',$user_name='');
         $cost_model = new QcAdvDayCost();
+        $currentDate = new \DateTime();
+        $currentDate->modify('yesterday');
+        //获取昨天的全域消耗
         $adv_list = $cost_model->where([
             'adv_id' => ['in', $advList],
-            'cost_date' => strtotime('2024-12-14'),
+//            'cost_date' => strtotime('2024-12-14'),
+            'cost_date'=>$currentDate->getTimestamp(),
             'type' => 2,//全域
         ])->field('*,SUM(cost) as day_cost ')
             ->group('adv_id')
@@ -179,7 +200,6 @@ class AutoUpdateObjName extends Api
                 $queue->addQueue('分块处理自动化', 'app\job\ChunkAutoObj', 'chunkAutoObj', $queueData);
             }
         }
-//        die;
         $page++;
         Cache::set('chunk_obj_global_page', $page);
         $this->chunkGlobalComAdv();
