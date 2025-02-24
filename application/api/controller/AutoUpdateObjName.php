@@ -24,21 +24,22 @@ class AutoUpdateObjName extends Api
 {
     protected $noNeedLogin = '*';
     protected $noNeedRight = '*';
+    const GLOBAL_CACHE_KEY = 'global_handler_key';
 
+    const CACHE_KEY = 'handler_key';
     public function index($user_name='')
     {
+        $this->checkTimestamp(self::CACHE_KEY);
         $page = Cache::get('chunk_obj_page', 1);
         $redis = Cache::store('redis');
         list($advList, $notWhiteCom) = $this->getAdvList($page, $redis,$type='normal',$user_name);
         $comModel = new Company();
         $currentDate = new \DateTime();
         $currentDate->modify('yesterday');
-        $end_time = time();
-//        $end_time = "1736922704";
-//        $start_time = strtotime(date('Y-m-d',time()));
+        $end_time = strtotime(date('Y-m-d',time()));
         //获取昨天的操作次数
         $start_time = $currentDate->getTimestamp();
-//        $start_time = "1735713104";
+
         //获取本月的操作日志
         $list = $comModel
             ->alias('adv_c')
@@ -60,6 +61,7 @@ class AutoUpdateObjName extends Api
             echo "全部处理完了";
             Cache::rm('chunk_obj_page');
             $redis->rm('company_setting_list_'.$type);
+            Cache::set(self::CACHE_KEY, strtotime(date('Y-m-d')));
             die;
         }
         $queue = new Queue();
@@ -110,12 +112,23 @@ class AutoUpdateObjName extends Api
      * @param $page
      * @param $redis
      * @param string $type
-     * @param string $charge_name
-     * 负责人名字
+     * @param string $user_name
      * @return array
      */
-    protected function getAdvList($page, $redis, string $type='normal', string $charge_name=''): array
+    protected function getAdvList($page, $redis, string $type='normal', string $user_name=''): array
     {
+        $operator = [
+            'zqp'=>"张秋萍",
+            'mmc'=>"莫美春",
+            'cxy'=>"陈秀玉",
+            'tyx'=>"谭玉霞",
+            'wyc'=>"王倚澄",
+        ];
+        if(!$operator[$user_name]){
+            echo "名字不存在";
+            die;
+        }
+        $charge_name = $operator[$user_name];
         //1、先查询不是白名单的 公司下的广告账户
         $comSettingModel = new CompanySetting();
         $comModel = new Company();
@@ -139,6 +152,8 @@ class AutoUpdateObjName extends Api
             ->order('advertiser_id desc')
             ->page($page)
             ->limit(1000)
+//            ->fetchSql(true)
+//            ->select()
             ->column('advertiser_id');
 
         return [$adv_list, $notWhiteCom];
@@ -146,16 +161,21 @@ class AutoUpdateObjName extends Api
 
     /**
      * 分割当天全域消耗下的广告计划
+     * @param string $user_name
      * @return void
-     * @throws DataNotFoundException
-     * @throws ModelNotFoundException
      * @throws DbException
+     * @throws ModelNotFoundException
+     * @throws DataNotFoundException
      */
-    public function chunkGlobalComAdv($user_name = '')
+    public function chunkGlobalComAdv(string $user_name = '')
     {
+//       echo  Cache::get(self::GLOBAL_CACHE_KEY);
+//       echo Cache::rm(self::GLOBAL_CACHE_KEY);
+//        die;
+        $this->checkTimestamp(self::GLOBAL_CACHE_KEY);
         $page = Cache::get('chunk_obj_global_page', 1);
         $redis = Cache::store('redis');
-        list($advList, $notWhiteCom) = $this->getAdvList($page, $redis,$type='global',$user_name='');
+        list($advList, $notWhiteCom) = $this->getAdvList($page, $redis,$type='global',$user_name);
         $cost_model = new QcAdvDayCost();
         $currentDate = new \DateTime();
         $currentDate->modify('yesterday');
@@ -173,6 +193,7 @@ class AutoUpdateObjName extends Api
             echo "全部处理完了";
             Cache::rm('chunk_obj_global_page');
             $redis->rm('company_setting_list_'.$type);
+            Cache::set(self::GLOBAL_CACHE_KEY, strtotime(date('Y-m-d')));
             die;
         }
 
@@ -200,9 +221,10 @@ class AutoUpdateObjName extends Api
                 $queue->addQueue('分块处理自动化', 'app\job\ChunkAutoObj', 'chunkAutoObj', $queueData);
             }
         }
+//        die;
         $page++;
         Cache::set('chunk_obj_global_page', $page);
-        $this->chunkGlobalComAdv();
+        $this->chunkGlobalComAdv($user_name);
     }
 
     /**
@@ -230,6 +252,19 @@ class AutoUpdateObjName extends Api
         }
         // 如果超过 40000，每叠加 1 万增加 40 次
         return 200 + intval(($value - 40000) / 10000) * 40;
+    }
+
+    public function checkTimestamp($key)
+    {
+        // 获取当前日期的时间戳（只保留日期部分）
+        $currentDateTimestamp = strtotime(date('Y-m-d'));
+        // 从缓存中获取上次记录的时间戳
+        $lastTimestamp = Cache::get($key);
+        if ($lastTimestamp && $lastTimestamp == $currentDateTimestamp) {
+            // 判断是否是同一天
+              echo "今天已经处理了";
+              die;
+        }
     }
 
 }
