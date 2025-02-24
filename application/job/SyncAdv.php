@@ -76,9 +76,10 @@ class SyncAdv
         foreach ($public_info_data['data'] as $item) {
             $info = $companyModel->where('advertiser_id', $item['id'])->find();
             if ($info) {
-                if ($item['name'] != $info['name']) {
+                if ($item['name'] != $info['name'] || $item['company'] != $info['company_name']) {
                     $companyModel->where(["advertiser_id" => $item["id"]])->update([
                         "name" => $item["name"],
+                        "company_name" => $item["company"],
                         "update_time" => time()
                     ]);
                 } else {
