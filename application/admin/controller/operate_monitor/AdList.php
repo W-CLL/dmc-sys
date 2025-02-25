@@ -23,7 +23,7 @@ class AdList extends Backend
             $kahuna = input("kahuna");
             $advertiser_id = input("advertiser_id");
             if (!empty($kahuna) || $user_name) {
-                $kahuna = $user_name;
+                $kahuna = $user_name?:$kahuna;
                 $where['kahuna'] = ['like', "%$kahuna%"];
             }
             if (!empty($advertiser_id)) {
@@ -52,7 +52,6 @@ class AdList extends Backend
                     if ($kahuna) {
                         $whereStr['com.kahuna'] = ['like', "%$kahuna%"];
                     }
-
                     $query->where($whereStr);
                 })
                 ->field("adv_c.*, SUM(cost) AS mon_cost,
