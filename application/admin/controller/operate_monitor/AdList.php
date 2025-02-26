@@ -68,7 +68,10 @@ class AdList extends Backend
                 if ($item['company_num'] > 0 && $item['cus_num'] > 0) {
                     $item['percentage'] = number_format($item['company_num'] / $item['cus_num'], 2) * 100;
                     $item['percentage'] = $item['percentage'] . '%';
-                } else {
+                } else if($item['company_num'] > 0 && $item['cus_num'] == 0){
+                    $item['percentage'] = number_format($item['company_num'], 2) * 100;
+                    $item['percentage'] = $item['percentage'] . '%';
+                }else{
                     $item['percentage'] = "0%";
                 }
 
