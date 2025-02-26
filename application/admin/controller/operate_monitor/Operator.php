@@ -53,9 +53,8 @@ class Operator extends Backend
         $this->token();
         if ($this->request->isPost()) {
             $params = $this->request->post();
-            $nameArr = array_filter(explode("\n",$params['name']), function($value) {
-                return trim($value) !== '';
-            });
+            $cleaned = str_replace(["\r"], '', $params['name']);  // 移除所有换行符残留
+            $nameArr = array_filter(array_map('trim', explode("\n", $cleaned)));
 
             $insertData = array_map(function ($value) use ($params) {
                 return [
