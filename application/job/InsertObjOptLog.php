@@ -89,7 +89,7 @@ class InsertObjOptLog
         $requestsArray = iterator_to_array($requests(10));
         $guzzleClient = new Client();
         $pool = new Pool($guzzleClient, array_column($requestsArray, 'request'), [
-            'concurrency' => 50, // 并发请求数量
+            'concurrency' => 10, // 并发请求数量
             'fulfilled' => function ($response, $index) use ( &$requestsArray) {
                 $resData = json_decode($response->getBody()->getContents(), true);
 //                dump($resData['code']);

@@ -121,7 +121,7 @@ class AutoUpdateObjName extends Api
             'zqp'=>"张秋萍",
             'mmc'=>"莫美春",
             'cxy'=>"陈秀玉",
-            'tyx'=>"谭玉霞",
+            'tyx'=>"罗文静",
             'wyc'=>"王倚澄",
         ];
         if(!$operator[$user_name]){
