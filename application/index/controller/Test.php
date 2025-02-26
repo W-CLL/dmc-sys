@@ -16,6 +16,8 @@ use jlqc\FundManagement;
 use qywx\Api;
 use thiagoalessio\TesseractOCR\TesseractOCR;
 use think\Cache;
+use think\Db;
+use think\Env;
 use think\Exception;
 
 
@@ -222,9 +224,9 @@ class Test extends Frontend
         try {
             if ($insertData) {
                 $costModel = new QcAdvDayCost();
-                if($marketing_goal == "VIDEO_PROM_GOODS"){
-                    $res =  $this->updateCost($insertData,$costModel);
-                }else{
+                if ($marketing_goal == "VIDEO_PROM_GOODS") {
+                    $res = $this->updateCost($insertData, $costModel);
+                } else {
                     $res = $costModel->saveAll($insertData);
                 }
                 if ($res) {
@@ -235,7 +237,7 @@ class Test extends Frontend
                 echo "第{$page}页成功写进{$count}条数据";
                 Cache::set('global_cost_page_' . $date, $page + 1, 3600);
             }
-        }catch (Exception $e){
+        } catch (Exception $e) {
             throw new Exception($e->getMessage());
         }
 
@@ -250,7 +252,7 @@ class Test extends Frontend
             if ($res) {
                 $final_cost = $cost + $res['cost'];
                 $costModel->where(['id' => $res['id']])->update(['cost' => $final_cost]);
-                echo "更新了".$res['id'];
+                echo "更新了" . $res['id'];
             } else {
                 $data['cost'] = $cost;
                 $costModel->save($data);
@@ -329,6 +331,35 @@ class Test extends Frontend
         $promise->wait();
 
         return $insertData;
+    }
+
+    public function testGetOpt()
+    {
+        $a = Env::get('dmc_ad_config');
+        dump($a);
+        die;
+        $token = Cache::get("qc_access_token");
+        $params = [
+            'advertiser_id' => "1816613270435852",
+            'object_id' => json_encode(['1816710130289844']),
+            'start_date' => "2025-02-19 00:00:00",
+            'end_date' => "2025-02-19 23:00:00",
+            'page' => "1",
+            'page_size' => "10"];
+        $data = FundManagement::get_opt_log($token,$params);
+        dump($data);
+        die;
+    }
+
+    public function fixedOperator()
+    {
+        $list = Db::name('ad_operator')->select();
+        foreach ($list as $item){
+            $update_name = str_replace(["\n", "\r", "\t", " "], "", $item['name']);
+            Db::name('ad_operator')->where(['id'=>$item['id']])->update(['name'=>$update_name]);
+        }
+        echo "全部处理完了";
+        die;
     }
 
 }
