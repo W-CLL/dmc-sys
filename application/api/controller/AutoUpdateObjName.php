@@ -218,7 +218,7 @@ class AutoUpdateObjName extends Api
                 ];
 //                dump($queueData);
                 //一个广告主下的托管计划，总的操作次数，写入任务再平分次数到每个计划，进行延时修改
-                $queue->addQueue('分块处理自动化', 'app\job\ChunkAutoObj', 'chunkAutoObj', $queueData);
+                $queue->addQueue('全域分块处理自动化', 'app\job\ChunkAutoObj', 'chunkAutoObj', $queueData);
             }
         }
 //        die;
