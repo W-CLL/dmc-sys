@@ -147,14 +147,14 @@ class CompanySetting extends Backend
             $comInfo = $companySetting->where('id',$data['ids'])->find();
             Db::startTrans();
             try {
-                $companySetting->where('id',$data['ids'])->update(['is_white'=>$data['is_white']]);
+                $companySetting->where('id',$data['ids'])->update(['is_white'=>$data['is_white'],'percentage'=>$data['percentage']]);
                 //设置公司下的广告主为白名单
-                $this->companyModel->where(['company_name'=>$comInfo['company_name']])->update(['is_white'=>$data['is_white']]);
+                $this->companyModel->where(['company_name'=>$comInfo['company_name']])->update(['is_white'=>$data['is_white'],'monitor_percentage'=>$data['percentage']]);
                 Db::commit();
                 $this->success('设置成功!');
             }catch (Exception $e){
                 Db::rollback();
-                $this->error('设置失败，联系管理员');
+                $this->error('设置失败，联系管理员'.$e->getMessage());
             }
 
         }
