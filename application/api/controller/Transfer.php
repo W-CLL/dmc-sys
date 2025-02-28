@@ -186,9 +186,7 @@ class Transfer extends Api
                     // $this->error("转账失败," . $transfer_detail_data['data']['transfer_target_record_list'][0]['transfer_capital_record_list'][0]['fail_reason']);
                 }
             } else {
-                $explain_record[] = $transfer_records_data;
-
-                Db::name("transfer_records")->where(["id" => $v['id']])->update(['status' => 5, 'explain_record' => json_encode($explain_record, JSON_UNESCAPED_UNICODE), 'explain' => "查询转账状态失败", 'update_time' => time()]);
+                Db::name("transfer_records")->where(["id" => $v['id']])->update(['status' => 5, 'explain_record' => json_encode($transfer_detail_data, JSON_UNESCAPED_UNICODE), 'explain' => "查询转账状态失败", 'update_time' => time()]);
                 // $this->error("查询转账状态失败");
             }
 
