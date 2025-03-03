@@ -84,8 +84,8 @@ class Company extends Backend
                 }
 
                 if (isset($filter_data["store_name"])){
-                    $store_id = Db::name("store")->where(["username" =>['like',"%". $filter_data["store_name"]."%"]])->value("id");
-                    $whereOr['store_id'] = ['=', $store_id];
+                    $store_id = Db::name("store")->where(["username" =>['like',"%". $filter_data["store_name"]."%"]])->column("id");
+                    $where['store_id'] = ['in', $store_id];
                 }
             }
 
@@ -94,6 +94,9 @@ class Company extends Backend
             if (is_array($store_ids)){
                 if (empty($store_ids)){
                     return json(["total" => 0, "rows" => []]);
+                }
+                if (isset($filter_data["store_name"])){
+                    $store_ids = array_values(array_intersect($store_ids, $store_id));
                 }
                 $where["store_id"] = ["in",$store_ids];
             }
