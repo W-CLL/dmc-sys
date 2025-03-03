@@ -9,7 +9,7 @@ use app\common\model\QcAdvDayCost;
 
 class AdList extends Backend
 {
-    public function index($user_name='')
+    public function index($user_name = '')
     {
         $companyModel = new CompanyModel();
         if ($this->request->isAjax()) {
@@ -23,7 +23,7 @@ class AdList extends Backend
             $kahuna = input("kahuna");
             $advertiser_id = input("advertiser_id");
             if (!empty($kahuna) || $user_name) {
-                $kahuna = $user_name?:$kahuna;
+                $kahuna = $user_name ?: $kahuna;
                 $where['kahuna'] = ['like', "%$kahuna%"];
             }
             if (!empty($advertiser_id)) {
@@ -57,24 +57,31 @@ class AdList extends Backend
                 ->field("adv_c.*, SUM(cost) AS mon_cost,
                  SUM(CASE WHEN adv_c.type = 1 THEN cost ELSE 0 END) AS stand_cost,
                   SUM(CASE WHEN adv_c.type = 2 THEN cost ELSE 0 END) AS global_cost,
-                 com.company_name, com.kahuna, total_stats.total_num, company_stats.company_num")
+                 com.company_name, com.kahuna, total_stats.total_num, company_stats.company_num,
+                 (total_num -  company_num) as cus_num,
+                 (CASE 
+            WHEN (total_num - company_num) > 0 THEN (company_num / (total_num - company_num)) * 100
+            ELSE 0
+        END) as percentage
+                 ")
                 ->group('adv_c.adv_id')
                 ->order($sort, $order)
                 ->limit($offset, $limit)
                 ->select();
 
             foreach ($list as &$item) {
-                $item['cus_num'] = $item['total_num'] - $item['company_num'];
-                if ($item['company_num'] > 0 && $item['cus_num'] > 0) {
-                    $item['percentage'] = number_format($item['company_num'] / $item['cus_num'], 2) * 100;
-                    $item['percentage'] = $item['percentage'] . '%';
-                } else if($item['company_num'] > 0 && $item['cus_num'] == 0){
-                    $item['percentage'] = number_format($item['company_num'], 2) * 100;
-                    $item['percentage'] = $item['percentage'] . '%';
-                }else{
-                    $item['percentage'] = "0%";
-                }
-
+//                $item['cus_num'] = $item['total_num'] - $item['company_num'];
+//
+//                if ($item['company_num'] > 0 && $item['cus_num'] > 0) {
+//                    $item['percentage'] = number_format($item['company_num'] / $item['cus_num'], 2) * 100;
+//                    $item['percentage'] = $item['percentage'] . '%';
+//                } else if ($item['company_num'] > 0 && $item['cus_num'] == 0) {
+//                    $item['percentage'] = number_format($item['company_num'], 2) * 100;
+//                    $item['percentage'] = $item['percentage'] . '%';
+//                } else {
+//                    $item['percentage'] = "0%";
+//                }
+                $item['percentage'] = number_format($item['percentage'], 2)."%" ;
             }
 
             // 查询总数
@@ -89,7 +96,7 @@ class AdList extends Backend
     public function charge_page()
     {
         $user_name = $this->auth->getUserInfo()['nickname'];
-       return $this->index($user_name);
+        return $this->index($user_name);
     }
 
 }
