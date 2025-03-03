@@ -65,7 +65,7 @@ Class StoreMoneyLog extends Backend{
     }
     public function index()
     {
-
+        $store_ids = $this->get_store_ids();
         if ($this->request->isAjax()) {
             $sort = input("sort","id");
             $order = input("order","desc");
@@ -74,8 +74,7 @@ Class StoreMoneyLog extends Backend{
             $where = [];
             $this->_search($where);
 
-            $store_ids = $this->get_store_ids();
-            if (is_array($store_ids)) {
+            if (is_array($store_ids) && !isset($where["store_id"])) {
                 if (empty($store_ids)) {
                     return json(["total" => 0, "rows" => []]);
                 }
@@ -113,7 +112,15 @@ Class StoreMoneyLog extends Backend{
             ->where(['bind_store_id'=>['gt',0]])
 //            ->group("advertiser_id")
             ->select();
-        $store_data = Db::name('store')->field("id,username")->select();
+        if (is_array($store_ids)) {
+            if (empty($store_ids)) {
+                return json(["total" => 0, "rows" => []]);
+            }
+            $store_data = Db::name('store')->where(["id"=>["in",$store_ids]])->field("id,username")->select();
+        }else{
+            $store_data = Db::name('store')->field("id,username")->select();
+        }
+
         $this->assign('account_data',$account_data?:[]);
         $this->assign('sub_wallet_data',$sub_wallet_data?:[]);
         $this->assign('store_data',$store_data);
