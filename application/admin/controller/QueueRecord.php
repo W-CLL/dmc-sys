@@ -43,8 +43,9 @@ class QueueRecord extends Backend
                         $item['status_text'] = '失败';
                         break;
                 }
-
-                $item['msg'] = substr($item['msg'], 0, 65);
+//                $res = mb_convert_encoding($item['msg'], 'UTF-8', 'UTF-8');
+//
+              $item['msg']=  $item['msg']??'-';
             }
 
             $result = array("total" => $list->total(), "rows" => $list->items());

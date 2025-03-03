@@ -1,4 +1,4 @@
-define(['jquery', 'bootstrap', 'backend', 'table', 'form','bootstrap-table-fixed-columns'], function ($, undefined, Backend, Table, Form) {
+define(['jquery', 'bootstrap', 'backend', 'table', 'form', 'bootstrap-table-fixed-columns'], function ($, undefined, Backend, Table, Form) {
 
     var Controller = {
         index: function () {
@@ -40,7 +40,22 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form','bootstrap-table-fixed
                             }
                         },
                         {field: 'job_name', title: "任务名称"},
-                        {field: 'msg', title: "执行信息", width: 130, align: 'left'},
+                        {
+                            field: 'msg', title: "执行信息", width: 130, align: 'left',
+                            formatter: function (value, row, index, field) {
+                                return "<span style='display: block;overflow: hidden;text-overflow: ellipsis;white-space: nowrap;' title='" + row.msg + "'>" + value + "</span>";
+                            },
+                            cellStyle: function (value, row, index, field) {
+                                return {
+                                    css: {
+                                        "white-space": "nowrap",
+                                        "text-overflow": "ellipsis",
+                                        "overflow": "hidden",
+                                        "max-width": "150px"
+                                    }
+                                };
+                            }
+                        },
                         {field: 'remark', title: "备注"},
                         {field: 'status_text', title: __('Status')},
                         {field: 'create_time', title: "创建时间", formatter: Table.api.formatter.datetime},
