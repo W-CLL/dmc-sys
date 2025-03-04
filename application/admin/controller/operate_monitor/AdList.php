@@ -100,6 +100,9 @@ class AdList extends Backend
     public function charge_page()
     {
         $user_name = $this->auth->getUserInfo()['nickname'];
+        if($user_name=="谭玉霞"){
+            $user_name='罗文静';
+        }
         return $this->index($user_name);
     }
 
