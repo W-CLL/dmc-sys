@@ -58,16 +58,20 @@ class AdList extends Backend
                  SUM(CASE WHEN adv_c.type = 1 THEN cost ELSE 0 END) AS stand_cost,
                   SUM(CASE WHEN adv_c.type = 2 THEN cost ELSE 0 END) AS global_cost,
                  com.company_name, com.kahuna, total_stats.total_num, company_stats.company_num,
-                 (total_num -  company_num) as cus_num,
-                 (CASE 
-            WHEN (total_num - company_num) > 0 THEN (company_num / (total_num - company_num)) * 100
-            ELSE 0
-        END) as percentage
+                (total_num - IFNULL(company_num, 0)) as cus_num,
+                (CASE 
+                    WHEN (total_num - IFNULL(company_num, 0)) > 0 THEN (IFNULL(company_num, 0) / (total_num - IFNULL(company_num, 0))) * 100
+                ELSE 0
+                END) as percentage
                  ")
                 ->group('adv_c.adv_id')
                 ->order($sort, $order)
                 ->limit($offset, $limit)
+//                ->fetchSql(true)
                 ->select();
+
+//            dump($list);
+//            die;
 
             foreach ($list as &$item) {
 //                $item['cus_num'] = $item['total_num'] - $item['company_num'];
@@ -81,7 +85,7 @@ class AdList extends Backend
 //                } else {
 //                    $item['percentage'] = "0%";
 //                }
-                $item['percentage'] = number_format($item['percentage'], 2)."%" ;
+                $item['percentage'] = number_format($item['percentage'], 2) . "%";
             }
 
             // 查询总数
