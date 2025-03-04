@@ -58,6 +58,7 @@ class Company extends Backend
 
 
             $whereOr = [];
+            $where = [];
             $is_binding = input("is_binding");
             if (!empty($is_binding)){
                 if ($is_binding == 1){
@@ -73,14 +74,14 @@ class Company extends Backend
                         return trim($value) !== "";
                     });
                     if (count($advertiser_ids) > 1){
-                        $whereOr['advertiser_id'] = ['in',$advertiser_ids];
+                        $where['advertiser_id'] = ['in',$advertiser_ids];
                     }else{
-                        $whereOr['advertiser_id'] = ['=', $advertiser_ids[0]];
+                        $where['advertiser_id'] = ['=', $advertiser_ids[0]];
                     }
                 }
 
                 if (isset($filter_data["company_name"])){
-                    $whereOr['company_name'] = ['like', "%" . $filter_data["company_name"] . "%"];
+                    $where['company_name'] = ['like', "%" . $filter_data["company_name"] . "%"];
                 }
 
                 if (isset($filter_data["store_name"])){
@@ -89,7 +90,6 @@ class Company extends Backend
                 }
             }
 
-            $where = [];
             $store_ids = $this->get_store_ids();
             if (is_array($store_ids)){
                 if (empty($store_ids)){
