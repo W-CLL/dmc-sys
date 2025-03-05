@@ -28,12 +28,13 @@ class QcObj extends Api
         // 查询某一页的数据
         return Db::name('company')
             ->order('advertiser_id', 'desc')
+            ->where(['adv_status'=>1])
             ->limit($offset, $pageSize) // 通过offset和pageSize控制查询范围
             ->column('advertiser_id');
     }
 
     /**
-     * 每天的零点23:59:59，下午12:00:00拉取一次当天新建的计划
+     * 每天的零点23:58
      * @param int $pageSize
      * @param string $type
      * @return void
@@ -69,9 +70,10 @@ class QcObj extends Api
                             'marketing_goal' => $type,
                             'ad_create_start_date' => date('Y-m-d', time()),
                             'ad_create_end_date' => date('Y-m-d', time()),
-                            'page' => 1,
-                            'page_size' => 200
-                        ]
+                            'marketing_scene'=>'ALL',
+                        ],
+                    'page' => 1,
+                    'page_size' => 200
                 ];
                 if (count($objIds) > 100) {
                     echo $id . "竟然一天创建了超过一百条计划";
