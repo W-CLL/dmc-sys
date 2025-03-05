@@ -54,11 +54,12 @@ class InsertDayObj
                 return true;
             }
             $totalPage = $resData['data']['page_info']['total_page'];
-            if($totalPage>2){
+            if($totalPage>1){
               for($i=2;$i<=$totalPage;$i++){
-                  $filtering = json_decode($data['filtering'],true);
-                  $filtering['page'] = $i;
-                  $data['filtering'] = json_encode($filtering);
+//                  $filtering = json_decode($data['filtering'],true);
+//                  $filtering['page'] = $i;
+//                  $data['filtering'] = json_encode($filtering);
+                  $data['page'] = $i;
                   $resData = FundManagement::get_ad_list($accessToken,$data);
                   if($resData['code'] == 0 && !empty($resData['data']['list']) ){
                     $res =   $this->saveNewObj($data['advertiser_id'],$resData['data']['list']);
