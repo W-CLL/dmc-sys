@@ -85,8 +85,9 @@ class InsertObjOptLog
      */
     protected function sendGuzzleRequest($requests)
     {
-        sleep(1);
-        $requestsArray = iterator_to_array($requests(10));
+//        sleep(1);
+        $requestsArray = iterator_to_array($requests(20));
+//        dump($requestsArray);
         $guzzleClient = new Client();
         $pool = new Pool($guzzleClient, array_column($requestsArray, 'request'), [
             'concurrency' => 10, // 并发请求数量
