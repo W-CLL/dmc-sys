@@ -71,6 +71,15 @@ class QcObj extends Api
                             'ad_create_start_date' => date('Y-m-d', time()),
                             'ad_create_end_date' => date('Y-m-d', time()),
                             'marketing_scene'=>'ALL',
+                            "status" => "ALL_INCLUDE_DELETED",
+                            "campaign_scene" => [
+                                'DAILY_SALE',
+                                'NEW_CUSTOMER_TRANSFORMATION',
+                                'LIVE_HEAT',
+                                'PLANT_GRASS',
+                                'PRODUCT_HEAT',
+                                'NEW_PRODUCT_BOOST',
+                            ],
                         ],
                     'page' => 1,
                     'page_size' => 200
