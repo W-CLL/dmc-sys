@@ -36,7 +36,7 @@ class QcAdvCost extends Api
             }
             $data = [
                 'adv_list'=>$advIdList,
-                'date'=>$this->getDateBasedOnTime()
+                'date'=>$this->getDateBasedOnTime('normal')
             ];
             $queue->addQueue('1h更新账户当天消耗','app\job\UpdateAdvDayCost','upAdvDayCost',$data);
             $page++;
@@ -69,7 +69,7 @@ class QcAdvCost extends Api
             }
             $data = [
                 'adv_list'=>$advIdList,
-                'date'=>$this->getDateBasedOnTime()
+                'date'=>$this->getDateBasedOnTime('global')
 //                'date'=>"2024-12-14"
             ];
             \think\Queue::push('app\job\UpdateAdvDayGlobalCost', $data, 'upAdvDayGlobalCost');
@@ -77,16 +77,26 @@ class QcAdvCost extends Api
         }
     }
 
-   protected function getDateBasedOnTime() {
+    /**
+     * @param $type
+     * normal是标准推广
+     * global是全域推广
+     * @return false|string
+     */
+   protected function getDateBasedOnTime($type) {
         // 获取当前时间
         $currentTime = time();
 
         // 获取当前的小时和分钟
         $currentHour = date('H', $currentTime);
         $currentMinute = date('i', $currentTime);
-
+        if($type=='normal'){
+            $check_time = "05";
+        }else{
+            $check_time = "10";
+       }
         // 检查是否是00:05分
-        if ($currentHour == '00' && $currentMinute == '05') {
+        if ($currentHour == '00' && $currentMinute == $check_time) {
             // 返回前一天的日期
             return date('Y-m-d', strtotime('-1 day', $currentTime));
         } else {
