@@ -34,7 +34,11 @@ class QcAdvCost extends Api
                 echo "已经全部处理完了";
                 break;
             }
-            $queue->addQueue('1h更新账户当天消耗','app\job\UpdateAdvDayCost','upAdvDayCost',$advIdList);
+            $data = [
+                'adv_list'=>$advIdList,
+                'date'=>$this->getDateBasedOnTime()
+            ];
+            $queue->addQueue('1h更新账户当天消耗','app\job\UpdateAdvDayCost','upAdvDayCost',$data);
             $page++;
         }
     }
@@ -65,11 +69,29 @@ class QcAdvCost extends Api
             }
             $data = [
                 'adv_list'=>$advIdList,
-                'date'=>date('Y-m-d')
+                'date'=>$this->getDateBasedOnTime()
 //                'date'=>"2024-12-14"
             ];
             \think\Queue::push('app\job\UpdateAdvDayGlobalCost', $data, 'upAdvDayGlobalCost');
             $page++;
+        }
+    }
+
+   protected function getDateBasedOnTime() {
+        // 获取当前时间
+        $currentTime = time();
+
+        // 获取当前的小时和分钟
+        $currentHour = date('H', $currentTime);
+        $currentMinute = date('i', $currentTime);
+
+        // 检查是否是00:05分
+        if ($currentHour == '00' && $currentMinute == '05') {
+            // 返回前一天的日期
+            return date('Y-m-d', strtotime('-1 day', $currentTime));
+        } else {
+            // 返回当前日期
+            return date('Y-m-d', $currentTime);
         }
     }
 

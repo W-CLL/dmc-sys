@@ -74,7 +74,7 @@ class UpdateAdvDayCost
 
     }
 
-    protected function buildGuzzleRequest($advIds)
+    protected function buildGuzzleRequest($job_data)
     {
         $access_token = Cache::get("qc_access_token");
         $url = "https://ad.oceanengine.com/open_api/v1.0/qianchuan/report/advertiser/get/";
@@ -83,11 +83,11 @@ class UpdateAdvDayCost
             'Content-Type' => 'application/json'
         ];
         $requests = [];
-        foreach ($advIds as $advId) {
+        foreach ($job_data['adv_list'] as $advId) {
             $params = [
                 "advertiser_id" => $advId,
-                "start_date" => date('Y-m-d',time()),
-                "end_date" => date('Y-m-d',time()),
+                "start_date" => $job_data['date'],
+                "end_date" => $job_data['date'],
 //                "start_date" => "2025-01-08",
 //                "end_date" => "2025-01-08",
                 "page" => 1,
