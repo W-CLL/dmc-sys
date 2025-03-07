@@ -29,9 +29,9 @@ define(['jquery', 'bootstrap', 'company', 'table', 'form'], function ($, undefin
                         {field: 'store.username', title: "商户"},
                         {field: 'store_money_log.id', title: "对应资金流水ID"},
                         {field: 'sub_wallet_id', title: "子钱包ID"},
-                        {field: 'money', title: "充值金额"},
+                        {field: 'money', title: "充值的账户币"},
                         {field: 'rebate', title: "返点"},
-                        {field: 'actual_money', title: "实际到账金额"},
+                        {field: 'actual_money', title: "使用现金"},
                         {field: 'transfer_direction', title: "转账类型", formatter: function(value,row,index) {
                                 if (row.transfer_direction == 1){
                                     return "转入"
