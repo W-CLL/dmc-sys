@@ -58,26 +58,29 @@ class UpdateQcAdvCost extends Controller
         );
         $res = Requests::get($url, $header);
         $costModel = new QcAdvDayCost();
-        foreach ($res['data']['list'] as $item) {
-            $cost_data = strtotime($item['stat_datetime']);
-            $dayCost = $costModel->where(['adv_id' => $item['advertiser_id'], 'cost_date' => $cost_data,'type'=>1])->find();
-            if ($dayCost) {
-                $upData['id']=$dayCost['id'];
-                $upData['cost'] = $item['stat_cost'];
-                $res = $dayCost->save($upData);
-                echo "更新";
-            } else {
-                $insert_data = [
-                    'adv_id' => $item['advertiser_id'],
-                    'cost' => $item['stat_cost'],
-                    'cost_date' => $cost_data,
-                    'type'=>1
-                ];
-                $res = $costModel->save($insert_data);
-                echo "插入";
-            }
-            if (!$res && $res != 0) {
-                throw  new \think\Exception($res);
+        if($res['code'] == 0 && $res['data']['list']) {
+
+            foreach ($res['data']['list'] as $item) {
+                $cost_data = strtotime($item['stat_datetime']);
+                $dayCost = $costModel->where(['adv_id' => $item['advertiser_id'], 'cost_date' => $cost_data, 'type' => 1])->find();
+                if ($dayCost) {
+                    $upData['id'] = $dayCost['id'];
+                    $upData['cost'] = $item['stat_cost'];
+                    $res = $dayCost->save($upData);
+                    echo "更新";
+                } else {
+                    $insert_data = [
+                        'adv_id' => $item['advertiser_id'],
+                        'cost' => $item['stat_cost'],
+                        'cost_date' => $cost_data,
+                        'type' => 1
+                    ];
+                    $res = $costModel->save($insert_data);
+                    echo "插入";
+                }
+                if (!$res && $res != 0) {
+                    throw  new \think\Exception($res);
+                }
             }
         }
         return true;
