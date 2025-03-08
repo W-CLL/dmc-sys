@@ -18,21 +18,44 @@ use think\Controller;
 class InitObjOptLog extends Controller
 {
 
-//    public function index($day = 2)
-//    {
-//        for ($i = 0; $i < 20; $i++) {
-//            $this->intObjOptLog($day);
-//        }
-//        $objModel = new QcObj();
-//        $exist = QcObjOptLog::group('adv_id')->column('adv_id');
-//        $emptyAdvId = Cache::get('empty_adv_id', 0);
-//        $exist = array_merge($exist, explode(',', $emptyAdvId));
-//        $exist = array_unique($exist);
-//        echo "处理了" . count($exist) . '个,还剩下' . $objModel->distinct('adv_id')->where(['adv_id' => ['not in', $exist]])->count();
-//        echo '</br>';
-//    }
+    public function initObjOptLog($day = 1)
+    {
+        dump('初始化完了，禁止访问!');
+        die;
+        // 设置超时时间
+        set_time_limit(360);
+//        dump(Cache::rm('handle_opt_log_is_done'));
+//        die;
+        if(Cache::get('handle_opt_log_is_done')){
+            echo "已经处理过了";
+            die;
+        };
+        //检查已处理的广告账户
+        $objModel = new QcObj();
+        $list = $objModel->field('adv_id,count(obj_id) as obj_num')->group('adv_id')->select();
 
-    public function intObjOptLog($day)
+        $comFun = new ComFun();
+        list($start_date, $end_date) = $comFun->getSearchDate($day);
+        foreach ($list as $item){
+            $count = ceil($item['obj_num'] / 500); // 计算分页数
+            for ($i = 0; $i < $count; $i++) {
+                $start = $i * 500;
+                $obj_ids = $objModel->where(['adv_id'=>$item['adv_id']])->order('obj_id asc')->limit($start,500)->column('obj_id');
+                $job_data = [
+                    "advertiser_id" => (int)$item['adv_id'],
+                    'object_ids' => $obj_ids,
+                    'start_time' => $start_date . ' 00:00:00',
+                    'end_time' => $end_date . ' 23:59:59',
+                ];
+                \think\Queue::push('app\job\InitObjOptLog', $job_data, "initObjOptLog");
+            }
+        }
+        Cache::set('handle_opt_log_is_done',true);
+        echo "已经全部处理完了";
+        die;
+    }
+
+    public function intObjOptLog_old($day)
     {
         dump('初始化完了，禁止访问!');
         die;
@@ -148,7 +171,7 @@ class InitObjOptLog extends Controller
         $requestsArray = iterator_to_array($requests(10));
         $guzzleClient = new Client();
         $pool = new Pool($guzzleClient, array_column($requestsArray, 'request'), [
-            'concurrency' => 50, // 并发请求数量
+            'concurrency' => 10, // 并发请求数量
             'fulfilled' => function ($response, $index) use (&$insertData, &$is_empty, &$requestsArray, $queue, &$is_error) {
                 $resData = json_decode($response->getBody()->getContents(), true);
                 //可以在这里获取到每一个请求的请求参数吗

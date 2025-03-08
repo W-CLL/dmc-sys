@@ -4,6 +4,9 @@ namespace app\api\controller;
 
 use app\common\controller\Api;
 use app\common\model\Queue;
+use DateTime;
+use fast\Date;
+use think\Cache;
 
 /**
  * 每天12：00：00，晚上23：59：50 获取一下当天区间操作日志
@@ -13,24 +16,33 @@ class QcObjOptLog extends Api
     protected $noNeedLogin = '*';
     protected $noNeedRight = '*';
 
+
+
     /**
-     * 获取前一天的所有计划的操作日志
+     * 获取当天操作日志，定时任务每小时的第二分钟执行一次
+     * 但有判断隔四个小时才会执行一次，从凌晨开始算，00：02、04：02、08：02。。。。
      * @param $date
-     * 格式2025-01-15,处理特殊情况，比如漏掉的日期，一般不传
+     * 格式2025-01-15,处理特殊情况，比如漏掉的日期，一般不传（作废）
      * @return void
      */
-    public function index($date='')
+    public function index($date = '')
     {
+//        Cache::rm('first_execution_done');
+        list($s,$e)=$this->checkAndGetExecutionTime();
+        if(!$s&&!$e){
+            echo "时间不对不执行".date('Y-m-d H:i:s');
+            die;
+        }
         $objModel = new \app\admin\model\QcObj();
         $queue = new Queue();
         $advIds = $objModel->group('adv_id')->column('adv_id');
-        $where['obj_status'] = ['not in', ["DELETE", "TIME_DONE","FROZEN"]];
+        $where['obj_status'] = ['not in', ["DELETE", "TIME_DONE", "FROZEN"]];
 
-        if($date){
-            $startTime = $date.' 00:00:00';
-            $endTime = $date.' 23:59:59';
-            $where['obj_create_time'] = ['between',[strtotime($startTime),strtotime($endTime)]];
-        }
+//        if ($date) {
+//            $startTime = $date . ' 00:00:00';
+//            $endTime = $date . ' 23:59:59';
+////            $where['obj_create_time'] = ['between', [strtotime($startTime), strtotime($endTime)]];
+//        }
         foreach ($advIds as $id) {
             $where['adv_id'] = $id;
             $objIds = $objModel->where($where)->column('obj_id');
@@ -39,30 +51,8 @@ class QcObjOptLog extends Api
                 continue;
             }
             $count = ceil($count / 20); // 计算分页数
-            // 分页处理
-            //每天凌晨获取前一天的操作次数
-            $currDay = date('Y-m-d',  strtotime('-1 day')) ;
-            if($date){//如果传入具体值，则获取具体日期一整天的操作次数
-                $currDay = $date;
-            }
-//            $currTime = time();
-//            $dayHalfTime = strtotime($currDay.' 11:59:00');
-//            $dayEndTime = strtotime($currDay.' 23:49:00');
-//            if($currTime > $dayHalfTime && $currTime<$dayEndTime){
-//                $startTime = $currDay . ' 00:00:00';
-//                $endTime = $currDay.' 11:59:59';
-//            }else if($currTime > $dayEndTime){
-//                $startTime = $currDay . ' 12:00:00';
-//                $endTime = $currDay.' 23:59:59';
-//            }else{
-//                $startTime = $currDay.' 00:00:00';
-//                $endTime = $currDay.' 23:59:59';
-//            }
-
-//            if($date){
-                $startTime = $currDay.' 00:00:00';
-                $endTime = $currDay.' 23:59:59';
-//            }
+            $startTime = $s;
+            $endTime = $e;
             for ($i = 0; $i < $count; $i++) {
                 $start = $i * 20;
                 $object_ids = array_slice($objIds, $start, 20);
@@ -80,5 +70,54 @@ class QcObjOptLog extends Api
         echo "已经全部处理完了";
     }
 
+    /**
+     * 检查定时任务时间是否匹配
+     * 每四个小时执行一次,不符合则返回null
+     * @return array|null[]
+     */
+    public function checkAndGetExecutionTime()
+    {
+        $now = new \DateTime(); // 获取当前时间
+        $currentHour = (int)$now->format('H'); // 当前小时
+        $currentMinute = (int)$now->format('i'); // 当前分钟
 
+        // 检查是否在每小时的第 2 分钟
+        if ($currentMinute != 2) {
+            return [null, null]; // 不满足条件，返回空
+        }
+        // 获取今天的凌晨时间（00:00:00）
+        $midnight = new \DateTime('today');
+
+        // 读取缓存，判断是否已经执行过第一次
+        $isFirstExecution = true; // 默认是第一次执行
+        if (Cache::has('first_execution_done')) {
+            $isFirstExecution = false; // 如果缓存标记为已执行，则不是第一次执行
+        }
+
+        // 如果是第一次执行（即当前时间不是 4 小时的倍数，且没有执行过）
+        if ($isFirstExecution && $currentHour % 4 != 0) {
+            // 标记为已执行
+            Cache::set('first_execution_done', true);
+            // 返回从凌晨到当前时间的时间范围
+            return [
+                $midnight->format('Y-m-d H:i:s'), // 凌晨时间
+                $now->format('Y-m-d H:i:s')       // 当前时间
+            ];
+        }
+
+        // 检查是否满足从零点开始每隔 4 小时的条件
+        if ($currentHour % 4 == 0) {
+            // 计算上一次执行时间（当前时间减去 4 小时）
+            $lastExecutionTime = clone $now;
+            $lastExecutionTime->modify('-4 hours');
+            // 返回当前时间和上一次执行时间
+            return [
+                $now->format('Y-m-d H:i:s'),              // 当前时间
+                $lastExecutionTime->format('Y-m-d H:i:s') // 上一次执行时间
+            ];
+        }
+
+        // 如果当前时间不是 4 小时的倍数，且不是第一次执行，则不执行逻辑
+        return [null, null];
+    }
 }

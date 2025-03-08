@@ -5,6 +5,7 @@ namespace app\qcdatahandle\controller;
 
 use app\admin\model\Company;
 use app\admin\model\QcObj;
+use app\common\model\Queue;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Pool;
@@ -34,14 +35,6 @@ class InitObj extends Controller
         $page = $redis->get("{$cacheKeyPrefix}_page_" . $day, 1);; // 动态生成缓存键
         $companyModel = new Company();
         $comFun = new ComFun();
-//        $where = " advertiser_id NOT IN (SELECT advertiser_id FROM fa_qc_obj f WHERE f.adv_id = c.advertiser_id AND f.marketing_goal ='".$marketingGoal."'";
-//        if ($day == 1) {
-//            $newDay = $day + 1; // 不直接修改外部传入的 $day
-//            list($start_date, $end_date) = $comFun->getSearchDate($newDay);
-//            $where .= ' AND f.obj_create_time < '. strtotime($end_date).')';
-//        }else{
-//            $where .=" )";
-//        }
 
         // 查询公司列表，过滤没有处理过的广告商
         $list = $companyModel
@@ -50,40 +43,48 @@ class InitObj extends Controller
             ->where(['adv_status' => 1])
             ->order('advertiser_id desc')
             ->page($page)
-            ->limit(100)
+            ->limit(50)
 //            ->fetchSql(true)  // 仅用于调试，生产环境可以去掉
 //            ->select();
             ->column('advertiser_id');
-
+        if ($page == 1 && empty($list)) {
+            echo "没有数据";
+            die;
+        }
         // 如果空数据超过15次且分页已超过100，停止处理
-        if ($redis->get("empty_{$cacheKeyPrefix}_list_" . $day, 0) > 15 && $page > 100) {
+        if ($redis->get("empty_{$cacheKeyPrefix}_list_" . $day, 0) > 150 && $page > 300) {
             echo "{$marketingGoal} 数据已经全部处理完";
-//            $redis->rm("{$cacheKeyPrefix}_page_".$day);
             die;
         }
         // 获取日期范围
         list($start_date, $end_date) = $comFun->getSearchDate($day);
-        echo $start_date."--".$end_date.'</br>';
+        echo $start_date . "--" . $end_date . '</br>';
         // 构建请求过滤条件
         $filter = [
-            "status" => "ALL_INCLUDE_DELETED",//全部（包含已删除）
             "marketing_goal" => $marketingGoal,
             "ad_create_start_date" => $start_date,
             "ad_create_end_date" => $end_date,
-            "marketing_scene" => "ALL"
+            'marketing_scene' => 'ALL',
+            "status" => "ALL_INCLUDE_DELETED",
+            "campaign_scene" => [
+                'DAILY_SALE',
+                'NEW_CUSTOMER_TRANSFORMATION',
+                'LIVE_HEAT',
+                'PLANT_GRASS',
+                'PRODUCT_HEAT',
+                'NEW_PRODUCT_BOOST',
+            ],
         ];
 
         // 构建请求并发送
-        $requests = $this->buildGuzzleRequest(count($list), $list, $filter);
+        $requests = $this->buildGuzzleRequest($list, $filter);
         $insertData = $this->sendGuzzleRequest($requests);
-
         // 处理返回数据
         if ($insertData) {
-            $objModel = new QcObj();
-            $res = $objModel->saveAll($insertData);
+            list($res, $count) = $this->saveNewObj($insertData);
             if ($res) {
                 $redis->set("{$cacheKeyPrefix}_page_" . $day, $page + 1);
-                echo "成功插入 " . count($insertData) . " 条数据， 第 " . $page . " 页";
+                echo "成功插入 " . $count . " 条数据， 第 " . $page . " 页";
             } else {
                 echo "插入失败";
             }
@@ -96,14 +97,50 @@ class InitObj extends Controller
         }
     }
 
+
+    protected function saveNewObj($list)
+    {
+        $objModel = new QcObj();
+        $adv = [];
+        foreach ($list as $key => $item) {
+            if ($item['obj_id']) {
+                if (!isset($adv[$item['adv_id']])) {
+                    $adv[$item['adv_id']] = [];
+                }
+                $adv[$item['adv_id']][] = $item['obj_id'];
+            }
+        }
+        $keys = array_keys($adv);
+        $values = array_values($adv);
+        $flattenedValues = array_merge(...$values);
+
+        $exitedIds = $objModel->where(['adv_id' => ['in', $keys], 'obj_id' => ['in', $flattenedValues]])->column('obj_id');
+
+
+        $afterData = array_filter($list, function ($item) use ($exitedIds) {
+            return !in_array($item['obj_id'], $exitedIds);
+        });
+
+        if ($afterData) {
+            $res = $objModel->saveAll($afterData);
+            if ($res) {
+                return [true, count($afterData)];
+            } else {
+                return [false, ''];
+            }
+        }
+        return [true, count($afterData)];
+    }
+
     /**
      * 推商品
      * @param int $day
      * @return void
      * @throws Exception
      */
-    public function initInsertVideoObj(int $day = 2)
+    public function initInsertVideoObj(int $day = 1)
     {
+        set_time_limit(300);
         $this->initInsertObj("VIDEO_PROM_GOODS", "qc_com_adv_video", $day);
     }
 
@@ -113,8 +150,9 @@ class InitObj extends Controller
      * @return void
      * @throws Exception
      */
-    public function initInsertLiveObj(int $day = 2)
+    public function initInsertLiveObj(int $day = 1)
     {
+        set_time_limit(300);
         $this->initInsertObj("LIVE_PROM_GOODS", "qc_com_adv_live", $day);
     }
 
@@ -125,7 +163,7 @@ class InitObj extends Controller
      * @param $filter
      * @return array
      */
-    protected function buildGuzzleRequest($count, $advIds, $filter): array
+    protected function buildGuzzleRequest($advIds, $filter): array
     {
         $access_token = Cache::get("qc_access_token");
         $url = "https://ad.oceanengine.com/open_api/v1.0/qianchuan/ad/get/";
@@ -156,15 +194,14 @@ class InitObj extends Controller
     {
         $insertData = [];
         $guzzleClient = new Client();
-
+        $queue = new Queue();
         // 并发请求
         $pool = new Pool($guzzleClient, array_column($requests, 'request'), [
-            'concurrency' => 50,  // 控制并发数
-            'fulfilled' => function ($response, $index) use (&$insertData, $requests) {
+            'concurrency' => 10,  // 控制并发数
+            'fulfilled' => function ($response, $index) use (&$insertData, $requests, $queue) {
                 $resData = json_decode($response->getBody()->getContents(), true);
                 $requestInfo = $requests[$index]['params'];
                 $requestAdvId = $requestInfo['advertiser_id'];
-//                dump($resData);
                 if (!empty($resData) && $resData['code'] == 0 && !empty($resData['data']['list'])) {
                     foreach ($resData['data']['list'] as $item) {
                         $insertData[] = [
@@ -184,6 +221,13 @@ class InitObj extends Controller
                             'aweme_info' => json_encode($item['product_info']),
                             'delivery_setting' => json_encode($item['product_info']),
                         ];
+                    }
+                    echo "计划总页数是:" . $resData['data']['page_info']['total_page'];
+                    echo "总数是:" . $resData['data']['page_info']['total_number'];
+                    //从第二页开始用队列进行执行
+                    if ($resData['data']['page_info']['total_page'] > 1) {
+                        $requestInfo['page'] = 2;
+                        \think\Queue::push('app\job\InitObj', $requestInfo, "initObj");
                     }
                 }
             },
