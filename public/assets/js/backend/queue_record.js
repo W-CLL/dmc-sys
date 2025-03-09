@@ -41,6 +41,22 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', 'bootstrap-table-fixe
                         },
                         {field: 'job_name', title: "任务名称"},
                         {
+                            field: 'job_data', title: "请求参数", width: 130, align: 'left',
+                            formatter: function (value, row, index, field) {
+                                return "<span style='display: block;overflow: hidden;text-overflow: ellipsis;white-space: nowrap;' title='" + row.job_data + "'>" + value + "</span>";
+                            },
+                            cellStyle: function (value, row, index, field) {
+                                return {
+                                    css: {
+                                        "white-space": "nowrap",
+                                        "text-overflow": "ellipsis",
+                                        "overflow": "hidden",
+                                        "max-width": "150px"
+                                    }
+                                };
+                            }
+                        },
+                        {
                             field: 'msg', title: "执行信息", width: 130, align: 'left',
                             formatter: function (value, row, index, field) {
                                 return "<span style='display: block;overflow: hidden;text-overflow: ellipsis;white-space: nowrap;' title='" + row.msg + "'>" + value + "</span>";
@@ -59,6 +75,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', 'bootstrap-table-fixe
                         {field: 'remark', title: "备注"},
                         {field: 'status_text', title: __('Status')},
                         {field: 'create_time', title: "创建时间", formatter: Table.api.formatter.datetime},
+                        {field: 'update_time', title: "更新时间", formatter: Table.api.formatter.datetime},
                         {
                             field: 'operate', title: __('Operate'),
                             buttons: [{
