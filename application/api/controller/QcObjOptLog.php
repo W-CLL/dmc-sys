@@ -29,7 +29,7 @@ class QcObjOptLog extends Api
     {
 //        Cache::rm('first_execution_done');
         list($e,$s)=$this->checkAndGetExecutionTime();
-        if(!$s&&!$e){
+        if(!$s&&!$e && !$start_date){
             echo "时间不对不执行".date('Y-m-d H:i:s');
             die;
         }
