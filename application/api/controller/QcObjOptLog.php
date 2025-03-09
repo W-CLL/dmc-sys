@@ -17,12 +17,11 @@ class QcObjOptLog extends Api
     protected $noNeedRight = '*';
 
 
-
     /**
      * 获取当天操作日志，定时任务每小时的第二分钟执行一次
      * 但有判断隔四个小时才会执行一次，从凌晨开始算，00：02、04：02、08：02。。。。
-     * @param $date
-     * 格式2025-01-15,处理特殊情况，比如漏掉的日期，一般不传（作废）
+     * @param string $start_date 时间戳
+     * @param string $end_date 时间戳
      * @return void
      */
     public function index($start_date ='',$end_date='')
@@ -39,8 +38,8 @@ class QcObjOptLog extends Api
         $where['obj_status'] = ['not in', ["DELETE", "TIME_DONE", "FROZEN"]];
 
         if ($start_date&&$end_date) {
-            $s =$start_date;
-            $e =$end_date;
+            $s = date("Y-m-d H:i:s",$start_date);
+            $e = date("Y-m-d H:i:s",$end_date);
         }
         foreach ($advIds as $id) {
             $where['adv_id'] = $id;
