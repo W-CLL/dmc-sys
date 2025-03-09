@@ -25,7 +25,7 @@ class QcObjOptLog extends Api
      * 格式2025-01-15,处理特殊情况，比如漏掉的日期，一般不传（作废）
      * @return void
      */
-    public function index($date = '')
+    public function index($start_date ='',$end_date='')
     {
 //        Cache::rm('first_execution_done');
         list($e,$s)=$this->checkAndGetExecutionTime();
@@ -38,11 +38,10 @@ class QcObjOptLog extends Api
         $advIds = $objModel->group('adv_id')->column('adv_id');
         $where['obj_status'] = ['not in', ["DELETE", "TIME_DONE", "FROZEN"]];
 
-//        if ($date) {
-//            $startTime = $date . ' 00:00:00';
-//            $endTime = $date . ' 23:59:59';
-////            $where['obj_create_time'] = ['between', [strtotime($startTime), strtotime($endTime)]];
-//        }
+        if ($start_date&&$end_date) {
+            $s =$start_date;
+            $e =$end_date;
+        }
         foreach ($advIds as $id) {
             $where['adv_id'] = $id;
             $objIds = $objModel->where($where)->column('obj_id');
