@@ -28,7 +28,7 @@ class QcObjOptLog extends Api
     public function index($date = '')
     {
 //        Cache::rm('first_execution_done');
-        list($s,$e)=$this->checkAndGetExecutionTime();
+        list($e,$s)=$this->checkAndGetExecutionTime();
         if(!$s&&!$e){
             echo "时间不对不执行".date('Y-m-d H:i:s');
             die;
