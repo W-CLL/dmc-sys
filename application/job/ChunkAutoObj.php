@@ -48,25 +48,21 @@ class ChunkAutoObj
         $needNum = $data['need_opt_num'];
         $accountNum = count($data['obj_list']);
         $singleAccountNeedNum = round($needNum / $accountNum);
-        $list_count = count($data['obj_list']);
-        for($i = 0;$i<$singleAccountNeedNum;$i++){
-            foreach ($data['obj_list'] as $item){
-                if($list_count <3){
-                    $seconds = rand(10,30);
-                }else{
-                    $seconds = rand(5,10);
-                }
+//        $list_count = count($data['obj_list']);
+        for ($i = 0; $i < $singleAccountNeedNum; $i++) {
+            foreach ($data['obj_list'] as $item) {
+                $seconds = rand(3, 8);
                 $upData = [
-                    'adv_id'=>$data['adv_id'],
-                    'obj_id'=>$item,
-                    'delay'=>$seconds,
+                    'adv_id' => $data['adv_id'],
+                    'obj_id' => $item,
+                    'delay' => $seconds,
                     'last_one' => false
                 ];
-                if($i == $singleAccountNeedNum - 1){
-                    $upData['last_one']= true;
+                if ($i == $singleAccountNeedNum - 1) {
+                    $upData['last_one'] = true;
                 }
 
-             $queue->addQueue('修改'.$item.'计划名称','app\job\AutoUpdateObjName','autoUpdateObjName',$upData,'','延迟'.$seconds.'秒执行');
+                $queue->addQueue('修改' . $item . '计划名称', 'app\job\AutoUpdateObjName', 'autoUpdateObjName', $upData, '', '延迟' . $seconds . '秒执行');
             }
         }
         return true;

@@ -55,7 +55,13 @@ class AutoUpdateObjName
     protected function doJob($data, $queueData)
     {
 //        $queue = new Queue();
-        sleep($data['delay']);
+        $delay = $data['delay'];
+        if($delay>5&&$delay<10){
+            $delay = $delay-2;
+        }else if($delay>10){
+            $delay = $delay-6;
+        }
+        sleep($delay);
         $token = Cache::get('qc_access_token');
         $objInfo = FundManagement::get_ad_detail($token, $data['adv_id'],$data['obj_id']);
         $qcObj = new QcObj();
