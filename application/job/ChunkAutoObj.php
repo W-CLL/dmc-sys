@@ -51,7 +51,12 @@ class ChunkAutoObj
 //        $list_count = count($data['obj_list']);
         for ($i = 0; $i < $singleAccountNeedNum; $i++) {
             foreach ($data['obj_list'] as $item) {
-                $seconds = rand(3, 8);
+                if(isset($data['is_abnormal']) && $data['is_abnormal']){
+                    $seconds = 0;
+                }else{
+                    $seconds = rand(3, 8);
+                }
+
                 $upData = [
                     'adv_id' => $data['adv_id'],
                     'obj_id' => $item,

@@ -51,6 +51,7 @@ class AutoUpdateObjName
 
     /**
      * @throws Exception
+     * @throws \Exception
      */
     protected function doJob($data, $queueData)
     {
@@ -65,6 +66,9 @@ class AutoUpdateObjName
         $token = Cache::get('qc_access_token');
         $objInfo = FundManagement::get_ad_detail($token, $data['adv_id'],$data['obj_id']);
         $qcObj = new QcObj();
+        if($objInfo['code'] !=0){
+            throw new \Exception($objInfo['message']);
+        }
 
         $objDetail = $objInfo['data'];
         if(in_array($objDetail['opt_status'],['DELETE', "TIME_DONE", 'FROZEN']) ){

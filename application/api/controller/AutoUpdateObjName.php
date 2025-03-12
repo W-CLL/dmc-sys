@@ -8,12 +8,10 @@ use app\admin\model\QcObj as ObjModel;
 use app\common\controller\Api;
 use app\common\model\QcAdvDayCost;
 use app\common\model\Queue;
-use GuzzleHttp\Psr7\Request;
 use think\Cache;
 use think\Db;
 use think\db\exception\DataNotFoundException;
 use think\db\exception\ModelNotFoundException;
-use think\Exception;
 use think\exception\DbException;
 
 
@@ -27,16 +25,17 @@ class AutoUpdateObjName extends Api
     const GLOBAL_CACHE_KEY = 'global_handler_key';
 
     const CACHE_KEY = 'handler_key';
-    public function index($user_name='')
+
+    public function index($user_name = '')
     {
         $this->checkTimestamp(self::CACHE_KEY);
         $page = Cache::get('chunk_obj_page', 1);
         $redis = Cache::store('redis');
-        list($advList, $notWhiteCom) = $this->getAdvList($page, $redis,$type='normal',$user_name);
+        list($advList, $notWhiteCom) = $this->getAdvList($page, $redis, $type = 'normal', $user_name);
         $comModel = new Company();
         $currentDate = new \DateTime();
         $currentDate->modify('yesterday');
-        $end_time = strtotime(date('Y-m-d',time()));
+        $end_time = strtotime(date('Y-m-d', time()));
         //获取昨天的操作次数
         $start_time = $currentDate->getTimestamp();
 
@@ -60,7 +59,7 @@ class AutoUpdateObjName extends Api
         if (empty($list)) {
             echo "全部处理完了";
             Cache::rm('chunk_obj_page');
-            $redis->rm('company_setting_list_'.$type);
+            $redis->rm('company_setting_list_' . $type);
             Cache::set(self::CACHE_KEY, strtotime(date('Y-m-d')));
             die;
         }
@@ -71,10 +70,16 @@ class AutoUpdateObjName extends Api
             $totalNum = (int)$item['total_num'];
             $companyNum = (int)$item['company_num'];
             $cusNum = $totalNum - $companyNum;
-            $actualComNum = $cusNum + ($cusNum * ($notWhiteCom[$item['company_name']] / 100));
-            if ($cusNum <= 0) {
+            if ($cusNum <= 0) {//客户操作次数小于等于零直接跳过
                 continue;
             }
+            if ($companyNum > 0) { //判断公司操作次数如果已经大于等于设置的百分比了就跳过
+                $currPer = $companyNum / $cusNum;
+                if ($currPer >= $notWhiteCom[$item['company_name']]) {
+                    continue;
+                }
+            }
+            $actualComNum = $cusNum + ($cusNum * ($notWhiteCom[$item['company_name']] / 100));
             if ($companyNum > 0) {
                 if ($companyNum < $cusNum) {
                     $needComNum = $actualComNum - $companyNum;
@@ -115,48 +120,57 @@ class AutoUpdateObjName extends Api
      * @param string $user_name
      * @return array
      */
-    protected function getAdvList($page, $redis, string $type='normal', string $user_name=''): array
+    protected function getAdvList($page, $redis, string $type = 'normal', string $user_name = ''): array
     {
         $operator = [
-            'zqp'=>"张秋萍",
-            'mmc'=>"莫美春",
-            'cxy'=>"陈秀玉",
-            'tyx'=>"罗文静",
-            'wyc'=>"王倚澄",
+            'zqp' => "张秋萍",
+            'mmc' => "莫美春",
+            'cxy' => "陈秀玉",
+            'tyx' => "罗文静",
+            'wyc' => "王倚澄",
         ];
-        if(!$operator[$user_name]){
-            echo "名字不存在";
-            die;
+        $charge_name = '';
+        if ($user_name) {
+            if (!$operator[$user_name]) {
+                echo "名字不存在";
+                die;
+            } else {
+                $charge_name = $operator[$user_name];
+            }
         }
-        $charge_name = $operator[$user_name];
         //1、先查询不是白名单的 公司下的广告账户
         $comSettingModel = new CompanySetting();
-        $comModel = new Company();
-
-        if ($redis->get('company_setting_list_'.$type)) {
-            $notWhiteCom = unserialize($redis->get('company_setting_list_'.$type));
+        $comCostModel = new QcAdvDayCost();
+        if ($redis->get('company_setting_list_' . $type)) {
+            $notWhiteCom = unserialize($redis->get('company_setting_list_' . $type));
         } else {
             //获取非白名单公司
             $notWhiteCom = $comSettingModel->where(['is_white' => 0])->column('percentage', 'company_name');
-            $redis->set('company_setting_list_'.$type, serialize($notWhiteCom));
+            $redis->set('company_setting_list_' . $type, serialize($notWhiteCom));
         }
         //提取公司名
         $companyNames = array_keys($notWhiteCom);
-        //获取公司下的广告主账户，每页100条
-        $adv_list = $comModel->where(['company_name' => ['in', $companyNames]])
-            ->where(function ($query) use ($charge_name){
-                if($charge_name){
-                    $query->where(['kahuna'=>$charge_name]);
-                }
-            })
-            ->order('advertiser_id desc')
-            ->page($page)
-            ->limit(1000)
-//            ->fetchSql(true)
-//            ->select()
-            ->column('advertiser_id');
-
-        return [$adv_list, $notWhiteCom];
+        //获取公司下的广告主账户，每页1000条
+        $adv_list =
+            $comCostModel
+                ->alias('cc')
+                ->join('company com', 'cc.adv_id=com.advertiser_id', 'left')
+                ->where(['com.company_name' => ['in', $companyNames], 'cc.cost_date' => ['between', [strtotime(date('Y-m-01')), time()]]])
+                ->where(function ($query) use ($charge_name) {
+                    if ($charge_name) {
+                        $query->where(['com.kahuna' => $charge_name]);
+                    }
+                })
+                ->field('cc.*,sum(cc.cost) as mon_cost')
+                ->group('cc.adv_id')
+                ->order('mon_cost desc')
+                ->page(1)
+                ->limit(1000)
+//                ->fetchSql(true)
+                ->select();
+//                ->column('cc.adv_id');
+        $adv_ids = array_column((array)$adv_list, 'adv_id');
+        return [$adv_ids, $notWhiteCom];
     }
 
     /**
@@ -175,7 +189,7 @@ class AutoUpdateObjName extends Api
         $this->checkTimestamp(self::GLOBAL_CACHE_KEY);
         $page = Cache::get('chunk_obj_global_page', 1);
         $redis = Cache::store('redis');
-        list($advList, $notWhiteCom) = $this->getAdvList($page, $redis,$type='global',$user_name);
+        list($advList, $notWhiteCom) = $this->getAdvList($page, $redis, $type = 'global', $user_name);
         $cost_model = new QcAdvDayCost();
         $currentDate = new \DateTime();
         $currentDate->modify('yesterday');
@@ -183,7 +197,7 @@ class AutoUpdateObjName extends Api
         $adv_list = $cost_model->where([
             'adv_id' => ['in', $advList],
 //            'cost_date' => strtotime('2024-12-14'),
-            'cost_date'=>$currentDate->getTimestamp(),
+            'cost_date' => $currentDate->getTimestamp(),
             'type' => 2,//全域
         ])->field('*,SUM(cost) as day_cost ')
             ->group('adv_id')
@@ -192,7 +206,7 @@ class AutoUpdateObjName extends Api
         if (empty($adv_list)) {
             echo "全部处理完了";
             Cache::rm('chunk_obj_global_page');
-            $redis->rm('company_setting_list_'.$type);
+            $redis->rm('company_setting_list_' . $type);
             Cache::set(self::GLOBAL_CACHE_KEY, strtotime(date('Y-m-d')));
             die;
         }
@@ -200,7 +214,7 @@ class AutoUpdateObjName extends Api
         $queue = new Queue();
         $objModel = new ObjModel();
         foreach ($adv_list as $item) {
-            if ($item['day_cost'] > 0) {
+            if ($item['day_cost'] > 10) {
                 $need_num = $this->getDailyOperationLimit($item['day_cost']);
                 $list = $objModel->where([
                     'obj_status' => ['not in', ['DELETE', "TIME_DONE", 'FROZEN']],
@@ -221,20 +235,107 @@ class AutoUpdateObjName extends Api
                 $queue->addQueue('全域分块处理自动化', 'app\job\ChunkAutoObj', 'chunkAutoObj', $queueData);
             }
         }
-//        die;
         $page++;
         Cache::set('chunk_obj_global_page', $page);
         $this->chunkGlobalComAdv($user_name);
     }
 
     /**
+     * 获取异常账户
+     *
+     */
+    public function getAbnormalAccount()
+    {
+        $qcAdvModel = new QcAdvDayCost();
+        $qc_opt_log = new \app\admin\model\QcObjOptLog();
+        $qc_company_setting = new CompanySetting();
+        $start_time = strtotime(date("Y-m-01"));
+        $end_time = time();
+        $list = $qcAdvModel
+            ->where(['cost_date' => ['between', [$start_time, $end_time]]])
+            ->field("adv_id,SUM(cost) AS mon_cost")
+            ->group('adv_id')
+            ->having('mon_cost <= 100000')
+            ->select();
+        $currentDayStart = strtotime('today');
+        $queue = new Queue();
+        $objModel = new ObjModel();
+        $operator = Db::name('ad_operator')->where(['status' => 1])->column('name');
+        foreach ($list as $item) {
+            $opt_counts = $qc_opt_log->where([
+                'adv_id' => $item['adv_id'],
+                'operator' => ['NOT IN', $operator]
+            ])
+                ->field("
+    adv_id,
+    SUM(CASE WHEN opt_time BETWEEN {$start_time} AND " . time() . " THEN 1 ELSE 0 END) AS month_cus_num,
+    SUM(CASE WHEN opt_time BETWEEN {$currentDayStart} AND " . time() . " THEN 1 ELSE 0 END) AS day_cus_num
+")
+//                ->fetchSql(true)
+//                ->select();
+                ->find();
+
+// 改用JOIN查询（更高效）
+            $percentage = $qc_company_setting
+                ->alias('s')
+                ->join('company c', 's.company_name = c.company_name')
+                ->where('c.advertiser_id', $item['adv_id'])
+                ->value('s.percentage');
+            //1000，2000到时候改成设置
+            if ($opt_counts['day_cus_num'] >= 1000) {
+                $adv_list[] = $item['adv_id'];
+                $needComNum = $this->getNeedOptCount($opt_counts['day_cus_num'], $percentage);
+            } elseif ($opt_counts['month_cus_num'] >= 3000) {
+                $adv_list[] = $item['adv_id'];
+                $needComNum = $this->getNeedOptCount($opt_counts['month_cus_num'], $percentage);
+            } else {
+                continue;
+            }
+//            dump($needComNum);
+
+            $list = $objModel->where([
+                'obj_status' => ['not in', ['DELETE', "TIME_DONE", 'FROZEN']],
+                'lab_ad_type' => "LAB_AD",
+                'opt_status' => ['not in', ['DELETE', "TIME_DONE", 'FROZEN']],
+                'adv_id' => $item['adv_id']
+            ])
+                ->field('obj_id,adv_id')
+                ->limit($needComNum)
+//              ->fetchSql(true)
+                ->column('obj_id');
+            $queueData = [
+                'need_opt_num' => $needComNum,
+                'adv_id' => $item['adv_id'],
+                'obj_list' => $list,
+                'is_abnormal' => true
+            ];
+            //一个广告主下的托管计划，总的操作次数，写入任务再平分次数到每个计划，进行延时修改
+            $queue->addQueue('分块处理自动化', 'app\job\ChunkAutoObj', 'chunkAutoObj', $queueData);
+        }
+        echo "处理完成了";
+    }
+
+    /**
+     * 获取需要操作多少次
+     * @param $cus_count
+     * @param $percentage
+     * @return int
+     */
+    protected function getNeedOptCount($cus_count, $percentage): int
+    {
+        $actualComNum = $cus_count + ($cus_count * ($percentage / 100));
+        $needComNum = $actualComNum;
+        return (int)ceil($needComNum);
+    }
+
+    /**
      * 获取次数限制
-    * 全域的 5000以下含5000的一天操作50次
-    * 全域的1w以下含1w的一天操作80次
-    * 全域的2w以下含2w的一天操作120次
-    * 全域的3w以下含3w的一天操作160次
-    * 全域的4w以下含4w的一天操作200次
-    * 每叠加1万增加操作40次
+     * 全域的 5000以下含5000的一天操作50次
+     * 全域的1w以下含1w的一天操作80次
+     * 全域的2w以下含2w的一天操作120次
+     * 全域的3w以下含3w的一天操作160次
+     * 全域的4w以下含4w的一天操作200次
+     * 每叠加1万增加操作40次
      */
     protected function getDailyOperationLimit($value)
     {
@@ -262,8 +363,8 @@ class AutoUpdateObjName extends Api
         $lastTimestamp = Cache::get($key);
         if ($lastTimestamp && $lastTimestamp == $currentDateTimestamp) {
             // 判断是否是同一天
-              echo "今天已经处理了";
-              die;
+            echo "今天已经处理了";
+            die;
         }
     }
 

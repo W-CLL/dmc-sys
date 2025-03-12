@@ -73,7 +73,7 @@ class QcObjOptLog extends Api
      * 每四个小时执行一次,不符合则返回null
      * @return array|null[]
      */
-    public function checkAndGetExecutionTime()
+    public function checkAndGetExecutionTime(): array
     {
         $now = new \DateTime(); // 获取当前时间
         $currentHour = (int)$now->format('H'); // 当前小时
@@ -98,8 +98,8 @@ class QcObjOptLog extends Api
             Cache::set('first_execution_done', true);
             // 返回从凌晨到当前时间的时间范围
             return [
-                $midnight->format('Y-m-d H:i:s'), // 凌晨时间
-                $now->format('Y-m-d H:i:s')       // 当前时间
+                $now->format('Y-m-d H:i:s'),      // 当前时间
+                $midnight->format('Y-m-d H:i:s') // 凌晨时间
             ];
         }
 
