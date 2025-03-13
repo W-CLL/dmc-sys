@@ -14,6 +14,7 @@ use GuzzleHttp\Pool;
 use GuzzleHttp\Psr7\Request;
 use jlqc\FundManagement;
 use qywx\Api;
+use Requests;
 use thiagoalessio\TesseractOCR\TesseractOCR;
 use think\Cache;
 use think\Db;
@@ -81,26 +82,68 @@ class Test extends Frontend
     public function test()
     {
         $token = Cache::get('qc_access_token');
-        $params = [
-            'advertiser_id' => 1816613270435852,
-            'filtering' => json_encode([
-                'marketing_goal' => 'VIDEO_PROM_GOODS',
-                'ad_create_start_date' => '2024-11-01',
-                'ad_create_end_date' => '2024-12-31',
-            ]),
-            'page_size' => 200
-        ];
+//        $params = [
+//            'advertiser_id' => 1795209597736064,
+//            'filtering' => json_encode([
+//                'marketing_goal' => 'VIDEO_PROM_GOODS',
+//                'ad_create_start_date' => '2024-11-01',
+//                'ad_create_end_date' => '2024-12-31',
+//            ]),
+//            'page_size' => 200
+//        ];
+
+        $data = FundManagement::get_ad_detail($token, 1818558201643082, 1824572253132650);
+
+        $objDetail = $data['data'];
+
+        $this->removeEmptyValues($objDetail);
+        unset($objDetail['ad_create_time']);
+        unset($objDetail['ad_modify_time']);
+        $updateData = $objDetail;
+        $updateData['advertiser_id'] = 1818558201643082;
+        $pattern = '/\(\.\d+_\d+\.\)/';
+        // 获取当前时间，精确到秒
+        $current_time = "(." . date('md_His') . ".)";
+        if (preg_match($pattern, $objDetail['name'])) {
+            // 如果找到了匹配的内容，进行替换
+            $newName = preg_replace($pattern, $current_time, $objDetail['name']);
+        } else {
+            // 如果没有找到匹配，拼接新的内容
+            $newName = $objDetail['name'] . $current_time;
+        }
+        // 将提取的中文字符拼接当前时间
+        $updateData['name'] = $newName;
+        if (isset($updateData['delivery_setting']['schedule_time'])) {
+            if (preg_match('/^0+$/', $updateData['delivery_setting']['schedule_time']) || preg_match('/^1+$/', $updateData['delivery_setting']['schedule_time'])) {
+                unset($updateData['delivery_setting']['schedule_time']);
+            }
+        }
+//        dump($updateData);
+//        die;
+//            dump($updateData);
+        $url = "https://ad.oceanengine.com/open_api/v1.0/qianchuan/ad/update/";
+        $header = array(
+            'Access-Token:' . $token,
+            'Content-Type:application/json',
+        );
+        $res = \Requests::post($url, json_encode($updateData, JSON_UNESCAPED_UNICODE), $header);
+
+        dump($res);
+        die;
+
+
         $res = FundManagement::get_ad_list($token, $params);
         foreach ($res['data']['list'] as $i => $item) {
             if ($i == 0) {
                 continue;
             }
-            $data = FundManagement::get_ad_detail($token, 1816613270435852, $item['ad_id']);
+            $data = FundManagement::get_ad_detail($token, 1795209597736064, $item['ad_id']);
 //            dump($data);
 //            die;
 //            $result = $this->generateRandomCharacter();
             $objDetail = $data['data'];
             $this->removeEmptyValues($objDetail);
+
             unset($objDetail['ad_create_time']);
             unset($objDetail['ad_modify_time']);
             $updateData = $objDetail;
@@ -150,6 +193,9 @@ class Test extends Frontend
 
     protected function removeEmptyValues(&$array)
     {
+        if(!empty($array['marketing_scene']) == "SEARCH"){
+            unset($array['audience']['new_customer']);
+        }
         foreach ($array as $key => &$value) {
             // 如果值是数组，则递归处理
             if (is_array($value)) {
@@ -346,7 +392,7 @@ class Test extends Frontend
             'end_date' => "2025-02-19 23:00:00",
             'page' => "1",
             'page_size' => "10"];
-        $data = FundManagement::get_opt_log($token,$params);
+        $data = FundManagement::get_opt_log($token, $params);
         dump($data);
         die;
     }
@@ -354,12 +400,74 @@ class Test extends Frontend
     public function fixedOperator()
     {
         $list = Db::name('ad_operator')->select();
-        foreach ($list as $item){
+        foreach ($list as $item) {
             $update_name = str_replace(["\n", "\r", "\t", " "], "", $item['name']);
-            Db::name('ad_operator')->where(['id'=>$item['id']])->update(['name'=>$update_name]);
+            Db::name('ad_operator')->where(['id' => $item['id']])->update(['name' => $update_name]);
         }
         echo "全部处理完了";
         die;
+    }
+
+    public function testGetDateObj($date = '')
+    {
+        $params = [
+            'advertiser_id' => 1823187119100122,
+            'filtering' =>
+                [
+                    'marketing_goal' => 'VIDEO_PROM_GOODS',
+                    'ad_create_start_date' => "2025-01-30",
+                    'ad_create_end_date' => "2025-03-06",
+                    'marketing_scene' => 'ALL',
+                    "status" => "ALL_INCLUDE_DELETED",
+                    "campaign_scene" => [
+                        'DAILY_SALE',
+                        'NEW_CUSTOMER_TRANSFORMATION',
+                        'LIVE_HEAT',
+                        'PLANT_GRASS',
+                        'PRODUCT_HEAT',
+                        'NEW_PRODUCT_BOOST',
+                    ],
+                ],
+            'page' => 1,
+            'page_size' => 200
+        ];
+        $accessToken = Cache::get("qc_access_token");
+        $resData = FundManagement::get_ad_list($accessToken, $params);
+        dump($resData);
+        die;
+    }
+
+    public function getSingleAdvCost($adv_id = 1805463240633364	, $start_date = '2025-03-01', $end_date = '2025-03-06')
+    {
+        $access_token = Cache::get("qc_access_token");
+        $url = "https://ad.oceanengine.com/open_api/v1.0/qianchuan/report/advertiser/get";
+        $params = [
+            "advertiser_id" => $adv_id,
+            "start_date" => $start_date,
+            "end_date" => $end_date,
+            "page" => 1,
+            "fields" => ['stat_cost'],
+            "page_size" => 100,
+            "order_type" => "DESC",
+            "filtering" => [
+                "marketing_goal" => 'ALL'
+            ],
+            'time_granularity' => 'TIME_GRANULARITY_DAILY'
+        ];
+        $url = buildUrlWithParams($url, $params);
+        $header = array(
+            'Access-Token:' . $access_token,
+        );
+        $total= 0;
+        $res = Requests::get($url, $header);
+        foreach ($res['data']['list'] as $item){
+            $total += $item['stat_cost'];
+        }
+        dump($total);
+      dump($res);
+      die;
+
+
     }
 
 }

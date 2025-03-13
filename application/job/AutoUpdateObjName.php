@@ -121,6 +121,9 @@ class AutoUpdateObjName
     }
 
     protected function removeEmptyValues(&$array) {
+        if(!empty($array['marketing_scene']) == "SEARCH"){
+            unset($array['audience']['new_customer']);
+        }
         foreach ($array as $key => &$value) {
             // 如果值是数组，则递归处理
             if (is_array($value)) {
