@@ -67,7 +67,7 @@ class AutoUpdateObjName
         $objInfo = FundManagement::get_ad_detail($token, $data['adv_id'],$data['obj_id']);
         $qcObj = new QcObj();
         if($objInfo['code'] !=0){
-            throw new \Exception($objInfo['message']);
+            throw new Exception($objInfo['message']);
         }
 
         $objDetail = $objInfo['data'];

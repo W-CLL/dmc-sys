@@ -74,7 +74,7 @@ class AutoUpdateObjName extends Api
                 continue;
             }
             if ($companyNum > 0) { //判断公司操作次数如果已经大于等于设置的百分比了就跳过
-                $currPer = $companyNum / $cusNum;
+                $currPer = ($companyNum / $cusNum) * 100;
                 if ($currPer >= $notWhiteCom[$item['company_name']]) {
                     continue;
                 }
@@ -164,7 +164,7 @@ class AutoUpdateObjName extends Api
                 ->field('cc.*,sum(cc.cost) as mon_cost')
                 ->group('cc.adv_id')
                 ->order('mon_cost desc')
-                ->page(1)
+                ->page($page)
                 ->limit(1000)
 //                ->fetchSql(true)
                 ->select();
@@ -291,8 +291,6 @@ class AutoUpdateObjName extends Api
             } else {
                 continue;
             }
-//            dump($needComNum);
-
             $list = $objModel->where([
                 'obj_status' => ['not in', ['DELETE', "TIME_DONE", 'FROZEN']],
                 'lab_ad_type' => "LAB_AD",
@@ -366,6 +364,19 @@ class AutoUpdateObjName extends Api
             echo "今天已经处理了";
             die;
         }
+    }
+
+    public function clearPageCache()
+    {
+        $redis = Cache::store('redis');
+        dump(Cache::rm('chunk_obj_global_page'));
+        dump(Cache::rm('chunk_obj_page'));
+        dump(Cache::rm(self::CACHE_KEY));
+        dump(Cache::rm(self::GLOBAL_CACHE_KEY));
+        dump($redis->rm('company_setting_list_global'));
+        dump($redis->rm('company_setting_list_normal'));
+        echo "全部清理了";
+        die;
     }
 
 }
