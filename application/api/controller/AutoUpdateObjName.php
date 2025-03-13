@@ -214,7 +214,7 @@ class AutoUpdateObjName extends Api
         $queue = new Queue();
         $objModel = new ObjModel();
         foreach ($adv_list as $item) {
-            if ($item['day_cost'] > 10) {
+            if ($item['day_cost'] > 0) {
                 $need_num = $this->getDailyOperationLimit($item['day_cost']);
                 $list = $objModel->where([
                     'obj_status' => ['not in', ['DELETE', "TIME_DONE", 'FROZEN']],
@@ -225,6 +225,9 @@ class AutoUpdateObjName extends Api
                     ->field('obj_id,adv_id')
                     ->limit($need_num)
                     ->column('obj_id');
+                if (!$list) {
+                    continue;
+                }
                 $queueData = [
                     'need_opt_num' => $need_num,
                     'adv_id' => $item['adv_id'],

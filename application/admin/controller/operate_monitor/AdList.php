@@ -70,9 +70,6 @@ class AdList extends Backend
 //                ->fetchSql(true)
                 ->select();
 
-//            dump($list);
-//            die;
-
             foreach ($list as &$item) {
 //                $item['cus_num'] = $item['total_num'] - $item['company_num'];
 //
@@ -85,6 +82,10 @@ class AdList extends Backend
 //                } else {
 //                    $item['percentage'] = "0%";
 //                }
+                $cus_num = $item['total_num'] - $item['company_num'];
+                if($cus_num == 0){
+                    $item['percentage'] = $item['company_num'] * 100;
+                }
                 $item['percentage'] = number_format($item['percentage'], 2) . "%";
             }
 
