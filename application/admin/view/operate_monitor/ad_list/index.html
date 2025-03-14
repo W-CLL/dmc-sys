@@ -96,29 +96,37 @@
 <script type="text/javascript">
     // 获取当前日期
     const today = new Date();
-    // 计算30天前的日期
-    const thirtyDaysAgo = new Date(today);
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
+    // 获取本月的第一天
+    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    // 获取本月的最后一天
+    const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
-    // 格式化日期为"YYYY-MM-DD"格式
-    const formattedThirtyDaysAgo = thirtyDaysAgo.toISOString().split('T')[0];
-    const formattedYesterday = today.toISOString().split('T')[0];
+    // 手动格式化日期为"YYYY-MM-DD"格式
+    const formatDate = (date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+    const formattedFirstDay = formatDate(firstDayOfMonth);
+    const formattedLastDay = formatDate(lastDayOfMonth);
 
     // 设置输入框的默认值
-    document.getElementById('dateRange').value = `${formattedThirtyDaysAgo} - ${formattedYesterday}`;
+    document.getElementById('dateRange').value = `${formattedFirstDay} - ${formattedLastDay}`;
 
     // 添加日期范围设置函数
     function setDateRange(days) {
         let startDate, endDate;
         const toDay = new Date();
-        if(days > 0){
+        if (days > 0) {
             const beforeDays = new Date(toDay);
             beforeDays.setDate(toDay.getDate() - days);
-            startDate = beforeDays.toISOString().split('T')[0];
-            endDate = formattedYesterday;
+            startDate = formatDate(beforeDays);
+            endDate = formatDate(toDay);
         } else {
-            startDate = formattedThirtyDaysAgo;
-            endDate = formattedYesterday;
+            // 如果days为0，设置为本月范围
+            startDate = formattedFirstDay;
+            endDate = formattedLastDay;
         }
         // 更新日期范围输入框的值
         document.getElementById('dateRange').value = `${startDate} - ${endDate}`;
@@ -134,13 +142,14 @@
         document.getElementById('tj').click(); // 自动触发提交按钮
     }
 
-
-    // 页面加载时默认设置近30天为选中
+    // 页面加载时默认设置为本月范围
     window.onload = function() {
-        setDateRange('30d');
+        setDateRange(0); // 0表示本月范围
     };
 
     document.getElementById('tj').addEventListener('click', function(event) {
         document.getElementById('shuaxin').click();
     });
 </script>
+
+

@@ -18,7 +18,7 @@ class AdList extends Backend
             $order = input("order", "desc");
             $offset = input("offset", 0);
             $limit = input("limit", 10);
-            $start_time = strtotime(input("start_date") ?: date("Y-m-d", strtotime("-30 day")));
+            $start_time = strtotime(input("start_date") ?: date("Y-m-01"));
             $end_time = strtotime(input("end_date") . ' 23:59:59' ?: date("Y-m-d", time()) . ' 23:59:59');
             $kahuna = input("kahuna");
             $advertiser_id = input("advertiser_id");
