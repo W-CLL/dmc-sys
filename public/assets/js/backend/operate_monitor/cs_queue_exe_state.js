@@ -1,0 +1,105 @@
+define(['jquery', 'bootstrap', 'company', 'table', 'form'], function ($, undefined, Company, Table, Form) {
+
+    var Controller = {
+        index: function () {
+            Controller.api.bindevent();
+            // 初始化表格参数配置
+            Table.api.init({
+                extend: {
+                    index_url: 'operate_monitor/cs_queue_exe_state/index' + location.search,
+                    table: 'queue_record',
+                }
+            });
+
+            var table = $("#table");
+
+            // 初始化表格
+            table.bootstrapTable({
+                // ... 其他配置 ...
+                search: false, // 禁用默认搜索
+                commonSearch: false, // 启用普通表单搜索
+                searchFormVisible: true, // 控制搜索栏是否显示在页面上
+                url: $.fn.bootstrapTable.defaults.extend.index_url,
+                pk: 'id',
+                sortName: 'id',
+                fixedColumns: true,
+                fixedRightNumber: 1,
+                columns: [
+                    [
+                        {checkbox: true},
+                        {field: 'id', title: __('Id'), visible: false},
+                        {
+                            field: 'job_id',
+                            title: "任务id",
+                            operate: false,
+                            searchList: Config.searchList,
+                            formatter: Table.api.formatter.label
+                        },
+                        {
+                            field: 'class_name',
+                            title: "任务类名",
+                            align: 'left',
+                            formatter: function (value, row, index) {
+                                return value.toString().replace(/(&|&amp;)nbsp;/g, '&nbsp;');
+                            }
+                        },
+                        {field: 'job_name', title: "任务名称"},
+                        // {
+                        //     field: 'job_data', title: "请求参数", width: 130, align: 'left',
+                        //     formatter: function (value, row, index, field) {
+                        //         return "<span style='display: block;overflow: hidden;text-overflow: ellipsis;white-space: nowrap;' title='" + row.job_data + "'>" + value + "</span>";
+                        //     },
+                        //     cellStyle: function (value, row, index, field) {
+                        //         return {
+                        //             css: {
+                        //                 "white-space": "nowrap",
+                        //                 "text-overflow": "ellipsis",
+                        //                 "overflow": "hidden",
+                        //                 "max-width": "150px"
+                        //             }
+                        //         };
+                        //     }
+                        // },
+                        {
+                            field: 'msg', title: "执行信息", width: 130, align: 'left',
+                            formatter: function (value, row, index, field) {
+                                return "<span style='display: block;overflow: hidden;text-overflow: ellipsis;white-space: nowrap;' title='" + row.msg + "'>" + value + "</span>";
+                            },
+                            cellStyle: function (value, row, index, field) {
+                                return {
+                                    css: {
+                                        "white-space": "nowrap",
+                                        "text-overflow": "ellipsis",
+                                        "overflow": "hidden",
+                                        "max-width": "150px"
+                                    }
+                                };
+                            }
+                        },
+                        {field: 'remark', title: "备注"},
+                        {field: 'status_text', title: __('Status')},
+                        {field: 'create_time', title: "创建时间", formatter: Table.api.formatter.datetime},
+                        {field: 'update_time', title: "更新时间", formatter: Table.api.formatter.datetime},
+                    ]
+                ],
+                queryParams:function (params) {
+                    let time_data = document.getElementById('dateRange').value.split(' - ');
+                    params.start_date = time_data[0];
+                    params.end_date = time_data[1];
+                    params.csdb = document.getElementById('csdb').value;
+                    params.status = document.getElementById('status').value;
+                    return params;
+                }
+            });
+
+            // 为表格绑定事件
+            Table.api.bindevent(table);
+        },
+        api: {
+            bindevent: function () {
+                Form.api.bindevent($("form[role=form]"));
+            }
+        }
+    };
+    return Controller;
+});

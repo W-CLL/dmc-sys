@@ -377,4 +377,97 @@ return [
         //API接口地址
         'api_url'               => 'https://api.fastadmin.net',
     ],
+    // +----------------------------------------------------------------------
+    // | 客服数据库设置
+    // +----------------------------------------------------------------------
+    'cxy'                => [
+        // 数据库类型
+        'type'        => 'mysql',
+        // 服务器地址
+        'hostname'    => Env::get('cxy.address', ''),
+        // 数据库名
+        'database'    => Env::get('cxy.database', ''),
+        // 数据库连接端口
+        'hostport'    => Env::get('cxy.port', 3306),
+        // 数据库用户名
+        'username'    => Env::get('cxy.username', 'root'),
+        // 数据库密码
+        'password'    => Env::get('cxy.password', ''),
+        // 数据库编码默认采用utf8mb4
+        'charset'     => 'utf8mb4',
+        // 数据库表前缀
+        'prefix'      => 'fa_',
+    ],
+    'tyx'                => [
+        // 数据库类型
+        'type'        => 'mysql',
+        // 服务器地址
+        'hostname'    => Env::get('tyx.address', ''),
+        // 数据库名
+        'database'    => Env::get('tyx.database', ''),
+        // 数据库连接端口
+        'hostport'    => Env::get('tyx.port', 3306),
+        // 数据库用户名
+        'username'    => Env::get('tyx.username', 'root'),
+        // 数据库密码
+        'password'    => Env::get('tyx.password', ''),
+        // 数据库编码默认采用utf8mb4
+        'charset'     => 'utf8mb4',
+        // 数据库表前缀
+        'prefix'      => 'fa_',
+    ],
+    'wyc'                => [
+        // 数据库类型
+        'type'        => 'mysql',
+        // 服务器地址
+        'hostname'    => Env::get('wyc.address', ''),
+        // 数据库名
+        'database'    => Env::get('wyc.database', ''),
+        // 数据库连接端口
+        'hostport'    => Env::get('wyc.port', 3306),
+        // 数据库用户名
+        'username'    => Env::get('wyc.username', 'root'),
+        // 数据库密码
+        'password'    => Env::get('wyc.password', ''),
+        // 数据库编码默认采用utf8mb4
+        'charset'     => 'utf8mb4',
+        // 数据库表前缀
+        'prefix'      => 'fa_',
+    ],
+    'zqp'                => [
+        // 数据库类型
+        'type'        => 'mysql',
+        // 服务器地址
+        'hostname'    => Env::get('zqp.address', ''),
+        // 数据库名
+        'database'    => Env::get('zqp.database', ''),
+        // 数据库连接端口
+        'hostport'    => Env::get('zqp.port', 3306),
+        // 数据库用户名
+        'username'    => Env::get('zqp.username', 'root'),
+        // 数据库密码
+        'password'    => Env::get('zqp.password', ''),
+        // 数据库编码默认采用utf8mb4
+        'charset'     => 'utf8mb4',
+        // 数据库表前缀
+        'prefix'      => 'fa_',
+    ],
+    'mmc'                => [
+        // 数据库类型
+        'type'        => 'mysql',
+        // 服务器地址
+        'hostname'    => Env::get('mmc.address', ''),
+        // 数据库名
+        'database'    => Env::get('mmc.database', ''),
+        // 数据库连接端口
+        'hostport'    => Env::get('mmc.port', 3306),
+        // 数据库用户名
+        'username'    => Env::get('mmc.username', 'root'),
+        // 数据库密码
+        'password'    => Env::get('mmc.password', ''),
+        // 数据库编码默认采用utf8mb4
+        'charset'     => 'utf8mb4',
+        // 数据库表前缀
+        'prefix'      => 'fa_',
+    ],
 ];
