@@ -22,6 +22,8 @@ define(['jquery', 'bootstrap', 'company', 'table', 'form'], function ($, undefin
                 url: $.fn.bootstrapTable.defaults.extend.index_url,
                 pk: 'id',
                 sortName: 'id',
+                pageSize: 10,
+                pageList: [10, 15, 20],
                 fixedColumns: true,
                 fixedRightNumber: 1,
                 columns: [
@@ -86,7 +88,7 @@ define(['jquery', 'bootstrap', 'company', 'table', 'form'], function ($, undefin
                     let time_data = document.getElementById('dateRange').value.split(' - ');
                     params.start_date = time_data[0];
                     params.end_date = time_data[1];
-                    params.csdb = document.getElementById('csdb').value;
+                    params.cs = document.getElementById('cs').value;
                     params.status = document.getElementById('status').value;
                     return params;
                 }

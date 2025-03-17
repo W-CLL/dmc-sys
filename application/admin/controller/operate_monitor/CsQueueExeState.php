@@ -3,6 +3,7 @@
 namespace app\admin\controller\operate_monitor;
 
 use app\common\controller\Backend;
+use Requests;
 use think\Db;
 
 class CsQueueExeState extends Backend
@@ -34,37 +35,64 @@ class CsQueueExeState extends Backend
             $order = input("order", "desc");
             $offset = input("offset", 0);
             $limit = input("limit", 10);
-            $csdb = input("csdb");
-            $Db = '';
-            switch ($csdb) {
+            $cs = input("cs");
+            $name = '';
+            switch ($cs) {
                 case 'cxy':
-                    $Db = Db::connect('cxy');
+//                    $Db = Db::connect('cxy');
+                    $name = 'cxy';
                     break;
                 case 'wyc':
-                    $Db = Db::connect('wyc');
+//                    $Db = Db::connect('wyc');
+                    $name = 'wyc';
                     break;
                 case 'mmc':
-                    $Db = Db::connect('mmc');
+//                    $Db = Db::connect('mmc');
+                    $name = 'mmc';
                     break;
                 case 'zqp':
-                    $Db = Db::connect('zqp');
+//                    $Db = Db::connect('zqp');
+                    $name = 'zqp';
                     break;
                 case 'tyx':
-                    $Db = Db::connect('tyx');
+//                    $Db = Db::connect('tyx');
+                    $name = 'tyx';
                     break;
             }
-            if(!$Db){
-                $this->error('请选择数据库');
+//            if(!$Db){
+//                $this->error('请选择数据库');
+//            }
+            if(!$name){
+                $this->error('请选择客服');
             }
+            $url = $name.".frp.zebranumber.cn/index.php/api/index/getQueueStatusList";
             $where = [];
             $this->_search($where);
+            $data = [
+                'sort' => $sort,
+                'order' => $order,
+                'offset' => $offset,
+                'limit' => $limit,
+                'where' => $where,
+            ];
+            $data['validate'] = md5(json_encode($data,JSON_UNESCAPED_UNICODE));
 
-            $list = $Db->name("queue_record")
-                ->where($where)
-                ->order($sort, $order)
-                ->limit($offset,$limit)
-                ->select();
-            foreach ($list as $item) {
+//            $list = $Db->name("queue_record")
+//                ->where($where)
+//                ->order($sort, $order)
+//                ->limit($offset,$limit)
+//                ->select();
+
+            $res = Requests::post($url, json_encode($data, JSON_UNESCAPED_UNICODE), [
+                'Content-Type' => 'application/json'
+            ]);
+            if(is_null($res)){
+                $this->error('请求异常');
+            }
+            if($res['code'] != 0){
+                $this->error($res['msg']);
+            }
+            foreach ($res['list'] as $item) {
                 switch ($item['status']) {
                     case 0:
                         $item['status_text'] = '等待中';
@@ -80,8 +108,8 @@ class CsQueueExeState extends Backend
 //
                 $item['msg']=  $item['msg']??'-';
             }
-            $count = $Db->name("queue_record")->where($where)->count();
-            $result = array("total" => $count, "rows" => $list);
+//            $count = $Db->name("queue_record")->where($where)->count();
+            $result = array("total" => $res['count'], "rows" => $res['list']);
 
             return json($result);
         }
