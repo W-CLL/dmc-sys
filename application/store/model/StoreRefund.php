@@ -107,7 +107,7 @@ class StoreRefund extends Model
      * 目标充值钱包类型：1千川[默认]   2共享
      * @param $is_update
      * 是否执行更新操作
-     * @return  float
+     * @return  array
      * @throws DataNotFoundException
      * @throws ModelNotFoundException
      * @throws DbException
@@ -117,7 +117,7 @@ class StoreRefund extends Model
         $list = $this->getStoreRefundRecordList($transfer_records_data,$wallet_type);
         $totalRefundPoints = 0;
         if (!$list) {
-            return $totalRefundPoints;
+            return [$totalRefundPoints,$transfer_records_data['discount_percentage']];
         }
 
         //需要退款的金额
@@ -159,7 +159,8 @@ class StoreRefund extends Model
                 break;
             }
         }
-        return $totalRefundPoints;
+        $actualPer = $list[0]['discount_percentage'];
+        return [$totalRefundPoints,$actualPer];
     }
 
 

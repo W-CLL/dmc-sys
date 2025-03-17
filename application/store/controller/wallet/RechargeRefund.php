@@ -426,7 +426,7 @@ class RechargeRefund extends Store
             //返点金额 计算方式 交易金额 - （交易金额*100 / 折扣百分比*100）取小数点后两位，往上根据百分比扣除
             //$transfer_records_data["rebate"] = round( $transfer_records_data["money"] -($transfer_records_data["money"] * 100) / ($transfer_records_data['discount_percentage'] * 100),2);
 
-            $real_rebate = $store_refund_model->getRealRefundRebate($transfer_records_data);
+            list($real_rebate,$actual_per) = $store_refund_model->getRealRefundRebate($transfer_records_data);
             if (empty($real_rebate)) {
                 if(!empty(floatval($transfer_records_data['discount_percentage']))){
                     $real_rebate = $transfer_records_data["rebate"] = round($transfer_records_data["money"] - ($transfer_records_data["money"] * 100) / ($transfer_records_data['discount_percentage'] * 100), 2);
@@ -436,6 +436,7 @@ class RechargeRefund extends Store
             }
             $transfer_records_data["rebate"] = $real_rebate;
             $transfer_records_data['actual_money'] = $transfer_records_data["money"];
+            $transfer_records_data['discount_percentage'] = $actual_per;
         }
     }
 
