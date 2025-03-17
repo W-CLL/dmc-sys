@@ -79,7 +79,15 @@ define(['jquery', 'bootstrap', 'company', 'table', 'form'], function ($, undefin
                             }
                         },
                         {field: 'remark', title: "备注"},
-                        {field: 'status_text', title: __('Status')},
+                        {field: 'status', title: "状态", formatter: function(value,row,index) {
+                                if (row.status == 1){
+                                    return "成功"
+                                }else if (row.status == 2){
+                                    return "失败"
+                                }else{
+                                    return "等待中"
+                                }
+                            }, operate: 'LIKE'},
                         {field: 'create_time', title: "创建时间", formatter: Table.api.formatter.datetime},
                         {field: 'update_time', title: "更新时间", formatter: Table.api.formatter.datetime},
                     ]

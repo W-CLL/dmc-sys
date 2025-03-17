@@ -92,22 +92,6 @@ class CsQueueExeState extends Backend
             if($res['code'] != 0){
                 $this->error($res['msg']);
             }
-            foreach ($res['list'] as $item) {
-                switch ($item['status']) {
-                    case 0:
-                        $item['status_text'] = '等待中';
-                        break;
-                    case 1:
-                        $item['status_text'] = '已完成';
-                        break;
-                    case 2:
-                        $item['status_text'] = '失败';
-                        break;
-                }
-//                $res = mb_convert_encoding($item['msg'], 'UTF-8', 'UTF-8');
-//
-                $item['msg']=  $item['msg']??'-';
-            }
 //            $count = $Db->name("queue_record")->where($where)->count();
             $result = array("total" => $res['count'], "rows" => $res['list']);
 
