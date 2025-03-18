@@ -251,10 +251,11 @@ class SubWallet extends Store
         if($post['transfer_direction'] == 'TRANSFER_OUT'){
             $insert_data['transfer_direction'] = 2;
             if(!empty(floatval($wallet_info['wallet_discount']))) {
-                $real_rebate = $this->RefundModel->getRealRefundRebate($insert_data, 2);
+                list($real_rebate,$actualPer) = $this->RefundModel->getRealRefundRebate($insert_data, 2);
                 if (empty($real_rebate)) {
                     $real_rebate = round($insert_data["money"] - ($insert_data["money"] * 100) / ($insert_data['discount_percentage'] * 100), 2);
                 }
+                $insert_data['discount_percentage'] = $actualPer; // 获取实际退款比例
             }else{
                 $real_rebate = 0;
             }
@@ -616,7 +617,7 @@ class SubWallet extends Store
                     'account_type' => $wallet_info['sub_wallet_type'],
                     'sub_wallet_id' => $request->param('sub_wallet_id')
                 ];
-                $rebate = $this->RefundModel->getRealRefundRebate($data,2,false);
+                list($rebate,$actual_money) = $this->RefundModel->getRealRefundRebate($data,2,false);
                 if (empty($rebate)) {
                     $rebate = round($amount - ($amount * 100) / ($wallet['wallet_discount'] * 100), 2);
                 }

@@ -130,7 +130,12 @@ class StoreRefund extends Model
             $currentTotal = $wallet + $credit;//最新一笔充值的 钱包+授信总额度
             //如果需要退款的金额大于或等于最新一笔充值的钱包+授信总额度
             if ($remainingRefundAmount > 0 && $remainingRefundAmount >= $currentTotal) {
-                $rebate = round($currentTotal - ($currentTotal * 100) / ($percentage * 100), 2);
+                if(!empty(floatval($percentage))){
+                    $rebate = round($currentTotal - ($currentTotal * 100) / ($percentage * 100), 2);
+                }else{
+                    $rebate = 0;
+                }
+
                 $totalRefundPoints += $rebate;
                 $remainingRefundAmount -= $currentTotal;
                 $wallet = 0;
@@ -140,12 +145,20 @@ class StoreRefund extends Model
                 }
                 // 如果处理金额超出了最近充值的所有金额，超出部分则按照最新百分比进行退款
                 if ($remainingRefundAmount > 0 && $key == ($recordCount - 1)) {
-                    $rebate = round($remainingRefundAmount - ($remainingRefundAmount * 100) / ($percentage * 100), 2);
+                    if(!empty(floatval($percentage))){
+                        $rebate = round($remainingRefundAmount - ($remainingRefundAmount * 100) / ($percentage * 100), 2);
+                    }else{
+                        $rebate = 0;
+                    }
                     $totalRefundPoints += $rebate;
                 }
             } else if ($remainingRefundAmount > 0) {
                 // 处理超出部分金额
-                $rebate = round($remainingRefundAmount - ($remainingRefundAmount * 100) / ($percentage * 100), 2);
+                if(!empty(floatval($percentage))) {
+                    $rebate = round($remainingRefundAmount - ($remainingRefundAmount * 100) / ($percentage * 100), 2);
+                }else{
+                    $rebate = 0;
+                }
                 $totalRefundPoints += $rebate;
                 // 扣除钱包和授信额度
                 if ($remainingRefundAmount <= $wallet) {

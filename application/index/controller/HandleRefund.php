@@ -34,14 +34,14 @@ class HandleRefund extends Frontend
             ->order('store_id','asc')
             ->order('id', 'asc')
             ->select();
-        $res1 = $this->initRefundData($records,1);
+        $res1 = $this->initRefundData($records);
         $records1 = Db::name('store_money_log')
             ->where('type', '=', 8)
             ->whereOr('type', '=', 9)
             ->order('store_id','asc')
             ->order('id', 'asc')
             ->select();
-        $res2 = $this->initRefundData($records1,2);
+        $res2 = $this->initRefundData($records1,'store_money_log',2); // 此处本地执行需要同步share_wallet_transfer_log表，不然会超时
         echo $res1;
         echo $res2;
         die;
@@ -70,7 +70,7 @@ class HandleRefund extends Frontend
     }
 
 
-    public function initRefundData($records, $wallet_type = 1, $handleType = 'store_money_log')
+    public function initRefundData($records, $handleType = 'store_money_log', $wallet_type = 1)
     {
         $newRecords = [];
         $tempGroup = [];
