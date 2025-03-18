@@ -80,10 +80,10 @@ class AutoUpdateObjName extends Api
                 }
             }
             $actualComNum = $cusNum + ($cusNum * ($notWhiteCom[$item['company_name']] / 100));
-            if ($companyNum > 0) {
-                if ($companyNum < $cusNum) {
+            if ($companyNum > 0) {//公司操作大于0
+//                if ($companyNum < $cusNum) { //公司<客户
                     $needComNum = $actualComNum - $companyNum;
-                }
+//                }
             } else {
                 $needComNum = $actualComNum;
             }
@@ -119,6 +119,9 @@ class AutoUpdateObjName extends Api
      * @param string $type
      * @param string $user_name
      * @return array
+     * @throws DataNotFoundException
+     * @throws DbException
+     * @throws ModelNotFoundException
      */
     protected function getAdvList($page, $redis, string $type = 'normal', string $user_name = ''): array
     {
@@ -151,23 +154,22 @@ class AutoUpdateObjName extends Api
         //提取公司名
         $companyNames = array_keys($notWhiteCom);
         //获取公司下的广告主账户，每页1000条
-        $adv_list =
-            $comCostModel
-                ->alias('cc')
-                ->join('company com', 'cc.adv_id=com.advertiser_id', 'left')
-                ->where(['com.company_name' => ['in', $companyNames], 'cc.cost_date' => ['between', [strtotime(date('Y-m-01')), time()]]])
-                ->where(function ($query) use ($charge_name) {
-                    if ($charge_name) {
-                        $query->where(['com.kahuna' => $charge_name]);
-                    }
-                })
-                ->field('cc.*,sum(cc.cost) as mon_cost')
-                ->group('cc.adv_id')
-                ->order('mon_cost desc')
-                ->page($page)
-                ->limit(1000)
+        $adv_list = $comCostModel
+            ->alias('cc')
+            ->join('company com', 'cc.adv_id=com.advertiser_id', 'left')
+            ->where(['com.company_name' => ['in', $companyNames], 'cc.cost_date' => ['between', [strtotime(date('Y-m-01')), time()]]])
+            ->where(function ($query) use ($charge_name) {
+                if ($charge_name) {
+                    $query->where(['com.kahuna' => $charge_name]);
+                }
+            })
+            ->field('cc.*,sum(cc.cost) as mon_cost')
+            ->group('cc.adv_id')
+            ->order('mon_cost desc')
+            ->page($page)
+            ->limit(1000)
 //                ->fetchSql(true)
-                ->select();
+            ->select();
 //                ->column('cc.adv_id');
         $adv_ids = array_column((array)$adv_list, 'adv_id');
         return [$adv_ids, $notWhiteCom];

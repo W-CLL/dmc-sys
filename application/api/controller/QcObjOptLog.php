@@ -35,7 +35,7 @@ class QcObjOptLog extends Api
         $objModel = new \app\admin\model\QcObj();
         $queue = new Queue();
         $advIds = $objModel->group('adv_id')->column('adv_id');
-        $where['obj_status'] = ['not in', ["DELETE", "TIME_DONE", "FROZEN"]];
+//        $where['obj_status'] = ['not in', ["DELETE", "TIME_DONE", "FROZEN"]];
 
         if ($start_date&&$end_date) {
             $s = date("Y-m-d H:i:s",$start_date);
