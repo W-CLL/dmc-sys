@@ -28,7 +28,7 @@ class InitObj
             }
         } catch (Exception $e) {
             $insert_data = [
-                'job_name' => '初始化获取计划',
+                'job_name' => '获取第n页计划',
                 'job_id' => $jobId,
                 'class_name' => 'app\job\InitObj',
                 'queue_name' => 'initObj',
@@ -49,36 +49,21 @@ class InitObj
      */
     protected function doJob($data)
     {
-//        sleep(1);
-        $accessToken =  Cache::get("qc_access_token");
+        $accessToken = Cache::get("qc_access_token");
         $data['advertiser_id'] = (int)$data['advertiser_id'];
-        $resData = FundManagement::get_ad_list($accessToken,$data);
-        if($resData['code'] == 0){
-            if(empty($resData['data']['list'])){
-                echo $data['advertiser_id']."当天没有新建计划";
+        $resData = FundManagement::get_ad_list($accessToken, $data);
+        if ($resData['code'] == 0) {
+            if (empty($resData['data']['list'])) {
+                echo $data['advertiser_id'] . "当天没有新建计划";
                 return true;
             }
             $totalPage = $resData['data']['page_info']['total_page'];
-            if($totalPage>$data['page']){
-                $data['page'] = $data['page']+1;
+            if ($totalPage > $data['page']) {
+                $data['page'] = $data['page'] + 1;
                 \think\Queue::push('app\job\InitObj', $data, "initObj");
-//              for($i=3;$i<=$totalPage;$i++){
-//                  $data['page'] = $i;
-//                  $resData = FundManagement::get_ad_list($accessToken,$data);
-//                  if($resData['code'] == 0 && !empty($resData['data']['list']) ){
-//                    $res =   $this->saveNewObj($data['advertiser_id'],$resData['data']['list']);
-//                    if(!$res){
-//                        return false;
-//                    }
-//                  }else{
-//                      throw new Exception($resData['message']);
-//                  }
-//              }
             }
-             return  $this->saveNewObj($data['advertiser_id'],$resData['data']['list']);
-
-
-        }else{
+            return $this->saveNewObj($data['advertiser_id'], $resData['data']['list']);
+        } else {
             throw new Exception($resData['message']);
         }
 
