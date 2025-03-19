@@ -92,6 +92,10 @@ class CsQueueExeState extends Backend
             if($res['code'] != 0){
                 $this->error($res['msg']);
             }
+            foreach ($res['list'] as $k => $v){
+                $dataArray = json_decode($v['job_data'], true);
+                $res['list'][$k]['company_id'] = $dataArray['adv_id'] ?? null;
+            }
 //            $count = $Db->name("queue_record")->where($where)->count();
             $result = array("total" => $res['count'], "rows" => $res['list']);
 

@@ -46,6 +46,7 @@ define(['jquery', 'bootstrap', 'company', 'table', 'form'], function ($, undefin
                             }
                         },
                         {field: 'job_name', title: "任务名称"},
+                        {field: 'company_id', title: "千川id"},
                         // {
                         //     field: 'job_data', title: "请求参数", width: 130, align: 'left',
                         //     formatter: function (value, row, index, field) {
