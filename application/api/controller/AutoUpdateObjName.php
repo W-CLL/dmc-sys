@@ -144,13 +144,18 @@ class AutoUpdateObjName extends Api
         //1、先查询不是白名单的 公司下的广告账户
         $comSettingModel = new CompanySetting();
         $comCostModel = new QcAdvDayCost();
-        if ($redis->get('company_setting_list_' . $type)) {
-            $notWhiteCom = unserialize($redis->get('company_setting_list_' . $type));
-        } else {
-            //获取非白名单公司
-            $notWhiteCom = $comSettingModel->where(['is_white' => 0])->column('percentage', 'company_name');
-            $redis->set('company_setting_list_' . $type, serialize($notWhiteCom));
+        $companyModel = new Company();
+//        if ($redis->get('company_setting_list_' . $type)) {
+//            $notWhiteCom = unserialize($redis->get('company_setting_list_' . $type));
+//        } else {
+        //获取非白名单公司
+        if ($charge_name) {
+            $ownerCompanyNames = $companyModel->where(['kahuna' => ['like', "%" . $charge_name . "%"]])->column('company_name');
+            $name_where['company_name'] = ['in', $ownerCompanyNames];
         }
+        $name_where['is_white'] = 0;
+
+        $notWhiteCom = $comSettingModel->where($name_where)->column('percentage', 'company_name');
         //提取公司名
         $companyNames = array_keys($notWhiteCom);
         //获取公司下的广告主账户，每页1000条
@@ -160,7 +165,7 @@ class AutoUpdateObjName extends Api
             ->where(['com.company_name' => ['in', $companyNames], 'cc.cost_date' => ['between', [strtotime(date('Y-m-01')), time()]]])
             ->where(function ($query) use ($charge_name) {
                 if ($charge_name) {
-                    $query->where(['com.kahuna' => $charge_name]);
+                    $query->where(['com.kahuna' => ['like', "%" . $charge_name . "%"]]);
                 }
             })
             ->field('cc.*,sum(cc.cost) as mon_cost')
@@ -185,9 +190,6 @@ class AutoUpdateObjName extends Api
      */
     public function chunkGlobalComAdv(string $user_name = '')
     {
-//       echo  Cache::get(self::GLOBAL_CACHE_KEY);
-//       echo Cache::rm(self::GLOBAL_CACHE_KEY);
-//        die;
         $this->checkTimestamp(self::GLOBAL_CACHE_KEY);
         $page = Cache::get('chunk_obj_global_page', 1);
         $redis = Cache::store('redis');
@@ -235,8 +237,6 @@ class AutoUpdateObjName extends Api
                     'adv_id' => $item['adv_id'],
                     'obj_list' => $list
                 ];
-//                dump($queueData);
-                //一个广告主下的托管计划，总的操作次数，写入任务再平分次数到每个计划，进行延时修改
                 $queue->addQueue('全域分块处理自动化', 'app\job\ChunkAutoObj', 'chunkAutoObj', $queueData);
             }
         }
