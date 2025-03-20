@@ -24,6 +24,10 @@ class InsertDayObj
         try {
             $isJobDone = $this->doJob($data);
             if ($isJobDone) {
+                $queueData = $queueModel->where('job_id', $jobId)->find();
+                if($queueData){
+                    $queueData->save(['id' => $queueData['id'], 'status' => 1, 'msg' => "处理完成"]);
+                }
                 $job->delete();
             } else {
                 if ($job->attempts() > 3) {
@@ -55,6 +59,7 @@ class InsertDayObj
     {
         if(isset($data['advertiser_id'])){
             $data['adv_list'] = [$data['advertiser_id']];
+            $data['filtering'] = json_decode($data['filtering'],true);
         }
         $requests = $this->buildGuzzleRequest($data['adv_list'],$data['filtering']);
         list($insertData,$error) = $this->sendGuzzleRequest($requests);
@@ -152,6 +157,7 @@ class InsertDayObj
                 $requestInfo = $requests[$index]['params'];
                 $requestAdvId = $requestInfo['advertiser_id'];
                 $error = '';
+                $insertData = [];
                 if (!empty($resData) && $resData['code'] == 0 && !empty($resData['data']['list'])) {
                     foreach ($resData['data']['list'] as $item) {
                         $insertData[] = [
