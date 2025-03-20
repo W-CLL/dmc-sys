@@ -28,7 +28,7 @@ class AutoUpdateObjName extends Api
 
     public function index($user_name = '')
     {
-        $this->checkQueueExecutionOver();
+        $this->checkQueueExecutionOver(self::GLOBAL_CACHE_KEY);
 //        $this->checkTimestamp(self::CACHE_KEY);
         $page = Cache::get('chunk_obj_page', 1);
         $redis = Cache::store('redis');
@@ -191,7 +191,7 @@ class AutoUpdateObjName extends Api
      */
     public function chunkGlobalComAdv(string $user_name = '')
     {
-        $this->checkQueueExecutionOver(); //
+        $this->checkQueueExecutionOver(self::CACHE_KEY); //
 //        $this->checkTimestamp(self::GLOBAL_CACHE_KEY);
         $page = Cache::get('chunk_obj_global_page', 1);
         $redis = Cache::store('redis');
@@ -386,7 +386,11 @@ class AutoUpdateObjName extends Api
         die;
     }
 
-    public function checkQueueExecutionOver(){
+    /**
+     * @param $fun_name
+     * @return void
+     */
+    public function checkQueueExecutionOver($fun_name){
         // 生成时间参数
         $todayStart = strtotime('today');
         $todayEnd = strtotime('tomorrow') - 1;
@@ -414,8 +418,15 @@ class AutoUpdateObjName extends Api
             'end2'   => $todayEnd
         ])[0]['count'];
 
-        if($count > 0){
-            echo '时辰未到';
+        if($count == 0){
+            Cache::store('redis')->set(self::CACHE_KEY.'_over', 1);
+            Cache::store('redis')->set(self::GLOBAL_CACHE_KEY.'_over', 1);
+        }
+        $canRun = Cache::store('redis')->get($fun_name.'_over');
+        if(!empty($canRun) && $canRun == 1){
+            Cache::rm($fun_name.'_over');
+        }else{
+            echo "时辰未到";
             die;
         }
     }
