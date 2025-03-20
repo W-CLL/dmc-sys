@@ -20,7 +20,7 @@ class ChunkAutoObj
         $queueData = $queueModel->where('job_id', $jobId)->find();
         if (!$queueData) {
             $job->delete();
-            die;
+            return '';
         }
         try {
             $isJobDone = $this->doJob($data, $queueData);
