@@ -28,7 +28,8 @@ class AutoUpdateObjName extends Api
 
     public function index($user_name = '')
     {
-        $this->checkTimestamp(self::CACHE_KEY);
+        $this->checkQueueExecutionOver();
+//        $this->checkTimestamp(self::CACHE_KEY);
         $page = Cache::get('chunk_obj_page', 1);
         $redis = Cache::store('redis');
         list($advList, $notWhiteCom) = $this->getAdvList($page, $redis, $type = 'normal', $user_name);
@@ -190,7 +191,8 @@ class AutoUpdateObjName extends Api
      */
     public function chunkGlobalComAdv(string $user_name = '')
     {
-        $this->checkTimestamp(self::GLOBAL_CACHE_KEY);
+        $this->checkQueueExecutionOver(); //
+//        $this->checkTimestamp(self::GLOBAL_CACHE_KEY);
         $page = Cache::get('chunk_obj_global_page', 1);
         $redis = Cache::store('redis');
         list($advList, $notWhiteCom) = $this->getAdvList($page, $redis, $type = 'global', $user_name);
@@ -382,6 +384,40 @@ class AutoUpdateObjName extends Api
         dump($redis->rm('company_setting_list_normal'));
         echo "全部清理了";
         die;
+    }
+
+    public function checkQueueExecutionOver(){
+        // 生成时间参数
+        $todayStart = strtotime('today');
+        $todayEnd = strtotime('tomorrow') - 1;
+
+        // 构造原生SQL（使用命名占位符）
+        $sql = "SELECT COUNT(*) AS count 
+            FROM fa_queue_record 
+            WHERE (
+                (queue_name = :queue1 
+                AND status = 0 
+                AND create_time BETWEEN :start1 AND :end1)
+                OR 
+                (queue_name = :queue2 
+                AND status = 0 
+                AND create_time BETWEEN :start2 AND :end2)
+            )";
+
+        // 执行查询（使用ThinkPHP的数据库组件）
+        $count = Db::query($sql, [
+            'queue1'  => 'autoUpdateObjName',
+            'queue2'  => 'chunkAutoObj',
+            'start1' => $todayStart,
+            'end1'   => $todayEnd,
+            'start2' => $todayStart,
+            'end2'   => $todayEnd
+        ])[0]['count'];
+
+        if($count > 0){
+            echo '时辰未到';
+            die;
+        }
     }
 
 }
