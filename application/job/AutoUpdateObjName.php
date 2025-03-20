@@ -23,15 +23,19 @@ class AutoUpdateObjName
         // 判断是否在凌晨1点到5点之间
         if ($currentHour >= 2 && $currentHour < 5) {
             // 记录日志或返回信息
-            \think\Log::info('每天凌晨1点到5点不刷计划');
-            return; // 直接返回，停止执行
+            \think\Log::info('每天凌晨2点到5点不刷计划');
+            return ''; // 直接返回，停止执行
         }
         $jobId = json_decode($job->getRawBody(), true)['id'];
         $queueModel = new \app\common\model\Queue();
         $queueData = $queueModel->where('job_id', $jobId)->find();
         if (!$queueData) {
             $job->delete();
-            die;
+            return '';
+        }
+        if($queueData['status'] !=0){
+            $job->delete();
+            return '';
         }
         try {
             list($isJobDone,$msg) = $this->doJob($data, $queueData);

@@ -21,7 +21,7 @@ class InsertObjOptLog
         $queueData = $queueModel->where('job_id', $jobId)->find();
         if(!$queueData){
             $job->delete();
-            die;
+            return '';
         }
         try {
             $isJobDone = $this->doJob($data, $queueData);
@@ -31,11 +31,13 @@ class InsertObjOptLog
             } else {
                 if ($job->attempts() > 3) {
                     $job->delete();
+                    return '';
                 }
             }
         } catch (Exception $e) {
             $queueData->save(['id' => $queueData['id'], 'status' => 2, 'msg' => $e->getMessage()]);
             $job->delete();
+            return '';
         }
     }
 

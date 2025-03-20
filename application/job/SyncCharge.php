@@ -42,7 +42,7 @@ class SyncCharge
             $beforeSync = $this->beforeSync($data, $queueData);
             if ($beforeSync) {
                 $job->delete();
-                return;
+                return '';
             }
             list($buildData, $moneyLog) = $this->buildData($data, $queueData);
 
@@ -50,15 +50,18 @@ class SyncCharge
             if ($isJobDone) {
                 //如果任务执行成功， 记得删除任务
                 $job->delete();
+                return '';
             } else {
                 if ($job->attempts() > 3) {
                     //通过这个方法可以检查这个任务已经重试了几次了
                     $job->delete();
+                    return '';
                 }
             }
         } catch (Exception $e) {
             $queueData->save(['id' => $queueData['id'], 'status' => 2, 'msg' => $e->getMessage()]);
             $job->delete();
+            return '';
         }
     }
 

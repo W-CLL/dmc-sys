@@ -25,7 +25,11 @@ class InsertDayOptLog
         $queueData = $queueModel->where('job_id', $jobId)->find();
         if (!$queueData) {
             $job->delete();
-            die;
+            return '';
+        }
+        if($queueData['status'] !=0){
+            $job->delete();
+            return '';
         }
         try {
             $isJobDone = $this->doJob($data, $queueData);

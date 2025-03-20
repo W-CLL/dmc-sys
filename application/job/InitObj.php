@@ -21,9 +21,11 @@ class InitObj
             $isJobDone = $this->doJob($data);
             if ($isJobDone) {
                 $job->delete();
+                return '';
             } else {
                 if ($job->attempts() > 3) {
                     $job->delete();
+                    return '';
                 }
             }
         } catch (Exception $e) {
@@ -40,6 +42,7 @@ class InitObj
             ];
             $queueModel->save($insert_data);
             $job->delete();
+            return '';
         }
     }
 

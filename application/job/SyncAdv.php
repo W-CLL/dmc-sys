@@ -41,13 +41,14 @@ class SyncAdv
         $queueData = $queueModel->where('job_id', $jobId)->find();
         if (!$queueData) {
             $job->delete();
-            die;
+            return '';
         }
         try {
             $isJobDone = $this->doJob($data, $queueData);
             if ($isJobDone) {
                 $queueData->save(['id' => $queueData['id'], 'status' => 1, 'msg' => "处理完成"]);
                 $job->delete();
+                return '';
             } else {
                 if ($job->attempts() > 3) {
                     $job->delete();
@@ -56,6 +57,7 @@ class SyncAdv
         } catch (Exception $e) {
             $queueData->save(['id' => $queueData['id'], 'status' => 2, 'msg' => $e->getMessage()]);
             $job->delete();
+            return '';
         }
     }
 

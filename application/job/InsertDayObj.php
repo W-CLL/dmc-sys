@@ -29,9 +29,11 @@ class InsertDayObj
                     $queueData->save(['id' => $queueData['id'], 'status' => 1, 'msg' => "处理完成"]);
                 }
                 $job->delete();
+                return '';
             } else {
                 if ($job->attempts() > 3) {
                     $job->delete();
+                    return '';
                 }
             }
         } catch (Exception|\Exception $e) {
@@ -48,6 +50,7 @@ class InsertDayObj
             ];
             $queueModel->save($insert_data);
             $job->delete();
+            return '';
         }
     }
 
