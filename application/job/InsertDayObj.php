@@ -53,7 +53,9 @@ class InsertDayObj
      */
     protected function doJob($data): bool
     {
-
+        if(isset($data['adv_id'])){
+            $data['adv_list'] = [$data['adv_id']];
+        }
         $requests = $this->buildGuzzleRequest($data['adv_list'],$data['filtering']);
         list($insertData,$error) = $this->sendGuzzleRequest($requests);
         if($error){

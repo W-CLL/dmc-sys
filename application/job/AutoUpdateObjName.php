@@ -21,7 +21,7 @@ class AutoUpdateObjName
         $currentHour = date('H');
 
         // 判断是否在凌晨1点到5点之间
-        if ($currentHour >= 1 && $currentHour < 5) {
+        if ($currentHour >= 2 && $currentHour < 5) {
             // 记录日志或返回信息
             \think\Log::info('每天凌晨1点到5点不刷计划');
             return; // 直接返回，停止执行
@@ -72,14 +72,12 @@ class AutoUpdateObjName
 
         $objDetail = $objInfo['data'];
         if(in_array($objDetail['opt_status'],['DELETE', "TIME_DONE", 'FROZEN']) ){
-//            更新计划状态
            $qcObj->where(['obj_id'=>$data['obj_id']])->update(['opt_status'=>$objDetail['opt_status']]);
-            return [true,'处理成功,计划状态不符合更新'];
+            throw new Exception("计划状态不符合更新,该计划状态为:".$this->convertStatus($objDetail['opt_status']));
         }
         if(in_array($objDetail['status'],['DELETE', "TIME_DONE", 'FROZEN']) ){
-//            更新计划状态
             $qcObj->where(['obj_id'=>$data['obj_id']])->update(['opt_status'=>$objDetail['status']]);
-            return [true,'处理成功,计划状态不符合更新'];
+            throw new Exception("计划状态不符合更新,该计划状态为:".$this->convertStatus($objDetail['opt_status']));
         }
         $this->removeEmptyValues($objDetail);
         unset($objDetail['ad_create_time']);
@@ -137,6 +135,24 @@ class AutoUpdateObjName
         }
     }
 
+    public function convertStatus($status)
+    {
+
+        switch ($status){
+            case 'DELETE':
+                $text = "已删除";
+                break;
+            case "TIME_DONE":
+                $text = "已终止";
+                break;
+            case "FROZEN":
+                $text = "已冻结";
+                break;
+            default :
+                $text = '';
+        }
+        return $text;
+    }
 
 
 }

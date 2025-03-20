@@ -81,9 +81,6 @@ class Queue extends Model
             \think\Log::error('add_queue_error：' . $e->getMessage());
             return false;
         }
-
-//        \think\Log::info('restart_string:');
-        \think\Log::info('job_test_id:'.$isPushed);
         // database 驱动时，返回值为 1|false  ; redis 驱动时，返回值为 随机字符串|false
         if ($isPushed) {
             $queueModel = new static();
