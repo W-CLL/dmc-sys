@@ -424,7 +424,7 @@ class AutoUpdateObjName extends Api
         }
         $canRun = Cache::store('redis')->get($fun_name.'_over');
         if(!empty($canRun) && $canRun == 1){
-            Cache::rm($fun_name.'_over');
+            Cache::store('redis')->rm($fun_name.'_over');
         }else{
             echo "时辰未到";
             die;
