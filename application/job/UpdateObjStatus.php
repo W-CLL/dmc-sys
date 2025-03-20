@@ -2,80 +2,181 @@
 
 namespace app\job;
 
+use app\admin\model\QcObj;
+use GuzzleHttp\Client;
+use GuzzleHttp\Pool;
+use GuzzleHttp\Psr7\Request;
 use think\Cache;
 use think\Db;
+use think\Exception;
 use think\Log;
 use think\queue\Job;
 use jlqc\FundManagement;
 use app\common\model\Queue;
+
 class UpdateObjStatus
 {
     public function fire(Job $job, $data)
     {
         $jobId = json_decode($job->getRawBody(), true)['id'];
-        $redis = Cache::store('redis_db2')->handler();
-        Db::startTrans();
+        $queueModel = new \app\common\model\Queue();
         try {
-            $canRun = $this->check();
-            if (!$canRun) {
-                echo "进来啦";
-                sleep(60);
-                return;
-            }
-            $isJobDone = $this->Run($data);
+            $isJobDone = $this->doJob($data);
             if ($isJobDone) {
-                $queue_status_update_array[$jobId] = ['status' => 1, 'msg' => '队列消费成功'];
-                $job->delete();
-            } else {
-                $attempts = $job->attempts();
-                if($attempts >= 3){
-                    $queue_status_update_array[$jobId] = ['status' => 2, 'msg' => '队列消费失败[失败次数过多]'];
-                    $job->delete();
+                $queueData = $queueModel->where('job_id', $jobId)->find();
+                if($queueData){
+                    $queueData->save(['id' => $queueData['id'], 'status' => 1, 'msg' => "处理完成"]);
                 }
-                //如果任务执行失败了，重新发布这个任务，3s后
-                $job->release(3);
+                $job->delete();
+                return '';
+            } else {
+                if ($job->attempts() > 3) {
+                    $job->delete();
+                    return '';
+                }
             }
-            if(isset($queue_status_update_array)){
-                $redis->rpush('queue_status_update', serialize($queue_status_update_array));
+        } catch (Exception|\Exception $e) {
+            $queueData = $queueModel->where('job_id', $jobId)->find();
+            if($queueData){
+                $queueData->save(['id' => $queueData['id'], 'status' => 2, 'msg' => $e->getMessage()]);
+                $job->delete();
+                return '';
             }
-            Db::commit();
-        } catch (\Exception $e) {
-            Db::rollback();
-            $queue_status_update_array[$jobId] = ['status' => 2, 'msg' => '队列消费失败[执行异常]：'.mb_convert_encoding($e->getMessage(), 'UTF-8', 'auto')];
-            $redis->rpush('queue_status_update', serialize($queue_status_update_array));
+            $insert_data = [
+                'job_name' => '更新计划状态',
+                'job_id' => $jobId,
+                'class_name' => 'app\job\UpdateObjStatus',
+                'queue_name' => 'updateObjStatus',
+                'relation_table' => '',
+                'job_data' => json_encode($data),
+                'remark' => '',
+                'msg' => $e->getMessage(),
+                'status' => 2,
+            ];
+
+            $queueModel->save($insert_data);
+            $job->delete();
+            return '';
         }
     }
 
-    private function Run($data){
-        $redis = Cache::store('redis_db2')->handler();
-        $access_token = Cache::get("qc_access_token");
-        foreach ($data as $key => $value){
-            $ad_detail_res = FundManagement::get_ad_detail($access_token, $value, $key);
-            if($ad_detail_res['code'] != 0){
-                $where[] = $value;
-                $redis->SREM('obj_arr',serialize(['advertiser_id' => $value, 'object_id' => $key]));
-            }else if ($ad_detail_res['data']['status'] == 'DELETE' || $ad_detail_res['data']['status'] == 'FROZEN') {
-                $where[] = $value;
-                $redis->SREM('obj_arr',serialize(['advertiser_id' => $value, 'object_id' => $key]));
-            }
+    /**
+     * @throws Exception
+     * @throws \Exception
+     */
+    protected function doJob($data): bool
+    {
+        if(empty($data['obj_list'])){
+            echo "没有列表";
+            return true;
         }
-        if(!empty($where)){
-            $res = Db::name('qc_obj')->where('object_id','in',$where)->update(['status'=>0]);
-            if($res === false){
-                return false;
-            }
+        $requests = $this->buildGuzzleRequest($data);
+
+        list($updateData, $error) = $this->sendGuzzleRequest($requests);
+
+        if ($error) {
+            throw new Exception(json_encode($error));
+        }
+        // 处理返回数据
+        if ($updateData) {
+            return $this->updateObjStatus($updateData);
+        }
+
+        return true;
+    }
+
+    /**
+     * 更新计划状态
+     * @param $list
+     * @return bool
+     * @throws \Exception
+     */
+    protected function updateObjStatus($list)
+    {
+        $obj_model = new QcObj();
+        foreach ($list as $item) {
+            $item['update']['update_time'] = time();
+            $obj_model->where($item['where'])->update($item['update']);
         }
         return true;
     }
 
-    private function check(){
-        $queueModel = new Queue();
-        $queueSum = $queueModel->where(['queue_name'=>'createQcOpt','status'=>0])->count();
-        if ($queueSum > 0){
-            return false;
-        }else{
-            return true;
+
+    /**
+     * 构建请求
+     * @param $count
+     * @param $advIds
+     * @param $filter
+     * @return array
+     */
+    protected function buildGuzzleRequest($data): array
+    {
+        $access_token = Cache::get("qc_access_token");
+        $url = "https://ad.oceanengine.com/open_api/v1.0/qianchuan/ad/detail/get/";
+        $headers = [
+            'Access-Token' => $access_token,
+            'Content-Type' => 'application/json'
+        ];
+        $requests = [];
+        $objList = $data['obj_list'];
+        $advId = $data['adv_id'];
+
+        foreach ($objList as $obj_id) {
+            $params = [
+                "advertiser_id" => (int)$advId,
+                "ad_id" => $obj_id,
+                "request_material_url" => false,
+            ];
+            $request = new Request('GET', $url, $headers, json_encode($params));
+            $requests[] = ['request' => $request, 'params' => $params];
         }
+        return $requests;
     }
+
+    /**
+     * 发送请求
+     * @param $requests
+     * @return array
+     */
+    protected function sendGuzzleRequest($requests)
+    {
+        $updateData = [];
+        $guzzleClient = new Client();
+        $error = [];
+        // 并发请求
+        $pool = new Pool($guzzleClient, array_column($requests, 'request'), [
+            'concurrency' => 10,  // 控制并发数
+            'fulfilled' => function ($response, $index) use (&$updateData, $requests, &$error) {
+                $resData = json_decode($response->getBody()->getContents(), true);
+
+                if ($resData['code'] != 0) {
+                    $error[] = $resData['message'];
+                }
+                $requestInfo = $requests[$index]['params'];
+                $requestAdvId = $requestInfo['advertiser_id'];
+                $requestObjId = $requestInfo['ad_id'];
+                if (!empty($resData) && $resData['code'] == 0 && !empty($resData['data'])) {
+                    $updateData[] = [
+                        'where' => [
+                            'adv_id' => $requestAdvId,
+                            'obj_id' => $requestObjId,
+                        ],
+                        'update' => [
+                            'opt_status' => $resData['data']['opt_status'],
+                            'obj_status' => $resData['data']['status']
+                        ],
+                    ];
+                }
+            },
+            'rejected' => function ($reason, $index) {
+                echo "Request {$index} failed: " . $reason->getMessage() . "\n";
+            },
+        ]);
+        // 等待所有请求完成
+        $promise = $pool->promise();
+        $promise->wait();
+        return [$updateData, $error];
+    }
+
 
 }

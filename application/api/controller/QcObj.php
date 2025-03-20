@@ -38,8 +38,8 @@ class QcObj extends Api
         $chunks = array_chunk($allAdvIds, $pageSize);
         foreach ($chunks as $chunk) {
             $job_data = [
-                'filtering'=>[
-                    'marketing_goal' =>$type,
+                'filtering' => [
+                    'marketing_goal' => $type,
                     'ad_create_start_date' => date('Y-m-d', time()),
                     'ad_create_end_date' => date('Y-m-d', time()),
                     'marketing_scene' => 'ALL',
@@ -53,7 +53,7 @@ class QcObj extends Api
                         'NEW_PRODUCT_BOOST',
                     ],
                 ],
-                'adv_list'=>$chunk
+                'adv_list' => $chunk
             ];
             \think\Queue::push('app\job\InsertDayObj', $job_data, "insertDayObj");
         }
@@ -77,6 +77,37 @@ class QcObj extends Api
     public function initInsertLiveObj()
     {
         $this->getNewObjRecursive(200, "LIVE_PROM_GOODS");
+    }
+
+
+    public function updateObjStatus()
+    {
+
+        $obj_model = new ObjModel();
+        $adv_list = $obj_model
+            ->alias('obj')
+            ->join('company com','com.advertiser_id=obj.adv_id','left')
+            ->where(['com.adv_status'=>1])
+            ->group('adv_id')->column('adv_id');
+        foreach ($adv_list as $item) {
+            $list = $obj_model
+                ->where(['opt_status' => ['NOT IN', ['DELETE', "TIME_DONE", 'FROZEN']]])
+                ->where(['adv_id' => $item])
+                ->column('obj_id');
+            if($list){
+                $chunks = array_chunk($list, 300);
+                foreach ($chunks as $chunk) {
+                    $job_data = [
+                        'adv_id' => $item,
+                        'obj_list' => $chunk
+                    ];
+                    \think\Queue::push('app\job\UpdateObjStatus', $job_data, "updateObjStatus");
+                }
+            }
+
+        }
+        echo "全部处理完了";
+
     }
 
 
