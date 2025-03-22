@@ -183,7 +183,7 @@ class AutoUpdateObjName
         $queue = new Queue();
         $where['job_name'] = $queueData['job_name'];
         $where['queue_name'] = $queueData['queue_name'];
-        $where['status'] = 0;
+        $where['status'] = ['in',[0,2]];
         $where['id'] = ['neq',$queueData['id']];
         $queue->where($where)->delete();
     }
