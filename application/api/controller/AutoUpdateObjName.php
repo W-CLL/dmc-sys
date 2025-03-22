@@ -426,7 +426,7 @@ class AutoUpdateObjName extends Api
             Cache::store('redis')->set(self::GLOBAL_CACHE_KEY.'_over', 1);
         }
         $canRun = Cache::store('redis')->get($fun_name.'_over');
-        if(!$canRun && $canRun == 1){
+        if($canRun == 1){
             Cache::store('redis')->rm($fun_name.'_over');
         }else{
             echo "时辰未到";
