@@ -79,7 +79,7 @@ class AutoUpdateObjName extends Api
             }
             if ($companyNum > 0) { //判断公司操作次数如果已经大于等于设置的百分比了就跳过
                 $currPer = ($companyNum / $cusNum) * 100;
-                if ($currPer >= ($notWhiteCom[$item['company_name']]) * 2) {
+                if ($currPer >= $notWhiteCom[$item['company_name']]) {
                     continue;
                 }
             }
