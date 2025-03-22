@@ -77,10 +77,12 @@ class AutoUpdateObjName
         $objDetail = $objInfo['data'];
         if(in_array($objDetail['opt_status'],['DELETE', "TIME_DONE", 'FROZEN']) ){
            $qcObj->where(['obj_id'=>$data['obj_id']])->update(['opt_status'=>$objDetail['opt_status']]);
+           $this->deleteRedundantJob($queueData);
             throw new Exception("计划状态不符合更新,该计划状态为:".$this->convertStatus($objDetail['opt_status']));
         }
         if(in_array($objDetail['status'],['DELETE', "TIME_DONE", 'FROZEN']) ){
             $qcObj->where(['obj_id'=>$data['obj_id']])->update(['opt_status'=>$objDetail['status']]);
+            $this->deleteRedundantJob($queueData);
             throw new Exception("计划状态不符合更新,该计划状态为:".$this->convertStatus($objDetail['opt_status']));
         }
         $this->removeEmptyValues($objDetail);
@@ -118,6 +120,9 @@ class AutoUpdateObjName
        if($res['code'] == 0 && $res['message'] == "OK"){
            return [true,'处理成功'];
        }else{
+           if($this->checkResultMsg($res)){
+               $this->deleteRedundantJob($queueData);
+           }
            throw new Exception($res['message'].json_encode($updateData));
        }
     }
@@ -156,6 +161,30 @@ class AutoUpdateObjName
                 $text = '';
         }
         return $text;
+    }
+
+
+    private function checkResultMsg($res){
+        $msg_arr = [
+            '低效素材',
+            '不在素材库中',
+        ];
+        foreach ($msg_arr as $msg){
+            if (strpos($res['message'], $msg) !== false) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    private function deleteRedundantJob($queueData){
+        $queue = new Queue();
+        $where['job_name'] = $queueData['job_name'];
+        $where['queue_name'] = $queueData['queue_name'];
+        $where['status'] = 0;
+        $where['id'] = ['neq',$queueData['id']];
+        $queue->where($where)->delete();
     }
 
 

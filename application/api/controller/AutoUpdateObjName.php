@@ -392,7 +392,8 @@ class AutoUpdateObjName extends Api
      */
     public function checkQueueExecutionOver($fun_name){
         // 生成时间参数
-        $todayStart = strtotime('today');
+//        $todayStart = strtotime('today');
+        $todayStart = strtotime(date('Y-m-01'));
         $todayEnd = strtotime('tomorrow') - 1;
 
         // 构造原生SQL（使用命名占位符）
