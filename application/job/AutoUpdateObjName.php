@@ -168,6 +168,7 @@ class AutoUpdateObjName
         $msg_arr = [
             '低效素材',
             '不在素材库中',
+            '服务内部错误',
         ];
         foreach ($msg_arr as $msg){
             if (strpos($res['message'], $msg) !== false) {
