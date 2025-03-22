@@ -28,7 +28,7 @@ class AutoUpdateObjName extends Api
 
     public function index($user_name = '')
     {
-        $this->checkQueueExecutionOver(self::GLOBAL_CACHE_KEY);
+        $this->checkQueueExecutionOver(self::CACHE_KEY);
 //        $this->checkTimestamp(self::CACHE_KEY);
         $page = Cache::get('chunk_obj_page', 1);
         $redis = Cache::store('redis');
@@ -62,6 +62,7 @@ class AutoUpdateObjName extends Api
         if (empty($list)) {
             echo "全部处理完了";
             Cache::rm('chunk_obj_page');
+            $redis->rm(self::CACHE_KEY.'_over');
             $redis->rm('company_setting_list_' . $type);
             Cache::set(self::CACHE_KEY, strtotime(date('Y-m-d')));
             die;
@@ -193,7 +194,7 @@ class AutoUpdateObjName extends Api
      */
     public function chunkGlobalComAdv(string $user_name = '')
     {
-        $this->checkQueueExecutionOver(self::CACHE_KEY); //
+        $this->checkQueueExecutionOver(self::GLOBAL_CACHE_KEY); //
 //        $this->checkTimestamp(self::GLOBAL_CACHE_KEY);
         $page = Cache::get('chunk_obj_global_page', 1);
         $redis = Cache::store('redis');
@@ -214,6 +215,7 @@ class AutoUpdateObjName extends Api
         if (empty($adv_list)) {
             echo "全部处理完了";
             Cache::rm('chunk_obj_global_page');
+            $redis->rm(self::GLOBAL_CACHE_KEY.'_over');
             $redis->rm('company_setting_list_' . $type);
             Cache::set(self::GLOBAL_CACHE_KEY, strtotime(date('Y-m-d')));
             die;
@@ -393,7 +395,7 @@ class AutoUpdateObjName extends Api
      * @return void
      */
     public function checkQueueExecutionOver($fun_name){
-        // 生成时间参数
+//         生成时间参数
 //        $todayStart = strtotime('today');
         $todayStart = strtotime(date('Y-m-01'));
         $todayEnd = strtotime('tomorrow') - 1;
@@ -426,9 +428,7 @@ class AutoUpdateObjName extends Api
             Cache::store('redis')->set(self::GLOBAL_CACHE_KEY.'_over', 1);
         }
         $canRun = Cache::store('redis')->get($fun_name.'_over');
-        if($canRun == 1){
-            Cache::store('redis')->rm($fun_name.'_over');
-        }else{
+        if($canRun != 1){
             echo "时辰未到";
             die;
         }
