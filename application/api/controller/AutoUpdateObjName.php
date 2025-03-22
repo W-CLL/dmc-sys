@@ -34,11 +34,13 @@ class AutoUpdateObjName extends Api
         $redis = Cache::store('redis');
         list($advList, $notWhiteCom) = $this->getAdvList($page, $redis, $type = 'normal', $user_name);
         $comModel = new Company();
-        $currentDate = new \DateTime();
-        $currentDate->modify('yesterday');
+//        $currentDate = new \DateTime();
+//        $currentDate->modify('yesterday');
         $end_time = strtotime(date('Y-m-d', time()));
+        //获取本月的操作次数
+        $start_time = strtotime(date('Y-m-01', time()));
         //获取昨天的操作次数
-        $start_time = $currentDate->getTimestamp();
+//        $start_time = $currentDate->getTimestamp();
 
         //获取本月的操作日志
         $list = $comModel
