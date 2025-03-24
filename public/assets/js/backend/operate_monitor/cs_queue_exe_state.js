@@ -21,7 +21,7 @@ define(['jquery', 'bootstrap', 'company', 'table', 'form'], function ($, undefin
                 searchFormVisible: true, // 控制搜索栏是否显示在页面上
                 url: $.fn.bootstrapTable.defaults.extend.index_url,
                 pk: 'id',
-                sortName: 'id',
+                sortName: 'update_time',
                 pageSize: 10,
                 pageList: [10, 15, 20],
                 fixedColumns: true,
