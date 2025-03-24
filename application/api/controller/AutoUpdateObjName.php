@@ -104,7 +104,7 @@ class AutoUpdateObjName extends Api
         }
         $page++;
         Cache::set('chunk_obj_page', $page);
-        $this->index();
+        $this->index($user_name);
     }
 
     /**
