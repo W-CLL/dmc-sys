@@ -29,7 +29,7 @@ class QueueRecord extends Backend
             list($where, $sort, $order, $offset, $limit) = $this->buildparams();
             $list = $this->model
                 ->where($where)
-                ->order('id desc')
+                ->order('update_time desc')
                 ->paginate($limit);
             foreach ($list as $item) {
                 switch ($item['status']) {

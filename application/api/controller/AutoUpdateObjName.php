@@ -425,4 +425,40 @@ class AutoUpdateObjName extends Api
         }
     }
 
+    public function delNoPermission($str="No permission")
+    {
+        $queue = new Queue();
+        $result = Db::table('fa_queue_record')
+            ->field([
+                'SUBSTRING_INDEX(SUBSTRING_INDEX(msg, \'"adv_id":"\', -1), \'"\', 1)' => 'adv_id',
+                'GROUP_CONCAT(id)' => 'id_list',
+                'id'
+            ])
+            ->where('status', 2)
+            ->where('msg', 'like', '%'.$str.'%')
+            ->group('adv_id')
+            ->select();
+
+//dump($result);
+//die;
+        foreach ($result as $value) {
+            if((string)$value['id'] == $value['id_list']) {
+                continue;
+            }
+            $idListArray = explode(',', $value['id_list']);
+            if(count($idListArray) >1){
+                $idListArray = array_filter($idListArray, function ($item) use ($value) {
+                    return $item != $value['id'];
+                });
+                $queue->where(['id' => ['in', $idListArray]])->delete();
+            }
+            if (preg_match('/\d+/', $value['adv_id'], $matches)) {
+                $number = $matches[0];
+                $queue->where(['job_data' => ['like', "%" . $number . "%"],'id'=>['neq',$value['id']]])->delete();
+            }
+        }
+        echo "全部处理完了";
+        die;
+    }
+
 }
