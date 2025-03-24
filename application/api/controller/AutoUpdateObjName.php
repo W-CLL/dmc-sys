@@ -74,24 +74,15 @@ class AutoUpdateObjName extends Api
             $totalNum = (int)$item['total_num'];
             $companyNum = (int)$item['company_num'];
             $cusNum = $totalNum - $companyNum;
-            if ($cusNum <= 0) {//客户操作次数小于等于零直接跳过
+
+            if ($cusNum <= 0 || ($companyNum > 0 && ($companyNum / $cusNum) * 100 >= $notWhiteCom[$item['company_name']])) {
                 continue;
             }
-            if ($companyNum > 0) { //判断公司操作次数如果已经大于等于设置的百分比了就跳过
-                $currPer = ($companyNum / $cusNum) * 100;
-                if ($currPer >= $notWhiteCom[$item['company_name']]) {
-                    continue;
-                }
-            }
+
             $actualComNum = $cusNum + ($cusNum * ($notWhiteCom[$item['company_name']] / 100));
-            if ($companyNum > 0) {//公司操作大于0
-//                if ($companyNum < $cusNum) { //公司<客户
-                    $needComNum = $actualComNum - $companyNum;
-//                }
-            } else {
-                $needComNum = $actualComNum;
-            }
+            $needComNum = $companyNum > 0 ? $actualComNum - $companyNum : $actualComNum;
             $needComNum = (int)ceil($needComNum);
+
             //只查托管的计划
             $list = $objModel->where([
                 'obj_status' => ['not in', ['DELETE', "TIME_DONE", 'FROZEN']],

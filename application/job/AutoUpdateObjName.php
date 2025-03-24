@@ -169,6 +169,13 @@ class AutoUpdateObjName
             '低效素材',
             '不在素材库中',
             '服务内部错误',
+            '商品托管计划',
+            'No permission',
+            '抖音原生视频的imageModel',
+            '当前广告主状态已禁用',
+            '计划状态不符合更新',
+            '搜索计划只支持',
+            '成本稳投通投广告不',
         ];
         foreach ($msg_arr as $msg){
             if (strpos($res['message'], $msg) !== false) {
