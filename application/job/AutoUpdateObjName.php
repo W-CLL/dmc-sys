@@ -18,14 +18,14 @@ class AutoUpdateObjName
 
     public function fire(Job $job, $data)
     {
-        $currentHour = date('H');
+//        $currentHour = date('H');
 
         // 判断是否在凌晨1点到5点之间
-        if ($currentHour >= 2 && $currentHour < 5) {
-            // 记录日志或返回信息
-            \think\Log::info('每天凌晨2点到5点不刷计划');
-            return ''; // 直接返回，停止执行
-        }
+//        if ($currentHour >= 2 && $currentHour < 5) {
+//            // 记录日志或返回信息
+//            \think\Log::info('每天凌晨2点到5点不刷计划');
+//            return ''; // 直接返回，停止执行
+//        }
         $jobId = json_decode($job->getRawBody(), true)['id'];
         $queueModel = new \app\common\model\Queue();
         $queueData = $queueModel->where('job_id', $jobId)->find();
@@ -42,6 +42,7 @@ class AutoUpdateObjName
             if ($isJobDone) {
                 $queueData->save(['id' => $queueData['id'], 'status' => 1, 'msg' => $msg]);
                 $job->delete();
+                return '';
             } else {
                 if ($job->attempts() > 3) {
                     $job->delete();
@@ -50,6 +51,7 @@ class AutoUpdateObjName
         } catch (Exception $e) {
             $queueData->save(['id' => $queueData['id'], 'status' => 2, 'msg' => $e->getMessage()]);
             $job->delete();
+            return '';
         }
     }
 
@@ -128,8 +130,14 @@ class AutoUpdateObjName
     }
 
     protected function removeEmptyValues(&$array) {
+        //日常销售-商品-搜索-托管
         if(!empty($array['marketing_scene']) == "SEARCH"){
             unset($array['audience']['new_customer']);
+            if(isset($array['multi_product_creative_list'])){
+                unset($array['programmatic_creative_card']);
+                unset($array['programmatic_creative_media_list']);
+                unset($array['programmatic_creative_title_list']);
+            }
         }
         foreach ($array as $key => &$value) {
             // 如果值是数组，则递归处理

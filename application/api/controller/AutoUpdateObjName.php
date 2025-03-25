@@ -9,6 +9,7 @@ use app\common\controller\Api;
 use app\common\model\QcAdvDayCost;
 use app\common\model\Queue;
 use think\Cache;
+use think\Collection;
 use think\Db;
 use think\db\exception\DataNotFoundException;
 use think\db\exception\ModelNotFoundException;
@@ -34,48 +35,25 @@ class AutoUpdateObjName extends Api
         $redis = Cache::store('redis');
         list($advList, $notWhiteCom) = $this->getAdvList($page, $redis, $type = 'normal', $user_name);
         $comModel = new Company();
-        $currentDate = new \DateTime();
-        $currentDate->modify('-10 days');
-        $end_time = strtotime(date('Y-m-d', time()));
-        //获取本月的操作次数
-//        $start_time = strtotime(date('Y-m-01', time()));
-        //获取昨天的操作次数
-        $start_time = $currentDate->getTimestamp();
-
+        list($start_time, $end_time) = $this->getPersonStartTime($user_name);
         //获取本月的操作日志
-        $list = $comModel
-            ->alias('adv_c')
-            ->join(
-                "(SELECT adv_id, COUNT(*) AS total_num FROM fa_qc_obj_opt_log WHERE opt_time BETWEEN " . $start_time . " AND " . $end_time . " GROUP BY adv_id) AS total_stats",
-                'adv_c.advertiser_id = total_stats.adv_id',
-                'left'
-            )
-            ->join(
-                "(SELECT adv_id, COUNT(*) AS company_num FROM fa_qc_obj_opt_log WHERE opt_time BETWEEN " . $start_time . " AND " . $end_time . " AND operator IN (SELECT name FROM fa_ad_operator WHERE status = 1) GROUP BY adv_id) AS company_stats",
-                'adv_c.advertiser_id = company_stats.adv_id',
-                'left'
-            )
-            ->where(['adv_c.advertiser_id' => ['in', $advList], 'total_stats.total_num' => ['>', 0]])
-            ->field("adv_c.*, total_stats.total_num, company_stats.company_num")
-            ->order('total_stats.total_num desc')
-            ->select();
+        $list = $this->getOptCountCollection($comModel, $start_time, $end_time, $advList);
         if (empty($list)) {
             echo "全部处理完了";
             Cache::rm('chunk_obj_page');
-            $redis->rm(self::CACHE_KEY.'_over');
+            $redis->rm(self::CACHE_KEY . '_over');
             $redis->rm('company_setting_list_' . $type);
             Cache::set(self::CACHE_KEY, strtotime(date('Y-m-d')));
             die;
         }
         $queue = new Queue();
         $objModel = new ObjModel();
-        $needComNum = 0;
         foreach ($list as $item) {
             $totalNum = (int)$item['total_num'];
             $companyNum = (int)$item['company_num'];
             $cusNum = $totalNum - $companyNum;
 
-            if ($cusNum <= 0 || ($companyNum > 0 && ($companyNum / $cusNum) * 100 >= $notWhiteCom[$item['company_name']])) {
+            if ($cusNum <= 0 || ($companyNum > 0 && ($companyNum / $cusNum) * 100 >= ($notWhiteCom[$item['company_name']] * 2))) {
                 continue;
             }
 
@@ -191,22 +169,23 @@ class AutoUpdateObjName extends Api
         $redis = Cache::store('redis');
         list($advList, $notWhiteCom) = $this->getAdvList($page, $redis, $type = 'global', $user_name);
         $cost_model = new QcAdvDayCost();
-        $currentDate = new \DateTime();
-        $currentDate->modify('yesterday');
+        $comModel = new Company();
+
+        list($start_time, $end_time) = $this->getPersonStartTime($user_name);
         //获取昨天的全域消耗
         $adv_list = $cost_model->where([
             'adv_id' => ['in', $advList],
-//            'cost_date' => strtotime('2024-12-14'),
-            'cost_date' => $currentDate->getTimestamp(),
+            'cost_date' => ['between', [$start_time, $end_time]],
             'type' => 2,//全域
         ])->field('*,SUM(cost) as day_cost ')
             ->group('adv_id')
             ->select();
 
+        $count_list = $this->getOptCountCollection($comModel, $start_time, $end_time, $advList);
         if (empty($adv_list)) {
             echo "全部处理完了";
             Cache::rm('chunk_obj_global_page');
-            $redis->rm(self::GLOBAL_CACHE_KEY.'_over');
+            $redis->rm(self::GLOBAL_CACHE_KEY . '_over');
             $redis->rm('company_setting_list_' . $type);
             Cache::set(self::GLOBAL_CACHE_KEY, strtotime(date('Y-m-d')));
             die;
@@ -215,26 +194,36 @@ class AutoUpdateObjName extends Api
         $queue = new Queue();
         $objModel = new ObjModel();
         foreach ($adv_list as $item) {
-            if ($item['day_cost'] > 0) {
-                $need_num = $this->getDailyOperationLimit($item['day_cost']);
-                $list = $objModel->where([
-                    'obj_status' => ['not in', ['DELETE', "TIME_DONE", 'FROZEN']],
-                    'lab_ad_type' => "LAB_AD",
-                    'opt_status' => ['not in', ['DELETE', "TIME_DONE", 'FROZEN']],
-                    'adv_id' => $item['adv_id']
-                ])
-                    ->field('obj_id,adv_id')
-                    ->limit($need_num)
-                    ->column('obj_id');
-                if (!$list) {
-                    continue;
+            foreach ($count_list as $value) {
+                if ($item['day_cost'] > 0 && $item['adv_id'] == $value['advertiser_id']) {
+
+                    $need_num = $this->getDailyOperationLimit($item['day_cost']);
+                    $companyNum = (int)$value['company_num'];
+
+                    if($companyNum >=$need_num){
+                        continue;
+                    }
+
+                    $need_num = $need_num-$companyNum;
+                    $list = $objModel->where([
+                        'obj_status' => ['not in', ['DELETE', "TIME_DONE", 'FROZEN']],
+                        'lab_ad_type' => "LAB_AD",
+                        'opt_status' => ['not in', ['DELETE', "TIME_DONE", 'FROZEN']],
+                        'adv_id' => $item['adv_id']
+                    ])
+                        ->field('obj_id,adv_id')
+                        ->limit($need_num)
+                        ->column('obj_id');
+                    if (!$list) {
+                        continue;
+                    }
+                    $queueData = [
+                        'need_opt_num' => $need_num,
+                        'adv_id' => $item['adv_id'],
+                        'obj_list' => $list
+                    ];
+                    $queue->addQueue('全域分块处理自动化', 'app\job\ChunkAutoObj', 'chunkAutoObj', $queueData);
                 }
-                $queueData = [
-                    'need_opt_num' => $need_num,
-                    'adv_id' => $item['adv_id'],
-                    'obj_list' => $list
-                ];
-                $queue->addQueue('全域分块处理自动化', 'app\job\ChunkAutoObj', 'chunkAutoObj', $queueData);
             }
         }
         $page++;
@@ -385,7 +374,8 @@ class AutoUpdateObjName extends Api
      * @param $fun_name
      * @return void
      */
-    public function checkQueueExecutionOver($fun_name){
+    public function checkQueueExecutionOver($fun_name)
+    {
 //         生成时间参数
 //        $todayStart = strtotime('today');
         $todayStart = strtotime(date('Y-m-01'));
@@ -406,26 +396,26 @@ class AutoUpdateObjName extends Api
 
         // 执行查询（使用ThinkPHP的数据库组件）
         $count = Db::query($sql, [
-            'queue1'  => 'autoUpdateObjName',
-            'queue2'  => 'chunkAutoObj',
+            'queue1' => 'autoUpdateObjName',
+            'queue2' => 'chunkAutoObj',
             'start1' => $todayStart,
-            'end1'   => $todayEnd,
+            'end1' => $todayEnd,
             'start2' => $todayStart,
-            'end2'   => $todayEnd
+            'end2' => $todayEnd
         ])[0]['count'];
 
-        if($count == 0){
-            Cache::store('redis')->set(self::CACHE_KEY.'_over', 1);
-            Cache::store('redis')->set(self::GLOBAL_CACHE_KEY.'_over', 1);
+        if ($count == 0) {
+            Cache::store('redis')->set(self::CACHE_KEY . '_over', 1);
+            Cache::store('redis')->set(self::GLOBAL_CACHE_KEY . '_over', 1);
         }
-        $canRun = Cache::store('redis')->get($fun_name.'_over');
-        if($canRun != 1){
+        $canRun = Cache::store('redis')->get($fun_name . '_over');
+        if ($canRun != 1) {
             echo "时辰未到";
             die;
         }
     }
 
-    public function delNoPermission($str="No permission")
+    public function delNoPermission($str = "No permission")
     {
         $queue = new Queue();
         $result = Db::table('fa_queue_record')
@@ -435,18 +425,16 @@ class AutoUpdateObjName extends Api
                 'id'
             ])
             ->where('status', 2)
-            ->where('msg', 'like', '%'.$str.'%')
+            ->where('msg', 'like', '%' . $str . '%')
             ->group('adv_id')
             ->select();
 
-//dump($result);
-//die;
         foreach ($result as $value) {
-            if((string)$value['id'] == $value['id_list']) {
+            if ((string)$value['id'] == $value['id_list']) {
                 continue;
             }
             $idListArray = explode(',', $value['id_list']);
-            if(count($idListArray) >1){
+            if (count($idListArray) > 1) {
                 $idListArray = array_filter($idListArray, function ($item) use ($value) {
                     return $item != $value['id'];
                 });
@@ -454,11 +442,65 @@ class AutoUpdateObjName extends Api
             }
             if (preg_match('/\d+/', $value['adv_id'], $matches)) {
                 $number = $matches[0];
-                $queue->where(['job_data' => ['like', "%" . $number . "%"],'id'=>['neq',$value['id']]])->delete();
+                $queue->where(['job_data' => ['like', "%" . $number . "%"], 'id' => ['neq', $value['id']]])->delete();
             }
         }
         echo "全部处理完了";
         die;
+    }
+
+    protected function getPersonStartTime($user_name = '')
+    {
+        $mon = date('d');
+        switch ($user_name) {
+            case 'zqp':
+                $day_before = $mon;
+                break;
+            case 'cxy':
+            case 'tyx':
+            case 'wyc':
+            case 'mmc':
+                $day_before = 20;
+                break;
+            default:
+                $day_before = 1;
+                break;
+        }
+        $currentDate = new \DateTime();
+        $currentDate->modify('-' . $day_before . ' days');
+        $start_time = $currentDate->getTimestamp();
+        $end_time = time();
+        return [$start_time, $end_time];
+    }
+
+    /**
+     * @param Company $comModel
+     * @param $start_time
+     * @param $end_time
+     * @param $advList
+     * @return bool|\PDOStatement|string|Collection
+     * @throws DataNotFoundException
+     * @throws DbException
+     * @throws ModelNotFoundException
+     */
+    public function getOptCountCollection(Company $comModel, $start_time, $end_time, $advList)
+    {
+        return $comModel
+            ->alias('adv_c')
+            ->join(
+                "(SELECT adv_id, COUNT(*) AS total_num FROM fa_qc_obj_opt_log WHERE opt_time BETWEEN " . $start_time . " AND " . $end_time . " GROUP BY adv_id) AS total_stats",
+                'adv_c.advertiser_id = total_stats.adv_id',
+                'left'
+            )
+            ->join(
+                "(SELECT adv_id, COUNT(*) AS company_num FROM fa_qc_obj_opt_log WHERE opt_time BETWEEN " . $start_time . " AND " . $end_time . " AND operator IN (SELECT name FROM fa_ad_operator WHERE status = 1) GROUP BY adv_id) AS company_stats",
+                'adv_c.advertiser_id = company_stats.adv_id',
+                'left'
+            )
+            ->where(['adv_c.advertiser_id' => ['in', $advList], 'total_stats.total_num' => ['>', 0]])
+            ->field("adv_c.*, total_stats.total_num, company_stats.company_num")
+            ->order('total_stats.total_num desc')
+            ->select();
     }
 
 }
