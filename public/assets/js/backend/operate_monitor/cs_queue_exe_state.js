@@ -64,9 +64,20 @@ define(['jquery', 'bootstrap', 'company', 'table', 'form'], function ($, undefin
                         //     }
                         // },
                         {
-                            field: 'msg', title: "执行信息", width: 130, align: 'left',
+                            field: 'msg',
+                            title: "执行信息",
+                            width: 130,
+                            align: 'left',
                             formatter: function (value, row, index, field) {
-                                return "<span style='display: block;overflow: hidden;text-overflow: ellipsis;white-space: nowrap;' title='" + row.msg + "'>" + value + "</span>";
+                                function decodeHtmlEntities(str) {
+                                    // 递归删除 {} 及其内容
+                                    while (/\{[^{}]*\}/g.test(str)) {
+                                        str = str.replace(/\{[^{}]*\}/g, '').trim();
+                                    }
+                                    return str.substring(0, 20);
+                                }
+                                const decodedValue = decodeHtmlEntities(value);
+                                return `<span style="display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${value}">${decodedValue}</span>`;
                             },
                             cellStyle: function (value, row, index, field) {
                                 return {
