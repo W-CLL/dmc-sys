@@ -363,14 +363,16 @@ class FundManagement
      * 广告主id
      * @param $ad_id
      * 计划id
+     * @param bool $creative_url
+     * 是否需要获取创意素材url
      * @return mixed
      */
-    public static function get_ad_detail($access_token, $advertiser_id, $ad_id)
+    public static function get_ad_detail($access_token, $advertiser_id, $ad_id, bool $creative_url=false)
     {
         $header = array(
             'Access-Token:' . $access_token,
         );
-        $url = "https://ad.oceanengine.com/open_api/v1.0/qianchuan/ad/detail/get/?advertiser_id=" . $advertiser_id . "&ad_id=" . $ad_id . "&request_material_url=false";
+        $url = "https://ad.oceanengine.com/open_api/v1.0/qianchuan/ad/detail/get/?advertiser_id=" . $advertiser_id . "&ad_id=" . $ad_id . "&request_material_url=".$creative_url;
         return Requests::get($url, $header);
     }
 

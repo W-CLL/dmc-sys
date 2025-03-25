@@ -10,6 +10,7 @@ use app\common\model\Queue;
 use app\qcdatahandle\controller\ComFun;
 use fast\Random;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Pool;
 use GuzzleHttp\Psr7\Request;
 use jlqc\FundManagement;
@@ -79,6 +80,28 @@ class Test extends Frontend
         die;
     }
 
+  public function arrayDiffRecursive($array1, $array2) {
+        $diff = [];
+        foreach ($array1 as $key => $value) {
+            if (array_key_exists($key, $array2)) {
+                if (is_array($value) && is_array($array2[$key])) {
+                    // 递归比较子数组
+                    $subDiff = $this->arrayDiffRecursive($value, $array2[$key]);
+                    if (!empty($subDiff)) {
+                        $diff[$key] = $subDiff;
+                    }
+                } elseif ($value !== $array2[$key]) {
+                    // 值不同
+                    $diff[$key] = $value;
+                }
+            } else {
+                // 键不存在于第二个数组
+                $diff[$key] = $value;
+            }
+        }
+        return $diff;
+    }
+
     public function test()
     {
         $token = Cache::get('qc_access_token');
@@ -92,7 +115,7 @@ class Test extends Frontend
 //            'page_size' => 200
 //        ];
 
-        $data = FundManagement::get_ad_detail($token, 1818558201643082, 1824572253132650);
+        $data = FundManagement::get_ad_detail($token, 1821398283882794, 1822866533980266);
 
         $objDetail = $data['data'];
 
@@ -100,7 +123,7 @@ class Test extends Frontend
         unset($objDetail['ad_create_time']);
         unset($objDetail['ad_modify_time']);
         $updateData = $objDetail;
-        $updateData['advertiser_id'] = 1818558201643082;
+        $updateData['advertiser_id'] = 1821398283882794;
         $pattern = '/\(\.\d+_\d+\.\)/';
         // 获取当前时间，精确到秒
         $current_time = "(." . date('md_His') . ".)";
@@ -118,8 +141,7 @@ class Test extends Frontend
                 unset($updateData['delivery_setting']['schedule_time']);
             }
         }
-//        dump($updateData);
-//        die;
+
 //            dump($updateData);
         $url = "https://ad.oceanengine.com/open_api/v1.0/qianchuan/ad/update/";
         $header = array(
@@ -193,8 +215,13 @@ class Test extends Frontend
 
     protected function removeEmptyValues(&$array)
     {
-        if(!empty($array['marketing_scene']) == "SEARCH"){
+        if(isset($array['marketing_scene']) && $array['marketing_scene'] == "SEARCH"){
             unset($array['audience']['new_customer']);
+            if(isset($array['multi_product_creative_list'])){
+                unset($array['programmatic_creative_card']);
+                unset($array['programmatic_creative_media_list']);
+                unset($array['programmatic_creative_title_list']);
+            }
         }
         foreach ($array as $key => &$value) {
             // 如果值是数组，则递归处理
@@ -381,17 +408,17 @@ class Test extends Frontend
 
     public function testGetOpt()
     {
-        $a = Env::get('dmc_ad_config');
-        dump($a);
-        die;
+//        $a = Env::get('dmc_ad_config');
+//        dump($a);
+//        die;
         $token = Cache::get("qc_access_token");
         $params = [
-            'advertiser_id' => "1816613270435852",
-            'object_id' => json_encode(['1816710130289844']),
-            'start_date' => "2025-02-19 00:00:00",
-            'end_date' => "2025-02-19 23:00:00",
-            'page' => "1",
-            'page_size' => "10"];
+            'advertiser_id' => 1818881230249995,
+            'object_id' => ['1825833568147738', '1825833539400009', "1825831570922028", "1825831541866745", "1825830916010355"],
+            'start_time' => "2025-03-18 00:00:00",
+            'end_time' => "2025-03-19 23:59:59",
+            'page' => 1,
+            'page_size' => 20];
         $data = FundManagement::get_opt_log($token, $params);
         dump($data);
         die;
@@ -437,7 +464,7 @@ class Test extends Frontend
         die;
     }
 
-    public function getSingleAdvCost($adv_id = 1805463240633364	, $start_date = '2025-03-01', $end_date = '2025-03-06')
+    public function getSingleAdvCost($adv_id = 1805463240633364, $start_date = '2025-03-01', $end_date = '2025-03-06')
     {
         $access_token = Cache::get("qc_access_token");
         $url = "https://ad.oceanengine.com/open_api/v1.0/qianchuan/report/advertiser/get";
@@ -458,16 +485,81 @@ class Test extends Frontend
         $header = array(
             'Access-Token:' . $access_token,
         );
-        $total= 0;
+        $total = 0;
         $res = Requests::get($url, $header);
-        foreach ($res['data']['list'] as $item){
+        foreach ($res['data']['list'] as $item) {
             $total += $item['stat_cost'];
         }
         dump($total);
-      dump($res);
-      die;
+        dump($res);
+        die;
 
 
     }
+
+    public function getGlobalObj()
+    {
+        $access_token = Cache::get("qc_access_token");
+        $url = "https://api.oceanengine.com/open_api/v1.0/qianchuan/uni_promotion/list/";
+        $start_time = "2024-03-01";
+        $params = [
+            "advertiser_id" => 1818881230249995,//1818881230249995,
+            "start_time" => $start_time . ' 00:00:00',
+            "end_time" => "2025-03-25 23:59:59",
+            "marketing_goal" => "VIDEO_PROM_GOODS",//LIVE_PROM_GOODS,VIDEO_PROM_GOODS
+            "order_type" => "DESC",
+            "page" => 1,
+            "fields" => json_encode(['stat_cost']),
+            "page_size" => 100,
+            "filtering" => [
+                "smart_bid_type" => 'SMART_BID_CUSTOM',//SMART_BID_CUSTOM(默认),SMART_BID_CONSERVATIVE
+                "status" => "ALL_INCLUDE_DELETED",//当marketing_goal==VIDEO_PROM_GOODS 才生效
+                "having_cost" => "ALL",//当marketing_goal==VIDEO_PROM_GOODS  才生效
+                "create_start_date" => $start_time,
+                "create_end_date" => "2025-03-25"
+            ],
+        ];
+        $res = new Client();
+        try {
+            $rep = $res->get($url, [
+                'headers' => [
+                    'Access-Token' => $access_token, // 替换为实际的 token
+                    'Content-Type' => 'application/json', // 可以根据需要添加其他头信息
+                ],
+                'query' => $params]);
+            $contents = $rep->getBody()->getContents();
+            dump(json_decode($contents,true));
+//            dump($rep->getStatusCode());
+        } catch (GuzzleException $e) {
+//            dump($e->getMessage());
+        }
+        die;
+        $url = buildUrlWithParams($url, $params);
+        $header = array(
+            'Access-Token:' . $access_token,
+        );
+        $res = Requests::get($url, $header);
+//        foreach ($res['data']['ad_list'] as $item){
+//          $log =   $this->getGlobalObjOpt(1818519029951595,[$item['ad_info']['id']]);
+//          dump($log);
+//          die;
+//        }
+        dump($res);
+        die;
+    }
+
+    public function getGlobalObjOpt($adv_id, $obj_ids)
+    {
+        $token = Cache::get("qc_access_token");
+        $params = [
+            'advertiser_id' => $adv_id,
+            'object_id' => json_encode($obj_ids),
+            'start_date' => "2025-03-01 00:00:00",
+            'end_date' => "2025-03-21 23:00:00",
+            'page' => "1",
+            'page_size' => 20];
+        return FundManagement::get_opt_log($token, $params);
+    }
+
 
 }

@@ -131,7 +131,7 @@ class AutoUpdateObjName
 
     protected function removeEmptyValues(&$array) {
         //日常销售-商品-搜索-托管
-        if(!empty($array['marketing_scene']) == "SEARCH"){
+        if(isset($array['marketing_scene']) && $array['marketing_scene'] == "SEARCH"){
             unset($array['audience']['new_customer']);
             if(isset($array['multi_product_creative_list'])){
                 unset($array['programmatic_creative_card']);

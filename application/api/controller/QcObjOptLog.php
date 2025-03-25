@@ -34,14 +34,14 @@ class QcObjOptLog extends Api
         }
         $objModel = new \app\admin\model\QcObj();
         $queue = new Queue();
-        $advIds = $objModel->group('adv_id')->column('adv_id');
+        $advIds = $objModel->group('adv_id')->order('adv_id')->column('adv_id');
         if ($start_date&&$end_date) {
             $s = date("Y-m-d H:i:s",$start_date);
             $e = date("Y-m-d H:i:s",$end_date);
         }
         foreach ($advIds as $id) {
             $where['adv_id'] = $id;
-            $objIds = $objModel->where($where)->column('obj_id');
+            $objIds = $objModel->where($where)->order('obj_id')->column('obj_id');
             $count = count($objIds);
             if ($count == 0) {
                 continue;
