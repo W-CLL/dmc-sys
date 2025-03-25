@@ -70,10 +70,15 @@ define(['jquery', 'bootstrap', 'company', 'table', 'form'], function ($, undefin
                             align: 'left',
                             formatter: function (value, row, index, field) {
                                 function decodeHtmlEntities(str) {
+                                    // 检查 str 是否为 null 或 undefined
+                                    if (str == null) {
+                                        return ''; // 返回空字符串或默认值
+                                    }
                                     // 递归删除 {} 及其内容
                                     while (/\{[^{}]*\}/g.test(str)) {
                                         str = str.replace(/\{[^{}]*\}/g, '').trim();
                                     }
+                                    // 仅显示前 20 个字符
                                     return str.substring(0, 20);
                                 }
                                 const decodedValue = decodeHtmlEntities(value);
