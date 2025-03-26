@@ -49,6 +49,9 @@ class AutoUpdateObjName extends Api
         $queue = new Queue();
         $objModel = new ObjModel();
         foreach ($list as $item) {
+            if(in_array($item['advertiser_id'],['1816678114059481'] )){
+                continue;
+            }
             $totalNum = (int)$item['total_num'];
             $companyNum = (int)$item['company_num'];
             $cusNum = $totalNum - $companyNum;
@@ -72,6 +75,9 @@ class AutoUpdateObjName extends Api
                 ->limit($needComNum)
 //              ->fetchSql(true)
                 ->column('obj_id');
+            if(!$list){
+                continue;
+            }
             $queueData = [
                 'need_opt_num' => $needComNum,
                 'adv_id' => $item['advertiser_id'],
@@ -194,9 +200,11 @@ class AutoUpdateObjName extends Api
         $queue = new Queue();
         $objModel = new ObjModel();
         foreach ($adv_list as $item) {
+            if(in_array($item['advertiser_id'],['1816678114059481'] )){
+                continue;
+            }
             foreach ($count_list as $value) {
                 if ($item['day_cost'] > 0 && $item['adv_id'] == $value['advertiser_id']) {
-
                     $need_num = $this->getDailyOperationLimit($item['day_cost']);
                     $companyNum = (int)$value['company_num'];
 
@@ -404,7 +412,7 @@ class AutoUpdateObjName extends Api
             'end2' => $todayEnd
         ])[0]['count'];
 
-        if ($count == 0) {
+        if ($count <=50) {
             Cache::store('redis')->set(self::CACHE_KEY . '_over', 1);
             Cache::store('redis')->set(self::GLOBAL_CACHE_KEY . '_over', 1);
         }
@@ -422,7 +430,8 @@ class AutoUpdateObjName extends Api
             ->field([
                 'SUBSTRING_INDEX(SUBSTRING_INDEX(msg, \'"adv_id":"\', -1), \'"\', 1)' => 'adv_id',
                 'GROUP_CONCAT(id)' => 'id_list',
-                'id'
+                'id',
+                'job_data'
             ])
             ->where('status', 2)
             ->where('msg', 'like', '%' . $str . '%')
@@ -440,8 +449,8 @@ class AutoUpdateObjName extends Api
                 });
                 $queue->where(['id' => ['in', $idListArray]])->delete();
             }
-            if (preg_match('/\d+/', $value['adv_id'], $matches)) {
-                $number = $matches[0];
+            $number = json_decode($value['job_data'],true)['adv_id'];
+            if ($number) {
                 $queue->where(['job_data' => ['like', "%" . $number . "%"], 'id' => ['neq', $value['id']]])->delete();
             }
         }
