@@ -39,8 +39,8 @@ class InitGlobalObj extends Controller
      */
     public function handlerVideo($start,$end)
     {
-        $this->handleGlobalObj->getNewObjRecursive(100, "VIDEO_PROM_GOODS",'SMART_BID_CUSTOM',$start,$end);
-        $this->handleGlobalObj->getNewObjRecursive(100, "VIDEO_PROM_GOODS",'SMART_BID_CONSERVATIVE',$start,$end);
+        $this->handleGlobalObj->getNewObjRecursive(200, "VIDEO_PROM_GOODS",'SMART_BID_CUSTOM',$start,$end);
+        $this->handleGlobalObj->getNewObjRecursive(200, "VIDEO_PROM_GOODS",'SMART_BID_CONSERVATIVE',$start,$end);
     }
 
     /**
@@ -52,8 +52,8 @@ class InitGlobalObj extends Controller
      */
     public function handlerLive($start,$end)
     {
-        $this->handleGlobalObj->getNewObjRecursive(100, "LIVE_PROM_GOODS",'SMART_BID_CUSTOM',$start,$end);
-        $this->handleGlobalObj->getNewObjRecursive(100, "LIVE_PROM_GOODS",'SMART_BID_CONSERVATIVE',$start,$end);
+        $this->handleGlobalObj->getNewObjRecursive(200, "LIVE_PROM_GOODS",'SMART_BID_CUSTOM',$start,$end);
+        $this->handleGlobalObj->getNewObjRecursive(200, "LIVE_PROM_GOODS",'SMART_BID_CONSERVATIVE',$start,$end);
     }
     
 }

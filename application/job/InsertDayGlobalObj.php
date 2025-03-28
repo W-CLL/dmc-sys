@@ -59,7 +59,7 @@ class InsertDayGlobalObj
      */
     protected function doJob($data): bool
     {
-        sleep(15);
+//        sleep(5);
         $requests = $this->buildGuzzleRequest($data['adv_list'],$data['params']);
         list($insertData,$error,$need_rebuild) = $this->sendGuzzleRequest($requests);
         echo date('m-d H:i:s');

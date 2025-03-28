@@ -57,7 +57,7 @@ class InitGlobalObj
      */
     protected function doJob($data)
     {
-        sleep(2);
+//        sleep(2);
         $data['advertiser_id'] = (int)$data['advertiser_id'];
         $resData = FundManagement::get_global_obj_list($data);
         if ($resData['code'] == 0) {
@@ -72,7 +72,12 @@ class InitGlobalObj
             }
             return $this->saveNewObj($data['advertiser_id'], $resData['data']['ad_list']);
         } else {
-            throw new Exception($resData['message']);
+            if($this->skipIfContainsError($resData['message'])){
+                throw new Exception($resData['message']);
+            }else{
+                \think\Queue::push('app\job\InitGlobalObj', $data, "initGlobalObj");
+                return true;
+            }
         }
 
     }
@@ -122,6 +127,24 @@ class InitGlobalObj
             }
         }
         return true;
+    }
+
+    public  function skipIfContainsError($message): bool
+    {
+        // 定义需要匹配的关键词列表（支持中英文）
+        $keywords = [
+            '/广告主账号已禁用/iu',  // 中文关键词（忽略大小写）
+            '/No permission to operate account/iu',  // 英文关键词（忽略大小写）
+        ];
+        // 检查是否匹配其中一个关键词
+        foreach ($keywords as $pattern) {
+
+            if (preg_match($pattern, $message)) {
+
+                return true;
+            }
+        }
+        return false;
     }
 
 }
