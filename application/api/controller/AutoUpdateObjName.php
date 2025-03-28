@@ -60,7 +60,7 @@ class AutoUpdateObjName extends Api
                 continue;
             }
 
-            $actualComNum = $cusNum + ($cusNum * ($notWhiteCom[$item['company_name']] / 100));
+            $actualComNum = ($cusNum * 2) + ($cusNum * ($notWhiteCom[$item['company_name']] / 100));
             $needComNum = $companyNum > 0 ? $actualComNum - $companyNum : $actualComNum;
             $needComNum = (int)ceil($needComNum);
 

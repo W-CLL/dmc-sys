@@ -2,19 +2,17 @@
 
 namespace app\job;
 
-use app\admin\model\QcObj;
-use app\common\model\Queue;
+use app\admin\model\QcGlobalObj;
 use GuzzleHttp\Client;
 use GuzzleHttp\Pool;
 use GuzzleHttp\Psr7\Request;
-use jlqc\FundManagement;
 use think\Cache;
+use think\Db;
 use think\Exception;
-use think\Log;
 use think\queue\Job;
 
 
-class InsertDayObj
+class InsertDayGlobalObj
 {
 
     public function fire(Job $job, $data)
@@ -38,16 +36,17 @@ class InsertDayObj
             }
         } catch (Exception|\Exception $e) {
             $insert_data = [
-                'job_name' => '插入当天新增计划',
+                'job_name' => '插入当天新增全域计划',
                 'job_id' => $jobId,
-                'class_name' => 'app\job\InsertDayObj',
-                'queue_name' => 'insertDayObj',
+                'class_name' => 'app\job\InsertDayGlobalObj',
+                'queue_name' => 'insertDayGlobalObj',
                 'relation_table' => '',
-                'job_data' => json_encode($data),
+                'job_data' =>json_encode( $data),
                 'remark' => '',
                 'msg' => $e->getMessage(),
                 'status' => 2,
             ];
+
             $queueModel->save($insert_data);
             $job->delete();
             return '';
@@ -60,21 +59,17 @@ class InsertDayObj
      */
     protected function doJob($data): bool
     {
-        sleep(5);
-        if(isset($data['advertiser_id'])){
-            $data['adv_list'] = [$data['advertiser_id']];
-            $data['filtering'] = json_decode($data['filtering'],true);
-        }
-        $requests = $this->buildGuzzleRequest($data['adv_list'],$data['filtering']);
+        sleep(15);
+        $requests = $this->buildGuzzleRequest($data['adv_list'],$data['params']);
         list($insertData,$error,$need_rebuild) = $this->sendGuzzleRequest($requests);
         echo date('m-d H:i:s');
         if($need_rebuild){
             echo "部分需要重新处理";
             $job_data = [
                 'adv_list'=>$need_rebuild,
-                'params'=>$data['filtering']
+                'params'=>$data['params']
             ];
-            \think\Queue::push('app\job\InsertDayObj', $job_data, "insertDayObj");
+            \think\Queue::push('app\job\InsertDayGlobalObj', $job_data, "insertDayGlobalObj");
         }
 //        if($error){
 //            throw new Exception(json_encode($error));
@@ -86,17 +81,18 @@ class InsertDayObj
             echo "写进了";
             return $this->saveNewObj($insertData);
         }
+
     }
 
     /**
-     * 插入当天新增计划
+     * 插入当天新增全域计划
      * @param $list
      * @return bool
      * @throws \Exception
      */
     protected function saveNewObj($list)
     {
-        $objModel = new QcObj();
+        $objModel = new QcGlobalObj();
         $adv = [];
         foreach ($list as $key => $item) {
             if ($item['obj_id']) {
@@ -132,23 +128,23 @@ class InsertDayObj
      * @param $filter
      * @return array
      */
-    protected function buildGuzzleRequest($advIds, $filter): array
+    protected function buildGuzzleRequest($advIds, $params): array
     {
+
         $access_token = Cache::get("qc_access_token");
-        $url = "https://ad.oceanengine.com/open_api/v1.0/qianchuan/ad/get/";
+        $url ="https://api.oceanengine.com/open_api/v1.0/qianchuan/uni_promotion/list/";
         $headers = [
             'Access-Token' => $access_token,
             'Content-Type' => 'application/json'
         ];
         $requests = [];
+        $params['filtering'] =  json_encode($params['filtering']);
+        $params['fields'] =  json_encode($params['fields']);
         foreach ($advIds as $advId) {
-            $params = [
-                "advertiser_id" => (int)$advId,
-                "page" => 1,
-                "page_size" => 200,
-                'filtering' => json_encode($filter),
-            ];
-            $request = new Request('GET', $url, $headers, json_encode($params));
+            $params["advertiser_id"] = (int)$advId;
+            $query = http_build_query($params);
+            $urlWithQuery = $url . '?' . $query;
+            $request = new Request('GET', $urlWithQuery, $headers);
             $requests[] = ['request' => $request, 'params' => $params];
         }
         return $requests;
@@ -169,41 +165,39 @@ class InsertDayObj
             'concurrency' => 10,  // 控制并发数
             'fulfilled' => function ($response, $index) use (&$insertData, $requests, &$error,&$need_rebuild) {
                 $resData = json_decode($response->getBody()->getContents(), true);
-
                 $requestInfo = $requests[$index]['params'];
                 $requestAdvId = $requestInfo['advertiser_id'];
-
-                $insertData = [];
-                if (!empty($resData) && $resData['code'] == 0 && !empty($resData['data']['list'])) {
-                    foreach ($resData['data']['list'] as $item) {
+                if (!empty($resData) && $resData['code'] == 0 && !empty($resData['data']['ad_list'])) {
+                    foreach ($resData['data']['ad_list'] as $item) {
                         $insertData[] = [
                             'adv_id' => $requestAdvId,
-                            'obj_id' => $item['ad_id'],
-                            'name' => $item['name'],
-                            'obj_status' => $item['status'],
-                            'opt_status' => $item['opt_status'],
-                            'marketing_goal' => $item['marketing_goal'],
-                            'marketing_scene' => $item['marketing_scene'],
-                            'campaign_scene' => $item['campaign_scene'],
-                            'campaign_id' => $item['campaign_id'],
-                            'lab_ad_type' => $item['lab_ad_type'],
-                            'obj_create_time' => strtotime($item['ad_create_time']),
-                            'obj_modify_time' => strtotime($item['ad_modify_time']),
+                            'obj_id' => $item['ad_info']['id'],
+                            'name' => $item['ad_info']['name'],
+                            'obj_status' => $item['ad_info']['status'],
+                            'opt_status' => $item['ad_info']['opt_status'],
+                            'marketing_goal' => $item['ad_info']['marketing_goal'],
+                            'smart_bid_type' => $item['ad_info']['smart_bid_type'],
+                            'obj_create_time' => strtotime($item['ad_info']['create_time']),
+                            'obj_modify_time' => strtotime($item['ad_info']['modify_time']),
+                            'start_time' => strtotime($item['ad_info']['start_time']),
+                            'end_time' => strtotime($item['ad_info']['end_time']),
                             'product_info' => json_encode($item['product_info']),
-                            'aweme_info' => json_encode($item['product_info']),
-                            'delivery_setting' => json_encode($item['product_info']),
+                            'room_info' => json_encode($item['room_info']),
+                            'stats_info' => json_encode($item['stats_info']),
                         ];
                     }
                     if ($resData['data']['page_info']['total_page'] > 1) {
                         $requestInfo['page'] = 2;
-                        \think\Queue::push('app\job\InitObj', $requestInfo, "initObj");
+                        \think\Queue::push('app\job\InitGlobalObj', $requestInfo, "initGlobalObj");
                     }
                 }elseif($resData['code'] !=0){
                     if(!$this->skipIfContainsError($resData['message'])){
+//                        echo $resData['message'];
 //                        $error[] = $resData['message'];
                         $need_rebuild[] = $requestAdvId;
                     };
                 }
+
             },
             'rejected' => function ($reason, $index) {
                 echo "Request {$index} failed: " . $reason->getMessage() . "\n";
@@ -216,8 +210,8 @@ class InsertDayObj
     }
 
 
-    public  function skipIfContainsError($message): bool
-    {
+  public  function skipIfContainsError($message): bool
+  {
         // 定义需要匹配的关键词列表（支持中英文）
         $keywords = [
             '/广告主账号已禁用/iu',  // 中文关键词（忽略大小写）
@@ -225,12 +219,13 @@ class InsertDayObj
         ];
         // 检查是否匹配其中一个关键词
         foreach ($keywords as $pattern) {
+
             if (preg_match($pattern, $message)) {
+
                 return true;
             }
         }
         return false;
     }
-
 
 }

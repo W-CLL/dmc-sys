@@ -29,6 +29,10 @@ class InitObjOptLog
         try {
             $isJobDone = $this->doJob($data);
             if ($isJobDone) {
+                $queueData = $queueModel->where('job_id', $jobId)->find();
+                if($queueData){
+                    $queueData->save(['id' => $queueData['id'], 'status' => 1, 'msg' => "处理完成"]);
+                }
                 $job->delete();
                 return '';
             } else {

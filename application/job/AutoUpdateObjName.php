@@ -140,7 +140,7 @@ class AutoUpdateObjName
             }
         }
 
-        if(isset($array['audience']['new_customer']) && isset($array['audience']['new_customer'])=="NO_BUY_DOUYIN"){
+        if(isset($array['audience']['new_customer']) && $array['audience']['new_customer']=="NO_BUY_DOUYIN"){
             $array['audience']['new_customer'] = "NO_BUY";
         }
 

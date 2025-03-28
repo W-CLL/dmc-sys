@@ -2,7 +2,9 @@
 
 namespace jlqc;
 
+use GuzzleHttp\Client;
 use Requests;
+use think\Cache;
 
 class FundManagement
 {
@@ -367,12 +369,12 @@ class FundManagement
      * 是否需要获取创意素材url
      * @return mixed
      */
-    public static function get_ad_detail($access_token, $advertiser_id, $ad_id, bool $creative_url=false)
+    public static function get_ad_detail($access_token, $advertiser_id, $ad_id, bool $creative_url = false)
     {
         $header = array(
             'Access-Token:' . $access_token,
         );
-        $url = "https://ad.oceanengine.com/open_api/v1.0/qianchuan/ad/detail/get/?advertiser_id=" . $advertiser_id . "&ad_id=" . $ad_id . "&request_material_url=".$creative_url;
+        $url = "https://ad.oceanengine.com/open_api/v1.0/qianchuan/ad/detail/get/?advertiser_id=" . $advertiser_id . "&ad_id=" . $ad_id . "&request_material_url=" . $creative_url;
         return Requests::get($url, $header);
     }
 
@@ -446,6 +448,23 @@ class FundManagement
             'Access-Token:' . $access_token,
         );
         return Requests::get($url, $header);
+    }
+
+
+    public static function get_global_obj_list($params)
+    {
+        $access_token = Cache::get("qc_access_token");
+        $url = "https://api.oceanengine.com/open_api/v1.0/qianchuan/uni_promotion/list/";
+        $res = new Client();
+        $rep = $res->get($url, [
+            'headers' => [
+                'Access-Token' => $access_token, // 替换为实际的 token
+                'Content-Type' => 'application/json', // 可以根据需要添加其他头信息
+            ],
+            'query' => $params]);
+
+        $contents = $rep->getBody()->getContents();
+        return json_decode($contents, true);
     }
 
 }
