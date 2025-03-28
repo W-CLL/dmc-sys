@@ -25,11 +25,11 @@ class InitObjOptLog
     {
         $jobId = json_decode($job->getRawBody(), true)['id'];
         $queueModel = new \app\common\model\Queue();
-
+        $queueData = $queueModel->where('job_id', $jobId)->find();
         try {
             $isJobDone = $this->doJob($data);
             if ($isJobDone) {
-                $queueData = $queueModel->where('job_id', $jobId)->find();
+
                 if($queueData){
                     $queueData->save(['id' => $queueData['id'], 'status' => 1, 'msg' => "处理完成"]);
                 }
@@ -53,6 +53,11 @@ class InitObjOptLog
                 'msg' => $e->getMessage(),
                 'status' => 2,
             ];
+            if($queueData){
+                $queueData->save(['id' => $queueData['id'], 'status' => 2, 'msg' =>$e->getMessage()]);
+                $job->delete();
+                return '';
+            }
             $queueModel->save($insert_data);
             $job->delete();
             return '';
