@@ -8,6 +8,7 @@ use app\admin\model\QcObj as ObjModel;
 use app\common\controller\Api;
 use app\common\model\QcAdvDayCost;
 use app\common\model\Queue;
+use GuzzleHttp\Client;
 use think\Cache;
 use think\Collection;
 use think\Db;
@@ -27,7 +28,7 @@ class AutoUpdateObjName extends Api
 
     const CACHE_KEY = 'handler_key';
 
-    public function index($user_name = '')
+    public function index($user_name = '',$is_special=false)
     {
         $this->checkQueueExecutionOver(self::CACHE_KEY);
 //        $this->checkTimestamp(self::CACHE_KEY);
@@ -36,8 +37,23 @@ class AutoUpdateObjName extends Api
         list($advList, $notWhiteCom) = $this->getAdvList($page, $redis, $type = 'normal', $user_name);
         $comModel = new Company();
         list($start_time, $end_time) = $this->getPersonStartTime($user_name);
+
+        $url = "https://dmc.zebranumber.cn/index.php/api/auto_update_obj_name/getOptCountCollectionApi/";
+        $res = new Client();
+        $params = [
+            $comModel, $start_time, $end_time, $advList
+        ];
+        $rep = $res->get($url, [
+            'headers' => [
+                'Content-Type' => 'application/json', // 可以根据需要添加其他头信息
+            ],
+            'query' => $params]);
+
+        $contents = $rep->getBody()->getContents();
+        $list = json_decode($contents, true);
         //获取本月的操作日志
-        $list = $this->getOptCountCollection($comModel, $start_time, $end_time, $advList);
+//        $list = $this->getOptCountCollection($comModel, $start_time, $end_time, $advList);
+
         if (empty($list)) {
             echo "全部处理完了";
             Cache::rm('chunk_obj_page');
@@ -49,7 +65,7 @@ class AutoUpdateObjName extends Api
         $queue = new Queue();
         $objModel = new ObjModel();
         foreach ($list as $item) {
-            if(in_array($item['advertiser_id'],['1816678114059481'] )){
+            if (in_array($item['advertiser_id'], ['1816678114059481'])) {
                 continue;
             }
             $totalNum = (int)$item['total_num'];
@@ -60,7 +76,7 @@ class AutoUpdateObjName extends Api
                 continue;
             }
 
-            $actualComNum = ($cusNum * 2) + ($cusNum * ($notWhiteCom[$item['company_name']] / 100));
+            $actualComNum = $cusNum + ($cusNum * ($notWhiteCom[$item['company_name']] / 100));
             $needComNum = $companyNum > 0 ? $actualComNum - $companyNum : $actualComNum;
             $needComNum = (int)ceil($needComNum);
 
@@ -75,7 +91,7 @@ class AutoUpdateObjName extends Api
                 ->limit($needComNum)
 //              ->fetchSql(true)
                 ->column('obj_id');
-            if(!$list){
+            if (!$list) {
                 continue;
             }
             $queueData = [
@@ -85,6 +101,10 @@ class AutoUpdateObjName extends Api
             ];
             //一个广告主下的托管计划，总的操作次数，写入任务再平分次数到每个计划，进行延时修改
             $queue->addQueue('分块处理自动化', 'app\job\ChunkAutoObj', 'chunkAutoObj', $queueData);
+        }
+        if($is_special){
+            echo "全部处理完了";
+            die;
         }
         $page++;
         Cache::set('chunk_obj_page', $page);
@@ -135,28 +155,68 @@ class AutoUpdateObjName extends Api
         $name_where['is_white'] = 0;
 
         $notWhiteCom = $comSettingModel->where($name_where)->column('percentage', 'company_name');
-        //提取公司名
-        $companyNames = array_keys($notWhiteCom);
-        //获取公司下的广告主账户，每页1000条
-        $adv_list = $comCostModel
-            ->alias('cc')
-            ->join('company com', 'cc.adv_id=com.advertiser_id', 'left')
-            ->where(['com.company_name' => ['in', $companyNames], 'cc.cost_date' => ['between', [strtotime(date('Y-m-01')), time()]]])
-            ->where(function ($query) use ($charge_name) {
-                if ($charge_name) {
-                    $query->where(['com.kahuna' => ['like', "%" . $charge_name . "%"]]);
-                }
-            })
-            ->field('cc.*,sum(cc.cost) as mon_cost')
-            ->group('cc.adv_id')
-            ->order('mon_cost desc')
-            ->page($page)
-            ->limit(1000)
-//                ->fetchSql(true)
-            ->select();
-//                ->column('cc.adv_id');
-        $adv_ids = array_column((array)$adv_list, 'adv_id');
+        if(!$this->handlerSpecialAdvIds($user_name)) {
+            //提取公司名
+            $companyNames = array_keys($notWhiteCom);
+            //获取公司下的广告主账户，每页1000条
+            $adv_list = $comCostModel
+                ->alias('cc')
+                ->join('company com', 'cc.adv_id=com.advertiser_id', 'left')
+                ->where(['com.company_name' => ['in', $companyNames], 'cc.cost_date' => ['between', [strtotime(date('Y-m-01')), time()]]])
+                ->where(function ($query) use ($charge_name) {
+                    if ($charge_name) {
+                        $query->where(['com.kahuna' => ['like', "%" . $charge_name . "%"]]);
+                    }
+                })
+                ->field('cc.*,sum(cc.cost) as mon_cost')
+                ->group('cc.adv_id')
+                ->order('mon_cost desc')
+                ->page($page)
+                ->limit(1000)
+                ->select();
+            $adv_ids = array_column((array)$adv_list, 'adv_id');
+        }else{
+            $adv_ids =   $this->handlerSpecialAdvIds($user_name);
+        }
+
         return [$adv_ids, $notWhiteCom];
+    }
+
+    protected function handlerSpecialAdvIds($user_name)
+    {
+        switch ($user_name) {
+
+            case 'zqp':
+                return [1798900300552202, 1801531189762058];
+            case 'mmc':
+                return [1758512218442765, 1772743741289549, 1773547895695364, 1808438118201411];
+            case 'tyx':
+                return [1818881230249995, 1824554226216235,
+                    1779533087983680, 1807807620930633, 1823186604478618, 1777732145496080,
+                    1826838617832651, 1818880672572507, 1796456560379914, 1823934842909353,
+                    1823187059373466, 1814842941111385, 1823187119100122, 1825270447482067,
+                    1777718934256704, 1823839192925242, 1824104708264379, 1804093297773577,
+                    1823661062656266, 1823299972528266, 1823935039296793, 1820235995114505,
+                    1816860832330761, 1825191216068683, 1825098629073929, 1803549847800964,
+                    1823661033728089, 1823661005941898, 1801931161559099];
+            case 'cxy':
+                return [1823660724104201, 1732688473098254, 1772397939168263, 1804786464188426,
+                    1810237662826522, 1809256736272459, 1809252248028363, 1813782044932153,
+                    1807469019857036, 1796584296189083, 1815514481765580, 1802340657956873,
+                    1819213529969162, 1811711435233290, 1826013248757771, 1809255158699163,
+                    1772397751002120, 1772398215539726, 1759237466632205, 1764387173323848,
+                    1801556161640457, 1782499507917914, 1796224122811402, 1795097317258249,
+                    1798288325942298, 1818139722159435, 1795097228606473, 1796224670681257
+                ];
+            case 'wyc':
+                return [
+                    1824009871301770, 1788398571030528, 1768645243407453, 1771126890361864,1780779287451722,  1766313160488974,
+                    1782778829719556, 1820556783165883, 1788873143071812, 1782528755600459, 1788589466283081, 1805241831726148
+                ];
+            default:
+                return [];
+        }
+
     }
 
     /**
@@ -167,7 +227,7 @@ class AutoUpdateObjName extends Api
      * @throws ModelNotFoundException
      * @throws DataNotFoundException
      */
-    public function chunkGlobalComAdv(string $user_name = '')
+    public function chunkGlobalComAdv(string $user_name = '',$is_special=false)
     {
         $this->checkQueueExecutionOver(self::GLOBAL_CACHE_KEY); //
 //        $this->checkTimestamp(self::GLOBAL_CACHE_KEY);
@@ -188,6 +248,7 @@ class AutoUpdateObjName extends Api
             ->select();
 
         $count_list = $this->getOptCountCollection($comModel, $start_time, $end_time, $advList);
+
         if (empty($adv_list)) {
             echo "全部处理完了";
             Cache::rm('chunk_obj_global_page');
@@ -200,7 +261,7 @@ class AutoUpdateObjName extends Api
         $queue = new Queue();
         $objModel = new ObjModel();
         foreach ($adv_list as $item) {
-            if(in_array($item['advertiser_id'],['1816678114059481'] )){
+            if (in_array($item['adv_id'], ['1816678114059481'])) {
                 continue;
             }
             foreach ($count_list as $value) {
@@ -208,11 +269,11 @@ class AutoUpdateObjName extends Api
                     $need_num = $this->getDailyOperationLimit($item['day_cost']);
                     $companyNum = (int)$value['company_num'];
 
-                    if($companyNum >=$need_num){
+                    if ($companyNum >= $need_num) {
                         continue;
                     }
 
-                    $need_num = $need_num-$companyNum;
+                    $need_num = $need_num - $companyNum;
                     $list = $objModel->where([
                         'obj_status' => ['not in', ['DELETE', "TIME_DONE", 'FROZEN']],
                         'lab_ad_type' => "LAB_AD",
@@ -233,6 +294,10 @@ class AutoUpdateObjName extends Api
                     $queue->addQueue('全域分块处理自动化', 'app\job\ChunkAutoObj', 'chunkAutoObj', $queueData);
                 }
             }
+        }
+        if($is_special){
+            echo "全部处理完了";
+            die;
         }
         $page++;
         Cache::set('chunk_obj_global_page', $page);
@@ -412,7 +477,7 @@ class AutoUpdateObjName extends Api
             'end2' => $todayEnd
         ])[0]['count'];
 
-        if ($count <=50) {
+        if ($count <= 50) {
             Cache::store('redis')->set(self::CACHE_KEY . '_over', 1);
             Cache::store('redis')->set(self::GLOBAL_CACHE_KEY . '_over', 1);
         }
@@ -449,7 +514,7 @@ class AutoUpdateObjName extends Api
                 });
                 $queue->where(['id' => ['in', $idListArray]])->delete();
             }
-            $number = json_decode($value['job_data'],true)['adv_id'];
+            $number = json_decode($value['job_data'], true)['adv_id'];
             if ($number) {
                 $queue->where(['job_data' => ['like', "%" . $number . "%"], 'id' => ['neq', $value['id']]])->delete();
             }
@@ -469,7 +534,7 @@ class AutoUpdateObjName extends Api
             case 'tyx':
             case 'wyc':
             case 'mmc':
-                $day_before = 20;
+                $day_before = 25;
                 break;
             default:
                 $day_before = 1;
@@ -510,6 +575,28 @@ class AutoUpdateObjName extends Api
             ->field("adv_c.*, total_stats.total_num, company_stats.company_num")
             ->order('total_stats.total_num desc')
             ->select();
+    }
+
+    public function getOptCountCollectionApi(Company $comModel, $start_time, $end_time, $advList)
+    {
+       $list =  $comModel
+            ->alias('adv_c')
+            ->join(
+                "(SELECT adv_id, COUNT(*) AS total_num FROM fa_qc_obj_opt_log WHERE opt_time BETWEEN " . $start_time . " AND " . $end_time . " GROUP BY adv_id) AS total_stats",
+                'adv_c.advertiser_id = total_stats.adv_id',
+                'left'
+            )
+            ->join(
+                "(SELECT adv_id, COUNT(*) AS company_num FROM fa_qc_obj_opt_log WHERE opt_time BETWEEN " . $start_time . " AND " . $end_time . " AND operator IN (SELECT name FROM fa_ad_operator WHERE status = 1) GROUP BY adv_id) AS company_stats",
+                'adv_c.advertiser_id = company_stats.adv_id',
+                'left'
+            )
+            ->where(['adv_c.advertiser_id' => ['in', $advList], 'total_stats.total_num' => ['>', 0]])
+            ->field("adv_c.*, total_stats.total_num, company_stats.company_num")
+            ->order('total_stats.total_num desc')
+            ->select();
+
+        return json($list);
     }
 
 }
