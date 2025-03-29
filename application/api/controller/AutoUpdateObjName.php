@@ -527,14 +527,12 @@ class AutoUpdateObjName extends Api
     {
         $mon = date('d');
         switch ($user_name) {
+            case 'mmc':
+            case 'wyc':
+            case 'tyx':
+            case 'cxy':
             case 'zqp':
                 $day_before = $mon;
-                break;
-            case 'cxy':
-            case 'tyx':
-            case 'wyc':
-            case 'mmc':
-                $day_before = 25;
                 break;
             default:
                 $day_before = 1;
