@@ -83,16 +83,31 @@ class AutoUpdateObjName extends Api
             $needComNum = (int)ceil($needComNum);
 
             //只查托管的计划
-            $list = $objModel->where([
-                'obj_status' => ['not in', ['DELETE', "TIME_DONE", 'FROZEN']],
-                'lab_ad_type' => "LAB_AD",
-                'opt_status' => ['not in', ['DELETE', "TIME_DONE", 'FROZEN']],
-                'adv_id' => $item['advertiser_id']
-            ])
-                ->field('obj_id,adv_id')
-                ->limit($needComNum)
-//              ->fetchSql(true)
-                ->column('obj_id');
+//            $list = $objModel->where([
+//                'obj_status' => ['not in', ['DELETE', "TIME_DONE", 'FROZEN']],
+//                'lab_ad_type' => "LAB_AD",
+//                'opt_status' => ['not in', ['DELETE', "TIME_DONE", 'FROZEN']],
+//                'adv_id' => $item['advertiser_id']
+//            ])
+//                ->field('obj_id,adv_id')
+//                ->limit($needComNum)
+////              ->fetchSql(true)
+//                ->column('obj_id');
+
+            $url = "http://dmc.zebranumber.cn/index.php/api/auto_update_obj_name/getObjListApi/";
+            $res = new Client(['verify' => false]);
+            $params = [
+                $item['advertiser_id'], $needComNum
+            ];
+            $rep = $res->get($url, [
+                'headers' => [
+                    'Content-Type' => 'application/json', // 可以根据需要添加其他头信息
+                ],
+                'query' => $params]);
+
+            $contents = $rep->getBody()->getContents();
+            $list = json_decode($contents, true);
+
             if (!$list) {
                 continue;
             }
@@ -292,15 +307,28 @@ class AutoUpdateObjName extends Api
                     }
 
                     $need_num = $need_num - $companyNum;
-                    $list = $objModel->where([
-                        'obj_status' => ['not in', ['DELETE', "TIME_DONE", 'FROZEN']],
-                        'lab_ad_type' => "LAB_AD",
-                        'opt_status' => ['not in', ['DELETE', "TIME_DONE", 'FROZEN']],
-                        'adv_id' => $item['adv_id']
-                    ])
-                        ->field('obj_id,adv_id')
-                        ->limit($need_num)
-                        ->column('obj_id');
+//                    $list = $objModel->where([
+//                        'obj_status' => ['not in', ['DELETE', "TIME_DONE", 'FROZEN']],
+//                        'lab_ad_type' => "LAB_AD",
+//                        'opt_status' => ['not in', ['DELETE', "TIME_DONE", 'FROZEN']],
+//                        'adv_id' => $item['adv_id']
+//                    ])
+//                        ->field('obj_id,adv_id')
+//                        ->limit($need_num)
+//                        ->column('obj_id');
+                    $url = "http://dmc.zebranumber.cn/index.php/api/auto_update_obj_name/getObjListApi/";
+                    $res = new Client(['verify' => false]);
+                    $params = [
+                        $item['adv_id'], $need_num
+                    ];
+                    $rep = $res->get($url, [
+                        'headers' => [
+                            'Content-Type' => 'application/json', // 可以根据需要添加其他头信息
+                        ],
+                        'query' => $params]);
+
+                    $contents = $rep->getBody()->getContents();
+                    $list = json_decode($contents, true);
                     if (!$list) {
                         continue;
                     }
@@ -611,6 +639,24 @@ class AutoUpdateObjName extends Api
             ->field("adv_c.*, total_stats.total_num, company_stats.company_num")
             ->order('total_stats.total_num desc')
             ->select();
+
+        return json($list);
+    }
+
+
+    public function getObjListApi($adv_id,$needComNum)
+    {
+        $objModel = new ObjModel();
+        $list = $objModel->where([
+            'obj_status' => ['not in', ['DELETE', "TIME_DONE", 'FROZEN']],
+            'lab_ad_type' => "LAB_AD",
+            'opt_status' => ['not in', ['DELETE', "TIME_DONE", 'FROZEN']],
+            'adv_id' => $adv_id
+        ])
+            ->field('obj_id,adv_id')
+            ->limit($needComNum)
+//              ->fetchSql(true)
+            ->column('obj_id');
 
         return json($list);
     }
