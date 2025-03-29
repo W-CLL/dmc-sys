@@ -72,7 +72,7 @@ class InsertDayObj
             $data['filtering'] = json_decode($data['filtering'],true);
         }
         if(isset($data['params'])){
-            $data['filtering'] = json_decode($data['params'],true);
+            $data['filtering'] = $data['params'];
         }
         $requests = $this->buildGuzzleRequest($data['adv_list'],$data['filtering']);
         list($insertData,$error,$need_rebuild) = $this->sendGuzzleRequest($requests);
