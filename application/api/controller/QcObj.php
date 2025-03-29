@@ -80,6 +80,36 @@ class QcObj extends Api
     }
 
 
+
+    public function handlerSpecialAdvId($type)
+    {
+        $allAdvIds = $this->getAllAdvIds();
+        $chunks = array_chunk($allAdvIds, 200);
+        foreach ($chunks as $chunk) {
+            $job_data = [
+                'filtering' => [
+                    'marketing_goal' => $type,
+                    'ad_create_start_date' => "2025-03-01",
+                    'ad_create_end_date' => "2025-03-29",
+                    'marketing_scene' => 'ALL',
+                    "status" => "ALL_INCLUDE_DELETED",
+                    "campaign_scene" => [
+                        'DAILY_SALE',
+                        'NEW_CUSTOMER_TRANSFORMATION',
+                        'LIVE_HEAT',
+                        'PLANT_GRASS',
+                        'PRODUCT_HEAT',
+                        'NEW_PRODUCT_BOOST',
+                    ],
+                ],
+                'adv_list' => $chunk
+            ];
+            \think\Queue::push('app\job\InsertDayObj', $job_data, "insertDayObj");
+        }
+        echo "全部处理完了";
+    }
+
+
     public function updateObjStatus()
     {
 

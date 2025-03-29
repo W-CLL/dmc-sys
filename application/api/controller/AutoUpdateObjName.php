@@ -30,7 +30,9 @@ class AutoUpdateObjName extends Api
 
     public function index($user_name = '',$is_special=false)
     {
-        $this->checkQueueExecutionOver(self::CACHE_KEY);
+        if(!$is_special){
+            $this->checkQueueExecutionOver(self::GLOBAL_CACHE_KEY); //
+        }
 //        $this->checkTimestamp(self::CACHE_KEY);
         $page = Cache::get('chunk_obj_page', 1);
         $redis = Cache::store('redis');
@@ -38,8 +40,8 @@ class AutoUpdateObjName extends Api
         $comModel = new Company();
         list($start_time, $end_time) = $this->getPersonStartTime($user_name);
 
-        $url = "https://dmc.zebranumber.cn/index.php/api/auto_update_obj_name/getOptCountCollectionApi/";
-        $res = new Client();
+        $url = "http://dmc.zebranumber.cn/index.php/api/auto_update_obj_name/getOptCountCollectionApi/";
+        $res = new Client(['verify' => false]);
         $params = [
             $comModel, $start_time, $end_time, $advList
         ];
@@ -229,7 +231,10 @@ class AutoUpdateObjName extends Api
      */
     public function chunkGlobalComAdv(string $user_name = '',$is_special=false)
     {
-        $this->checkQueueExecutionOver(self::GLOBAL_CACHE_KEY); //
+        if(!$is_special){
+            $this->checkQueueExecutionOver(self::GLOBAL_CACHE_KEY); //
+        }
+
 //        $this->checkTimestamp(self::GLOBAL_CACHE_KEY);
         $page = Cache::get('chunk_obj_global_page', 1);
         $redis = Cache::store('redis');
@@ -247,7 +252,20 @@ class AutoUpdateObjName extends Api
             ->group('adv_id')
             ->select();
 
-        $count_list = $this->getOptCountCollection($comModel, $start_time, $end_time, $advList);
+//        $count_list = $this->getOptCountCollection($comModel, $start_time, $end_time, $advList);
+        $url = "http://dmc.zebranumber.cn/index.php/api/auto_update_obj_name/getOptCountCollectionApi/";
+        $res = new Client(['verify' => false]);
+        $params = [
+            $comModel, $start_time, $end_time, $advList
+        ];
+        $rep = $res->get($url, [
+            'headers' => [
+                'Content-Type' => 'application/json', // 可以根据需要添加其他头信息
+            ],
+            'query' => $params]);
+
+        $contents = $rep->getBody()->getContents();
+        $count_list = json_decode($contents, true);
 
         if (empty($adv_list)) {
             echo "全部处理完了";
