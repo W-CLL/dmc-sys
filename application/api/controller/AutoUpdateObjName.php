@@ -9,6 +9,7 @@ use app\common\controller\Api;
 use app\common\model\QcAdvDayCost;
 use app\common\model\Queue;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
 use think\Cache;
 use think\Collection;
 use think\Db;
@@ -245,7 +246,7 @@ class AutoUpdateObjName extends Api
      * @return void
      * @throws DbException
      * @throws ModelNotFoundException
-     * @throws DataNotFoundException
+     * @throws DataNotFoundException|GuzzleException
      */
     public function chunkGlobalComAdv(string $user_name = '', $is_special = false)
     {

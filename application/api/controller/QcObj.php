@@ -21,13 +21,13 @@ class QcObj extends Api
 
     public function getAllAdvIds()
     {
-        $list = Cache::get('company_list_obj');
+        $list = Cache::rm('company_list_obj');
         if (!$list) {
             $list = Db::name('company')
                 ->where('adv_status', 1)
                 ->order('advertiser_id', 'desc')
                 ->column('advertiser_id');
-            Cache::set('company_list_obj', $list, 21600);
+//            Cache::set('company_list_obj', $list, 21600);
         }
         return $list;
     }

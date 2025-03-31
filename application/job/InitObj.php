@@ -62,6 +62,7 @@ class InitObj
      */
     protected function doJob($data)
     {
+        echo date('m-d H:i:s');
         $accessToken = Cache::get("qc_access_token");
         $data['advertiser_id'] = (int)$data['advertiser_id'];
         $resData = FundManagement::get_ad_list($accessToken, $data);
@@ -118,6 +119,7 @@ class InitObj
             ];
         }
         if ($insertData) {
+            echo "写进了";
             $res = $objModel->saveAll($insertData);
             if ($res) {
                 return true;
