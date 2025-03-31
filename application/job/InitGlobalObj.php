@@ -124,6 +124,7 @@ class InitGlobalObj
             ];
         }
         if ($insertData) {
+            echo "写进了";
             $res = $objModel->saveAll($insertData);
             if ($res) {
                 return true;

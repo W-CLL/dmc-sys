@@ -29,15 +29,21 @@ class AutoUpdateObjName extends Api
 
     const CACHE_KEY = 'handler_key';
 
+    /**
+     * @throws DataNotFoundException
+     * @throws DbException
+     * @throws ModelNotFoundException
+     * @throws GuzzleException
+     */
     public function index($user_name = '', $is_special = false)
     {
         if (!$is_special) {
-            $this->checkQueueExecutionOver(self::GLOBAL_CACHE_KEY); //
+            $this->checkQueueExecutionOver(self::GLOBAL_CACHE_KEY);
         }
 //        $this->checkTimestamp(self::CACHE_KEY);
         $page = Cache::get('chunk_obj_page', 1);
         $redis = Cache::store('redis');
-        list($advList, $notWhiteCom) = $this->getAdvList($page, $redis, $type = 'normal', $user_name);
+        list($advList, $notWhiteCom) = $this->getAdvList($page, $redis, $type = 'normal', $user_name,$is_special = false);
         $comModel = new Company();
         list($start_time, $end_time) = $this->getPersonStartTime($user_name);
 
@@ -136,14 +142,15 @@ class AutoUpdateObjName extends Api
      * 获取公司设置
      * @param $page
      * @param $redis
-     * @param string $type
-     * @param string $user_name
+     * @param $type
+     * @param  $user_name
+     * @param $is_special
      * @return array
      * @throws DataNotFoundException
      * @throws DbException
      * @throws ModelNotFoundException
      */
-    protected function getAdvList($page, $redis, string $type = 'normal', string $user_name = ''): array
+    protected function getAdvList($page, $redis,  $type,$user_name,$is_special): array
     {
         $operator = [
             'zqp' => "张秋萍",
@@ -176,7 +183,7 @@ class AutoUpdateObjName extends Api
         $name_where['is_white'] = 0;
 
         $notWhiteCom = $comSettingModel->where($name_where)->column('percentage', 'company_name');
-        if (!$this->handlerSpecialAdvIds($user_name)) {
+        if (!$is_special) {
             //提取公司名
             $companyNames = array_keys($notWhiteCom);
             //获取公司下的广告主账户，每页1000条

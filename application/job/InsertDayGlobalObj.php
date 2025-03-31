@@ -135,9 +135,8 @@ class InsertDayGlobalObj
 
     /**
      * 构建请求
-     * @param $count
      * @param $advIds
-     * @param $filter
+     * @param $params
      * @return array
      */
     protected function buildGuzzleRequest($advIds, $params): array
