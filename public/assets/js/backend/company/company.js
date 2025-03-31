@@ -147,9 +147,12 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
             $(".btn-changeteacher").on('click', function () {
                 var checkids = [];
                 checkids = getIdSelections();
+                var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent); // 判断是否为移动端
+                var width = isMobile ? '80%' : '40%'; // 手机端80%，电脑端40%
+                var height = '60%'; // 高度统一为60%
                 layer.open({
                     type: 2,
-                    area: ['680px', '520px'],
+                    area: [width, height],
                     content: 'company/batch_binding',
                     fixed: false, // 不固定
                     maxmin: true,
