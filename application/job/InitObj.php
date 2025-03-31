@@ -5,7 +5,10 @@ namespace app\job;
 use app\admin\model\QcObj;
 use jlqc\FundManagement;
 use think\Cache;
+use think\db\exception\DataNotFoundException;
+use think\db\exception\ModelNotFoundException;
 use think\Exception;
+use think\exception\DbException;
 use think\Log;
 use think\queue\Job;
 
@@ -13,15 +16,20 @@ use think\queue\Job;
 class InitObj
 {
 
+    /**
+     * @throws DbException
+     * @throws ModelNotFoundException
+     * @throws DataNotFoundException
+     */
     public function fire(Job $job, $data)
     {
+
         $jobId = json_decode($job->getRawBody(), true)['id'];
         $queueModel = new \app\common\model\Queue();
         $queueData = $queueModel->where('job_id', $jobId)->find();
         try {
             $isJobDone = $this->doJob($data);
             if ($isJobDone) {
-
                 if ($queueData) {
                     $queueData->save(['id' => $queueData['id'], 'status' => 1, 'msg' => "处理完成"]);
                 }
@@ -29,12 +37,12 @@ class InitObj
                 echo "处理完了这一条了";
                 return '';
             } else {
-                if ($job->attempts() > 1) {
+                if ($job->attempts() >=2 ) {
                     $job->delete();
                     return '';
                 }
             }
-        } catch (Exception $e) {
+        } catch (Exception | \Exception $e) {
             $insert_data = [
                 'job_name' => '获取第n页计划',
                 'job_id' => $jobId,
@@ -61,7 +69,7 @@ class InitObj
      * @throws Exception
      * @throws \Exception
      */
-    protected function doJob($data)
+    protected function doJob($data): bool
     {
         $accessToken = Cache::get("qc_access_token");
         $data['advertiser_id'] = (int)$data['advertiser_id'];
@@ -93,7 +101,7 @@ class InitObj
      * @return boolean
      * @throws \Exception
      */
-    protected function saveNewObj($advId, $list)
+    protected function saveNewObj($advId, $list): bool
     {
         $repObjIds = array_column($list, 'ad_id');
         $objModel = new QcObj();
