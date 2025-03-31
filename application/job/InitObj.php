@@ -73,7 +73,7 @@ class InitObj
                 return true;
             }
             $totalPage = $resData['data']['page_info']['total_page'];
-            $endPage = $data['page'] + 4;
+            $endPage = $data['page'] + 6;
             $nextStart = $endPage + 1;
             if ($endPage > $totalPage) {
                 $endPage = $totalPage;
@@ -90,7 +90,7 @@ class InitObj
                     }
                      $this->saveNewObj($data['advertiser_id'], $resData['data']['list']);
                 }else {
-                    $data['page'] = $nextStart;
+                    $data['page'] = $page;
                     \think\Queue::push('app\job\InitObj', $data, "initObj");
                     throw new Exception($resData['message']);
                 }

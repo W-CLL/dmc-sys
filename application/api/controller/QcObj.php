@@ -22,13 +22,13 @@ class QcObj extends Api
     public function getAllAdvIds()
     {
         $list = Cache::rm('company_list_obj');
-        if (!$list) {
+//        if (!$list) {
             $list = Db::name('company')
                 ->where('adv_status', 1)
                 ->order('advertiser_id', 'desc')
                 ->column('advertiser_id');
 //            Cache::set('company_list_obj', $list, 21600);
-        }
+//        }
         return $list;
     }
 
@@ -89,8 +89,8 @@ class QcObj extends Api
             $job_data = [
                 'filtering' => [
                     'marketing_goal' => $type,
-                    'ad_create_start_date' => "2025-02-01",
-                    'ad_create_end_date' => "2025-02-28",
+                    'ad_create_start_date' => "2025-03-01",
+                    'ad_create_end_date' => "2025-03-31",
                     'marketing_scene' => 'ALL',
                     "status" => "ALL_INCLUDE_DELETED",
                     "campaign_scene" => [
