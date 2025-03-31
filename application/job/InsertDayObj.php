@@ -92,7 +92,7 @@ class InsertDayObj
             echo "都是空的";
             return true;
         }else{
-            echo "写进了";
+
             return $this->saveNewObj($insertData);
         }
     }
@@ -115,14 +115,22 @@ class InsertDayObj
                 $adv[$item['adv_id']][] = $item['obj_id'];
             }
         }
-        $keys = array_keys($adv);
-        $values = array_values($adv);
-        $flattenedValues = array_merge(...$values);
-        $exitedIds = $objModel->where(['adv_id' => ['in', $keys], 'obj_id' => ['in', $flattenedValues]])->column('obj_id');
+
+        $exitedIds =[];
+        foreach ($adv as $key=> $item){
+            $exitedIds[] = $objModel->where(['adv_id'=>$key,'obj_id' => ['in', $item]])->column('obj_id');
+        }
+        $exitedIds = array_merge(...$exitedIds);
+
+//        $keys = array_keys($adv);
+//        $values = array_values($adv);
+//        $flattenedValues = array_merge(...$values);
+//        $exitedIds = $objModel->where([ 'obj_id' => ['in', $flattenedValues]])->column('obj_id');
         $afterData = array_filter($list, function ($item) use ($exitedIds) {
             return !in_array($item['obj_id'], $exitedIds);
         });
         if ($afterData) {
+            echo "写进了";
             $res = $objModel->saveAll($afterData);
             if ($res) {
                 return true;
@@ -136,7 +144,6 @@ class InsertDayObj
 
     /**
      * 构建请求
-     * @param $count
      * @param $advIds
      * @param $filter
      * @return array

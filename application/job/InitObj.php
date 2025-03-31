@@ -67,6 +67,7 @@ class InitObj
         $data['advertiser_id'] = (int)$data['advertiser_id'];
         $resData = FundManagement::get_ad_list($accessToken, $data);
         if ($resData['code'] == 0) {
+            echo "正常获取的条数".$resData['page_info']['page_size'];
             if (empty($resData['data']['list'])) {
                 echo $data['advertiser_id'] . "当天没有新建计划";
                 return true;

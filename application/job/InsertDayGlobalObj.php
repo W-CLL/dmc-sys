@@ -64,7 +64,7 @@ class InsertDayGlobalObj
      */
     protected function doJob($data): bool
     {
-//        sleep(5);
+//        sleep(10);
         $requests = $this->buildGuzzleRequest($data['adv_list'],$data['params']);
         list($insertData,$error,$need_rebuild) = $this->sendGuzzleRequest($requests);
         echo date('m-d H:i:s');
@@ -83,7 +83,6 @@ class InsertDayGlobalObj
             echo "都是空的";
             return true;
         }else{
-            echo "写进了";
             return $this->saveNewObj($insertData);
         }
 
@@ -107,14 +106,22 @@ class InsertDayGlobalObj
                 $adv[$item['adv_id']][] = $item['obj_id'];
             }
         }
-        $keys = array_keys($adv);
-        $values = array_values($adv);
-        $flattenedValues = array_merge(...$values);
-        $exitedIds = $objModel->where(['adv_id' => ['in', $keys], 'obj_id' => ['in', $flattenedValues]])->column('obj_id');
+        $exitedIds =[];
+        foreach ($adv as $key=> $item){
+            $exitedIds[] = $objModel->where(['adv_id'=>$key,'obj_id' => ['in', $item]])->column('obj_id');
+        }
+        $exitedIds = array_merge(...$exitedIds);
+
+//        $keys = array_keys($adv);
+//        $values = array_values($adv);
+//        $flattenedValues = array_merge(...$values);
+//        $exitedIds = $objModel->where(['obj_id' => ['in', $flattenedValues]])->column('obj_id');
         $afterData = array_filter($list, function ($item) use ($exitedIds) {
             return !in_array($item['obj_id'], $exitedIds);
         });
+        echo '后'.count($afterData);
         if ($afterData) {
+            echo "写进了";
             $res = $objModel->saveAll($afterData);
             if ($res) {
                 return true;
@@ -161,6 +168,7 @@ class InsertDayGlobalObj
      */
     protected function sendGuzzleRequest($requests)
     {
+
         $insertData = [];
         $error = [];
         $need_rebuild = [];
