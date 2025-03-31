@@ -655,6 +655,31 @@ class Store extends Backend
     }
 
 
+    /**
+     * 重置密码
+     */
+    public function reset_pwd($ids = null){
+        if ($this->request->isPost()) {
+            $this->token();
+            $password = input("password");
+            // 验证密码长度最少6位
+            if (strlen($password) < 6){
+                $this->error('密码长度最少6位');
+            }
+            $data['salt'] = Random::alnum();
+            $data['password'] = $this->auth->getEncryptPassword($password,$data['salt']);
+            $row = Db::name("store")->where("id",$ids)->update($data);
+            if ($row){
+                $this->success("修改成功");
+            }else{
+                $this->error("修改失败");
+            }
+        }
+        return $this->view->fetch();
+    }
+
+
+
 
 
 }

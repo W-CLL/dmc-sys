@@ -121,6 +121,18 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', 'bootstrap-table-fixe
                                         return false;
                                     }
                                 },
+                            },{
+                                name: "reset_pwd",
+                                text: "重置密码",//按钮名称
+                                classname: 'btn btn-xs btn-success btn-dialog ',
+                                // classname: 'btn btn-xs btn-success btn-magic btn-dialog',
+                                icon: 'fa fa-refresh',
+                                url: 'store/store/reset_pwd',//指向控制器对应方法
+                                confirm: '重置密码',
+                                visible: function (row) {
+                                    //返回true时按钮显示,返回false隐藏
+                                    return true;
+                                }
                             }
                             ], table: table, events: Table.api.events.operate, formatter: Table.api.formatter.operate}
                     ]
@@ -144,6 +156,9 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', 'bootstrap-table-fixe
             Controller.api.bindevent();
         },
         edit_sub_account: function () {
+            Controller.api.bindevent();
+        },
+        reset_pwd: function () {
             Controller.api.bindevent();
         },
         transfer_records: function () {
