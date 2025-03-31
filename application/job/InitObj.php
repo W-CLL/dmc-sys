@@ -86,7 +86,7 @@ class InitObj
                     echo "正常获取的页数" . $resData['data']['page_info']['page'].":". $data['page'];
                     if (empty($resData['data']['list'])) {
                         echo $data['advertiser_id'] . "当天没有新建计划";
-                        continue;
+                        return true;
                     }
                      $this->saveNewObj($data['advertiser_id'], $resData['data']['list']);
                 }else {
