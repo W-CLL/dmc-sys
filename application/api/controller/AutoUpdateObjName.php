@@ -28,9 +28,9 @@ class AutoUpdateObjName extends Api
 
     const CACHE_KEY = 'handler_key';
 
-    public function index($user_name = '',$is_special=false)
+    public function index($user_name = '', $is_special = false)
     {
-        if(!$is_special){
+        if (!$is_special) {
             $this->checkQueueExecutionOver(self::GLOBAL_CACHE_KEY); //
         }
 //        $this->checkTimestamp(self::CACHE_KEY);
@@ -43,7 +43,10 @@ class AutoUpdateObjName extends Api
         $url = "http://dmc.zebranumber.cn/index.php/api/auto_update_obj_name/getOptCountCollectionApi/";
         $res = new Client(['verify' => false]);
         $params = [
-            $comModel, $start_time, $end_time, $advList
+            'comModel' => $comModel,
+            'start_time' => $start_time,
+            'end_time' => $end_time,
+            'advList' => $advList
         ];
         $rep = $res->get($url, [
             'headers' => [
@@ -119,7 +122,7 @@ class AutoUpdateObjName extends Api
             //一个广告主下的托管计划，总的操作次数，写入任务再平分次数到每个计划，进行延时修改
             $queue->addQueue('分块处理自动化', 'app\job\ChunkAutoObj', 'chunkAutoObj', $queueData);
         }
-        if($is_special){
+        if ($is_special) {
             echo "全部处理完了";
             die;
         }
@@ -172,7 +175,7 @@ class AutoUpdateObjName extends Api
         $name_where['is_white'] = 0;
 
         $notWhiteCom = $comSettingModel->where($name_where)->column('percentage', 'company_name');
-        if(!$this->handlerSpecialAdvIds($user_name)) {
+        if (!$this->handlerSpecialAdvIds($user_name)) {
             //提取公司名
             $companyNames = array_keys($notWhiteCom);
             //获取公司下的广告主账户，每页1000条
@@ -192,8 +195,8 @@ class AutoUpdateObjName extends Api
                 ->limit(1000)
                 ->select();
             $adv_ids = array_column((array)$adv_list, 'adv_id');
-        }else{
-            $adv_ids =   $this->handlerSpecialAdvIds($user_name);
+        } else {
+            $adv_ids = $this->handlerSpecialAdvIds($user_name);
         }
 
         return [$adv_ids, $notWhiteCom];
@@ -227,7 +230,7 @@ class AutoUpdateObjName extends Api
                 ];
             case 'wyc':
                 return [
-                    1824009871301770, 1788398571030528, 1768645243407453, 1771126890361864,1780779287451722,  1766313160488974,
+                    1824009871301770, 1788398571030528, 1768645243407453, 1771126890361864, 1780779287451722, 1766313160488974,
                     1782778829719556, 1820556783165883, 1788873143071812, 1782528755600459, 1788589466283081, 1805241831726148
                 ];
             default:
@@ -244,9 +247,9 @@ class AutoUpdateObjName extends Api
      * @throws ModelNotFoundException
      * @throws DataNotFoundException
      */
-    public function chunkGlobalComAdv(string $user_name = '',$is_special=false)
+    public function chunkGlobalComAdv(string $user_name = '', $is_special = false)
     {
-        if(!$is_special){
+        if (!$is_special) {
             $this->checkQueueExecutionOver(self::GLOBAL_CACHE_KEY); //
         }
 
@@ -271,7 +274,10 @@ class AutoUpdateObjName extends Api
         $url = "http://dmc.zebranumber.cn/index.php/api/auto_update_obj_name/getOptCountCollectionApi/";
         $res = new Client(['verify' => false]);
         $params = [
-            $comModel, $start_time, $end_time, $advList
+            'comModel' => $comModel,
+            'start_time' => $start_time,
+            'end_time' => $end_time,
+            'advList' => $advList
         ];
         $rep = $res->get($url, [
             'headers' => [
@@ -341,7 +347,7 @@ class AutoUpdateObjName extends Api
                 }
             }
         }
-        if($is_special){
+        if ($is_special) {
             echo "全部处理完了";
             die;
         }
@@ -623,7 +629,7 @@ class AutoUpdateObjName extends Api
 
     public function getOptCountCollectionApi(Company $comModel, $start_time, $end_time, $advList)
     {
-       $list =  $comModel
+        $list = $comModel
             ->alias('adv_c')
             ->join(
                 "(SELECT adv_id, COUNT(*) AS total_num FROM fa_qc_obj_opt_log WHERE opt_time BETWEEN " . $start_time . " AND " . $end_time . " GROUP BY adv_id) AS total_stats",
@@ -644,7 +650,7 @@ class AutoUpdateObjName extends Api
     }
 
 
-    public function getObjListApi($adv_id,$needComNum)
+    public function getObjListApi($adv_id, $needComNum)
     {
         $objModel = new ObjModel();
         $list = $objModel->where([

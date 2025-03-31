@@ -89,8 +89,8 @@ class QcObj extends Api
             $job_data = [
                 'filtering' => [
                     'marketing_goal' => $type,
-                    'ad_create_start_date' => "2025-03-01",
-                    'ad_create_end_date' => "2025-03-29",
+                    'ad_create_start_date' => "2025-02-01",
+                    'ad_create_end_date' => "2025-02-28",
                     'marketing_scene' => 'ALL',
                     "status" => "ALL_INCLUDE_DELETED",
                     "campaign_scene" => [
