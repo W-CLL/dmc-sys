@@ -74,10 +74,10 @@ class InitObj
             }
             $totalPage = $resData['data']['page_info']['total_page'];
             $endPage = $data['page'] + 6;
-            $nextStart = $endPage + 1;
-            if ($endPage > $totalPage) {
+//            $nextStart = $endPage + 1;
+            if ($endPage >= $totalPage) {
                 $endPage = $totalPage;
-                $nextStart = '';
+//                $nextStart = 0;
             }
             for ($page = $data['page']; $page < $endPage; $page++) {
                 $data['page'] = $page;
@@ -91,13 +91,13 @@ class InitObj
                      $this->saveNewObj($data['advertiser_id'], $resData['data']['list']);
                 }else {
                     $data['page'] = $page;
-                    \think\Queue::push('app\job\InitObj', $data, "initObj");
+                    \think\Queue::later(100,'app\job\InitObj', $data, "initObj");
                     throw new Exception($resData['message']);
                 }
             }
-            if ($nextStart) {
-                $data['page'] = $nextStart;
-                \think\Queue::push('app\job\InitObj', $data, "initObj");
+            if ($endPage) {
+                $data['page'] = $endPage;
+                \think\Queue::later(100,'app\job\InitObj', $data, "initObj");
             }
             return true;
         } else {
