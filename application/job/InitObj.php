@@ -62,46 +62,20 @@ class InitObj
      */
     protected function doJob($data)
     {
-        echo date('m-d H:i:s');
         $accessToken = Cache::get("qc_access_token");
         $data['advertiser_id'] = (int)$data['advertiser_id'];
         $resData = FundManagement::get_ad_list($accessToken, $data);
-        if ($resData['code'] == 0 ) {
-            echo "正常获取的条数" . $resData['data']['page_info']['page_size'];
-            echo "总页数" . $resData['data']['page_info']['total_page'];
-            echo "真实条数".count($resData['data']['list']);
+        if ($resData['code'] == 0) {
             if (empty($resData['data']['list'])) {
                 echo $data['advertiser_id'] . "当天没有新建计划";
                 return true;
             }
             $totalPage = $resData['data']['page_info']['total_page'];
-            $endPage = $data['page'] + 6;
-//            $nextStart = $endPage + 1;
-            if ($endPage >= $totalPage) {
-                $endPage = $totalPage;
-//                $nextStart = 0;
-            }
-            for ($page = $data['page']; $page < $endPage; $page++) {
-                $data['page'] = $page;
-                $resData = FundManagement::get_ad_list($accessToken, $data);
-                if ($resData['code'] == 0) {
-//                    echo "正常获取的页数" . $resData['data']['page_info']['page'].":". $data['page'];
-                    if (empty($resData['data']['list'])) {
-                        echo $data['advertiser_id'] . "当天没有新建计划1";
-                        return true;
-                    }
-                     $this->saveNewObj($data['advertiser_id'], $resData['data']['list']);
-                }else {
-                    $data['page'] = $page;
-                    \think\Queue::later(100,'app\job\InitObj', $data, "initObj");
-                    throw new Exception($resData['message']);
-                }
-            }
-            if ($endPage) {
-                $data['page'] = $endPage;
+            if ($totalPage > $data['page']) {
+                $data['page'] = $data['page'] + 1;
                 \think\Queue::later(100,'app\job\InitObj', $data, "initObj");
             }
-            return true;
+            return $this->saveNewObj($data['advertiser_id'], $resData['data']['list']);
         } else {
             throw new Exception($resData['message']);
         }
@@ -149,7 +123,7 @@ class InitObj
             if ($res) {
                 return true;
             } else {
-                throw new Exception($res);
+               return false;
             }
         }
         return true;
