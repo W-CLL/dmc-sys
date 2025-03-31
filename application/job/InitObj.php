@@ -29,7 +29,7 @@ class InitObj
                 echo "处理完了这一条了";
                 return '';
             } else {
-                if ($job->attempts() > 3) {
+                if ($job->attempts() > 1) {
                     $job->delete();
                     return '';
                 }
@@ -73,11 +73,13 @@ class InitObj
             }
             $totalPage = $resData['data']['page_info']['total_page'];
             echo $totalPage."总:后".$data['page'];
-            if ($totalPage > $data['page']) {
+           $res =  $this->saveNewObj($data['advertiser_id'], $resData['data']['list']);
+            if ($totalPage > $data['page'] && $res) {
                 $data['page'] = $data['page'] + 1;
                 \think\Queue::later(100,'app\job\InitObj', $data, "initObj");
+                return true;
             }
-            return $this->saveNewObj($data['advertiser_id'], $resData['data']['list']);
+           return $res;
         } else {
             throw new Exception($resData['message']);
         }
