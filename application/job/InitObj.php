@@ -23,7 +23,10 @@ class InitObj
      */
     public function fire(Job $job, $data)
     {
-
+        if ($job->attempts() >=2 ) {
+            $job->delete();
+            return '';
+        }
         $jobId = json_decode($job->getRawBody(), true)['id'];
         $queueModel = new \app\common\model\Queue();
         $queueData = $queueModel->where('job_id', $jobId)->find();
@@ -74,20 +77,23 @@ class InitObj
         $accessToken = Cache::get("qc_access_token");
         $data['advertiser_id'] = (int)$data['advertiser_id'];
         $resData = FundManagement::get_ad_list($accessToken, $data);
-        if ($resData['code'] == 0) {
-            if (empty($resData['data']['list'])) {
-                echo $data['advertiser_id'] . "当天没有新建计划";
-                return true;
-            }
+        if ($resData['code'] == 0 && !empty($resData['data']['list'])) {
+//            dump($resData['data']);
+            // if (empty($resData['data']['list'])) {
+            //     echo $data['advertiser_id'] . "当天没有新建计划";
+            //     return true;
+            // }
             $totalPage = $resData['data']['page_info']['total_page'];
-            echo $totalPage."总:后".$data['page'];
-           $res =  $this->saveNewObj($data['advertiser_id'], $resData['data']['list']);
+
+            $res =  $this->saveNewObj($data['advertiser_id'], $resData['data']['list']);
             if ($totalPage > $data['page'] && $res) {
+//                echo $totalPage."总:后".$data['page'];
                 $data['page'] = $data['page'] + 1;
-                \think\Queue::later(100,'app\job\InitObj', $data, "initObj");
+//                dump($data);
+                \think\Queue::push('app\job\InitObj', $data, "initObj");
                 return true;
             }
-           return $res;
+            return $res;
         } else {
             throw new Exception($resData['message']);
         }
@@ -109,6 +115,10 @@ class InitObj
         $afterData = array_filter($list, function ($item) use ($exitedIds) {
             return !in_array($item['ad_id'], $exitedIds);
         });
+        if (empty($afterData)) {
+            echo "没有新增数据需要插入";
+            return true; // 没有新增数据，直接返回 true，避免重试
+        }
         $insertData = [];
         foreach ($afterData as $item) {
             $insertData[] = [
