@@ -26,6 +26,7 @@ class InitObj
                     $queueData->save(['id' => $queueData['id'], 'status' => 1, 'msg' => "处理完成"]);
                 }
                 $job->delete();
+                echo "处理完了这一条了";
                 return '';
             } else {
                 if ($job->attempts() > 3) {
@@ -71,6 +72,7 @@ class InitObj
                 return true;
             }
             $totalPage = $resData['data']['page_info']['total_page'];
+            echo $totalPage."总:后".$data['page'];
             if ($totalPage > $data['page']) {
                 $data['page'] = $data['page'] + 1;
                 \think\Queue::later(100,'app\job\InitObj', $data, "initObj");
