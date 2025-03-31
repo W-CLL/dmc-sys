@@ -22,7 +22,7 @@ class InitObj
             $isJobDone = $this->doJob($data);
             if ($isJobDone) {
 
-                if($queueData){
+                if ($queueData) {
                     $queueData->save(['id' => $queueData['id'], 'status' => 1, 'msg' => "处理完成"]);
                 }
                 $job->delete();
@@ -45,8 +45,8 @@ class InitObj
                 'msg' => $e->getMessage(),
                 'status' => 2,
             ];
-            if($queueData){
-                $queueData->save(['id' => $queueData['id'], 'status' => 2, 'msg' =>$e->getMessage()]);
+            if ($queueData) {
+                $queueData->save(['id' => $queueData['id'], 'status' => 2, 'msg' => $e->getMessage()]);
                 $job->delete();
                 return '';
             }
@@ -67,17 +67,39 @@ class InitObj
         $data['advertiser_id'] = (int)$data['advertiser_id'];
         $resData = FundManagement::get_ad_list($accessToken, $data);
         if ($resData['code'] == 0) {
-            echo "正常获取的条数".$resData['data']['page_info']['page_size'];
+            echo "正常获取的条数" . $resData['data']['page_info']['page_size'];
             if (empty($resData['data']['list'])) {
                 echo $data['advertiser_id'] . "当天没有新建计划";
                 return true;
             }
             $totalPage = $resData['data']['page_info']['total_page'];
-            if ($totalPage > $data['page']) {
-                $data['page'] = $data['page'] + 1;
+            $endPage = $data['page'] + 4;
+            $nextStart = $endPage + 1;
+            if ($endPage > $totalPage) {
+                $endPage = $totalPage;
+                $nextStart = '';
+            }
+            for ($page = $data['page']; $page < $endPage; $page++) {
+                $data['page'] = $page;
+                $resData = FundManagement::get_ad_list($accessToken, $data);
+                if ($resData['code'] == 0) {
+                    echo "正常获取的条数" . $resData['data']['page_info']['page_size'];
+                    if (empty($resData['data']['list'])) {
+                        echo $data['advertiser_id'] . "当天没有新建计划";
+                        continue;
+                    }
+                     $this->saveNewObj($data['advertiser_id'], $resData['data']['list']);
+                }else {
+                    $data['page'] = $nextStart;
+                    \think\Queue::push('app\job\InitObj', $data, "initObj");
+                    throw new Exception($resData['message']);
+                }
+            }
+            if ($nextStart) {
+                $data['page'] = $nextStart;
                 \think\Queue::push('app\job\InitObj', $data, "initObj");
             }
-            return $this->saveNewObj($data['advertiser_id'], $resData['data']['list']);
+            return true;
         } else {
             throw new Exception($resData['message']);
         }
@@ -125,7 +147,7 @@ class InitObj
             if ($res) {
                 return true;
             } else {
-                return false;
+                throw new Exception($res);
             }
         }
         return true;
