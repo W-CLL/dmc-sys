@@ -59,7 +59,7 @@ class QcAdvCost extends Api
     public function getGlobalCost()
     {
         $page = 1;
-        $pageSize = 50;
+        $pageSize = 100;
         while (true) {
             // 获取当前页的数据
             $advIdList = $this->getAdvByPage($page, $pageSize);
