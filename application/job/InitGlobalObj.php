@@ -33,7 +33,7 @@ class InitGlobalObj
                     return '';
                 }
             }
-        } catch (Exception $e) {
+        } catch (Exception | \Exception $e) {
             $insert_data = [
                 'job_name' => '获取第n页全域计划',
                 'job_id' => $jobId,
@@ -71,15 +71,17 @@ class InitGlobalObj
                 return true;
             }
             $totalPage = $resData['data']['page_info']['total_page'];
-            if ($totalPage > $data['page']) {
+            $res = $this->saveNewObj($data['advertiser_id'], $resData['data']['ad_list']);
+            if ($totalPage > $data['page'] && $res) {
                 $data['page'] = $data['page'] + 1;
                 \think\Queue::push('app\job\InitGlobalObj', $data, "initGlobalObj");
             }
-            return $this->saveNewObj($data['advertiser_id'], $resData['data']['ad_list']);
+            return true;
         } else {
             if($this->skipIfContainsError($resData['message'])){
                 throw new Exception($resData['message']);
             }else{
+//                dump($resData['message']);
                 \think\Queue::push('app\job\InitGlobalObj', $data, "initGlobalObj");
                 return true;
             }
@@ -104,6 +106,10 @@ class InitGlobalObj
         $afterData = array_filter($list, function ($item) use ($exitedIds) {
             return !in_array($item['ad_info']['id'], $exitedIds);
         });
+        if (empty($afterData)) {
+            echo "没有新插入";
+            return true; // 没有新增数据，直接返回 true，避免重试
+        }
         $insertData = [];
         foreach ($afterData as $item) {
             $insertData[] = [

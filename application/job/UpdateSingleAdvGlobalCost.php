@@ -81,7 +81,7 @@ class UpdateSingleAdvGlobalCost
         if ($live_cost['code'] == 0 && $live_cost['message'] == "OK") {
             $l_cost = $live_cost['data']['stat_cost'];
         }else{
-            throw  new Exception($l_cost['message']);
+            throw  new Exception($live_cost['message']);
         }
         $params['marketing_goal'] = "VIDEO_PROM_GOODS";
         $video_cost = FundManagement::get_global_adv_cost($access_token, $params);
@@ -90,7 +90,7 @@ class UpdateSingleAdvGlobalCost
         if ($video_cost['code'] == 0 && $video_cost['message'] == "OK") {
             $v_cost = $video_cost['data']['stat_cost'];
         }else{
-            throw  new Exception($l_cost['message']);
+            throw  new Exception($video_cost['message']);
         }
         $final_cost = $l_cost + $v_cost;
         $date_time = strtotime($data['start_date']);

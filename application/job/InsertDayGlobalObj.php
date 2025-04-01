@@ -74,7 +74,7 @@ class InsertDayGlobalObj
                 'adv_list'=>$need_rebuild,
                 'params'=>$data['params']
             ];
-            \think\Queue::push('app\job\InsertDayGlobalObj', $job_data, "insertDayGlobalObj");
+            \think\Queue::later(20,'app\job\InsertDayGlobalObj', $job_data, "insertDayGlobalObj");
         }
 //        if($error){
 //            throw new Exception(json_encode($error));
@@ -119,7 +119,6 @@ class InsertDayGlobalObj
         $afterData = array_filter($list, function ($item) use ($exitedIds) {
             return !in_array($item['obj_id'], $exitedIds);
         });
-        echo '后'.count($afterData);
         if ($afterData) {
             echo "写进了";
             $res = $objModel->saveAll($afterData);
