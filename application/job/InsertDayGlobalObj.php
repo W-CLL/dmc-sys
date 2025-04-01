@@ -173,7 +173,7 @@ class InsertDayGlobalObj
         $guzzleClient = new Client();
         // 并发请求
         $pool = new Pool($guzzleClient, array_column($requests, 'request'), [
-            'concurrency' => 10,  // 控制并发数
+            'concurrency' => 50,  // 控制并发数
             'fulfilled' => function ($response, $index) use (&$insertData, $requests, &$error,&$need_rebuild) {
                 $resData = json_decode($response->getBody()->getContents(), true);
                 $requestInfo = $requests[$index]['params'];

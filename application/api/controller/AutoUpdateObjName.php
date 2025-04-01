@@ -43,17 +43,17 @@ class AutoUpdateObjName extends Api
 //        $this->checkTimestamp(self::CACHE_KEY);
         $page = Cache::get('chunk_obj_page', 1);
         $redis = Cache::store('redis');
-        list($advList, $notWhiteCom) = $this->getAdvList($page, $redis, $type = 'normal', $user_name,$is_special = false);
-        $comModel = new Company();
+        list($advList, $notWhiteCom) = $this->getAdvList($page, $redis, $type = 'normal', $user_name,$is_special);
+//        $comModel = new Company();
         list($start_time, $end_time) = $this->getPersonStartTime($user_name);
 
         $url = "http://dmc.zebranumber.cn/index.php/api/auto_update_obj_name/getOptCountCollectionApi/";
         $res = new Client(['verify' => false]);
         $params = [
-            'comModel' => $comModel,
+//            'comModel' => $comModel,
             'start_time' => $start_time,
             'end_time' => $end_time,
-            'advList' => $advList
+            'advList' => json_encode($advList)
         ];
         $rep = $res->get($url, [
             'headers' => [
@@ -75,7 +75,7 @@ class AutoUpdateObjName extends Api
             die;
         }
         $queue = new Queue();
-        $objModel = new ObjModel();
+//        $objModel = new ObjModel();
         foreach ($list as $item) {
             if (in_array($item['advertiser_id'], ['1816678114059481'])) {
                 continue;
@@ -264,9 +264,9 @@ class AutoUpdateObjName extends Api
 //        $this->checkTimestamp(self::GLOBAL_CACHE_KEY);
         $page = Cache::get('chunk_obj_global_page', 1);
         $redis = Cache::store('redis');
-        list($advList, $notWhiteCom) = $this->getAdvList($page, $redis, $type = 'global', $user_name);
+        list($advList, $notWhiteCom) = $this->getAdvList($page, $redis, $type = 'global', $user_name,$is_special);
         $cost_model = new QcAdvDayCost();
-        $comModel = new Company();
+//        $comModel = new Company();
 
         list($start_time, $end_time) = $this->getPersonStartTime($user_name);
         //获取昨天的全域消耗
@@ -282,10 +282,10 @@ class AutoUpdateObjName extends Api
         $url = "http://dmc.zebranumber.cn/index.php/api/auto_update_obj_name/getOptCountCollectionApi/";
         $res = new Client(['verify' => false]);
         $params = [
-            'comModel' => $comModel,
+
             'start_time' => $start_time,
             'end_time' => $end_time,
-            'advList' => $advList
+            'advList' => json_encode($advList)
         ];
         $rep = $res->get($url, [
             'headers' => [
@@ -306,7 +306,7 @@ class AutoUpdateObjName extends Api
         }
 
         $queue = new Queue();
-        $objModel = new ObjModel();
+//        $objModel = new ObjModel();
         foreach ($adv_list as $item) {
             if (in_array($item['adv_id'], ['1816678114059481'])) {
                 continue;
@@ -635,8 +635,11 @@ class AutoUpdateObjName extends Api
             ->select();
     }
 
-    public function getOptCountCollectionApi(Company $comModel, $start_time, $end_time, $advList)
+    public function getOptCountCollectionApi($start_time, $end_time, $advList)
     {
+//        return json($advList);
+        $advList = json_decode($advList,true);
+        $comModel = new Company();
         $list = $comModel
             ->alias('adv_c')
             ->join(
