@@ -68,7 +68,7 @@ class UpdateSingleAdvGlobalCost
      */
     protected function doJob($data)
     {
-
+        sleep(3);
         $access_token = Cache::get("qc_access_token");
         $costModel = new QcAdvDayCost();
         $data['marketing_goal'] = "LIVE_PROM_GOODS";
