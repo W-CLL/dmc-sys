@@ -53,7 +53,7 @@ class AutoUpdateObjName extends Api
 //            'comModel' => $comModel,
             'start_time' => $start_time,
             'end_time' => $end_time,
-            'advList' => json_encode($advList)
+            'advList' => $advList
         ];
         $rep = $res->get($url, [
             'headers' => [
@@ -638,7 +638,6 @@ class AutoUpdateObjName extends Api
     public function getOptCountCollectionApi($start_time, $end_time, $advList)
     {
 //        return json($advList);
-        $advList = json_decode($advList,true);
         $comModel = new Company();
         $list = $comModel
             ->alias('adv_c')
