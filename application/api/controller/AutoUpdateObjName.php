@@ -43,14 +43,21 @@ class AutoUpdateObjName extends Api
 //        $this->checkTimestamp(self::CACHE_KEY);
         $page = Cache::get('chunk_obj_page', 1);
         $redis = Cache::store('redis');
-        list($advList, $notWhiteCom) = $this->getAdvList($page, $redis, $type = 'normal', $user_name,$is_special);
-//        $comModel = new Company();
+        list($advList, $notWhiteCom) = $this->getAdvList($page, $redis, $type = 'normal', $user_name, $is_special);
         list($start_time, $end_time) = $this->getPersonStartTime($user_name);
+
+        if (empty($advList)) {
+            echo "全部处理完了";
+            Cache::rm('chunk_obj_page');
+            $redis->rm(self::CACHE_KEY . '_over');
+            $redis->rm('company_setting_list_' . $type);
+            Cache::set(self::CACHE_KEY, strtotime(date('Y-m-d')));
+            die;
+        }
 
         $url = "http://dmc.zebranumber.cn/index.php/api/auto_update_obj_name/getOptCountCollectionApi/";
         $res = new Client(['verify' => false]);
         $params = [
-//            'comModel' => $comModel,
             'start_time' => $start_time,
             'end_time' => $end_time,
             'advList' => $advList
@@ -75,9 +82,8 @@ class AutoUpdateObjName extends Api
             die;
         }
         $queue = new Queue();
-//        $objModel = new ObjModel();
         foreach ($list as $item) {
-            if (in_array($item['advertiser_id'], ['1816678114059481'])) {
+            if ($item['advertiser_id'] == '1816678114059481') {
                 continue;
             }
             $totalNum = (int)$item['total_num'];
@@ -150,7 +156,7 @@ class AutoUpdateObjName extends Api
      * @throws DbException
      * @throws ModelNotFoundException
      */
-    protected function getAdvList($page, $redis,  $type,$user_name,$is_special): array
+    protected function getAdvList($page, $redis, $type, $user_name, $is_special): array
     {
         $operator = [
             'zqp' => "张秋萍",
@@ -250,12 +256,14 @@ class AutoUpdateObjName extends Api
     /**
      * 分割当天全域消耗下的广告计划
      * @param string $user_name
+     * @param bool $is_special
      * @return void
+     * @throws DataNotFoundException
      * @throws DbException
+     * @throws GuzzleException
      * @throws ModelNotFoundException
-     * @throws DataNotFoundException|GuzzleException
      */
-    public function chunkGlobalComAdv(string $user_name = '', $is_special = false)
+    public function chunkGlobalComAdv(string $user_name = '', bool $is_special = false)
     {
         if (!$is_special) {
             $this->checkQueueExecutionOver(self::GLOBAL_CACHE_KEY); //
@@ -264,28 +272,24 @@ class AutoUpdateObjName extends Api
 //        $this->checkTimestamp(self::GLOBAL_CACHE_KEY);
         $page = Cache::get('chunk_obj_global_page', 1);
         $redis = Cache::store('redis');
-        list($advList, $notWhiteCom) = $this->getAdvList($page, $redis, $type = 'global', $user_name,$is_special);
-        $cost_model = new QcAdvDayCost();
-//        $comModel = new Company();
-
+        list($advList, $notWhiteCom) = $this->getAdvList($page, $redis, $type = 'global', $user_name, $is_special);
         list($start_time, $end_time) = $this->getPersonStartTime($user_name);
         //获取昨天的全域消耗
-        $adv_list = $cost_model->where([
-            'adv_id' => ['in', $advList],
-            'cost_date' => ['between', [$start_time, $end_time]],
-            'type' => 2,//全域
-        ])->field('*,SUM(cost) as day_cost ')
-            ->group('adv_id')
-            ->select();
-
+        if (empty($advList)) {
+            echo "全部处理完了";
+            Cache::rm('chunk_obj_global_page');
+            $redis->rm(self::GLOBAL_CACHE_KEY . '_over');
+            $redis->rm('company_setting_list_' . $type);
+            Cache::set(self::GLOBAL_CACHE_KEY, strtotime(date('Y-m-d')));
+            die;
+        }
 //        $count_list = $this->getOptCountCollection($comModel, $start_time, $end_time, $advList);
         $url = "http://dmc.zebranumber.cn/index.php/api/auto_update_obj_name/getOptCountCollectionApi/";
         $res = new Client(['verify' => false]);
         $params = [
-
             'start_time' => $start_time,
             'end_time' => $end_time,
-            'advList' => json_encode($advList)
+            'advList' => $advList
         ];
         $rep = $res->get($url, [
             'headers' => [
@@ -295,7 +299,14 @@ class AutoUpdateObjName extends Api
 
         $contents = $rep->getBody()->getContents();
         $count_list = json_decode($contents, true);
-
+        $cost_model = new QcAdvDayCost();
+        $adv_list = $cost_model->where([
+            'adv_id' => ['in', $advList],
+            'cost_date' => ['between', [$start_time, $end_time]],
+            'type' => 2,//全域
+        ])->field('*,SUM(cost) as day_cost ')
+            ->group('adv_id')
+            ->select();
         if (empty($adv_list)) {
             echo "全部处理完了";
             Cache::rm('chunk_obj_global_page');
@@ -306,9 +317,8 @@ class AutoUpdateObjName extends Api
         }
 
         $queue = new Queue();
-//        $objModel = new ObjModel();
         foreach ($adv_list as $item) {
-            if (in_array($item['adv_id'], ['1816678114059481'])) {
+            if ($item['adv_id'] == '1816678114059481') {
                 continue;
             }
             foreach ($count_list as $value) {
@@ -321,15 +331,6 @@ class AutoUpdateObjName extends Api
                     }
 
                     $need_num = $need_num - $companyNum;
-//                    $list = $objModel->where([
-//                        'obj_status' => ['not in', ['DELETE', "TIME_DONE", 'FROZEN']],
-//                        'lab_ad_type' => "LAB_AD",
-//                        'opt_status' => ['not in', ['DELETE', "TIME_DONE", 'FROZEN']],
-//                        'adv_id' => $item['adv_id']
-//                    ])
-//                        ->field('obj_id,adv_id')
-//                        ->limit($need_num)
-//                        ->column('obj_id');
                     $url = "http://dmc.zebranumber.cn/index.php/api/auto_update_obj_name/getObjListApi/";
                     $res = new Client(['verify' => false]);
                     $params = [
