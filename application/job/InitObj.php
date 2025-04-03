@@ -52,7 +52,7 @@ class InitObj
                 'class_name' => 'app\job\InitObj',
                 'queue_name' => 'initObj',
                 'relation_table' => '',
-                'job_data' => $data,
+                'job_data' => json_encode($data),
                 'remark' => '',
                 'msg' => $e->getMessage(),
                 'status' => 2,

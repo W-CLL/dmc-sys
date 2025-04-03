@@ -189,7 +189,7 @@ class InsertDayObj
                 $requestInfo = $requests[$index]['params'];
                 $requestAdvId = $requestInfo['advertiser_id'];
 
-                $insertData = [];
+//                $insertData = [];    // ？
                 if (!empty($resData) && $resData['code'] == 0 && !empty($resData['data']['list'])) {
                     foreach ($resData['data']['list'] as $item) {
                         $insertData[] = [

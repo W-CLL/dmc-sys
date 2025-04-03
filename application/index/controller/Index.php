@@ -72,9 +72,9 @@ class Index extends Frontend
     {
         $sum = 0;
         $access_token = Cache::get("qc_access_token");
-        $res = FundManagement::get_ad_detail($access_token, 1785969793391627, 1810069220637712);
-        var_dump($res);
-        die;
+//        $res = FundManagement::get_ad_detail($access_token, 1785969793391627, 1810069220637712);
+//        var_dump($res);
+//        die;
 //        $res = FundManagement::get_agent_statement($access_token,1739518270441480, "2024-11-01", "2024-11-15",1,100,1811064042732587);
 //        foreach ($res['data']['list'] as $v){
 //            $sum += $v['no_grant_cost'] / 100000;
@@ -86,13 +86,43 @@ class Index extends Frontend
 ////        $sum = $sum / 1000;
 ////        var_dump($sum);
 //        die;
+        $list = Db::name('company')
+            ->where('adv_status', 1)
+            ->order('advertiser_id', 'desc')
+            ->column('advertiser_id');
+        $chunks = array_chunk($list, 200);
+        $i = 0;
+        foreach ($chunks as $chunk) {
+            $job_data = [
+                'filtering' => [
+                    'marketing_goal' => "VIDEO_PROM_GOODS",
+                    'ad_create_start_date' => '2025-02-01',
+                    'ad_create_end_date' => '2025-04-03',
+                    'marketing_scene' => 'ALL',
+                    "status" => "ALL_INCLUDE_DELETED",
+                    "campaign_scene" => [
+                        'DAILY_SALE',
+                        'NEW_CUSTOMER_TRANSFORMATION',
+                        'LIVE_HEAT',
+                        'PLANT_GRASS',
+                        'PRODUCT_HEAT',
+                        'NEW_PRODUCT_BOOST',
+                    ],
+                ],
+                'adv_list' => $chunk
+            ];
+            \think\Queue::push('app\job\InsertDayObj', $job_data, "insertDayObj");
+            echo $i++;
+        }
+        die;
         $params = [
-            'advertiser_id' => '1811064042731111',
+            'advertiser_id' => '1759237117991943',
             'filtering' => [
-                'marketing_goal' => 'LIVE_PROM_GOODS',
-                'ad_create_start_date' => '2024-12-01',
-                'ad_create_end_date' => '2024-12-06',
-                'status' => 'ALL_INCLUDE_DELETED'
+                'marketing_goal' => 'VIDEO_PROM_GOODS',
+                'ad_create_start_date' => '2025-02-01',
+                'ad_create_end_date' => '2025-04-02',
+                'status' => 'ALL_INCLUDE_DELETED',
+
             ],
             'page' => '1',
             'page_size' => '200',
