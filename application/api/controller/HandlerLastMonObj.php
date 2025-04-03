@@ -38,7 +38,6 @@ class HandlerLastMonObj extends Api
         $page = Cache::get(self::NORMAL_CACHE_KEY.'_page', 1);
         //分页获取负责人的广告账号
         $advList= $this->getOwnerAdvList($page, $user_name);
-        $domain =
         //获取上个月整月的时间范围，如当月是4月，返回则是3.1-3.31的时间戳
         list($start_time, $end_time) = $this->getTimeRange();
         if (empty($advList)) {
@@ -47,7 +46,7 @@ class HandlerLastMonObj extends Api
             Cache::set(self::NORMAL_CACHE_KEY, strtotime(date('Y-m-d')));
             die;
         }
-        $url = "http://dmc.zebranumber.cn/index.php/api/handler_last_mon_obj/getOptCountCollectionApi/";
+        $url = "https://dmc.zebranumber.cn/index.php/api/handler_last_mon_obj/getOptCountCollectionApi/";
         $params = [
             'start_time' => $start_time,
             'end_time' => $end_time,
@@ -224,9 +223,10 @@ class HandlerLastMonObj extends Api
      * 向正式服发送请求
      * @param $url
      * @param array $params
+     * @param string $method
      * @return array
      */
-    private function sendApiRes($url, array $params, $method = 'GET'): array
+    private function sendApiRes($url, array $params, string $method = 'GET'): array
     {
         try {
             $client = new Client(['verify' => false]);

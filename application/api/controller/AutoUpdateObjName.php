@@ -55,7 +55,7 @@ class AutoUpdateObjName extends Api
             die;
         }
 
-        $url = "http://dmc.zebranumber.cn/index.php/api/auto_update_obj_name/getOptCountCollectionApi/";
+        $url = "https://dmc.zebranumber.cn/index.php/api/auto_update_obj_name/getOptCountCollectionApi/";
         $res = new Client(['verify' => false]);
         $params = [
             'start_time' => $start_time,
@@ -110,7 +110,7 @@ class AutoUpdateObjName extends Api
 ////              ->fetchSql(true)
 //                ->column('obj_id');
 
-            $url = "http://dmc.zebranumber.cn/index.php/api/auto_update_obj_name/getObjListApi/";
+            $url = "https://dmc.zebranumber.cn/index.php/api/auto_update_obj_name/getObjListApi/";
             $res = new Client(['verify' => false]);
             $params = [
                 $item['advertiser_id'], $needComNum
