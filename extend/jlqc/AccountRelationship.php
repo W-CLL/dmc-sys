@@ -13,9 +13,22 @@ class AccountRelationship
         return Requests::get($url);
     }
 
-    //获取代理商账户关联的广告账户列表
-    public static function advertiser_select($access_token,$advertiser_id,$page=1,$page_size=10){
-        $url = "https://ad.oceanengine.com/open_api/2/agent/advertiser/select?advertiser_id=".$advertiser_id."&page=".$page."&page_size=".$page_size;
+    //获取代理商账户关联的广告账户列表[页数]
+//    public static function advertiser_select($access_token,$advertiser_id,$page=1,$page_size=10){
+//        $url = "https://ad.oceanengine.com/open_api/2/agent/advertiser/select?advertiser_id=".$advertiser_id."&page=".$page."&page_size=".$page_size;
+//
+//        $header = array(
+//            'Access-Token:'. $access_token,
+//        );
+//        return Requests::get($url,$header);
+//    }
+
+    //获取代理商账户关联的广告账户列表[游标]
+    public static function advertiser_select($access_token,$advertiser_id,$cursor='',$count=10){
+        $url = "https://ad.oceanengine.com/open_api/2/agent/advertiser/select?advertiser_id=".$advertiser_id."&count=".$count;
+        if($cursor != ''){
+            $url .= "&cursor=".$cursor;
+        }
 
         $header = array(
             'Access-Token:'. $access_token,

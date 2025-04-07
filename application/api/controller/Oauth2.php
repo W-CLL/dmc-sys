@@ -126,8 +126,9 @@ class Oauth2 extends Api
 //        $config_data = Db::name("qc_config")->where("id", 1)->find();
         $advertiser_id = Env::get('dmc_ad_config.advertiser_id');
         $access_token = Cache::get("qc_access_token");
-        $advertiser_data = AccountRelationship::advertiser_select($access_token, $advertiser_id, 1, 100);
-        $total_page = $advertiser_data['data']['page_info']['total_page'];
+        $count = 100;
+        $advertiser_data = AccountRelationship::advertiser_select($access_token, $advertiser_id, '', $count);
+        $total_page = ceil($advertiser_data['data']['cursor_page_info']['total_number'] / $count);
         $public_info_data = UserInfo::public_info($access_token, json_encode($advertiser_data['data']['advertiser_ids']));
         $company_add_data = [];
         foreach ($public_info_data['data'] as $item) {
@@ -160,13 +161,14 @@ class Oauth2 extends Api
         try {
             $queue = new Queue();
             if ($total_page > 1) {
-                for ($i = 2; $i <= $total_page; $i++) {
-                    $queue_data = [
-                        'advertiser_id' => $advertiser_id,
-                        'page' => $i
-                    ];
-                    $queue->addQueue('检查更新广告账户', 'app\job\SyncAdv', 'syncAdv', $queue_data);
-                }
+                $queue_data = [
+                    'advertiser_id' => $advertiser_id,
+                    'count' => $count,
+                    'cursor' => $advertiser_data['data']['cursor_page_info']['cursor'],
+                    'total_page' => $total_page,
+                    'now_page' => 2,   // 循环从第二页开始！
+                ];
+                $queue->addQueue('检查更新广告账户', 'app\job\SyncAdv', 'syncAdv', $queue_data);
             }
             if (!empty($company_add_data)) {
                 $companyModel->saveAll($company_add_data);

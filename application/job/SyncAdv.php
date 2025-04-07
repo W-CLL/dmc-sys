@@ -70,7 +70,7 @@ class SyncAdv
     protected function doJob($data, $queueData)
     {
         $access_token = Cache::get("qc_access_token");
-        $advertiser_data = AccountRelationship::advertiser_select($access_token, $data['advertiser_id'], $data['page'], 100);
+        $advertiser_data = AccountRelationship::advertiser_select($access_token, $data['advertiser_id'], $data['cursor'], $data['count']);
         $public_info_data = UserInfo::public_info($access_token, json_encode($advertiser_data['data']['advertiser_ids']));
         $company_add_data = [];
         $companyModel = new Company();
@@ -101,6 +101,17 @@ class SyncAdv
                     "update_time" => time(),
                 ];
             }
+        }
+        if($data['now_page'] <= $data['total_page']){
+            $queue = new Queue();
+            $queue_data = [
+                'advertiser_id' => $data['advertiser_id'],
+                'count' => $data['count'],
+                'cursor' => $advertiser_data['data']['cursor_page_info']['cursor'],
+                'total_page' => $data['total_page'],
+                'now_page' => $data['now_page']++,   // 记录循环页数+1
+            ];
+            $queue->addQueue('检查更新广告账户', 'app\job\SyncAdv', 'syncAdv', $queue_data);
         }
         if (!empty($company_add_data)) {
           $res =   $companyModel->saveAll($company_add_data);
