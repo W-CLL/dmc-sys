@@ -102,14 +102,12 @@ class SyncAdv
                 ];
             }
         }
-        if($data['now_page'] <= $data['total_page']){
+        if($advertiser_data['data']['cursor_page_info']['has_more']){
             $queue = new Queue();
             $queue_data = [
                 'advertiser_id' => $data['advertiser_id'],
                 'count' => $data['count'],
                 'cursor' => $advertiser_data['data']['cursor_page_info']['cursor'],
-                'total_page' => $data['total_page'],
-                'now_page' => $data['now_page']++,   // 记录循环页数+1
             ];
             $queue->addQueue('检查更新广告账户', 'app\job\SyncAdv', 'syncAdv', $queue_data);
         }
