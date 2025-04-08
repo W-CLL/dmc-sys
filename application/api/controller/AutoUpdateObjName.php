@@ -527,7 +527,7 @@ class AutoUpdateObjName extends Api
                 AND status = 0 
                 AND create_time BETWEEN :start2 AND :end2)
             )
-            AND TIME(create_time) NOT BETWEEN '09:00:00' AND '09:02:00'";
+            AND TIME(FROM_UNIXTIME(create_time)) NOT BETWEEN '09:00:00' AND '09:02:00'";
 
         // 执行查询（使用ThinkPHP的数据库组件）
         $count = Db::query($sql, [
