@@ -199,6 +199,7 @@ class Oauth2 extends Api
             ->where(['transfer_serial' => ['>', 0]])
             ->where(["create_time" => [">", strtotime('today midnight')]])
             ->where(["create_time" => ["<", time() - 300]])
+            ->limit(0,20)  // 做个分页，防止Google无头开启过多导致js脚本罢工【PS：因为下面更新url写入，所以每次获取的第0页都是不一样的，故写死】
             ->select();
         foreach ($data as $k => $v) {
             $url = "http://127.0.0.1:3000/jlfz/get_transfer_image";
