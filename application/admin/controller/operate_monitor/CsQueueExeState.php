@@ -14,6 +14,9 @@ class CsQueueExeState extends Backend
         $start_date = input("start_date");
         $end_date = input("end_date");
         $status = input("status");
+        $adv_id = trim(input("adv_id"));
+        $job_name = trim(input("job_name"));
+
 
         $startDate =strtotime($start_date);
         $endDate = strtotime($end_date." 23:59:59");
@@ -24,6 +27,14 @@ class CsQueueExeState extends Backend
 
         if($status != ''){
             $where['status'] = $status;
+        }
+
+        if($adv_id != ''){
+            $where['job_data'] = ['LIKE', "%{$adv_id}%"];
+        }
+
+        if($job_name != ''){
+            $where['job_name'] = ['LIKE', "%{$job_name}%"];
         }
 
         $where['queue_name'] = 'autoUpdateObjName';
