@@ -9,6 +9,14 @@ use app\common\model\QcAdvDayCost;
 
 class AdList extends Backend
 {
+    protected $username = [
+        '王跟' => '王倚澄',
+        '张跟' => '张秋萍',
+        '陈跟' => '陈秀玉',
+        '莫跟' => '莫美春',
+        '罗跟' => '罗文静',
+        '谭玉霞' => '罗文静',
+    ];
     public function index($user_name = '')
     {
         $companyModel = new CompanyModel();
@@ -101,8 +109,8 @@ class AdList extends Backend
     public function charge_page()
     {
         $user_name = $this->auth->getUserInfo()['nickname'];
-        if($user_name=="谭玉霞"){
-            $user_name='罗文静';
+        if(isset($this->username[$user_name])){
+            $user_name=$this->username[$user_name];
         }
         return $this->index($user_name);
     }
