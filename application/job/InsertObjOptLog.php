@@ -122,8 +122,19 @@ class InsertObjOptLog
     protected function handleInsertData($data, $advId)
     {
         $insertData = [];
-
+        $objOptLogModel = new QcObjOptLog();
         foreach ($data as $item) {
+            $count = $objOptLogModel
+                ->where('adv_id', $advId)
+                ->where('obj_id', $item['object_id'])
+                ->where('opt_ip', $item['opt_ip'])
+                ->where('opt_time', strtotime($item['create_time']))
+                ->where('object_name', $item['object_name'])
+                ->where('content_title', $item['content_title'])
+                ->count();
+            if ($count > 0) {
+                continue;
+            }
             $insertData[] = [
                 'adv_id' => $advId,
                 'obj_id' => $item['object_id'],
@@ -137,7 +148,6 @@ class InsertObjOptLog
             ];
         }
         if($insertData){
-            $objOptLogModel = new QcObjOptLog();
             return $objOptLogModel->saveAll($insertData);
         }
        return true;

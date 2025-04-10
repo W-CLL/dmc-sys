@@ -106,6 +106,10 @@ class QcObjOptLog extends Api
             // 计算上一次执行时间（当前时间减去 4 小时）
             $lastExecutionTime = clone $now;
             $lastExecutionTime->modify('-4 hours');
+            // 每4点拉一次前半天的数据
+            if ($currentHour == 4 || $currentHour == 16){
+                $lastExecutionTime->modify('-13 hours'); // 此处包含上面-的4小时，故需要再-13小时
+            }
             // 返回当前时间和上一次执行时间
             return [
                 $now->format('Y-m-d H:i:s'),              // 当前时间
