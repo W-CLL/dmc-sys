@@ -40,8 +40,17 @@ class QcObjOptLog extends Api
             $e = date("Y-m-d H:i:s",$end_date);
         }
         foreach ($advIds as $id) {
-            $where['adv_id'] = $id;
-            $objIds = $objModel->where($where)->order('obj_id')->column('obj_id');
+            $twoDaysAgo = (new DateTime('today'))->modify('-2 days')->getTimestamp();
+            $sql = "SELECT obj_id 
+                    FROM fa_qc_obj 
+                    WHERE adv_id = :id 
+                      AND (
+                          (obj_create_time <= :twoDaysAgo1 AND obj_status NOT IN ('DELETE', 'TIME_DONE', 'FROZEN')) 
+                          OR 
+                          (obj_create_time > :twoDaysAgo2)
+                      )
+                    ORDER BY obj_id";
+            $objIds = $objModel->query($sql, ['id' => $id, 'twoDaysAgo1' => $twoDaysAgo, 'twoDaysAgo2' => $twoDaysAgo]);
             $count = count($objIds);
             if ($count == 0) {
                 continue;
