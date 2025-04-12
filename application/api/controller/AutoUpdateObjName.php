@@ -38,7 +38,7 @@ class AutoUpdateObjName extends Api
     public function index($user_name = '', $is_special = false)
     {
         if (!$is_special) {
-            $this->checkQueueExecutionOver(self::GLOBAL_CACHE_KEY);
+            $this->checkQueueExecutionOver(self::CACHE_KEY);
         }
 //        $this->checkTimestamp(self::CACHE_KEY);
         $page = Cache::get('chunk_obj_page', 1);
