@@ -71,7 +71,6 @@ class QcAdvCost extends Api
                 'adv_list'=>$advIdList,
                 'date'=>$this->getDateBasedOnTime('global'),
 //                'date'=>"2025-04-02",
-                'run_type' => 0 // 0:全执行 1:仅构造直播 2：仅构造商品
             ];
             \think\Queue::push('app\job\UpdateAdvDayGlobalCost', $data, 'upAdvDayGlobalCost');
             $page++;

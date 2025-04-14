@@ -108,7 +108,6 @@ class UpdateAdvDayGlobalCost
             $data_l = [
                 'adv_list' => $need_rebuild_live,
                 'date' => $data['date'],
-                'run_type' => 1 // 0:全执行 1:仅构造直播 2：仅构造商品
             ];
             \think\Queue::later(3,'app\job\UpdateAdvDayGlobalCost', $data_l, 'upAdvDayGlobalCost');
         }
@@ -116,7 +115,6 @@ class UpdateAdvDayGlobalCost
             $data_v = [
                 'adv_list' => $need_rebuild_video,
                 'date' => $data['date'],
-                'run_type' => 2 // 0:全执行 1:仅构造直播 2：仅构造商品
             ];
             \think\Queue::later(3,'app\job\UpdateAdvDayGlobalCost', $data_v, 'upAdvDayGlobalCost');
         }
@@ -149,20 +147,17 @@ class UpdateAdvDayGlobalCost
                     'stat_cost'
                 ])
             ];
-            if($data['run_type'] === 0 || $data['run_type'] === 1){
-                $params['marketing_goal'] = "LIVE_PROM_GOODS";
-                $query = http_build_query($params);
-                $urlWithQuery = $url . '?' . $query;
-                $request = new Request('GET', $urlWithQuery, $headers);
-                $requests1[] = ['request' => $request, 'params' => $params];
-            }
-            if ($data['run_type'] === 0 || $data['run_type'] === 2){
-                $params['marketing_goal'] = "VIDEO_PROM_GOODS";
-                $query = http_build_query($params);
-                $urlWithQuery = $url . '?' . $query;
-                $request = new Request('GET', $urlWithQuery, $headers);
-                $requests2[] = ['request' => $request, 'params' => $params];
-            }
+            $params['marketing_goal'] = "LIVE_PROM_GOODS";
+            $query = http_build_query($params);
+            $urlWithQuery = $url . '?' . $query;
+            $request = new Request('GET', $urlWithQuery, $headers);
+            $requests1[] = ['request' => $request, 'params' => $params];
+
+            $params['marketing_goal'] = "VIDEO_PROM_GOODS";
+            $query = http_build_query($params);
+            $urlWithQuery = $url . '?' . $query;
+            $request = new Request('GET', $urlWithQuery, $headers);
+            $requests2[] = ['request' => $request, 'params' => $params];
         }
         return [$requests1,$requests2];
     }
