@@ -13,7 +13,7 @@ use think\Cache;
 use think\Exception;
 use think\queue\Job;
 
-
+// 暂时已废弃
 class UpdateSingleAdvGlobalCost
 {
 

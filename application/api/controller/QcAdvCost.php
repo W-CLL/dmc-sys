@@ -59,7 +59,7 @@ class QcAdvCost extends Api
     public function getGlobalCost()
     {
         $page = 1;
-        $pageSize = 100;
+        $pageSize = 50;
         while (true) {
             // 获取当前页的数据
             $advIdList = $this->getAdvByPage($page, $pageSize);
@@ -69,8 +69,9 @@ class QcAdvCost extends Api
             }
             $data = [
                 'adv_list'=>$advIdList,
-                'date'=>$this->getDateBasedOnTime('global')
-//                'date'=>"2024-12-14"
+                'date'=>$this->getDateBasedOnTime('global'),
+//                'date'=>"2025-04-02",
+                'run_type' => 0 // 0:全执行 1:仅构造直播 2：仅构造商品
             ];
             \think\Queue::push('app\job\UpdateAdvDayGlobalCost', $data, 'upAdvDayGlobalCost');
             $page++;
