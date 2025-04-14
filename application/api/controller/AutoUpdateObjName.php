@@ -43,7 +43,8 @@ class AutoUpdateObjName extends Api
 //        $this->checkTimestamp(self::CACHE_KEY);
         $page = Cache::get('chunk_obj_page', 1);
         $redis = Cache::store('redis');
-        list($advList, $notWhiteCom) = $this->getAdvList($page, $redis, $type = 'normal', $user_name, $is_special);
+        $type= "normal";
+        list($advList, $notWhiteCom) = $this->getAdvList($page, $user_name, $is_special);
         list($start_time, $end_time) = $this->getPersonStartTime($user_name);
 
         if (empty($advList)) {
@@ -98,18 +99,6 @@ class AutoUpdateObjName extends Api
             $needComNum = $companyNum > 0 ? $actualComNum - $companyNum : $actualComNum;
             $needComNum = (int)ceil($needComNum);
 
-            //只查托管的计划
-//            $list = $objModel->where([
-//                'obj_status' => ['not in', ['DELETE', "TIME_DONE", 'FROZEN']],
-//                'lab_ad_type' => "LAB_AD",
-//                'opt_status' => ['not in', ['DELETE', "TIME_DONE", 'FROZEN']],
-//                'adv_id' => $item['advertiser_id']
-//            ])
-//                ->field('obj_id,adv_id')
-//                ->limit($needComNum)
-////              ->fetchSql(true)
-//                ->column('obj_id');
-
             $url = "https://dmc.zebranumber.cn/index.php/api/auto_update_obj_name/getObjListApi/";
             $res = new Client(['verify' => false]);
             $params = [
@@ -147,8 +136,6 @@ class AutoUpdateObjName extends Api
     /**
      * 获取公司设置
      * @param $page
-     * @param $redis
-     * @param $type
      * @param  $user_name
      * @param $is_special
      * @return array
@@ -156,7 +143,7 @@ class AutoUpdateObjName extends Api
      * @throws DbException
      * @throws ModelNotFoundException
      */
-    protected function getAdvList($page, $redis, $type, $user_name, $is_special): array
+    public function getAdvList($page, $user_name, $is_special): array
     {
         $operator = [
             'zqp' => "张秋萍",
@@ -178,16 +165,12 @@ class AutoUpdateObjName extends Api
         $comSettingModel = new CompanySetting();
         $comCostModel = new QcAdvDayCost();
         $companyModel = new Company();
-//        if ($redis->get('company_setting_list_' . $type)) {
-//            $notWhiteCom = unserialize($redis->get('company_setting_list_' . $type));
-//        } else {
         //获取非白名单公司
         if ($charge_name) {
             $ownerCompanyNames = $companyModel->where(['kahuna' => ['like', "%" . $charge_name . "%"]])->column('company_name');
             $name_where['company_name'] = ['in', $ownerCompanyNames];
         }
         $name_where['is_white'] = 0;
-
         $notWhiteCom = $comSettingModel->where($name_where)->column('percentage', 'company_name');
         if (!$is_special) {
             //提取公司名
@@ -585,7 +568,7 @@ class AutoUpdateObjName extends Api
         die;
     }
 
-    protected function getPersonStartTime($user_name = '')
+    public function getPersonStartTime($user_name = '')
     {
         $mon = date('d');
         switch ($user_name) {

@@ -48,26 +48,25 @@ class ChunkAutoObjWeb
         $needNum = $data['need_opt_num'];
         $accountNum = count($data['obj_list']);
         $singleAccountNeedNum = round($needNum / $accountNum);
-//        $list_count = count($data['obj_list']);
         for ($i = 0; $i < $singleAccountNeedNum; $i++) {
             foreach ($data['obj_list'] as $item) {
-                if(isset($data['is_abnormal']) && $data['is_abnormal']){
-                    $seconds = 0;
-                }else{
-                    $seconds = rand(3, 8);
-                }
-
+//                if (isset($data['is_abnormal']) && $data['is_abnormal']) {
+//                    $seconds = 0;
+//                } else {
+//                    $seconds = rand(3, 8);
+//                }
+                $seconds = 3;
                 $upData = [
                     'adv_id' => $data['adv_id'],
                     'obj_id' => $item,
                     'delay' => $seconds,
-                    'last_one' => false
+                    'last_one' => false,
                 ];
                 if ($i == $singleAccountNeedNum - 1) {
                     $upData['last_one'] = true;
                 }
+             $queue->addQueue('web修改' . $item . '计划名称', 'app\job\AutoUpdateObjNameWeb', 'autoUpdateObjNameWeb', $upData, '', '延迟' . $seconds . '秒执行');
 
-                $queue->addQueue('修改' . $item . '计划名称', 'app\job\AutoUpdateObjName', 'autoUpdateObjName', $upData, '', '延迟' . $seconds . '秒执行');
             }
         }
         return true;

@@ -9,7 +9,11 @@ use app\common\model\Queue;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use think\Cache;
+use think\db\exception\DataNotFoundException;
+use think\db\exception\ModelNotFoundException;
 use think\Exception;
+use think\exception\DbException;
+use think\response\Json;
 
 
 /**
@@ -95,14 +99,16 @@ class RpaUpObjName extends Api
             echo $rep['msg'];
             die;
         }
-
+        $list = $rep['data'];
         if (empty($list)) {
             echo "全部处理完了";
             Cache::rm(self::CACHE_TYPE_NOT_LAB . '_page');
             die;
         }
         $queue = new Queue();
-        foreach ($list as $item) {
+        $i = 0;
+        foreach ($list as $key=>$item) {
+
             $totalNum = (int)$item['total_num'];
             $companyNum = (int)$item['company_num'];
             $cusNum = $totalNum - $companyNum;
@@ -117,7 +123,7 @@ class RpaUpObjName extends Api
 
 //            $url = "http://dmc-new.com.cn:8084/index.php/api/rpa_up_obj_name/getObjListApi/";
             $url = "https://dmc.zebranumber.cn/index.php/api/rpa_up_obj_name/getObjListApi/";
-            $params = [$item['advertiser_id'], $needComNum,'NOT_LAB_AD'];
+            $params = [$item['advertiser_id'], $needComNum];
             $rep = $this->sendApiRes($url, $params);
             if (isset($rep['msg'])) {
                 echo $rep['msg'];
@@ -126,18 +132,23 @@ class RpaUpObjName extends Api
             if (!$rep['data']) {
                 continue;
             }
+            $i++;
             $queueData = [
                 'need_opt_num' => $needComNum,
                 'adv_id' => $item['advertiser_id'],
-                'obj_list' => $list
+                'obj_list' =>$rep['data'],
+                'need_login'=>false
             ];
+            if( $i == 1 && $page == 1){
+                $queueData['need_login'] = true;
+            }
             //一个广告主下的托管计划，总的操作次数，写入任务再平分次数到每个计划，进行延时修改
             $queue->addQueue('web计划分块处理', 'app\job\ChunkAutoObjWeb', 'chunkAutoObjWeb', $queueData);
         }
 
         $page++;
         Cache::set(self::CACHE_TYPE_NOT_LAB . '_page', $page);
-        $this->index($user_name);
+        $this->getNotLabObjList($user_name);
 
     }
 
@@ -172,13 +183,13 @@ class RpaUpObjName extends Api
         return json($list);
     }
 
-    public function getObjListApi($adv_id, $needComNum, $lab_type = 'NOT_LAB_AD')
+    public function getObjListApi($adv_id, $needComNum)
     {
 
         $objModel = new ObjModel();
         $count = $objModel->where([
                 'obj_status' => ['not in', ['DELETE', "TIME_DONE", 'FROZEN']],
-                'lab_ad_type' => $lab_type,
+                'lab_ad_type' => "LAB_AD",
                 'opt_status' => ['not in', ['DELETE', "TIME_DONE", 'FROZEN']],
                 'adv_id' => $adv_id]
         )->count('id');
@@ -187,7 +198,7 @@ class RpaUpObjName extends Api
         if ($count < 4) {
             $list = $objModel->where([
                 'obj_status' => ['not in', ['DELETE', "TIME_DONE", 'FROZEN']],
-                'lab_ad_type' => $lab_type,
+//                'lab_ad_type' => $lab_type,
                 'opt_status' => ['not in', ['DELETE', "TIME_DONE", 'FROZEN']],
                 'adv_id' => $adv_id
             ])
@@ -198,6 +209,44 @@ class RpaUpObjName extends Api
 
 
         return json($list);
+    }
+
+    /**
+     * 获取计划信息
+     * @param $adv_id
+     * @param $obj_id
+     * @return Json
+     * @throws DataNotFoundException
+     * @throws DbException
+     * @throws ModelNotFoundException
+     */
+    public function getObjInfo( $adv_id,$obj_id): Json
+    {
+
+        $obj = new ObjModel();
+        $obj_info = $obj->where(['adv_id' => $adv_id, 'obj_status' => ['not in', ['DELETE']], 'obj_id' => $obj_id])->find();
+        if(!$obj_info){
+            return json([]);
+        }
+        return json($obj_info->getData());
+    }
+
+    /**
+     * 获取广告主信息
+     * @param $adv_id
+     * @return Json
+     * @throws DataNotFoundException
+     * @throws ModelNotFoundException
+     * @throws DbException
+     */
+    public function getAdvInfo($adv_id): Json
+    {
+        $company = new Company();
+        $com_info = $company->where(['advertiser_id' =>$adv_id])->find();
+        if(!$com_info){
+            return json([]);
+        }
+        return json($com_info->getData());
     }
 
 
@@ -225,7 +274,7 @@ class RpaUpObjName extends Api
                 ]);
             }
             $contents = $response->getBody()->getContents();
-            return ['data' => $contents, 'status' => 0];
+            return ['data' =>json_decode($contents,true), 'status' => 0];
         } catch (Exception|GuzzleException $e) {
             return ['data' => [], 'status' => -1, 'msg' => $e->getMessage()];
         }
