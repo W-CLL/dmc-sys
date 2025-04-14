@@ -77,12 +77,12 @@ class AutoUpdateObjName
         }
 
         $objDetail = $objInfo['data'];
-        if(in_array($objDetail['opt_status'],['DELETE', "TIME_DONE", 'FROZEN']) ){
+        if(in_array($objDetail['opt_status'],['DELETE','FROZEN']) ){
            $qcObj->where(['obj_id'=>$data['obj_id']])->update(['opt_status'=>$objDetail['opt_status']]);
            $this->deleteRedundantJob($queueData);
             throw new Exception("计划状态不符合更新,该计划状态为:".$this->convertStatus($objDetail['opt_status']));
         }
-        if(in_array($objDetail['status'],['DELETE', "TIME_DONE", 'FROZEN']) ){
+        if(in_array($objDetail['status'],['DELETE',  'FROZEN']) ){
             $qcObj->where(['obj_id'=>$data['obj_id']])->update(['opt_status'=>$objDetail['status']]);
             $this->deleteRedundantJob($queueData);
             throw new Exception("计划状态不符合更新,该计划状态为:".$this->convertStatus($objDetail['opt_status']));

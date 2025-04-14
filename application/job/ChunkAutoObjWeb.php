@@ -2,10 +2,7 @@
 
 namespace app\job;
 
-use app\admin\model\QcObj;
 use app\common\model\Queue;
-use jlqc\FundManagement;
-use think\Cache;
 use think\Exception;
 use think\queue\Job;
 
@@ -53,9 +50,9 @@ class ChunkAutoObjWeb
 //                if (isset($data['is_abnormal']) && $data['is_abnormal']) {
 //                    $seconds = 0;
 //                } else {
-//                    $seconds = rand(3, 8);
+                    $seconds = rand(2, 7);
 //                }
-                $seconds = 3;
+//                $seconds = 3;
                 $upData = [
                     'adv_id' => $data['adv_id'],
                     'obj_id' => $item,
@@ -66,7 +63,6 @@ class ChunkAutoObjWeb
                     $upData['last_one'] = true;
                 }
              $queue->addQueue('web修改' . $item . '计划名称', 'app\job\AutoUpdateObjNameWeb', 'autoUpdateObjNameWeb', $upData, '', '延迟' . $seconds . '秒执行');
-
             }
         }
         return true;

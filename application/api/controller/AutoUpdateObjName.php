@@ -400,9 +400,9 @@ class AutoUpdateObjName extends Api
                 continue;
             }
             $list = $objModel->where([
-                'obj_status' => ['not in', ['DELETE', "TIME_DONE", 'FROZEN']],
+                'obj_status' => ['not in', ['DELETE',  'FROZEN']],
                 'lab_ad_type' => "LAB_AD",
-                'opt_status' => ['not in', ['DELETE', "TIME_DONE", 'FROZEN']],
+                'opt_status' => ['not in', ['DELETE', 'FROZEN']],
                 'adv_id' => $item['adv_id']
             ])
                 ->field('obj_id,adv_id')
@@ -649,9 +649,9 @@ class AutoUpdateObjName extends Api
     {
         $objModel = new ObjModel();
         $list = $objModel->where([
-            'obj_status' => ['not in', ['DELETE', "TIME_DONE", 'FROZEN']],
+            'obj_status' => ['not in', ['DELETE',  'FROZEN']],
             'lab_ad_type' => "LAB_AD",
-            'opt_status' => ['not in', ['DELETE', "TIME_DONE", 'FROZEN']],
+            'opt_status' => ['not in', ['DELETE',  'FROZEN']],
             'adv_id' => $adv_id
         ])
             ->field('obj_id,adv_id')

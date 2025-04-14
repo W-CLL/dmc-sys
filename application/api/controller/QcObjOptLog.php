@@ -45,7 +45,7 @@ class QcObjOptLog extends Api
                 ->where(function ($query) use ($twoDaysAgo) {
                     $query->where(function ($q) use ($twoDaysAgo) {
                         $q->where('obj_create_time', '<=', $twoDaysAgo)
-                            ->where('obj_status', 'NOT IN', ['DELETE', 'TIME_DONE', 'FROZEN']);
+                            ->where('obj_status', 'NOT IN', ['DELETE', 'FROZEN']);
                     })
                         ->whereOr('obj_create_time', '>', $twoDaysAgo);
                 })

@@ -66,6 +66,12 @@ class AutoUpdateObjNameWeb
         } else {
             $type = 'video';
         }
+
+        if($marketing_scene == "shopping_mall"){
+            $marketing_scene = 'mall';
+            $type = "product";
+        }
+
         if ($obj_info['lab_ad_type'] == "NOT_LAB_AD") {
             $lab_type = "standard";
         } else {
