@@ -37,11 +37,12 @@ class AutoUpdateObjName extends Api
      */
     public function index($user_name = '', $is_special = false)
     {
-        if (!$is_special) {
+        $page = Cache::get('chunk_obj_page', 1);
+        if (!$is_special && $page == 1) {
             $this->checkQueueExecutionOver(self::CACHE_KEY);
         }
 //        $this->checkTimestamp(self::CACHE_KEY);
-        $page = Cache::get('chunk_obj_page', 1);
+
         $redis = Cache::store('redis');
         $type= "normal";
         list($advList, $notWhiteCom) = $this->getAdvList($page, $user_name, $is_special);
