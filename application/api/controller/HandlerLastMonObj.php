@@ -13,6 +13,7 @@ use think\db\exception\DataNotFoundException;
 use think\db\exception\ModelNotFoundException;
 use think\Exception;
 use think\exception\DbException;
+use app\common\model\QcAdvDayCost;
 
 
 /**
@@ -65,7 +66,19 @@ class HandlerLastMonObj extends Api
             die;
         }
         $queue = new Queue();
+        $cost_model = new QcAdvDayCost();
         foreach ($list as $item) {
+            //本月没有标准消耗就跳过
+            $has_cost = $cost_model->where([
+                'cost_date' => ['between', [strtotime(date('Y-m-01')), time()]],
+                'type' => 1,
+            ])
+                ->field('sum(cost) as total_cost')
+                ->group('adv_id')
+                ->find();
+            if ($has_cost && $has_cost['total_cost'] > 1000) {
+                continue;
+            }
             $cusNum = (int)$item['cus_num'];
             $needComNum = $cusNum / 27;
             if($needComNum < 50){
