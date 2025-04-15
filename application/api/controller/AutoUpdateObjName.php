@@ -37,11 +37,12 @@ class AutoUpdateObjName extends Api
      */
     public function index($user_name = '', $is_special = false)
     {
-        if (!$is_special) {
+        $page = Cache::get('chunk_obj_page', 1);
+        if (!$is_special && $page == 1) {
             $this->checkQueueExecutionOver(self::CACHE_KEY);
         }
 //        $this->checkTimestamp(self::CACHE_KEY);
-        $page = Cache::get('chunk_obj_page', 1);
+
         $redis = Cache::store('redis');
         $type= "normal";
         list($advList, $notWhiteCom) = $this->getAdvList($page, $user_name, $is_special);
@@ -180,6 +181,7 @@ class AutoUpdateObjName extends Api
                 ->alias('cc')
                 ->join('company com', 'cc.adv_id=com.advertiser_id', 'left')
                 ->where(['com.company_name' => ['in', $companyNames], 'cc.cost_date' => ['between', [strtotime(date('Y-m-01')), time()]]])
+                ->where(['com.adv_status'=>1])
                 ->where(function ($query) use ($charge_name) {
                     if ($charge_name) {
                         $query->where(['com.kahuna' => ['like', "%" . $charge_name . "%"]]);
@@ -189,7 +191,7 @@ class AutoUpdateObjName extends Api
                 ->group('cc.adv_id')
                 ->order('mon_cost desc')
                 ->page($page)
-                ->limit(1000)
+                ->limit(100)
                 ->select();
             $adv_ids = array_column((array)$adv_list, 'adv_id');
         } else {
