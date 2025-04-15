@@ -61,7 +61,7 @@ class AutoUpdateObjName extends Api
             'start_time' => $start_time,
             'end_time' => $end_time,
             'advList' => $advList
-        ])['data'];
+        ],'POST')['data'];
         //获取本月的操作日志
 //        $list = $this->getOptCountCollection($comModel, $start_time, $end_time, $advList);
 
@@ -591,10 +591,19 @@ class AutoUpdateObjName extends Api
             ->select();
     }
 
-    public function getOptCountCollectionApi($start_time, $end_time, $advList)
+    public function getOptCountCollectionApi()
     {
 //        return json($advList);
         $comModel = new Company();
+        // 获取当前请求对象
+        $request = \think\Request::instance();
+        // 获取并解析JSON数据
+        $jsonData = $request->getContent();
+
+        $data = json_decode($jsonData, true);
+        $start_time = $data['start_time'];
+        $end_time = $data['end_time'];
+        $advList = $data['advList'];
         $list = $comModel
             ->alias('adv_c')
             ->join(
