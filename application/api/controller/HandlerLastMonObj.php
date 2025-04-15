@@ -52,7 +52,7 @@ class HandlerLastMonObj extends Api
             'end_time' => $end_time,
             'adv_list' =>$advList
         ];
-       $rep =  $this->sendApiRes($url,$params,"POST");
+       $rep =  sendApiRes($url,$params,"POST");
        if(isset($rep['msg'])){
            echo $rep['msg'];
            die;
@@ -79,7 +79,7 @@ class HandlerLastMonObj extends Api
             $params = [
                 $item['advertiser_id'], $needComNum
             ];
-            $rep =  $this->sendApiRes($url,$params);
+            $rep =  sendApiRes($url,$params);
             if(isset($rep['msg'])){
                 echo $rep['msg'];
                 die;
@@ -154,19 +154,9 @@ class HandlerLastMonObj extends Api
                 $charge_name = $operator[$user_name];
             }
         }
-        $companyModel = new Company();
 
         //获取公司下的广告主账户，每页1000条
-        return $companyModel
-            ->where(function ($query) use ($charge_name) {
-                if ($charge_name) {
-                    $query->where(['kahuna' => ['like', "%" . $charge_name . "%"]]);
-                }
-            })
-            ->order('advertiser_id desc')
-            ->page($page)
-            ->limit(1000)
-            ->column('advertiser_id');
+        return sendApiRes("https://dmc.zebranumber.cn/index.php/api/handler_last_mon_obj/getOwnerAdvListApi/",[$page,$charge_name])['data'];
     }
 
     public function checkDayIsHandler($key)
@@ -219,34 +209,18 @@ class HandlerLastMonObj extends Api
     }
 
 
-    /**
-     * 向正式服发送请求
-     * @param $url
-     * @param array $params
-     * @param string $method
-     * @return array
-     */
-    private function sendApiRes($url, array $params, string $method = 'GET'): array
-    {
-        try {
-            $client = new Client(['verify' => false]);
-            if ($method === 'POST') {
-                $response = $client->post($url, [
-                    'headers' => [
-                        'Content-Type' => 'application/json',
-                    ],
-                    'json' => $params // 自动将数组转为 JSON 字符串
-                ]);
-            } else {
-                $response = $client->get($url, [
-                    'query' => $params
-                ]);
-            }
-            $contents = $response->getBody()->getContents();
-            return ['data' => json_decode($contents, true), 'status' => 0];
-        } catch (Exception | GuzzleException $e) {
-            return ['data' => [], 'status' => -1, 'msg' => $e->getMessage()];
-        }
+    public function getOwnerAdvListApi($page, $charge_name){
+        $companyModel = new Company();
+        return json($companyModel
+            ->where(function ($query) use ($charge_name) {
+                if ($charge_name) {
+                    $query->where(['kahuna' => ['like', "%" . $charge_name . "%"]]);
+                }
+            })
+            ->order('advertiser_id desc')
+            ->page($page)
+            ->limit(1000)
+            ->column('advertiser_id'));
     }
 
 }

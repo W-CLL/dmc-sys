@@ -56,21 +56,11 @@ class AutoUpdateObjName extends Api
             die;
         }
 
-        $url = "https://dmc.zebranumber.cn/index.php/api/auto_update_obj_name/getOptCountCollectionApi/";
-        $res = new Client(['verify' => false]);
-        $params = [
+        $list = sendApiRes("https://dmc.zebranumber.cn/index.php/api/auto_update_obj_name/getOptCountCollectionApi/",[
             'start_time' => $start_time,
             'end_time' => $end_time,
             'advList' => $advList
-        ];
-        $rep = $res->get($url, [
-            'headers' => [
-                'Content-Type' => 'application/json', // 可以根据需要添加其他头信息
-            ],
-            'query' => $params]);
-
-        $contents = $rep->getBody()->getContents();
-        $list = json_decode($contents, true);
+        ])['data'];
         //获取本月的操作日志
 //        $list = $this->getOptCountCollection($comModel, $start_time, $end_time, $advList);
 
@@ -99,19 +89,9 @@ class AutoUpdateObjName extends Api
             $needComNum = $companyNum > 0 ? $actualComNum - $companyNum : $actualComNum;
             $needComNum = (int)ceil($needComNum);
 
-            $url = "https://dmc.zebranumber.cn/index.php/api/auto_update_obj_name/getObjListApi/";
-            $res = new Client(['verify' => false]);
-            $params = [
+            $list = sendApiRes("https://dmc.zebranumber.cn/index.php/api/auto_update_obj_name/getObjListApi/",[
                 $item['advertiser_id'], $needComNum
-            ];
-            $rep = $res->get($url, [
-                'headers' => [
-                    'Content-Type' => 'application/json', // 可以根据需要添加其他头信息
-                ],
-                'query' => $params]);
-
-            $contents = $rep->getBody()->getContents();
-            $list = json_decode($contents, true);
+            ])['data'];
 
             if (!$list) {
                 continue;
@@ -162,35 +142,25 @@ class AutoUpdateObjName extends Api
             }
         }
         //1、先查询不是白名单的 公司下的广告账户
-        $comSettingModel = new CompanySetting();
-        $comCostModel = new QcAdvDayCost();
-        $companyModel = new Company();
+        $res = new Client(['verify' => false]);
         //获取非白名单公司
         if ($charge_name) {
-            $ownerCompanyNames = $companyModel->where(['kahuna' => ['like', "%" . $charge_name . "%"]])->column('company_name');
+            $ownerCompanyNames = sendApiRes("https://dmc.zebranumber.cn/index.php/api/auto_update_obj_name/ownerCompanyNames/",[
+                $charge_name
+            ])['data'];
             $name_where['company_name'] = ['in', $ownerCompanyNames];
         }
         $name_where['is_white'] = 0;
-        $notWhiteCom = $comSettingModel->where($name_where)->column('percentage', 'company_name');
+        $notWhiteCom = sendApiRes("https://dmc.zebranumber.cn/index.php/api/auto_update_obj_name/notWhiteCom/",$name_where,'POST')['data'];
         if (!$is_special) {
             //提取公司名
             $companyNames = array_keys($notWhiteCom);
-            //获取公司下的广告主账户，每页1000条
-            $adv_list = $comCostModel
-                ->alias('cc')
-                ->join('company com', 'cc.adv_id=com.advertiser_id', 'left')
-                ->where(['com.company_name' => ['in', $companyNames], 'cc.cost_date' => ['between', [strtotime(date('Y-m-01')), time()]]])
-                ->where(function ($query) use ($charge_name) {
-                    if ($charge_name) {
-                        $query->where(['com.kahuna' => ['like', "%" . $charge_name . "%"]]);
-                    }
-                })
-                ->field('cc.*,sum(cc.cost) as mon_cost')
-                ->group('cc.adv_id')
-                ->order('mon_cost desc')
-                ->page($page)
-                ->limit(1000)
-                ->select();
+            $adv_list = sendApiRes("https://dmc.zebranumber.cn/index.php/api/auto_update_obj_name/getAdvListApi/",[
+                "company_name"=>$companyNames,
+                "page"=>$page,
+                "charge_name"=>$charge_name,
+                "limit"=>1000
+            ],'POST')['data'];
             $adv_ids = array_column((array)$adv_list, 'adv_id');
         } else {
             $adv_ids = $this->handlerSpecialAdvIds($user_name);
@@ -660,6 +630,54 @@ class AutoUpdateObjName extends Api
             ->column('obj_id');
 
         return json($list);
+    }
+
+
+    public function ownerCompanyNames($charge_name){
+        $companyModel = new Company();
+        return json($companyModel->where(['kahuna' => ['like', "%" . $charge_name . "%"]])->column('company_name'));
+    }
+
+    public function notWhiteCom()
+    {
+        // 获取当前请求对象
+        $request = \think\Request::instance();
+        // 获取并解析JSON数据
+        $jsonData = $request->getContent();
+        $where = json_decode($jsonData, true);
+        $comSettingModel = new CompanySetting();
+        return json($comSettingModel->where($where)->column('percentage', 'company_name'));
+    }
+
+
+    public function getAdvListApi(){
+        // 获取当前请求对象
+        $request = \think\Request::instance();
+        // 获取并解析JSON数据
+        $jsonData = $request->getContent();
+
+        $data = json_decode($jsonData, true);
+        $companyNames = $data['company_name'];
+        $page = $data['page'];
+        $charge_name = $data['charge_name'];
+        $limit = $data['limit'];
+        $comCostModel = new QcAdvDayCost();
+        //获取公司下的广告主账户，每页1000条
+        return json($comCostModel
+            ->alias('cc')
+            ->join('company com', 'cc.adv_id=com.advertiser_id', 'left')
+            ->where(['com.company_name' => ['in', $companyNames], 'cc.cost_date' => ['between', [strtotime(date('Y-m-01')), time()]]])
+            ->where(function ($query) use ($charge_name) {
+                if ($charge_name) {
+                    $query->where(['com.kahuna' => ['like', "%" . $charge_name . "%"]]);
+                }
+            })
+            ->field('cc.*,sum(cc.cost) as mon_cost')
+            ->group('cc.adv_id')
+            ->order('mon_cost desc')
+            ->page($page)
+            ->limit($limit)
+            ->select());
     }
 
 }
