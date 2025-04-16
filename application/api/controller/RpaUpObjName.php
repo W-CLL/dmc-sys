@@ -9,6 +9,7 @@ use app\common\model\Queue;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use think\Cache;
+use think\Db;
 use think\db\exception\DataNotFoundException;
 use think\db\exception\ModelNotFoundException;
 use think\Exception;
@@ -27,50 +28,17 @@ class RpaUpObjName extends Api
     const CACHE_TYPE_NOT_LAB = "not_lab";
     const CACHE_TYPE_LAB = "lab";
 
-    public function index()
-    {
-        $company = new Company();
-        $obj = new ObjModel();
-        $com_info = $company->where(['advertiser_id' => 1818196468347980])->find()->getData();
-        $obj_info = $obj->where(['adv_id' => 1818196468347980, 'obj_status' => ['not in', ['DELETE']], 'obj_id' => 1828951472728074])->find()->getData();
-        $base_edit_url = "https://qianchuan.jinritemai.com/creation/";
-        $marketing_scene = strtolower($obj_info['marketing_scene']);
-        if ($obj_info['marketing_goal'] == "LIVE_PROM_GOODS") {
-            $type = "live";
-        } else {
-            $type = 'video';
-        }
-        if ($obj_info['lab_ad_type'] == "NOT_LAB_AD") {
-            $lab_type = "standard";
-        } else {
-            $lab_type = "auto";
-        }
+    const WEB_GLOBAL_KEY = 'web_global_key';
 
-        $target_url = sprintf(
-            "%s%s-%s-%s?type=edit&adId=%s&aavid=%s",
-            $base_edit_url,
-            $marketing_scene,
-            $type,
-            $lab_type,
-            $obj_info['obj_id'],
-            $obj_info['adv_id']
-        );
-        $url = "http://localhost:2025/edit_plan/";
-        $params = [
-            'account_id' => $obj_info['adv_id'],
-            'account_name' => $com_info['name'],
-            'target_url' => $target_url,
-            'need_login' => false,
-            'need_change' => false,
-        ];
-        $res = $this->sendApiRes($url, $params, "POST");
-        dump($res);
-        die;
-    }
+    const WEB_STRAND_KEY = 'web_strand_key';
 
     /**
      * 获取有操作日志且全都是非托管计划(自定义)的
+     * @param $user_name
      * @return void
+     * @throws DataNotFoundException
+     * @throws DbException
+     * @throws ModelNotFoundException
      */
     public function getNotLabObjList($user_name)
     {
@@ -86,8 +54,6 @@ class RpaUpObjName extends Api
             echo "全部处理完了";
             die;
         }
-
-//        $url = "http://dmc-new.com.cn:8084/index.php/api/rpa_up_obj_name/getOptCountCollectionApi/";
         $url = "https://dmc.zebranumber.cn/index.php/api/rpa_up_obj_name/getOptCountCollectionApi/";
         $params = [
             'start_time' => $start_time,
@@ -106,13 +72,10 @@ class RpaUpObjName extends Api
             die;
         }
         $queue = new Queue();
-        $i = 0;
-        foreach ($list as $key=>$item) {
-
+        foreach ($list as $item) {
             $totalNum = (int)$item['total_num'];
             $companyNum = (int)$item['company_num'];
             $cusNum = $totalNum - $companyNum;
-
             if ($cusNum <= 0 || ($companyNum > 0 && ($companyNum / $cusNum) * 100 >= ($notWhiteCom[$item['company_name']] * 2))) {
                 continue;
             }
@@ -121,7 +84,6 @@ class RpaUpObjName extends Api
             $needComNum = $companyNum > 0 ? $actualComNum - $companyNum : $actualComNum;
             $needComNum = (int)ceil($needComNum);
 
-//            $url = "http://dmc-new.com.cn:8084/index.php/api/rpa_up_obj_name/getObjListApi/";
             $url = "https://dmc.zebranumber.cn/index.php/api/rpa_up_obj_name/getObjListApi/";
             $params = [$item['advertiser_id'], $needComNum];
             $rep = $this->sendApiRes($url, $params);
@@ -132,16 +94,12 @@ class RpaUpObjName extends Api
             if (!$rep['data']) {
                 continue;
             }
-            $i++;
             $queueData = [
                 'need_opt_num' => $needComNum,
                 'adv_id' => $item['advertiser_id'],
                 'obj_list' =>$rep['data'],
-                'need_login'=>false
             ];
-            if( $i == 1 && $page == 1){
-                $queueData['need_login'] = true;
-            }
+
             //一个广告主下的托管计划，总的操作次数，写入任务再平分次数到每个计划，进行延时修改
             $queue->addQueue('web计划分块处理', 'app\job\ChunkAutoObjWeb', 'chunkAutoObjWeb', $queueData);
         }
@@ -206,10 +164,54 @@ class RpaUpObjName extends Api
                 ->limit($needComNum)
                 ->column('obj_id');
         }
-
-
         return json($list);
     }
+
+
+    public function checkQueueExecutionOver($fun_name)
+    {
+//         生成时间参数
+//        $todayStart = strtotime('today');
+        $todayStart = strtotime(date('Y-m-01'));
+        $todayEnd = strtotime('tomorrow') - 1;
+
+        // 构造原生SQL（使用命名占位符）
+        $sql = "SELECT COUNT(*) AS count 
+            FROM fa_queue_record 
+            WHERE (
+                (queue_name = :queue1 
+                AND status = 0 
+                AND create_time BETWEEN :start1 AND :end1)
+                OR 
+                (queue_name = :queue2 
+                AND status = 0 
+                AND create_time BETWEEN :start2 AND :end2)
+            )
+            AND TIME(FROM_UNIXTIME(create_time)) NOT BETWEEN '09:00:00' AND '09:02:00'";
+
+        // 执行查询（使用ThinkPHP的数据库组件）
+        $count = Db::query($sql, [
+            'queue1' => 'autoUpdateObjNameWeb',
+            'queue2' => 'chunkAutoObjWeb',
+            'start1' => $todayStart,
+            'end1' => $todayEnd,
+            'start2' => $todayStart,
+            'end2' => $todayEnd
+        ])[0]['count'];
+
+        if ($count <= 50) {
+            Cache::store('redis')->set(self::WEB_STRAND_KEY . '_over', 1);
+            Cache::store('redis')->set(self::WEB_GLOBAL_KEY . '_over', 1);
+        }
+        $canRun = Cache::store('redis')->get($fun_name . '_over');
+        if ($canRun != 1) {
+            echo "时辰未到";
+            die;
+        }
+    }
+
+
+
 
     /**
      * 获取计划信息
