@@ -460,4 +460,9 @@ class Oauth2 extends Api
     }
 
 
+    public function btNotice(){
+        return 1;
+    }
+
+
 }
