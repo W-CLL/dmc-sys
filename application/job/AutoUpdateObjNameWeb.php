@@ -56,7 +56,10 @@ class AutoUpdateObjNameWeb
      */
     protected function doJob($data, $queueData)
     {
-        sleep($data['delay']);
+//        sleep(random_int(1,3));
+//        dump(Cache::rm('need_login'));
+//        dump(Cache::rm('web_last_adv_id'));
+//        die;
         list($com_info,$obj_info) =   $this->getObjAndAdvInfo($data['adv_id'],$data['obj_id']);
         $base_edit_url = "https://qianchuan.jinritemai.com/creation/";
 
@@ -96,20 +99,22 @@ class AutoUpdateObjNameWeb
             'need_login' => !Cache::get('need_login'),
             'need_change' => true,
         ];
-        if( Cache::get('last_adv_id') == $data['adv_id']){
+        if(Cache::has('web_last_adv_id') && Cache::get('web_last_adv_id') == $data['adv_id']){
             $params['need_change'] = false;
         }
 
         $res = $this->sendApiRes($url, $params, "POST");
-        Cache::set('last_adv_id',$data['adv_id']);
+
         if (isset($res['data']['status']) && $res['data']['status'] == 'fail') {
             $msg_res = $this->skipIfContainsError($res['data']['msg']);
             if($msg_res){
                 $this->delQueue($obj_info['adv_id'],$obj_info['obj_id']);
+            }else{
+                Cache::set('web_last_adv_id',$data['adv_id'],30);
             }
-
             throw new Exception($res['data']['msg']);
         }
+        Cache::set('web_last_adv_id',$data['adv_id'],30);
         return [$res['status'], $res['data']['msg']];
 
     }
