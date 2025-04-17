@@ -346,7 +346,7 @@ class SubWallet extends Store
                 'transfer_capital_detail_list' => [
                     [
                         'capital_type' => 'PREPAY_GENERAL',
-                        'platform' => 'QIANCHUAN',
+                        'platform' => 'AD_ALL',
                         'transfer_amount' => (float)$post['transfer_amount'] * 100
                     ]
                 ]
