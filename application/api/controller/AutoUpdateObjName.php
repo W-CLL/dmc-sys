@@ -585,7 +585,7 @@ class AutoUpdateObjName extends Api
                 'adv_c.advertiser_id = company_stats.adv_id',
                 'left'
             )
-            ->where(['adv_c.advertiser_id' => ['in', $advList], 'total_stats.total_num' => ['>', 0]])
+            ->where(['adv_c.advertiser_id' => ['in', $advList], 'total_stats.total_num' => ['>', 0], 'is_white'=>0])
             ->field("adv_c.*, total_stats.total_num, company_stats.company_num")
             ->order('total_stats.total_num desc')
             ->select();
@@ -616,7 +616,7 @@ class AutoUpdateObjName extends Api
                 'adv_c.advertiser_id = company_stats.adv_id',
                 'left'
             )
-            ->where(['adv_c.advertiser_id' => ['in', $advList], 'total_stats.total_num' => ['>', 0]])
+            ->where(['adv_c.advertiser_id' => ['in', $advList], 'total_stats.total_num' => ['>', 0], 'is_white'=>0])
             ->field("adv_c.*, total_stats.total_num, company_stats.company_num")
             ->order('total_stats.total_num desc')
             ->select();

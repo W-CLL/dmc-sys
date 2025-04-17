@@ -25,7 +25,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', 'bootstrap-table-fixe
                                 return row.is_white == 1 ? "是" : "否";
                             }
                         },
-                        {field: 'percentage', title: "百分比"},
+                        {field: 'monitor_percentage', title: "百分比"},
                         {field: 'obj_num', title: "计划数"},
                         {
                             field: 'operate', title: __('Operate'),

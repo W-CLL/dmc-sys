@@ -32,7 +32,7 @@ class QcCompanySetting extends Api
             foreach ($companyNameList as $item) {
                 $insert[] = [
                     'company_name' => $item,
-                    'percentage' => 10
+                    'percentage' => 100
                 ];
             }
             if (!empty($insert)) {

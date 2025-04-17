@@ -133,7 +133,7 @@ class HandlerLastMonObj extends Api
                 'adv_c.advertiser_id = cus_stats.adv_id',
                 'left'
             )
-            ->where(['adv_c.advertiser_id' => ['in', $adv_list], 'cus_stats.cus_num' => ['>', 0]])
+            ->where(['adv_c.advertiser_id' => ['in', $adv_list], 'cus_stats.cus_num' => ['>', 0], 'is_white'=>0])
             ->field("adv_c.*, cus_stats.cus_num")
             ->order('cus_stats.cus_num desc')
             ->select();
@@ -230,6 +230,7 @@ class HandlerLastMonObj extends Api
                     $query->where(['kahuna' => ['like', "%" . $charge_name . "%"]]);
                 }
             })
+            ->where(['is_white' => 0])
             ->order('advertiser_id desc')
             ->page($page)
             ->limit(1000)
