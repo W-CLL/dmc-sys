@@ -53,7 +53,7 @@ class QueueRecord extends Backend
             return json($result);
         }
         $queue = new Queue();
-        $class_list = $queue->group('class_name')->column('job_name', 'class_name');
+        $class_list = $queue->group('class_name')->column('job_name', 'queue_name');
 
 //        $result = array_combine(
 //            array_map(function($key) {
@@ -61,15 +61,15 @@ class QueueRecord extends Backend
 //            }, array_keys($class_list)),
 //            $class_list
 //        );
-        $result = array_combine(
-            array_map(function ($key) {
-                // 去除前缀部分
-                return str_replace('app\\job\\', '', $key);
-            }, array_keys($class_list)),
-            $class_list
-        );
+//        $result = array_combine(
+//            array_map(function ($key) {
+//                // 去除前缀部分
+//                return str_replace('app\\job\\', '', $key);
+//            }, array_keys($class_list)),
+//            $class_list
+//        );
 
-        $select = build_select('class_name', $result, 0, ['class' => 'form-control selectpicker', 'data-rule' => 'required']);
+        $select = build_select('queue_name', $class_list, 0, ['class' => 'form-control selectpicker', 'data-rule' => 'required']);
 
         $this->assign('class_name_list', $select);
         return $this->view->fetch();

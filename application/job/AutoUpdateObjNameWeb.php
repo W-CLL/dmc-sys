@@ -34,7 +34,7 @@ class AutoUpdateObjNameWeb
             list($isJobDone, $msg) = $this->doJob($data, $queueData);
             if ($isJobDone) {
                 $queueData->save(['id' => $queueData['id'], 'status' => 1, 'msg' => $msg]);
-                Cache::set('need_login', true,30);
+                Cache::set('need_login', true, 30);
                 $job->delete();
                 return '';
             } else {
@@ -43,7 +43,7 @@ class AutoUpdateObjNameWeb
                 }
             }
         } catch (Exception $e) {
-            Cache::set('need_login', true,30);
+            Cache::set('need_login', true, 30);
             $queueData->save(['id' => $queueData['id'], 'status' => 2, 'msg' => $e->getMessage()]);
             $job->delete();
             return '';
@@ -60,7 +60,7 @@ class AutoUpdateObjNameWeb
 //        dump(Cache::rm('need_login'));
 //        dump(Cache::rm('web_last_adv_id'));
 //        die;
-        list($com_info,$obj_info) =   $this->getObjAndAdvInfo($data['adv_id'],$data['obj_id']);
+        list($com_info, $obj_info) = $this->getObjAndAdvInfo($data['adv_id'], $data['obj_id']);
         $base_edit_url = "https://qianchuan.jinritemai.com/creation/";
 
         $marketing_scene = strtolower($obj_info['marketing_scene']);
@@ -70,7 +70,7 @@ class AutoUpdateObjNameWeb
             $type = 'video';
         }
 
-        if($marketing_scene == "shopping_mall"){
+        if ($marketing_scene == "shopping_mall") {
             $marketing_scene = 'mall';
             $type = "product";
         }
@@ -99,7 +99,7 @@ class AutoUpdateObjNameWeb
             'need_login' => !Cache::get('need_login'),
             'need_change' => true,
         ];
-        if(Cache::has('web_last_adv_id') && Cache::get('web_last_adv_id') == $data['adv_id']){
+        if (Cache::has('web_last_adv_id') && Cache::get('web_last_adv_id') == $data['adv_id']) {
             $params['need_change'] = false;
         }
 
@@ -107,14 +107,14 @@ class AutoUpdateObjNameWeb
 
         if (isset($res['data']['status']) && $res['data']['status'] == 'fail') {
             $msg_res = $this->skipIfContainsError($res['data']['msg']);
-            if($msg_res){
-                $this->delQueue($obj_info['adv_id'],$obj_info['obj_id']);
-            }else{
-                Cache::set('web_last_adv_id',$data['adv_id'],30);
+            if ($msg_res) {
+                $this->delQueue($obj_info['adv_id'], $obj_info['obj_id']);
+            } else {
+                Cache::set('web_last_adv_id', $data['adv_id'], 30);
             }
             throw new Exception($res['data']['msg']);
         }
-        Cache::set('web_last_adv_id',$data['adv_id'],30);
+        Cache::set('web_last_adv_id', $data['adv_id'], 30);
         return [$res['status'], $res['data']['msg']];
 
     }
@@ -150,7 +150,7 @@ class AutoUpdateObjNameWeb
     }
 
 
-    public  function skipIfContainsError($message): bool
+    public function skipIfContainsError($message): bool
     {
         // 定义需要匹配的关键词列表（支持中英文）
         $keywords = [
@@ -169,11 +169,11 @@ class AutoUpdateObjNameWeb
     private function delQueue($adv_id, $obj_id)
     {
         $queue = new Queue();
-        if($adv_id){
-         return   $queue->where(['job_data'=>['like',"%".$adv_id."%"],'status'=>0])->delete();
+        if ($adv_id) {
+            return $queue->where(['job_data' => ['like', "%" . $adv_id . "%"], 'status' => 0, 'queue_name' => "autoUpdateObjNameWeb"])->delete();
         }
-        if($obj_id){
-            return   $queue->where(['job_name'=>['like',"%".$obj_id."%"],'status'=>0])->delete();
+        if ($obj_id) {
+            return $queue->where(['job_name' => ['like', "%" . $obj_id . "%"], 'status' => ['in', [0, 2]], 'queue_name' => "autoUpdateObjNameWeb"])->delete();
         }
         return true;
     }
@@ -185,20 +185,20 @@ class AutoUpdateObjNameWeb
      * @return array
      * @throws Exception
      */
-    private function getObjAndAdvInfo($adv_id,$obj_id)
+    private function getObjAndAdvInfo($adv_id, $obj_id)
     {
         $obj_url = "https://dmc.zebranumber.cn/index.php/api/rpa_up_obj_name/getObjInfo/";
         $adv_url = "https://dmc.zebranumber.cn/index.php/api/rpa_up_obj_name/getAdvInfo/";
 
         $adv_rep = $this->sendApiRes($adv_url, [$adv_id]);
-        if(!$adv_rep['data']){
+        if (!$adv_rep['data']) {
             throw new Exception("找不到广告主信息");
         }
-        $obj_rep = $this->sendApiRes($obj_url, [$adv_id,$obj_id]);
-        if(!$obj_rep['data']){
+        $obj_rep = $this->sendApiRes($obj_url, [$adv_id, $obj_id]);
+        if (!$obj_rep['data']) {
             throw new Exception('找不到计划信息');
         }
 
-        return [$adv_rep['data'],$obj_rep['data']];
+        return [$adv_rep['data'], $obj_rep['data']];
     }
 }
