@@ -31,15 +31,14 @@ class CompanyAdv extends Backend
         if ($this->request->isAjax()) {
             $offset = input("offset", 0);
             $limit = input("limit", 10);
-            $filter = input("filter");
             $is_white = input('is_white');
-            $inputData =  json_decode($filter,true);
+            $company_name = input("company_name");
 
             $list = $this->companyModel
                 ->field("company_name,advertiser_id,is_white,monitor_percentage")
-                ->where(function ($query) use ($inputData){
-                    if(isset($inputData['company_name'])){
-                        $query->where('company_name',$inputData['company_name']);
+                ->where(function ($query) use ($company_name){
+                    if($company_name){
+                        $query->where('company_name',$company_name);
                     }
                 })
                 ->order('monitor_percentage', 'asc')
@@ -48,9 +47,9 @@ class CompanyAdv extends Backend
                 $list = $list->where(['is_white' => $is_white]);
             }
             $list = $list->select();
-            $count = $this->companyModel->where(function ($query) use ($inputData){
-                if(isset($inputData['company_name'])){
-                    $query->where('company_name',$inputData['company_name']);
+            $count = $this->companyModel->where(function ($query) use ($company_name){
+                if($company_name){
+                    $query->where('company_name',$company_name);
                 }
             });
             if($is_white === '1' || $is_white === '0'){
@@ -63,7 +62,7 @@ class CompanyAdv extends Backend
             $result = array("total" => $count, "rows" => $list);
             return json($result);
         }
-
+        $this->assign("company_name", input('company_name'));
         return $this->view->fetch();
     }
 

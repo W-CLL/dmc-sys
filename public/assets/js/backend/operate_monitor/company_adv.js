@@ -64,6 +64,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', 'bootstrap-table-fixe
                 ],
                 queryParams: function (params) {
                     params.is_white = $("#is_white").val()
+                    params.company_name = $("#company_name").val()
                     return params;
                 }
             });
