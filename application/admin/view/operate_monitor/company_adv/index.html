@@ -18,3 +18,40 @@
         </div>
     </div>
 </div>
+
+<script id="customformtpl" type="text/html">
+    <form action="" class="form-commonsearch">
+        <div style="border-radius:2px;margin-bottom:10px;background:#f5f5f5;padding:15px 20px;">
+            <div class="row">
+
+                <div class="col-xs-6 col-sm-6 col-md-3">
+                    <div class="form-group">
+                        <label class="control-label">是否白名单</label>
+                        <!--隐式的operate操作符，必须携带一个class为operate隐藏的文本框,且它的data-name="字段",值为操作符-->
+                        <div>
+                            <select id="is_white" data-rule="required" class="form-control selectpicker" name="is_white">
+                                <option name="is_white" value="" >请选择</option>
+                                <option name="is_white" value="1">是</option>
+                                <option name="is_white" value="0">否</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xs-12 col-sm-6 col-md-3">
+                    <div class="form-group">
+                        <label class="control-label"></label>
+                        <div class="row">
+                            <div class="col-xs-6">
+                                <input type="submit" class="btn btn-success btn-block" value="提交"/>
+                            </div>
+                            <div class="col-xs-6">
+                                <input type="reset" class="btn btn-primary btn-block" value="重置"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</script>

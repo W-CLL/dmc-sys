@@ -32,6 +32,7 @@ class CompanyAdv extends Backend
             $offset = input("offset", 0);
             $limit = input("limit", 10);
             $filter = input("filter");
+            $is_white = input('is_white');
             $inputData =  json_decode($filter,true);
 
             $list = $this->companyModel
@@ -42,18 +43,23 @@ class CompanyAdv extends Backend
                     }
                 })
                 ->order('monitor_percentage', 'asc')
-                ->limit($offset, $limit)
-
-                ->select();
-
-            foreach ($list as &$item){
-                $item['obj_num'] = $this->objModel->where(['adv_id'=>$item['advertiser_id']])->count();
+                ->limit($offset, $limit);
+            if($is_white === '1' || $is_white === '0'){
+                $list = $list->where(['is_white' => $is_white]);
             }
+            $list = $list->select();
             $count = $this->companyModel->where(function ($query) use ($inputData){
                 if(isset($inputData['company_name'])){
                     $query->where('company_name',$inputData['company_name']);
                 }
-            })->count();
+            });
+            if($is_white === '1' || $is_white === '0'){
+                $count = $count->where(['is_white' => $is_white]);
+            }
+            $count = $count->count();
+            foreach ($list as &$item){
+                $item['obj_num'] = $this->objModel->where(['adv_id'=>$item['advertiser_id']])->count();
+            }
             $result = array("total" => $count, "rows" => $list);
             return json($result);
         }

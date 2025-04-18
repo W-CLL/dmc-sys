@@ -15,6 +15,8 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', 'bootstrap-table-fixe
             // 初始化表格
             table.bootstrapTable({
                 url: $.fn.bootstrapTable.defaults.extend.index_url,
+                searchFormVisible: true,
+                searchFormTemplate: 'customformtpl',
                 columns: [
                     [
                         {checkbox: true},
@@ -59,7 +61,11 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', 'bootstrap-table-fixe
                             table: table, events: Table.api.events.operate, formatter: Table.api.formatter.operate
                         }
                     ]
-                ]
+                ],
+                queryParams: function (params) {
+                    params.is_white = $("#is_white").val()
+                    return params;
+                }
             });
 
             // 为表格绑定事件
