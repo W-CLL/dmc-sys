@@ -307,31 +307,33 @@ class Transfer extends Api
                     $update['status'] = 2;
                     $update['fail_reason'] = $data['data']['transfer_wallet_record_list'][0]['transfer_capital_record_list'][0]['fail_reason'];
                     $update['update_time'] = time();
-                    // 退款
-                    if ($v['account_type'] == 1) {
-                        $balance_field = 'public_money';
-                        $limit_field = 'public_credit_limit';
-                        $spending_field = 'public_spending_credit_limit';
-                    } elseif ($v['account_type'] == 2) {
-                        $balance_field = 'private_money';
-                        $limit_field = 'private_credit_limit';
-                        $spending_field = 'private_spending_credit_limit';
-                    } else {
-                        throw new \Exception('未知的账户类型');
-                    }
-                    $RefundModel = new StoreRefund();
-                    $RefundModel->getRealRefundRebate($v, 2);
-                    if ($store_info[$spending_field] < $v['deduction_credit_limit']) {
-                        $change = Db::name('store')->where('id', $v['store_id'])->inc($balance_field, $v['deduction_balance'] + $v['deduction_credit_limit'] - $store_info[$spending_field])
-                            ->inc($limit_field, $store_info[$spending_field])
-                            ->dec($spending_field, $store_info[$spending_field]);
-                    } else {
-                        $change = Db::name('store')->where('id', $v['store_id'])->inc($balance_field, $v['deduction_balance'])
-                            ->inc($limit_field, $v['deduction_credit_limit'])
-                            ->dec($spending_field, $v['deduction_credit_limit']);
-                    }
-                    if (!$change->update()) {
-                        throw new \Exception('退款失败');
+                    if($v['transfer_direction'] == 1){
+                        // 退款
+                        if ($v['account_type'] == 1) {
+                            $balance_field = 'public_money';
+                            $limit_field = 'public_credit_limit';
+                            $spending_field = 'public_spending_credit_limit';
+                        } elseif ($v['account_type'] == 2) {
+                            $balance_field = 'private_money';
+                            $limit_field = 'private_credit_limit';
+                            $spending_field = 'private_spending_credit_limit';
+                        } else {
+                            throw new \Exception('未知的账户类型');
+                        }
+                        $RefundModel = new StoreRefund();
+                        $RefundModel->getRealRefundRebate($v, 2);
+                        if ($store_info[$spending_field] < $v['deduction_credit_limit']) {
+                            $change = Db::name('store')->where('id', $v['store_id'])->inc($balance_field, $v['deduction_balance'] + $v['deduction_credit_limit'] - $store_info[$spending_field])
+                                ->inc($limit_field, $store_info[$spending_field])
+                                ->dec($spending_field, $store_info[$spending_field]);
+                        } else {
+                            $change = Db::name('store')->where('id', $v['store_id'])->inc($balance_field, $v['deduction_balance'])
+                                ->inc($limit_field, $v['deduction_credit_limit'])
+                                ->dec($spending_field, $v['deduction_credit_limit']);
+                        }
+                        if (!$change->update()) {
+                            throw new \Exception('退款失败');
+                        }
                     }
                 } elseif ($data['data']['transfer_status'] == 'TRANSFER_SUCCESS') {
                     $update['status'] = 1;
