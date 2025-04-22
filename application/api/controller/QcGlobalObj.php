@@ -117,8 +117,8 @@ class QcGlobalObj extends Api
      */
     public function handlerVideo($start, $end)
     {
-        $this->getNewObjRecursive(100, "VIDEO_PROM_GOODS",'SMART_BID_CUSTOM',$start,$end);
-        $this->getNewObjRecursive(100, "VIDEO_PROM_GOODS",'SMART_BID_CONSERVATIVE',$start,$end);
+        $this->getNewObjRecursive(50, "VIDEO_PROM_GOODS",'SMART_BID_CUSTOM',$start,$end);
+        $this->getNewObjRecursive(50, "VIDEO_PROM_GOODS",'SMART_BID_CONSERVATIVE',$start,$end);
     }
 
     /**
@@ -126,8 +126,8 @@ class QcGlobalObj extends Api
      */
     public function handlerLive($start, $end)
     {
-        $this->getNewObjRecursive(100, "LIVE_PROM_GOODS",'SMART_BID_CUSTOM',$start,$end);
-        $this->getNewObjRecursive(100, "LIVE_PROM_GOODS",'SMART_BID_CONSERVATIVE',$start,$end);
+        $this->getNewObjRecursive(50, "LIVE_PROM_GOODS",'SMART_BID_CUSTOM',$start,$end);
+        $this->getNewObjRecursive(50, "LIVE_PROM_GOODS",'SMART_BID_CONSERVATIVE',$start,$end);
     }
 
 
