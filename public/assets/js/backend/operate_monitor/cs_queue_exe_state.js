@@ -117,6 +117,7 @@ define(['jquery', 'bootstrap', 'company', 'table', 'form'], function ($, undefin
                     params.status = document.getElementById('status').value;
                     params.adv_id = document.getElementById('adv_id').value;
                     params.job_name = document.getElementById('job_name').value;
+                    params.code_type = document.getElementById('code_type').value;
                     return params;
                 }
             });

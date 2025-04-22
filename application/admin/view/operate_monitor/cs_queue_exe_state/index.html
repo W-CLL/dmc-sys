@@ -58,6 +58,20 @@
                                     </div>
                                     <div class="col-xs-3 col-sm-3 col-md-3">
                                         <div class="form-group">
+                                            <!--                                            <input type="hidden" class="operate" data-name="status" value="="/>-->
+                                            <label class="control-label">脚本类型</label>
+                                            <div>
+                                                <select data-live-search="false" name="code_type" id="code_type" class="form-control selectpicker">
+                                                    <option value="" >全部</option>
+                                                    <option value="0" >正常追次数</option>
+                                                    <option value="1" >平均</option>
+                                                    <option value="2" >元素</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-xs-3 col-sm-3 col-md-3">
+                                        <div class="form-group">
                                             <label class="control-label">千川id</label>
                                             <div>
                                                 <input type="text" class="form-control" name="adv_id" id="adv_id" placeholder="请输入千川id" value=""/>
