@@ -56,7 +56,7 @@ class ChunkAutoObjWeb
                 $upData = [
                     'adv_id' => $data['adv_id'],
                     'obj_id' => $item,
-                    'delay' => $seconds,
+                    'delay' =>($accountNum>4) ?0: $seconds,
                     'last_one' => false,
                 ];
                 if ($i == $singleAccountNeedNum - 1) {

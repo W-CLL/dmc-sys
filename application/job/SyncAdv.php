@@ -65,13 +65,16 @@ class SyncAdv
      * @throws DbException
      * @throws ModelNotFoundException
      * @throws DataNotFoundException
-     * @throws \Exception
+     * @throws Exception
      */
     protected function doJob($data, $queueData)
     {
         $access_token = Cache::get("qc_access_token");
         $advertiser_data = AccountRelationship::advertiser_select($access_token, $data['advertiser_id'], $data['cursor'], $data['count']);
         $public_info_data = UserInfo::public_info($access_token, json_encode($advertiser_data['data']['advertiser_ids']));
+        if($public_info_data['code'] != 0){
+            throw new Exception($public_info_data['message']);
+        }
         $company_add_data = [];
         $companyModel = new Company();
         $auth = new Auth();
@@ -84,8 +87,6 @@ class SyncAdv
                         "company_name" => $item["company"],
                         "update_time" => time()
                     ]);
-                } else {
-                    continue;
                 }
             } else {
                 $salt = Random::alnum();

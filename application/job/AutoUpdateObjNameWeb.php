@@ -163,9 +163,11 @@ class AutoUpdateObjNameWeb
     {
         // 定义需要匹配的关键词列表（支持中英文）
         $keywords = [
-            'not_found' => '/账号找不到/iu',  // 中文关键词（忽略大小写）
+            'not_found' => '/账号找不到.*/iu',  // 中文关键词（忽略大小写）
             'no_permission' => '/No permission to operate account/iu',  // 英文关键词（忽略大小写）
-            "not_normal" => '/当前计划存在其他问/iu'
+            "not_normal" => '/当前计划存在其他问.*/iu',
+            "not_found_obj" => '/找不到计划信息.*/iu',
+
         ];
         // 检查是否匹配其中一个关键词
         foreach ($keywords as $key => $pattern) {
@@ -182,7 +184,7 @@ class AutoUpdateObjNameWeb
         if ($adv_id && $key == "not_found") {
             return $queue->where(['job_data' => ['like', "%" . $adv_id . "%"], 'status' => 0, 'queue_name' => "autoUpdateObjNameWeb", 'id' => ['neq', $queue_record_id]])->delete();
         }
-        if ($obj_id && $key == "not_normal") {
+        if ($obj_id &&  in_array($key, ["not_normal","not_found_obj"])) {
             return $queue->where(['job_name' => ['like', "%" . $obj_id . "%"], 'status' => ['in', [0, 2]], 'queue_name' => "autoUpdateObjNameWeb", 'id' => ['neq', $queue_record_id]])->delete();
         }
         return true;
