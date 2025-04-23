@@ -93,7 +93,7 @@ class QcGlobalObj extends Api
                     "order_type" => "DESC",
                     "page" => 1,
                     "fields" => ['stat_cost'],
-                    "page_size" => 100,
+                    "page_size" => 50,
                     "filtering" => [
                         "smart_bid_type" => $otherKey,//SMART_BID_CUSTOM(默认),SMART_BID_CONSERVATIVE
                     ]
