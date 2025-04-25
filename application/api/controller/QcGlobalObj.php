@@ -162,4 +162,13 @@ class QcGlobalObj extends Api
     }
 
 
+    public function getGlobalObjEveryDay()
+    {
+        $yesterday = date('Y-m-d', strtotime('-1 day'));
+        $today = date('Y-m-d');
+        $this->handlerVideo($yesterday,$today);
+        $this->handlerLive($yesterday,$today);
+    }
+
+
 }
