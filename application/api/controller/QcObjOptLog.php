@@ -129,4 +129,56 @@ class QcObjOptLog extends Api
         // 如果当前时间不是 4 小时的倍数，且不是第一次执行，则不执行逻辑
         return [null, null];
     }
+
+
+    public function getGlobalObjOptLog($start_date = '',$end_date = '')
+    {
+        list($e,$s)=$this->checkAndGetExecutionTime();
+        if(!$s&&!$e && !$start_date){
+            echo "时间不对不执行".date('Y-m-d H:i:s');
+            die;
+        }
+        $objModel = new \app\admin\model\QcGlobalObj();
+        $queue = new Queue();
+        $advIds = $objModel->group('adv_id')->order('adv_id')->column('adv_id');
+        if ($start_date&&$end_date) {
+            $s = date("Y-m-d H:i:s",$start_date);
+            $e = date("Y-m-d H:i:s",$end_date) ;
+        }
+        foreach ($advIds as $id) {
+            $twoDaysAgo = (new DateTime('today'))->modify('-2 days')->getTimestamp();
+            $objIds = $objModel->where('adv_id', $id)
+                ->where(function ($query) use ($twoDaysAgo) {
+                    $query->where(function ($q) use ($twoDaysAgo) {
+                        $q->where('obj_create_time', '<=', $twoDaysAgo)
+                            ->where('obj_status', 'NOT IN', ['DELETE', 'FROZEN']);
+                    })
+                        ->whereOr('obj_create_time', '>', $twoDaysAgo);
+                })
+                ->order('obj_id')
+                ->column('obj_id');
+            $count = count($objIds);
+            if ($count == 0) {
+                continue;
+            }
+            $count = ceil($count / 20); // 计算分页数
+            $startTime = $s;
+            $endTime = $e;
+            for ($i = 0; $i < $count; $i++) {
+                $start = $i * 20;
+                $object_ids = array_slice($objIds, $start, 20);
+                $params = [
+                    "advertiser_id" => (int)$id,
+                    'object_id' => $object_ids,
+                    'start_time' => $startTime,
+                    'end_time' => $endTime,
+                    "page" => 1,
+                    "page_size" => 20,
+                ];
+                $queue->addQueue('插入当天新增全域日志', 'app\job\InsertDayGlobalOptLog', 'insertDayGlobalOptLog', $params);
+            }
+        }
+        echo "已经全部处理完了";
+    }
+
 }
