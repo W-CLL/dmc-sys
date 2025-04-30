@@ -105,10 +105,25 @@ function get_transfer_image(cookie,transfer_serial) {
 
       await page.mouse.click(50, 500);
       // 聚焦到输入框
+      await page.waitForSelector('input[placeholder="请输入转账编号"]');
       await page.focus('input[placeholder="请输入转账编号"]');
 
       // 模拟键盘输入
       await page.keyboard.type(transfer_serial);
+
+      // 点击日期选择器的图标
+    //   await page.waitForSelector('span.byted-icon.byted-icon-calendar');
+    //   await page.click('span.byted-icon.byted-icon-calendar');
+
+    //   // 等待日期选择器弹出
+    //   await page.waitForSelector('.byted-date-picker-popper'); // 假设日期选择器的类名为 byted-date-picker
+
+    //   // 点击该元素
+    //   await page.click('div.byted-date-date.byted-date-item.byted-date-grid-end');
+    //   // 点击该元素
+    //   await page.click('div.byted-date-date.byted-date-item.byted-date-grid-in.byted-date-today');
+
+
 
       const acceptCookiesSelector='span[class="i-icon i-icon-setting-config"]';
       await page.waitForSelector(acceptCookiesSelector);
@@ -182,7 +197,7 @@ function get_transfer_image(cookie,transfer_serial) {
           path: url, // 截图保存的文件路径
           clip: {
               x: 120,  // 截图区域的左上角x坐标
-              y: 360,  // 截图区域的左上角y坐标
+              y: 390,  // 截图区域的左上角y坐标
               width: 1180,  // 截图区域的宽度
               height: 120  // 截图区域的高度
           }
