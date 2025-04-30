@@ -18,6 +18,7 @@ process.on('warning', (warning) => {
 function get_redis() {
   let redis = require('redis');
   let client = redis.createClient({
+    // url: 'redis://:@localhost:6379',
     url: 'redis://:s1v5h4d@localhost:6379',
   });
   // 连接到Redis
@@ -45,6 +46,7 @@ function get_transfer_image(cookie,transfer_serial) {
   (async () => {
       const browser = await puppeteer.launch({
         executablePath: '/usr/bin/google-chrome', // 替换为你的Chromium实际路径
+        // executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe', // 替换为你的Chromium实际路径
         args: ['--no-sandbox'],
           // headless: false,
       });
@@ -231,7 +233,9 @@ function get_cookie(email, password) {
     // const browser = await puppeteer.launch(browserOptions);
     const browser = await puppeteer.launch({
       executablePath: '/usr/bin/google-chrome', // 替换为你的Chromium实际路径
+      // executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe', // 替换为你的Chromium实际路径
       args: ['--no-sandbox'],
+      // headless: false, // 设置为 false 以显示界面
     });
     // 创建一个新页面
     let page = await browser.newPage();
