@@ -10,12 +10,12 @@ use app\common\model\QcAdvDayCost;
 class AdList extends Backend
 {
     protected $username = [
-        '王跟' => '王倚澄',
-        '张跟' => '张秋萍',
-        '陈跟' => '陈秀玉',
-        '莫跟' => '莫美春',
-        '罗跟' => '罗文静',
-        '谭玉霞' => '罗文静',
+        '王跟' => ['王倚澄'],
+        '张跟' => ['张秋萍'],
+        '陈跟' => ['陈秀玉'],
+        '莫跟' => ['莫美春'],
+        '罗跟' => ['罗文静'],
+        '谭玉霞' => ['罗文静'],
     ];
     public function index($user_name = '')
     {
@@ -31,8 +31,12 @@ class AdList extends Backend
             $kahuna = input("kahuna");
             $advertiser_id = input("advertiser_id");
             if (!empty($kahuna) || $user_name) {
-                $kahuna = $user_name ?: $kahuna;
-                $where['kahuna'] = ['like', "%$kahuna%"];
+                $kahuna = $this->check($kahuna, $user_name);
+                if(is_array($kahuna)){
+                    $where['kahuna'] = ['in', $kahuna];
+                }else{
+                    $where['kahuna'] = ['like', "%$kahuna%"];
+                }
             }
             if (!empty($advertiser_id)) {
                 $where['advertiser_id'] = ['=', $advertiser_id];
@@ -51,6 +55,16 @@ class AdList extends Backend
                     'adv_c.adv_id = company_stats.adv_id',
                     'left'
                 )
+                ->join(
+                    "(SELECT adv_id, COUNT(*) AS global_total_num FROM fa_qc_global_obj_opt_log WHERE opt_time BETWEEN " . $start_time . " AND " . $end_time . " GROUP BY adv_id) AS global_total_stats",
+                    'adv_c.adv_id = global_total_stats.adv_id',
+                    'left'
+                )
+                ->join(
+                    "(SELECT adv_id, COUNT(*) AS global_company_num FROM fa_qc_global_obj_opt_log WHERE opt_time BETWEEN " . $start_time . " AND " . $end_time . " AND operator IN (SELECT name FROM fa_ad_operator WHERE status = 1) GROUP BY adv_id) AS global_company_stats",
+                    'adv_c.adv_id = global_company_stats.adv_id',
+                    'left'
+                )
                 ->where(['adv_c.cost_date' => ['between', [$start_time, $end_time]]])
                 ->where(function ($query) use ($advertiser_id, $kahuna) {
                     $whereStr = [];
@@ -58,19 +72,28 @@ class AdList extends Backend
                         $whereStr['com.advertiser_id'] = $advertiser_id;
                     }
                     if ($kahuna) {
-                        $whereStr['com.kahuna'] = ['like', "%$kahuna%"];
+                        if (is_array($kahuna)) {
+                            $whereStr['com.kahuna'] = ['in', $kahuna];
+                        } else {
+                            $whereStr['com.kahuna'] = ['like', "%$kahuna%"];
+                        }
                     }
                     $query->where($whereStr);
                 })
                 ->field("adv_c.*, SUM(cost) AS mon_cost,
                  SUM(CASE WHEN adv_c.type = 1 THEN cost ELSE 0 END) AS stand_cost,
                   SUM(CASE WHEN adv_c.type = 2 THEN cost ELSE 0 END) AS global_cost,
-                 com.company_name, com.kahuna, total_stats.total_num, company_stats.company_num,
+                 com.company_name, com.kahuna, total_stats.total_num, company_stats.company_num, global_total_stats.global_total_num, global_company_stats.global_company_num,
                 (total_num - IFNULL(company_num, 0)) as cus_num,
                 (CASE 
                     WHEN (total_num - IFNULL(company_num, 0)) > 0 THEN (IFNULL(company_num, 0) / (total_num - IFNULL(company_num, 0))) * 100
                 ELSE 0
-                END) as percentage
+                END) as percentage,
+                (global_total_num - IFNULL(global_company_num, 0)) as global_cus_num,
+                (CASE 
+                    WHEN (global_total_num - IFNULL(global_company_num, 0)) > 0 THEN (IFNULL(global_company_num, 0) / (global_total_num - IFNULL(global_company_num, 0))) * 100
+                ELSE 0
+                END) as global_percentage
                  ")
                 ->group('adv_c.adv_id')
                 ->order($sort, $order)
@@ -95,6 +118,11 @@ class AdList extends Backend
                     $item['percentage'] = $item['company_num'] * 100;
                 }
                 $item['percentage'] = number_format($item['percentage'], 2) . "%";
+                $global_cus_num = $item['global_total_num'] - $item['global_company_num'];
+                if($global_cus_num == 0){
+                    $item['global_percentage'] = $item['global_company_num'] * 100;
+                }
+                $item['global_percentage'] = number_format($item['global_percentage'], 2) . "%";
             }
 
             // 查询总数
@@ -113,6 +141,20 @@ class AdList extends Backend
             $user_name=$this->username[$user_name];
         }
         return $this->index($user_name);
+    }
+
+    // 优先级判断
+    public function check($kahuna, $user_name)
+    {
+        if(empty($kahuna)){
+            return $user_name;
+        }
+        foreach ($user_name as $value){
+            if(strpos($value,$kahuna) !== false){
+                return $kahuna;
+            }
+        }
+        return $user_name;
     }
 
 }
