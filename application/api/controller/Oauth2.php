@@ -231,6 +231,84 @@ class Oauth2 extends Api
         return "执行成功";
     }
 
+    public function get_transfer_image_url_new()
+    {
+        $data = Db::name("transfer_records")
+            ->where(["status" => 1])
+            ->whereNull("image")
+//            ->where(["create_time" => [">", strtotime('today midnight')]])
+//            ->where(["create_time" => ["<", time() - 300]])
+            ->limit(20)
+            ->order('create_time desc')
+            ->select();
+
+//        die;
+        $token = Cache::get("qc_access_token");
+        $account_id = Env::get('dmc_ad_config.advertiser_id');
+        $account_type = 'AGENT';
+        $biz_request_no = generate_random_string(10, true);
+        $company_model = new Company();
+//        dump($token);
+//        dump($account_id);
+//        dump($biz_request_no);
+////        dump($account_id);
+        foreach ($data as $k => $v) {
+            $data = FundManagement::check_transfer_detail($token, (int)$account_id, $account_type, $biz_request_no, $v['transfer_serial']);
+            dump($data);
+//            dump( $v['transfer_serial']);
+//            dump($v);
+//            die;
+            $create_time = $v['create_time'] + 6;
+            $company_info_get = $company_model->where(['advertiser_id' => $v['advertiser_id']])->find();
+
+            $company_info_send = $company_model->where(['id' => $v['company_id']])->find();//发起
+            dump($v);
+            dump($company_info_send->toArray());
+            dump($company_info_get->toArray());
+            die;
+            if ($v['transfer_direction'] == 1) {
+                $transfer_out = $company_info_get['name'] . "\n转出方ID：" . $company_info_get['advertiser_id'];
+                $transfer_in = $company_info_send['name'] . "\n转入方ID：" . $company_info_send['advertiser_id'];
+                $transfer_type = "加款";
+                $money = number_format($v['money'], 2);
+            } elseif ($v['transfer_direction'] == 1) {
+                $transfer_out = $company_info_send['name'] . "\n转出方ID：" . $company_info_send['advertiser_id'];
+                $transfer_in = $company_info_get['name'] . "\n转入方ID：" . $company_info_get['advertiser_id'];
+                $transfer_type = "退款";
+                $money = -number_format($v['money'], 2, '.', ',');
+            }
+            if ($company_info_get['company_name'] == $company_info_send['company_name']) {
+                $transfer_type = "同级账户转账";
+            }
+            $img_data = [
+                date('Y-m-d H:i:s', $create_time),
+                $transfer_out,
+                $transfer_in,
+                $transfer_type,
+                '通用',
+                $money,
+                '账户余额',
+                'OPENAPI'];
+            $day = date('Ymd');
+            $path = ROOT_PATH . 'public/transfer_images/'.$day.'/';
+            $file_name = microtime().'.png';
+            if (!file_exists($path)) {
+                $created = mkdir($path, 0755, true);
+                if (!$created) {
+                    // 错误处理
+                    dump("目录创建失败: {$path}");
+                    die;
+                }
+            }
+            $res = generateTransferImg($img_data,[],$path,$file_name);
+            if($res){
+                Db::name("transfer_records")->where(["id" => $v['id']])->update(["image" =>'transfer_images/'.$day.'/'.$file_name ]);
+            }else{
+                dump($res);
+            }
+        }
+        return "执行成功";
+    }
 
     public function updateKahuna()
     {
