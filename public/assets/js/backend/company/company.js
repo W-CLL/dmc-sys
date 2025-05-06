@@ -98,6 +98,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                 ],
                 queryParams: function (params) {
                     params.is_binding = $("#is_binding").val()
+                    params.is_set = $("#is_set").val()
                     return params;
                 }
             });

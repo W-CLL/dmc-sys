@@ -60,11 +60,19 @@ class Company extends Backend
             $whereOr = [];
             $where = [];
             $is_binding = input("is_binding");
-            if (!empty($is_binding)){
-                if ($is_binding == 1){
-                    $whereOr['store_id'] = ['>', 0];
+            $is_set = input("is_set");
+            if (!empty($is_set)){
+                if ($is_set === '1'){
+                    $where['discount_percentage'] = ['neq', 0];
                 }else{
-                    $whereOr['store_id'] = ['=', 0];
+                    $where['discount_percentage'] = ['=', 0];
+                }
+            }
+            if (!empty($is_binding)){
+                if ($is_binding === '1'){
+                    $where['store_id'] = ['neq', 0];
+                }else{
+                    $where['store_id'] = ['=', 0];
                 }
             }
             if (!empty($filter_data)){

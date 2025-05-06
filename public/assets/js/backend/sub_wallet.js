@@ -62,6 +62,10 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         {field: 'operate', title: __('Operate'), table: table, events: Table.api.events.operate, formatter: Table.api.formatter.operate},
                     ]
                 ],
+                queryParams: function (params) {
+                    params.is_set = $("#is_set").val()
+                    return params;
+                }
             });
 
             // 为表格绑定事件

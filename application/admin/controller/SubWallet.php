@@ -32,6 +32,14 @@ class SubWallet extends Backend
                 $filter = (array)json_decode($filter, true);
                 $where = $this->screen_filter($filter);
             }
+            $is_set = input("is_set");
+            if (!empty($is_set)){
+                if ($is_set === '1'){
+                    $where['discount_percentage'] = ['neq', 0];
+                }else{
+                    $where['discount_percentage'] = ['=', 0];
+                }
+            }
 
             $list = $WalletModel
                 ->with('store')
