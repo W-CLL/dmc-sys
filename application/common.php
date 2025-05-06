@@ -667,7 +667,7 @@ if (!function_exists('generate_random_string')) {
 }
 
 if (!function_exists('send_work_wx_msg')) {
-    function send_work_wx_msg($content,$user = [])
+    function send_work_wx_msg($content, $user = [])
     {
         if (empty($users)) {
             $users = ['WangChunLong', 'WuZhongJie', 'MaYuTian'];
@@ -678,7 +678,7 @@ if (!function_exists('send_work_wx_msg')) {
     }
 }
 
-if (!function_exists('sendApiRes')){
+if (!function_exists('sendApiRes')) {
     /**
      * 向正式服发送请求
      * @param $url
@@ -704,9 +704,84 @@ if (!function_exists('sendApiRes')){
             }
             $contents = $response->getBody()->getContents();
             return ['data' => json_decode($contents, true), 'status' => 0];
-        } catch (Exception | GuzzleException $e) {
+        } catch (Exception|GuzzleException $e) {
             return ['data' => [], 'status' => -1, 'msg' => $e->getMessage()];
         }
     }
+}
+if (!function_exists('generateTransferImg')) {
+    /**
+     * @param $headerTexts
+     * 表头，有默认值 ['转账时间', '转出方', '转入方', '转账类型', '资金池', '非赠款金额(元)', '余额类型', '操作人'];
+     * @param $data
+     * 对应表头示例：$data = [
+     * '2025-03-26 05:51:05',
+     * "荆州区睿悦百货行 bm3 \n转出方ID: 1826996040404171",
+     * "佳悦严选bm1 \n转入方ID: 1826995930318026",
+     * '同级账户转账',
+     * '通用',
+     * '29,093.11',
+     * '账户余额',
+     * 'OPENAPI'
+     * ];
+     * @param $filePath
+     * 文件路径，默认在public下
+     * @param $fileName
+     * 文件名
+     * @return bool
+     */
+    function generateTransferImg($data, $headerTexts = [], $filePath = '', $fileName = 'test.png')
+    {
+        if (!$headerTexts) {
+            $headerTexts = ['转账时间', '转出方', '转入方', '转账类型', '资金池', '非赠款金额(元)', '余额类型', '操作人'];
+        }
+        // 列宽度定义
+        $colWidths = [250, 250, 250, 120, 100, 150, 100, 100];
+        $width = array_sum($colWidths);
+        $heightPerRow = 50;
+        $totalHeight = $heightPerRow * 2; // 表头 + 数据行
+        $img = imagecreatetruecolor($width, $totalHeight);
+        $bgColor = imagecolorallocate($img, 255, 255, 255); // 白色背景
+        $headerBg = imagecolorallocate($img, 245, 245, 245); // 表头浅灰色背景
+        $borderColor = imagecolorallocate($img, 240, 240, 240); // 浅灰色边框
+        $textColor = imagecolorallocate($img, 0, 0, 0); // 黑色
+        imagefill($img, 0, 0, $bgColor);// 填充背景
+        imagefilledrectangle($img, 0, 0, $width - 1, $heightPerRow - 1, $headerBg);// 绘制表头背景
+        imagerectangle($img, 0, 0, $width - 1, $totalHeight - 1, $borderColor); // 外框
+//        $x = 0;
+//        foreach ($colWidths as $key=> $w) {
+//            imageline($img, $x, 0, $x, $totalHeight - 1, $borderColor); // 竖线
+//            $x += $w;
+//        }
+        imageline($img, 0, $heightPerRow - 1, $width - 1, $heightPerRow - 1, $borderColor); // 表头与数据行分隔线
+        $baseFontPath = ROOT_PATH . 'public\assets\fonts';
+        $font = $baseFontPath . '\msyh.ttc';
+        $x = 0;
+        foreach ($headerTexts as $i => $text) {
+            imagettftext($img, 12, 0, $x + 5, 20, $textColor, $font, $text);
+            $x += $colWidths[$i];
+        }
+        $baseY = $heightPerRow + 20;
+        $x = 0;
+        $fontl = $baseFontPath . '\simfang.ttf';
+        foreach ($data as $i => $text) {
+            $lines = explode("\n", $text);
+            foreach ($lines as $lineIndex => $lineContent) {
+                if ($lineIndex == 0) {
+                    $currentY = $baseY + ($lineIndex * 20); // 行高18像素
+                    imagettftext($img, 11, 0, $x + 5, $currentY, $textColor, $fontl, $lineContent);
+                } else {
+                    $grayColor = imagecolorallocate($img, 140, 140, 140); // 灰色
+                    $currentY = $baseY + ($lineIndex * 20); // 行高18像素
+                    imagettftext($img, 11, 0, $x + 5, $currentY, $grayColor, $fontl, $lineContent);
+                }
+            }
+            $x += $colWidths[$i];
+        }
+        $res = imagepng($img, $filePath . $fileName);
+        imagedestroy($img);
+        return $res;
+    }
+
 }
 

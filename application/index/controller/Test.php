@@ -4,6 +4,7 @@ namespace app\index\controller;
 
 use app\admin\model\Company;
 use app\admin\model\Company as CompanyModel;
+use app\admin\model\QcObjOptLog;
 use app\common\controller\Frontend;
 use app\common\model\QcAdvDayCost;
 use app\common\model\Queue;
@@ -104,6 +105,16 @@ class Test extends Frontend
 
     public function test()
     {
+        $model = new QcObjOptLog();
+        $b = QcObjOptLog::scope('hello')->fetchSql(true)->select();
+
+        $c = $model->scopeHello($model)->fetchSql(true)->select();
+//        $a = $model->fetchSql(true)->select();
+        $data = $model->where(['type'=>3])->fetchSql(true)->select();
+        dump($b);
+        dump($data);
+        die;
+
         $token = Cache::get('qc_access_token');
 //        $params = [
 //            'advertiser_id' => 1795209597736064,
@@ -561,5 +572,18 @@ class Test extends Frontend
         return FundManagement::get_opt_log($token, $params);
     }
 
+public function genImg()
+{
+    $data = [
+      '2025-03-26 05:51:05',
+      "荆州区睿悦百货行 bm3 \n转出方ID: 1826996040404171",
+      "佳悦严选bm1 \n转入方ID: 1826995930318026",
+      '同级账户转账',
+      '通用',
+      '29,093.11',
+     '账户余额',
+      'OPENAPI'];
+   dump(generateTransferImg($data));die;
+}
 
 }
