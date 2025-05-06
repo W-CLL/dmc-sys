@@ -114,9 +114,9 @@ class AutoUpdateObjNameWeb
             list($key, $msg_res) = $this->skipIfContainsError($res['data']['msg']);
             if ($msg_res) {
                 $this->delQueue($obj_info['adv_id'], $obj_info['obj_id'], $queueData['id'], $key);
-            } else {
-                Cache::set('web_last_adv_id', $data['adv_id'], 30);
             }
+            Cache::set('web_last_adv_id', $data['adv_id'], 30);
+
             if($res['data']['msg'] == "网络异常，请重新提交"){
                 Cache::set('web_edit_too_many_res',true,600);
             }
