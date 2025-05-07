@@ -464,10 +464,10 @@ class Index extends Frontend
             echo "非2025-05-07禁止访问";
             return;
         }
-        $ids_bp = [1,3,4,11,12];  // 白牌1.035
-        $ids_pp = [5,8];   // 品牌1.04
-        Db::name('store')->where(['group_id'=>['in',$ids_bp]])->update(['public_discount_percentage' => 1.035]);
-        Db::name('store')->where(['group_id'=>['in',$ids_pp]])->update(['public_discount_percentage' => 1.04]);
+        $ids_bp = [1,3,4,11,12];  // 白牌对私1.035  对公1.015
+        $ids_pp = [5,8];   // 品牌对私1.04  对公1.02
+        Db::name('store')->where(['group_id'=>['in',$ids_bp]])->update(['private_discount_percentage' => 1.035,'public_discount_percentage' => 1.015]);
+        Db::name('store')->where(['group_id'=>['in',$ids_pp]])->update(['private_discount_percentage' => 1.04,'public_discount_percentage' => 1.02]);
         Db::name('company')->where(['discount_percentage' => ['neq',0]])->update(['discount_percentage' => 1.04]);
         echo "更新完成";
     }
