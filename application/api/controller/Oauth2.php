@@ -6,6 +6,7 @@ namespace app\api\controller;
 use app\admin\model\Company;
 use app\common\controller\Api;
 use app\common\model\Queue;
+use app\store\model\TransferRecords;
 use fast\Random;
 use jlqc\AccountRelationship;
 use jlqc\FundManagement;
@@ -231,83 +232,84 @@ class Oauth2 extends Api
         return "执行成功";
     }
 
-    public function get_transfer_image_url_new()
+    public function genTransferImageUrl()
     {
         $data = Db::name("transfer_records")
             ->where(["status" => 1])
             ->whereNull("image")
 //            ->where(["create_time" => [">", strtotime('today midnight')]])
 //            ->where(["create_time" => ["<", time() - 300]])
-            ->limit(20)
+            ->limit(30)
             ->order('create_time desc')
             ->select();
-
-//        die;
         $token = Cache::get("qc_access_token");
         $account_id = Env::get('dmc_ad_config.advertiser_id');
-        $account_type = 'AGENT';
         $biz_request_no = generate_random_string(10, true);
         $company_model = new Company();
-//        dump($token);
-//        dump($account_id);
-//        dump($biz_request_no);
-////        dump($account_id);
+        $transfer_model = new TransferRecords();
         foreach ($data as $k => $v) {
-            $data = FundManagement::check_transfer_detail($token, (int)$account_id, $account_type, $biz_request_no, $v['transfer_serial']);
-            dump($data);
-//            dump( $v['transfer_serial']);
-//            dump($v);
-//            die;
-            $create_time = $v['create_time'] + 6;
-            $company_info_get = $company_model->where(['advertiser_id' => $v['advertiser_id']])->find();
+            $data = FundManagement::transfer_detail($token,  $biz_request_no,(int)$account_id, $v['transfer_serial']);
 
-            $company_info_send = $company_model->where(['id' => $v['company_id']])->find();//发起
-            dump($v);
-            dump($company_info_send->toArray());
-            dump($company_info_get->toArray());
-            die;
-            if ($v['transfer_direction'] == 1) {
-                $transfer_out = $company_info_get['name'] . "\n转出方ID：" . $company_info_get['advertiser_id'];
-                $transfer_in = $company_info_send['name'] . "\n转入方ID：" . $company_info_send['advertiser_id'];
-                $transfer_type = "加款";
+            if($data['code'] == 0 && $data['data']) {
+                $transfer_info = $data['data']['transfer_target_record_list'][0];
+                $target_account_info = $company_model->where(['advertiser_id' => $transfer_info['target_account_id']])->find();
+                $account_info = $company_model->where(['advertiser_id' => $transfer_info['account_id']])->find();
+                if($transfer_info['account_id'] == "1739518270441480"){
+                    $account_info['name'] = "广州斑马数字科技有限公司";
+                    $account_info['advertiser_id'] = $transfer_info['account_id'];
+                    $account_info['company_name'] = "广州斑马数字科技有限公司";
+                }
                 $money = number_format($v['money'], 2);
-            } elseif ($v['transfer_direction'] == 1) {
-                $transfer_out = $company_info_send['name'] . "\n转出方ID：" . $company_info_send['advertiser_id'];
-                $transfer_in = $company_info_get['name'] . "\n转入方ID：" . $company_info_get['advertiser_id'];
-                $transfer_type = "退款";
-                $money = -number_format($v['money'], 2, '.', ',');
-            }
-            if ($company_info_get['company_name'] == $company_info_send['company_name']) {
-                $transfer_type = "同级账户转账";
-            }
-            $img_data = [
-                date('Y-m-d H:i:s', $create_time),
-                $transfer_out,
-                $transfer_in,
-                $transfer_type,
-                '通用',
-                $money,
-                '账户余额',
-                'OPENAPI'];
-            $day = date('Ymd');
-            $path = ROOT_PATH . 'public/transfer_images/'.$day.'/';
-            $file_name = microtime().'.png';
-            if (!file_exists($path)) {
-                $created = mkdir($path, 0755, true);
-                if (!$created) {
-                    // 错误处理
-                    dump("目录创建失败: {$path}");
-                    die;
+                if ($v['transfer_direction'] == 1) {
+                    $transfer_type = "加款";
+                    $transfer_in = $target_account_info['name'] . "\n转入方ID：" . $target_account_info['advertiser_id'];
+                    $transfer_out = $account_info['name'] . "\n转出方ID：" . $account_info['advertiser_id'];
+                } else if ($v['transfer_direction'] == 2) {
+                    $transfer_type = "退款";
+                    $money = '-'.$money;
+                    $transfer_in = $account_info['name'] . "\n转入方ID：" . $account_info['advertiser_id'];
+                    $transfer_out = $target_account_info['name'] . "\n转出方ID：" . $target_account_info['advertiser_id'];
+                }
+                if ($account_info['company_name'] == $target_account_info['company_name']) {
+                    $transfer_type = "同级账户转账";
+                }
+                $img_data = [
+                    $data['data']['transfer_finish_time'],
+                    $transfer_out,
+                    $transfer_in,
+                    $transfer_type,
+                    '通用',
+                    $money,
+                    '账户余额',
+                    'OPENAPI'];
+                $day = date('Ymd');
+                $path = ROOT_PATH . 'public/transfer_images/' . $day . '/';
+                $file_name = (int)round(microtime(true) * 1000) . '.png';
+                if (!file_exists($path)) {
+                    $created = mkdir($path, 0755, true);
+                    if (!$created) {
+                        // 错误处理
+                        dump("目录创建失败: {$path}");
+                        die;
+                    }
+                }
+                $res = generateTransferImg($img_data, [], $path, $file_name);
+                if ($res) {
+                    $update[] = [
+                        'id'=>$v['id'],
+                        'image'=>'transfer_images/' . $day . '/' . $file_name
+                    ];
+                } else {
+                    dump($res);
                 }
             }
-            $res = generateTransferImg($img_data,[],$path,$file_name);
-            if($res){
-                Db::name("transfer_records")->where(["id" => $v['id']])->update(["image" =>'transfer_images/'.$day.'/'.$file_name ]);
-            }else{
-                dump($res);
-            }
         }
-        return "执行成功";
+       $res =  $transfer_model->saveAll($update);
+        if($res){
+            return "执行成功";
+        }
+        return $res;
+
     }
 
     public function updateKahuna()

@@ -732,11 +732,36 @@ if (!function_exists('generateTransferImg')) {
      */
     function generateTransferImg($data, $headerTexts = [], $filePath = '', $fileName = 'test.png')
     {
-        if (!$headerTexts) {
+        if (empty($headerTexts)) {
             $headerTexts = ['转账时间', '转出方', '转入方', '转账类型', '资金池', '非赠款金额(元)', '余额类型', '操作人'];
         }
-        // 列宽度定义
-        $colWidths = [250, 250, 250, 120, 100, 150, 100, 100];
+        // 字体路径和大小定义
+        $baseFontPath = ROOT_PATH . 'public/assets/fonts/';
+        $fontHeader = $baseFontPath . 'msyh.ttc';
+        $fontSizeHeader = 12;
+        $fontData = $baseFontPath . 'simfang.ttf';
+        $fontSizeData = 11;
+        // 动态计算每列的宽度
+        $colWidths = [];
+        for ($i = 0; $i < count($headerTexts); $i++) {
+            // 表头宽度
+            $bboxHeader = imagettfbbox($fontSizeData, 0, $fontHeader, $headerTexts[$i]);
+            $headerWidth = ($bboxHeader[2] - $bboxHeader[0]) + 15; // 增加左右边距
+            // 数据宽度（取所有行中最大宽度）
+            $dataText = $data[$i];
+            $lines = explode("\n", $dataText);
+            $maxDataWidth = 0;
+            foreach ($lines as $line) {
+                $bboxData = imagettfbbox($fontSizeData, 0, $fontData, $line);
+                $width = $bboxData[2] - $bboxData[0];
+                if ($width > $maxDataWidth) {
+                    $maxDataWidth = $width;
+                }
+            }
+            $dataWidth = $maxDataWidth + 15; // 增加左右边距
+            $colWidths[] = max($headerWidth, $dataWidth);
+        }
+        // 动态计算图片宽度和高度
         $width = array_sum($colWidths);
         $heightPerRow = 50;
         $totalHeight = $heightPerRow * 2; // 表头 + 数据行
@@ -754,26 +779,23 @@ if (!function_exists('generateTransferImg')) {
 //            $x += $w;
 //        }
         imageline($img, 0, $heightPerRow - 1, $width - 1, $heightPerRow - 1, $borderColor); // 表头与数据行分隔线
-        $baseFontPath = ROOT_PATH . 'public\assets\fonts';
-        $font = $baseFontPath . '\msyh.ttc';
         $x = 0;
         foreach ($headerTexts as $i => $text) {
-            imagettftext($img, 12, 0, $x + 5, 20, $textColor, $font, $text);
+            imagettftext($img, $fontSizeData, 0, $x + 5, 20, $textColor, $fontHeader, $text);
             $x += $colWidths[$i];
         }
         $baseY = $heightPerRow + 20;
         $x = 0;
-        $fontl = $baseFontPath . '\simfang.ttf';
         foreach ($data as $i => $text) {
             $lines = explode("\n", $text);
             foreach ($lines as $lineIndex => $lineContent) {
                 if ($lineIndex == 0) {
                     $currentY = $baseY + ($lineIndex * 20); // 行高18像素
-                    imagettftext($img, 11, 0, $x + 5, $currentY, $textColor, $fontl, $lineContent);
+                    imagettftext($img, $fontSizeData, 0, $x + 5, $currentY, $textColor, $fontData, $lineContent);
                 } else {
                     $grayColor = imagecolorallocate($img, 140, 140, 140); // 灰色
                     $currentY = $baseY + ($lineIndex * 20); // 行高18像素
-                    imagettftext($img, 11, 0, $x + 5, $currentY, $grayColor, $fontl, $lineContent);
+                    imagettftext($img, $fontSizeData, 0, $x + 5, $currentY, $grayColor, $fontData, $lineContent);
                 }
             }
             $x += $colWidths[$i];
@@ -782,6 +804,5 @@ if (!function_exists('generateTransferImg')) {
         imagedestroy($img);
         return $res;
     }
-
 }
 
