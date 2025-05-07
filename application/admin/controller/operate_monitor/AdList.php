@@ -149,6 +149,9 @@ class AdList extends Backend
         if(empty($kahuna)){
             return $user_name;
         }
+        if (empty($user_name)){
+            return $kahuna;
+        }
         foreach ($user_name as $value){
             if(strpos($value,$kahuna) !== false){
                 return $kahuna;
