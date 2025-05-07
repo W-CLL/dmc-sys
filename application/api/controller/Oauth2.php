@@ -234,7 +234,7 @@ class Oauth2 extends Api
 
     public function genTransferImageUrl()
     {
-        $data = Db::name("transfer_records")
+        $list = Db::name("transfer_records")
             ->where(["status" => 1])
             ->whereNull("image")
 //            ->where(["create_time" => [">", strtotime('today midnight')]])
@@ -242,12 +242,15 @@ class Oauth2 extends Api
             ->limit(30)
             ->order('create_time desc')
             ->select();
+        if(!$list){
+            return "没有需要处理的数据";
+        }
         $token = Cache::get("qc_access_token");
         $account_id = Env::get('dmc_ad_config.advertiser_id');
         $biz_request_no = generate_random_string(10, true);
         $company_model = new Company();
         $transfer_model = new TransferRecords();
-        foreach ($data as $k => $v) {
+        foreach ($list as $k => $v) {
             $data = FundManagement::transfer_detail($token,  $biz_request_no,(int)$account_id, $v['transfer_serial']);
 
             if($data['code'] == 0 && $data['data']) {
