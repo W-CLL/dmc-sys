@@ -237,6 +237,7 @@ class Oauth2 extends Api
         $list = Db::name("transfer_records")
             ->where(["status" => 1])
             ->whereNull("image")
+            ->whereNotNull('transfer_serial')
 //            ->where(["create_time" => [">", strtotime('today midnight')]])
 //            ->where(["create_time" => ["<", time() - 300]])
             ->limit(30)
@@ -250,9 +251,10 @@ class Oauth2 extends Api
         $biz_request_no = generate_random_string(10, true);
         $company_model = new Company();
         $transfer_model = new TransferRecords();
+        $update = [];
+        $error = [];
         foreach ($list as $k => $v) {
             $data = FundManagement::transfer_detail($token,  $biz_request_no,(int)$account_id, $v['transfer_serial']);
-
             if($data['code'] == 0 && $data['data']) {
                 $transfer_info = $data['data']['transfer_target_record_list'][0];
                 $target_account_info = $company_model->where(['advertiser_id' => $transfer_info['target_account_id']])->find();
@@ -305,13 +307,22 @@ class Oauth2 extends Api
                 } else {
                     dump($res);
                 }
+            }else{
+                $error[]= $data['message'].$v['id'];
             }
         }
-       $res =  $transfer_model->saveAll($update);
-        if($res){
-            return "执行成功";
+        if($update){
+            $res =  $transfer_model->saveAll($update);
+            if($res){
+                return "执行成功";
+            }
         }
-        return $res;
+        if($error){
+            return json_encode($error);
+        }
+
+        return '执行成功2';
+
 
     }
 
