@@ -309,6 +309,10 @@ class Oauth2 extends Api
                 }
             }else{
                 $error[]= $data['message'].$v['id'];
+                $update[] = [
+                    'id'=>$v['id'],
+                    'image'=>$data['message']
+                ];
             }
         }
         if($update){
