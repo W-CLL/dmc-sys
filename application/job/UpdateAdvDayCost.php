@@ -22,14 +22,12 @@ class UpdateAdvDayCost
         $jobId = json_decode($job->getRawBody(), true)['id'];
         $queueModel = new \app\common\model\Queue();
         $queueData = $queueModel->where('job_id', $jobId)->find();
-        if (!$queueData) {
-            $job->delete();
-            return '';
-        }
         try {
-            $isJobDone = $this->doJob($data, $queueData);
+            $isJobDone = $this->doJob($data);
             if ($isJobDone) {
-                $queueData->save(['id' => $queueData['id'], 'status' => 1, 'msg' => "处理完成"]);
+                if ($queueData) {
+                    $queueData->save(['id' => $queueData['id'], 'status' => 1, 'msg' => "处理完成"]);
+                }
                 $job->delete();
             } else {
                 if ($job->attempts() > 3) {
@@ -37,36 +35,56 @@ class UpdateAdvDayCost
                 }
             }
         } catch (Exception $e) {
-            $queueData->save(['id' => $queueData['id'], 'status' => 2, 'msg' => $e->getMessage()]);
+            $insert_data = [
+                'job_name' => '更新账户标准消耗',
+                'job_id' => $jobId,
+                'class_name' => 'app\job\UpdateAdvDayCost',
+                'queue_name' => 'upAdvDayCost',
+                'relation_table' => '',
+                'job_data' => json_encode($data),
+                'remark' => '',
+                'msg' => $e->getMessage(),
+                'status' => 2,
+            ];
+            if ($queueData) {
+                $queueData->save(['id' => $queueData['id'], 'status' => 2, 'msg' => $e->getMessage()]);
+                $job->delete();
+                return ;
+            }
+            $queueModel->save($insert_data);
             $job->delete();
+            return ;
         }
     }
 
     /**
      * @throws Exception
      */
-    protected function doJob($data, $queueData)
+    protected function doJob($data)
     {
         $requests = $this->buildGuzzleRequest($data);
         $allData = $this->sendGuzzleRequest($requests);
         if(empty($allData)){
             return true;
         }
-//     dump($allData);
-//        die;
         $costModel = new QcAdvDayCost();
-        foreach ($allData as $data) {
-            $dayCost = $costModel->where(['adv_id' => $data['adv_id'], 'cost_date' => $data['cost_date'],'type'=>1])->find();
+        $saveData = [];
+        foreach ($allData as $item) {
+            $dayCost = $costModel->where(['adv_id' => $item['adv_id'], 'cost_date' => $item['cost_date'],'type'=>1])->find();
             if ($dayCost) {
-                echo "更新";
                 $upData['id']=$dayCost['id'];
-                $upData['cost'] = $data['cost'];
-                $res = $dayCost->save($upData);
+                $upData['cost'] = $item['cost'];
+                $saveData[]=$upData;
+//                $res = $dayCost->save($upData);
             } else {
-                echo "插入";
-                $res = $costModel->save($data);
+                $saveData[] = $item;
+//                $res = $costModel->save($data);
             }
-            if (!$res && $res != 0) {
+
+        }
+        if($saveData){
+            $res = $costModel->saveAll($saveData);
+            if (!$res) {
                 throw  new Exception($res);
             }
         }
@@ -114,7 +132,7 @@ class UpdateAdvDayCost
         $insertData = [];
         $guzzleClient = new Client();
         $pool = new Pool($guzzleClient, array_column($requests, 'request'), [
-            'concurrency' => 50, // 并发请求数量
+            'concurrency' => 20, // 并发请求数量
             'fulfilled' => function ($response, $index) use (&$insertData) {
                 $resData = json_decode($response->getBody()->getContents(), true);
 //                dump($resData['code'] . '1');

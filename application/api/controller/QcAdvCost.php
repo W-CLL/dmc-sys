@@ -25,7 +25,7 @@ class QcAdvCost extends Api
     {
         $page = 1;
         $pageSize = 100;
-        $queue = new Queue();
+//        $queue = new Queue();
         while (true) {
 //            sleep(5);
             // 获取当前页的数据
@@ -38,7 +38,8 @@ class QcAdvCost extends Api
                 'adv_list'=>$advIdList,
                 'date'=>$this->getDateBasedOnTime('normal')
             ];
-            $queue->addQueue('1h更新账户当天消耗','app\job\UpdateAdvDayCost','upAdvDayCost',$data);
+            \think\Queue::push('app\job\UpdateAdvDayCost', $data, 'upAdvDayCost');
+//            $queue->addQueue('1h更新账户当天消耗','app\job\UpdateAdvDayCost','upAdvDayCost',$data);
             $page++;
         }
     }
