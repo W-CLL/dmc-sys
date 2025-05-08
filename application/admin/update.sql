@@ -218,5 +218,11 @@ ALTER TABLE fa_qc_obj
 
 ALTER TABLE fa_queue_record
     ADD NORMAL INDEX queue_name (queue_name);
+--添加索引
+CREATE INDEX idx_opt_time_adv_id ON fa_qc_obj_opt_log (opt_time, adv_id);
+
+CREATE INDEX idx_operator ON fa_qc_obj_opt_log (operator);
+
+CREATE INDEX idx_opt_operator_time ON fa_qc_obj_opt_log (operator, opt_time, adv_id);
 
 

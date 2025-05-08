@@ -142,8 +142,6 @@ class AutoUpdateObjName extends Api
                 $charge_name = $operator[$user_name];
             }
         }
-        //1、先查询不是白名单的 公司下的广告账户
-        $res = new Client(['verify' => false]);
         //获取非白名单公司
         if ($charge_name) {
             $ownerCompanyNames = sendApiRes("https://dmc.zebranumber.cn/index.php/api/auto_update_obj_name/ownerCompanyNames/",[
@@ -219,12 +217,10 @@ class AutoUpdateObjName extends Api
      */
     public function chunkGlobalComAdv(string $user_name = '', bool $is_special = false)
     {
-        if (!$is_special) {
+        $page = Cache::get('chunk_obj_global_page', 1);
+        if ($page == 1) {
             $this->checkQueueExecutionOver(self::GLOBAL_CACHE_KEY); //
         }
-
-//        $this->checkTimestamp(self::GLOBAL_CACHE_KEY);
-        $page = Cache::get('chunk_obj_global_page', 1);
         $redis = Cache::store('redis');
         list($advList, $notWhiteCom) = $this->getAdvList($page, $redis, $type = 'global', $user_name, $is_special);
         list($start_time, $end_time) = $this->getPersonStartTime($user_name);
@@ -272,9 +268,6 @@ class AutoUpdateObjName extends Api
 
         $queue = new Queue();
         foreach ($adv_list as $item) {
-            if ($item['adv_id'] == '1816678114059481') {
-                continue;
-            }
             foreach ($count_list as $value) {
                 if ($item['day_cost'] > 0 && $item['adv_id'] == $value['advertiser_id']) {
                     $need_num = $this->getDailyOperationLimit($item['day_cost']);
