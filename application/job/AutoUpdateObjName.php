@@ -28,7 +28,7 @@ class AutoUpdateObjName
 //        }
         $jobId = json_decode($job->getRawBody(), true)['id'];
         $queueModel = new \app\common\model\Queue();
-        $queueData = $queueModel->where('job_id', $jobId)->find();
+        $queueData = $queueModel->where('job_id', $jobId)->lock(true)->find();
         if (!$queueData) {
             $job->delete();
             return '';
