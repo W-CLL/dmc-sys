@@ -135,13 +135,16 @@ class Oauth2 extends Api
             $info = $companyModel->where('advertiser_id', $item['id'])->find();
             if ($info) {
                 if ($item['name'] != $info['name'] || $item['company'] != $info['company_name']) {
-                    $companyModel->where(["advertiser_id" => $item["id"]])->update([
+                    $company_add_data[] = [
+                        'id'=>$info['id'],
                         "name" => $item["name"],
-                        "company_name" => $item["company"],
-                        "update_time" => time()
-                    ]);
-                }else{
-                    continue;
+                        "company_name" => $item["company"]
+                    ];
+//                    $companyModel->where(["advertiser_id" => $item["id"]])->update([
+//                        "name" => $item["name"],
+//                        "company_name" => $item["company"],
+//                        "update_time" => time()
+//                    ]);
                 }
             } else {
                 $salt = Random::alnum();
@@ -159,14 +162,15 @@ class Oauth2 extends Api
             }
         }
         try {
-            $queue = new Queue();
+//            $queue = new Queue();
             if ($advertiser_data['data']['cursor_page_info']['has_more']) {
                 $queue_data = [
                     'advertiser_id' => $advertiser_id,
                     'count' => $count,
                     'cursor' => $advertiser_data['data']['cursor_page_info']['cursor'],
                 ];
-                $queue->addQueue('检查更新广告账户', 'app\job\SyncAdv', 'syncAdv', $queue_data);
+                \think\queue::push('app\job\SyncAdv',$queue_data,'syncAdv');
+//                $queue->addQueue('检查更新广告账户', 'app\job\SyncAdv', 'syncAdv', $queue_data);
             }
             if (!empty($company_add_data)) {
                 $companyModel->saveAll($company_add_data);

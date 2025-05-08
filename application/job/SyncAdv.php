@@ -39,25 +39,38 @@ class SyncAdv
         $jobId = json_decode($job->getRawBody(), true)['id'];
         $queueModel = new \app\common\model\Queue();
         $queueData = $queueModel->where('job_id', $jobId)->find();
-        if (!$queueData) {
-            $job->delete();
-            return '';
-        }
         try {
-            $isJobDone = $this->doJob($data, $queueData);
+            $isJobDone = $this->doJob($data);
             if ($isJobDone) {
-                $queueData->save(['id' => $queueData['id'], 'status' => 1, 'msg' => "处理完成"]);
+                if ($queueData) {
+                    $queueData->save(['id' => $queueData['id'], 'status' => 1, 'msg' => "处理完成"]);
+                }
                 $job->delete();
-                return '';
             } else {
                 if ($job->attempts() > 3) {
                     $job->delete();
                 }
             }
         } catch (Exception $e) {
-            $queueData->save(['id' => $queueData['id'], 'status' => 2, 'msg' => $e->getMessage()]);
+            $insert_data = [
+                'job_name' => '检查更新广告账户',
+                'job_id' => $jobId,
+                'class_name' => 'app\job\SyncAdv',
+                'queue_name' => 'syncAdv',
+                'relation_table' => '',
+                'job_data' => json_encode($data),
+                'remark' => '',
+                'msg' => $e->getMessage(),
+                'status' => 2,
+            ];
+            if ($queueData) {
+                $queueData->save(['id' => $queueData['id'], 'status' => 2, 'msg' => $e->getMessage()]);
+                $job->delete();
+                return ;
+            }
+            $queueModel->save($insert_data);
             $job->delete();
-            return '';
+            return ;
         }
     }
 
@@ -67,7 +80,7 @@ class SyncAdv
      * @throws DataNotFoundException
      * @throws Exception
      */
-    protected function doJob($data, $queueData)
+    protected function doJob($data)
     {
         $access_token = Cache::get("qc_access_token");
         $advertiser_data = AccountRelationship::advertiser_select($access_token, $data['advertiser_id'], $data['cursor'], $data['count']);
@@ -82,11 +95,16 @@ class SyncAdv
             $info = $companyModel->where('advertiser_id', $item['id'])->find();
             if ($info) {
                 if ($item['name'] != $info['name'] || $item['company'] != $info['company_name']) {
-                    $companyModel->where(["advertiser_id" => $item["id"]])->update([
+                    $company_add_data[] = [
+                        'id'=>$info['id'],
                         "name" => $item["name"],
-                        "company_name" => $item["company"],
-                        "update_time" => time()
-                    ]);
+                        "company_name" => $item["company"]
+                    ];
+//                    $companyModel->where(["advertiser_id" => $item["id"]])->update([
+//                        "name" => $item["name"],
+//                        "company_name" => $item["company"],
+//                        "update_time" => time()
+//                    ]);
                 }
             } else {
                 $salt = Random::alnum();
@@ -104,18 +122,19 @@ class SyncAdv
             }
         }
         if($advertiser_data['data']['cursor_page_info']['has_more']){
-            $queue = new Queue();
+//            $queue = new Queue();
             $queue_data = [
                 'advertiser_id' => $data['advertiser_id'],
                 'count' => $data['count'],
                 'cursor' => $advertiser_data['data']['cursor_page_info']['cursor'],
             ];
-            $queue->addQueue('检查更新广告账户', 'app\job\SyncAdv', 'syncAdv', $queue_data);
+            \think\queue::later(3,'app\job\SyncAdv',$queue_data,'syncAdv');
+//            $queue->addQueue('检查更新广告账户', 'app\job\SyncAdv', 'syncAdv', $queue_data);
         }
         if (!empty($company_add_data)) {
           $res =   $companyModel->saveAll($company_add_data);
           if(!$res){
-              return false;
+             throw new Exception($res);
           }
         }
         return true;
