@@ -169,7 +169,7 @@ class Oauth2 extends Api
                     'count' => $count,
                     'cursor' => $advertiser_data['data']['cursor_page_info']['cursor'],
                 ];
-                \think\queue::push('app\job\SyncAdv',$queue_data,'syncAdv');
+                \think\Queue::push('app\job\SyncAdv',$queue_data,'syncAdv');
 //                $queue->addQueue('检查更新广告账户', 'app\job\SyncAdv', 'syncAdv', $queue_data);
             }
             if (!empty($company_add_data)) {
