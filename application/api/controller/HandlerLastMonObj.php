@@ -237,7 +237,7 @@ class HandlerLastMonObj extends Api
             ->where(['is_white' => 0])
             ->order('advertiser_id desc')
             ->page($page)
-            ->limit(1000)
+            ->limit(100)
             ->column('advertiser_id'));
     }
 
