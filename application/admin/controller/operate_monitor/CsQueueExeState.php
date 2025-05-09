@@ -73,6 +73,7 @@ if($startDate&&$endDate){
                 'offset' => $offset,
                 'limit' => $limit,
                 'where' => $where,
+                'kefu' => $cs,
             ];
 
             $data['validate'] = md5(json_encode($data, JSON_UNESCAPED_UNICODE));
