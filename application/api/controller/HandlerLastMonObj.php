@@ -5,13 +5,11 @@ namespace app\api\controller;
 use app\admin\model\Company;
 use app\admin\model\QcObj as ObjModel;
 use app\common\controller\Api;
-use app\common\model\Queue;
-use GuzzleHttp\Client;
+use app\common\model\QueueAvg;
 use GuzzleHttp\Exception\GuzzleException;
 use think\Cache;
 use think\db\exception\DataNotFoundException;
 use think\db\exception\ModelNotFoundException;
-use think\Exception;
 use think\exception\DbException;
 use app\common\model\QcAdvDayCost;
 
@@ -35,8 +33,10 @@ class HandlerLastMonObj extends Api
     public function index($user_name)
     {
         //检查当天是不是已经执行了
-        $this->checkDayIsHandler(self::NORMAL_CACHE_KEY);
         $page = Cache::get(self::NORMAL_CACHE_KEY.'_page', 1);
+        if($page == 1){
+            $this->checkDayIsHandler(self::NORMAL_CACHE_KEY);
+        }
         //分页获取负责人的广告账号
         $advList= $this->getOwnerAdvList($page, $user_name);
         //获取上个月整月的时间范围，如当月是4月，返回则是3.1-3.31的时间戳
@@ -48,10 +48,12 @@ class HandlerLastMonObj extends Api
             die;
         }
         $url = "https://dmc.zebranumber.cn/index.php/api/handler_last_mon_obj/getOptCountCollectionApi/";
+//        $url = "http://dmc-new.com.cn:8084/index.php/api/handler_last_mon_obj/getOptCountCollectionApi/";
         $params = [
             'start_time' => $start_time,
             'end_time' => $end_time,
-            'adv_list' =>$advList
+            'adv_list' =>$advList,
+            'page' =>$page,
         ];
        $rep =  sendApiRes($url,$params,"POST");
        if(isset($rep['msg'])){
@@ -65,7 +67,7 @@ class HandlerLastMonObj extends Api
             Cache::set(self::NORMAL_CACHE_KEY, strtotime(date('Y-m-d')));
             die;
         }
-        $queue = new Queue();
+        $queue = new QueueAvg();
         $cost_model = new QcAdvDayCost();
         foreach ($list as $item) {
             //本月没有标准消耗就跳过
@@ -82,9 +84,9 @@ class HandlerLastMonObj extends Api
             $cusNum = (int)$item['cus_num'];
             $needComNum = $cusNum / 27;
             if($needComNum < 50){
-                $needComNum = $needComNum + 60;
-            }else{
-                $needComNum = ($needComNum * 0.8) + $needComNum;
+                $needComNum = $needComNum + 20;
+            }elseif($needComNum<200 && $needComNum>50){
+                $needComNum = ($needComNum * 0.3) + $needComNum;
             }
             $needComNum = (int)ceil($needComNum);
 
@@ -107,7 +109,7 @@ class HandlerLastMonObj extends Api
                 'obj_list' => $rep['data']
             ];
             //一个广告主下的托管计划，总的操作次数，写入任务再平分次数到每个计划，进行延时修改
-            $queue->addQueue('分块处理自动化', 'app\job\ChunkAutoObj', 'chunkAutoObj', $queueData);
+            $queue->addQueue('平均分块处理自动化', 'app\job\ChunkAutoObjAvg', 'chunkAutoObjAvg', $queueData);
         }
         $page++;
         Cache::set(self::NORMAL_CACHE_KEY.'_page', $page);
@@ -121,6 +123,7 @@ class HandlerLastMonObj extends Api
         $start_time = $params['start_time'];
         $end_time = $params['end_time'] ;
         $adv_list = $params['adv_list'] ;
+        $page = $params['page'] ;
         if (!is_array($adv_list)) {
             // 处理解码失败的情况（如返回错误信息）
             return json(['status' => -1, 'msg' => '参数格式错误']);
@@ -136,6 +139,7 @@ class HandlerLastMonObj extends Api
             ->where(['adv_c.advertiser_id' => ['in', $adv_list], 'cus_stats.cus_num' => ['>', 0], 'is_white'=>0])
             ->field("adv_c.*, cus_stats.cus_num")
             ->order('cus_stats.cus_num desc')
+            ->page($page,100)
             ->select();
 
         return json($list);

@@ -132,34 +132,36 @@ CREATE TABLE `fa_ad_operator`
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COMMENT='千川投放计划操作员记录表';
 
 --2024.11.27
-CREATE TABLE `fa_plan_opt_log` (
-                                   `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT 'id',
-                                   `advertiser_id` varchar(30) NOT NULL COMMENT '广告主id',
-                                   `obj_id` varchar(30) NOT NULL COMMENT '项目id',
-                                   `content_log` text COMMENT '日志内容',
-                                   `content_title` varchar(255) DEFAULT NULL COMMENT '主题内容',
-                                   `object_name` varchar(255) DEFAULT NULL COMMENT '项目名称',
-                                   `object_type` varchar(100) DEFAULT NULL COMMENT '项目类型',
-                                   `operator` varchar(255) NOT NULL COMMENT '操作人',
-                                   `opt_ip` varchar(50) DEFAULT NULL COMMENT '操作ip',
-                                   `opt_time` bigint(16) NOT NULL COMMENT '操作时间',
-                                   `create_time` bigint(16) NOT NULL COMMENT '创建时间',
-                                   PRIMARY KEY (`id`),
-                                   KEY `advertiser_id` (`advertiser_id`) USING BTREE,
-                                   KEY `obj_id` (`obj_id`) USING BTREE
+CREATE TABLE `fa_plan_opt_log`
+(
+    `id`            int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT 'id',
+    `advertiser_id` varchar(30)  NOT NULL COMMENT '广告主id',
+    `obj_id`        varchar(30)  NOT NULL COMMENT '项目id',
+    `content_log`   text COMMENT '日志内容',
+    `content_title` varchar(255) DEFAULT NULL COMMENT '主题内容',
+    `object_name`   varchar(255) DEFAULT NULL COMMENT '项目名称',
+    `object_type`   varchar(100) DEFAULT NULL COMMENT '项目类型',
+    `operator`      varchar(255) NOT NULL COMMENT '操作人',
+    `opt_ip`        varchar(50)  DEFAULT NULL COMMENT '操作ip',
+    `opt_time`      bigint(16) NOT NULL COMMENT '操作时间',
+    `create_time`   bigint(16) NOT NULL COMMENT '创建时间',
+    PRIMARY KEY (`id`),
+    KEY             `advertiser_id` (`advertiser_id`) USING BTREE,
+    KEY             `obj_id` (`obj_id`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='计划操作日志表';
 
-CREATE TABLE `fa_qc_obj` (
-                             `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-                             `company_id` int(10) NOT NULL COMMENT '千川表id',
-                             `advertiser_id` varchar(50) NOT NULL COMMENT '广告商id',
-                             `object_id` varchar(50) NOT NULL COMMENT '项目id',
-                             `status` tinyint(1) NOT NULL DEFAULT '1' COMMENT '计划状态   1可操作  0不可操作',
-                             `create_time` bigint(16) NOT NULL COMMENT '创建时间',
-                             PRIMARY KEY (`id`),
-                             KEY `company_id` (`company_id`) USING BTREE,
-                             KEY `advertiser_id` (`advertiser_id`) USING BTREE,
-                             KEY `object_id` (`object_id`) USING BTREE
+CREATE TABLE `fa_qc_obj`
+(
+    `id`            int(10) unsigned NOT NULL AUTO_INCREMENT,
+    `company_id`    int(10) NOT NULL COMMENT '千川表id',
+    `advertiser_id` varchar(50) NOT NULL COMMENT '广告商id',
+    `object_id`     varchar(50) NOT NULL COMMENT '项目id',
+    `status`        tinyint(1) NOT NULL DEFAULT '1' COMMENT '计划状态   1可操作  0不可操作',
+    `create_time`   bigint(16) NOT NULL COMMENT '创建时间',
+    PRIMARY KEY (`id`),
+    KEY             `company_id` (`company_id`) USING BTREE,
+    KEY             `advertiser_id` (`advertiser_id`) USING BTREE,
+    KEY             `object_id` (`object_id`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='项目表';
 
 ALTER TABLE fa_company
@@ -172,35 +174,37 @@ ALTER TABLE fa_queue_record
     ADD UNIQUE INDEX job_id (job_id);
 
 --2024.11.27
-CREATE TABLE `fa_plan_opt_log` (
-                                   `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT 'id',
-                                   `advertiser_id` varchar(30) NOT NULL COMMENT '广告主id',
-                                   `obj_id` varchar(30) NOT NULL COMMENT '项目id',
-                                   `content_log` text COMMENT '日志内容',
-                                   `content_title` varchar(255) DEFAULT NULL COMMENT '主题内容',
-                                   `object_name` varchar(255) DEFAULT NULL COMMENT '项目名称',
-                                   `object_type` varchar(100) DEFAULT NULL COMMENT '项目类型',
-                                   `operator` varchar(255) NOT NULL COMMENT '操作人',
-                                   `opt_ip` varchar(50) DEFAULT NULL COMMENT '操作ip',
-                                   `opt_time` bigint(16) NOT NULL COMMENT '操作时间',
-                                   `create_time` bigint(16) NOT NULL COMMENT '创建时间',
-                                   PRIMARY KEY (`id`),
-                                   KEY `advertiser_id` (`advertiser_id`) USING BTREE,
-                                   KEY `obj_id` (`obj_id`) USING BTREE
+CREATE TABLE `fa_plan_opt_log`
+(
+    `id`            int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT 'id',
+    `advertiser_id` varchar(30)  NOT NULL COMMENT '广告主id',
+    `obj_id`        varchar(30)  NOT NULL COMMENT '项目id',
+    `content_log`   text COMMENT '日志内容',
+    `content_title` varchar(255) DEFAULT NULL COMMENT '主题内容',
+    `object_name`   varchar(255) DEFAULT NULL COMMENT '项目名称',
+    `object_type`   varchar(100) DEFAULT NULL COMMENT '项目类型',
+    `operator`      varchar(255) NOT NULL COMMENT '操作人',
+    `opt_ip`        varchar(50)  DEFAULT NULL COMMENT '操作ip',
+    `opt_time`      bigint(16) NOT NULL COMMENT '操作时间',
+    `create_time`   bigint(16) NOT NULL COMMENT '创建时间',
+    PRIMARY KEY (`id`),
+    KEY             `advertiser_id` (`advertiser_id`) USING BTREE,
+    KEY             `obj_id` (`obj_id`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='计划操作日志表';
 
-CREATE TABLE `fa_qc_obj` (
-                             `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-                             `company_id` int(10) NOT NULL COMMENT '千川表id',
-                             `advertiser_id` varchar(50) NOT NULL COMMENT '广告商id',
-                             `object_id` varchar(50) NOT NULL COMMENT '项目id',
-                             `object_name` text COMMENT '项目名称',
-                             `status` tinyint(1) NOT NULL DEFAULT '1' COMMENT '计划状态   1可操作  0不可操作',
-                             `create_time` bigint(16) NOT NULL COMMENT '创建时间',
-                             PRIMARY KEY (`id`),
-                             KEY `company_id` (`company_id`) USING BTREE,
-                             KEY `advertiser_id` (`advertiser_id`) USING BTREE,
-                             KEY `object_id` (`object_id`) USING BTREE
+CREATE TABLE `fa_qc_obj`
+(
+    `id`            int(10) unsigned NOT NULL AUTO_INCREMENT,
+    `company_id`    int(10) NOT NULL COMMENT '千川表id',
+    `advertiser_id` varchar(50) NOT NULL COMMENT '广告商id',
+    `object_id`     varchar(50) NOT NULL COMMENT '项目id',
+    `object_name`   text COMMENT '项目名称',
+    `status`        tinyint(1) NOT NULL DEFAULT '1' COMMENT '计划状态   1可操作  0不可操作',
+    `create_time`   bigint(16) NOT NULL COMMENT '创建时间',
+    PRIMARY KEY (`id`),
+    KEY             `company_id` (`company_id`) USING BTREE,
+    KEY             `advertiser_id` (`advertiser_id`) USING BTREE,
+    KEY             `object_id` (`object_id`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='项目表';
 
 ALTER TABLE fa_company
@@ -220,27 +224,31 @@ ALTER TABLE fa_queue_record
     ADD NORMAL INDEX queue_name (queue_name);
 --添加索引
 CREATE INDEX idx_opt_time_adv_id ON fa_qc_obj_opt_log (opt_time, adv_id);
-
 CREATE INDEX idx_operator ON fa_qc_obj_opt_log (operator);
-
 CREATE INDEX idx_opt_operator_time ON fa_qc_obj_opt_log (operator, opt_time, adv_id);
-
+ALTER TABLE fa_qc_global_obj_opt_log
+    ADD INDEX idx_time_adv_operator (opt_time, adv_id, operator);
+ALTER TABLE fa_ad_operator
+    ADD INDEX idx_name_status (name, status);
+ALTER TABLE fa_qc_adv_day_cost
+    ADD INDEX idx_adv_date (adv_id, cost_date);
 --全域计划日志表
 
-CREATE TABLE `fa_qc_global_obj_opt_log` (
-                                            `id` int(11) unsigned NOT NULL AUTO_INCREMENT COMMENT 'id',
-                                            `adv_id` varchar(30) NOT NULL COMMENT '广告主id',
-                                            `obj_id` varchar(30) NOT NULL COMMENT '项目id',
-                                            `content_log` text COMMENT '日志内容',
-                                            `content_title` varchar(255) DEFAULT NULL COMMENT '主题内容',
-                                            `object_name` varchar(255) DEFAULT NULL COMMENT '项目名称',
-                                            `object_type` varchar(100) DEFAULT NULL COMMENT '项目类型',
-                                            `operator` varchar(255) NOT NULL COMMENT '操作人',
-                                            `opt_ip` varchar(50) DEFAULT NULL COMMENT '操作ip',
-                                            `opt_time` bigint(16) NOT NULL COMMENT '操作时间',
-                                            `create_time` int(11) NOT NULL COMMENT '创建时间',
-                                            `update_time` int(11) DEFAULT NULL COMMENT '更新时间',
-                                            PRIMARY KEY (`id`,`opt_time`)
+CREATE TABLE `fa_qc_global_obj_opt_log`
+(
+    `id`            int(11) unsigned NOT NULL AUTO_INCREMENT COMMENT 'id',
+    `adv_id`        varchar(30)  NOT NULL COMMENT '广告主id',
+    `obj_id`        varchar(30)  NOT NULL COMMENT '项目id',
+    `content_log`   text COMMENT '日志内容',
+    `content_title` varchar(255) DEFAULT NULL COMMENT '主题内容',
+    `object_name`   varchar(255) DEFAULT NULL COMMENT '项目名称',
+    `object_type`   varchar(100) DEFAULT NULL COMMENT '项目类型',
+    `operator`      varchar(255) NOT NULL COMMENT '操作人',
+    `opt_ip`        varchar(50)  DEFAULT NULL COMMENT '操作ip',
+    `opt_time`      bigint(16) NOT NULL COMMENT '操作时间',
+    `create_time`   int(11) NOT NULL COMMENT '创建时间',
+    `update_time`   int(11) DEFAULT NULL COMMENT '更新时间',
+    PRIMARY KEY (`id`, `opt_time`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
 
 
