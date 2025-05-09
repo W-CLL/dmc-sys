@@ -34,10 +34,9 @@ class HandlerLastMonObj extends Api
     {
         //检查当天是不是已经执行了
         $page = Cache::get(self::NORMAL_CACHE_KEY.'_page', 1);
-        echo $page;
-//        if($page == 1){
-//            $this->checkDayIsHandler(self::NORMAL_CACHE_KEY);
-//        }
+        if($page == 1){
+            $this->checkDayIsHandler(self::NORMAL_CACHE_KEY);
+        }
         //分页获取负责人的广告账号
         if(Cache::has('last_mon_adv_list')){
             $advList = unserialize(Cache::get('last_mon_adv_list'));
@@ -48,7 +47,6 @@ class HandlerLastMonObj extends Api
         //获取上个月整月的时间范围，如当月是4月，返回则是3.1-3.31的时间戳
         list($start_time, $end_time) = $this->getTimeRange();
         $url = "https://dmc.zebranumber.cn/index.php/api/handler_last_mon_obj/getOptCountCollectionApi/";
-//        $url = "http://dmc-new.com.cn:8084/index.php/api/handler_last_mon_obj/getOptCountCollectionApi/";
         $params = [
             'start_time' => $start_time,
             'end_time' => $end_time,

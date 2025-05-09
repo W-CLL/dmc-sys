@@ -504,8 +504,6 @@ class Test extends Frontend
         dump($total);
         dump($res);
         die;
-
-
     }
 
     public function getGlobalObj()
@@ -572,18 +570,76 @@ class Test extends Frontend
         return FundManagement::get_opt_log($token, $params);
     }
 
-public function genImg()
-{
-    $data = [
-      '2025-03-26 05:51:05',
-      "荆州区睿悦百货行 bm3 \n转出方ID: 1826996040404171",
-      "佳悦严选bm1 \n转入方ID: 1826995930318026",
-      '同级账户转账',
-      '通用',
-      '29,093.11',
-     '账户余额',
-      'OPENAPI'];
-   dump(generateTransferImg($data));die;
-}
+    public function genImg()
+    {
+        $data = [
+            '2025-03-26 05:51:05',
+            "荆州区睿悦百货行 bm3 \n转出方ID: 1826996040404171",
+            "佳悦严选bm1 \n转入方ID: 1826995930318026",
+            '同级账户转账',
+            '通用',
+            '29,093.11',
+            '账户余额',
+            'OPENAPI'];
+        dump(generateTransferImg($data));
+        die;
+    }
+
+    public function testTotal()
+    {
+        $start_day = strtotime("2025-04-02 00:00:00");
+        $end_day = strtotime("2025-04-02 23:59:59");
+        $sql = "
+REPLACE INTO fa_adv_daily_summary (
+    adv_id, cost_date, mon_cost, stand_cost, global_cost,
+    total_num, company_num, global_total_num, global_company_num
+)
+SELECT
+    adv_c.adv_id,
+    adv_c.cost_date,
+    SUM(adv_c.cost) AS mon_cost,
+    (CASE WHEN adv_c.type = 1 THEN adv_c.cost ELSE 0 END) AS stand_cost,
+    (CASE WHEN adv_c.type = 2 THEN adv_c.cost ELSE 0 END) AS global_cost,
+    total_stats.total_num,
+    company_stats.company_num,
+    global_total_stats.global_total_num,
+    global_company_stats.global_company_num
+FROM
+    fa_qc_adv_day_cost adv_c
+LEFT JOIN (
+    SELECT adv_id, COUNT(*) AS total_num
+    FROM fa_qc_obj_opt_log
+    WHERE opt_time BETWEEN {$start_day} AND {$end_day}
+    GROUP BY adv_id
+) total_stats ON adv_c.adv_id = total_stats.adv_id
+LEFT JOIN (
+    SELECT fo.adv_id, COUNT(*) AS company_num
+    FROM fa_qc_obj_opt_log fo
+    JOIN fa_ad_operator ao ON fo.operator = ao.name AND ao.status = 1
+    WHERE fo.opt_time BETWEEN {$start_day} AND {$end_day}
+    GROUP BY fo.adv_id
+) company_stats ON adv_c.adv_id = company_stats.adv_id
+LEFT JOIN (
+    SELECT adv_id, COUNT(*) AS global_total_num
+    FROM fa_qc_global_obj_opt_log
+    WHERE opt_time BETWEEN {$start_day} AND {$end_day}
+    GROUP BY adv_id
+) global_total_stats ON adv_c.adv_id = global_total_stats.adv_id
+LEFT JOIN (
+    SELECT fo.adv_id, COUNT(*) AS global_company_num
+    FROM fa_qc_global_obj_opt_log fo
+    JOIN fa_ad_operator ao ON fo.operator = ao.name AND ao.status = 1
+    WHERE fo.opt_time BETWEEN {$start_day} AND {$end_day}
+    GROUP BY fo.adv_id
+) global_company_stats ON adv_c.adv_id = global_company_stats.adv_id
+WHERE
+    adv_c.cost_date BETWEEN {$start_day} AND {$end_day}
+GROUP BY
+    adv_c.adv_id;
+";
+        $a = Db::execute($sql);
+        dump($a);
+        die;
+    }
 
 }
