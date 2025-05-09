@@ -77,7 +77,7 @@ class HandlerLastMonObj extends Api
                 ->field('sum(cost) as total_cost')
                 ->group('adv_id')
                 ->find();
-            if ($has_cost && $has_cost['total_cost'] > 1000) {
+            if ($has_cost && $has_cost['total_cost'] < 100) {
                 continue;
             }
             $cusNum = (int)$item['cus_num'];
