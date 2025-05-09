@@ -225,4 +225,22 @@ CREATE INDEX idx_operator ON fa_qc_obj_opt_log (operator);
 
 CREATE INDEX idx_opt_operator_time ON fa_qc_obj_opt_log (operator, opt_time, adv_id);
 
+--全域计划日志表
+
+CREATE TABLE `fa_qc_global_obj_opt_log` (
+                                            `id` int(11) unsigned NOT NULL AUTO_INCREMENT COMMENT 'id',
+                                            `adv_id` varchar(30) NOT NULL COMMENT '广告主id',
+                                            `obj_id` varchar(30) NOT NULL COMMENT '项目id',
+                                            `content_log` text COMMENT '日志内容',
+                                            `content_title` varchar(255) DEFAULT NULL COMMENT '主题内容',
+                                            `object_name` varchar(255) DEFAULT NULL COMMENT '项目名称',
+                                            `object_type` varchar(100) DEFAULT NULL COMMENT '项目类型',
+                                            `operator` varchar(255) NOT NULL COMMENT '操作人',
+                                            `opt_ip` varchar(50) DEFAULT NULL COMMENT '操作ip',
+                                            `opt_time` bigint(16) NOT NULL COMMENT '操作时间',
+                                            `create_time` int(11) NOT NULL COMMENT '创建时间',
+                                            `update_time` int(11) DEFAULT NULL COMMENT '更新时间',
+                                            PRIMARY KEY (`id`,`opt_time`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
+
 
