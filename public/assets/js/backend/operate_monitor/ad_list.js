@@ -46,6 +46,8 @@ define(['jquery', 'bootstrap', 'company', 'table', 'form'], function ($, undefin
                                 let result = value.replace(/%/g, '');
                                 if (result < 200) {
                                     return '<span style="color:red;">' +value+'</span>';
+                                }else{
+                                    return '<span style="color:green;">' +value+'</span>';
                                 }
                             }},
                         {field: 'stand_cost', title: "标准消耗",sortable:true},
@@ -112,6 +114,8 @@ define(['jquery', 'bootstrap', 'company', 'table', 'form'], function ($, undefin
                                 let result = value.replace(/%/g, '');
                                 if (result < 200) {
                                     return '<span style="color:red;">' +value+'</span>';
+                                }else{
+                                    return '<span style="color:green;">' +value+'</span>';
                                 }
                             }},
                         {field: 'stand_cost', title: "标准消耗",sortable:true},
