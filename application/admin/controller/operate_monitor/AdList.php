@@ -46,23 +46,23 @@ class AdList extends Backend
                 ->alias('adv_c')
                 ->join('company com', 'adv_c.adv_id = com.advertiser_id', 'left')
                 ->join(
-                    "(SELECT adv_id, COUNT(*) AS total_num FROM fa_qc_obj_opt_log WHERE opt_time BETWEEN " . $start_time . " AND " . $end_time . " GROUP BY adv_id) AS total_stats",
-                    'adv_c.adv_id = total_stats.adv_id',
+                    "(SELECT adv_id, 
+                 COUNT(*) AS total_num, 
+                 SUM(CASE WHEN operator IN (SELECT name FROM fa_ad_operator WHERE status = 1) THEN 1 ELSE 0 END) AS company_num 
+          FROM fa_qc_obj_opt_log 
+          WHERE opt_time BETWEEN {$start_time} AND {$end_time} 
+          GROUP BY adv_id) AS obj_stats",
+                    'adv_c.adv_id = obj_stats.adv_id',
                     'left'
                 )
                 ->join(
-                    "(SELECT adv_id, COUNT(*) AS company_num FROM fa_qc_obj_opt_log WHERE opt_time BETWEEN " . $start_time . " AND " . $end_time . " AND operator IN (SELECT name FROM fa_ad_operator WHERE status = 1) GROUP BY adv_id) AS company_stats",
-                    'adv_c.adv_id = company_stats.adv_id',
-                    'left'
-                )
-                ->join(
-                    "(SELECT adv_id, COUNT(*) AS global_total_num FROM fa_qc_global_obj_opt_log WHERE opt_time BETWEEN " . $start_time . " AND " . $end_time . " GROUP BY adv_id) AS global_total_stats",
-                    'adv_c.adv_id = global_total_stats.adv_id',
-                    'left'
-                )
-                ->join(
-                    "(SELECT adv_id, COUNT(*) AS global_company_num FROM fa_qc_global_obj_opt_log WHERE opt_time BETWEEN " . $start_time . " AND " . $end_time . " AND operator IN (SELECT name FROM fa_ad_operator WHERE status = 1) GROUP BY adv_id) AS global_company_stats",
-                    'adv_c.adv_id = global_company_stats.adv_id',
+                    "(SELECT adv_id, 
+                 COUNT(*) AS global_total_num, 
+                 SUM(CASE WHEN operator IN (SELECT name FROM fa_ad_operator WHERE status = 1) THEN 1 ELSE 0 END) AS global_company_num 
+          FROM fa_qc_global_obj_opt_log 
+          WHERE opt_time BETWEEN {$start_time} AND {$end_time} 
+          GROUP BY adv_id) AS global_stats",
+                    'adv_c.adv_id = global_stats.adv_id',
                     'left'
                 )
                 ->where(['adv_c.cost_date' => ['between', [$start_time, $end_time]]])
@@ -80,26 +80,34 @@ class AdList extends Backend
                     }
                     $query->where($whereStr);
                 })
-                ->field("adv_c.*, SUM(cost) AS mon_cost,
-                 SUM(CASE WHEN adv_c.type = 1 THEN cost ELSE 0 END) AS stand_cost,
-                  SUM(CASE WHEN adv_c.type = 2 THEN cost ELSE 0 END) AS global_cost,
-                 com.company_name, com.kahuna, total_stats.total_num, company_stats.company_num, global_total_stats.global_total_num, global_company_stats.global_company_num,
-                (total_num - IFNULL(company_num, 0)) as cus_num,
-                (CASE 
-                    WHEN (total_num - IFNULL(company_num, 0)) > 0 THEN (IFNULL(company_num, 0) / (total_num - IFNULL(company_num, 0))) * 100
-                ELSE 0
-                END) as percentage,
-                (global_total_num - IFNULL(global_company_num, 0)) as global_cus_num,
-                (CASE 
-                    WHEN (global_total_num - IFNULL(global_company_num, 0)) > 0 THEN (IFNULL(global_company_num, 0) / (global_total_num - IFNULL(global_company_num, 0))) * 100
-                ELSE 0
-                END) as global_percentage
-                 ")
+                ->field("adv_c.*, 
+             SUM(cost) AS mon_cost,
+             SUM(CASE WHEN adv_c.type = 1 THEN cost ELSE 0 END) AS stand_cost,
+             SUM(CASE WHEN adv_c.type = 2 THEN cost ELSE 0 END) AS global_cost,
+             com.company_name, 
+             com.kahuna, 
+             obj_stats.total_num, 
+             obj_stats.company_num, 
+             global_stats.global_total_num, 
+             global_stats.global_company_num,
+             (obj_stats.total_num - IFNULL(obj_stats.company_num, 0)) AS cus_num,
+             (CASE 
+                WHEN (obj_stats.total_num - IFNULL(obj_stats.company_num, 0)) > 0 
+                THEN (IFNULL(obj_stats.company_num, 0) / (obj_stats.total_num - IFNULL(obj_stats.company_num, 0))) * 100 
+                ELSE 0 
+              END) AS percentage,
+             (global_stats.global_total_num - IFNULL(global_stats.global_company_num, 0)) AS global_cus_num,
+             (CASE 
+                WHEN (global_stats.global_total_num - IFNULL(global_stats.global_company_num, 0)) > 0 
+                THEN (IFNULL(global_stats.global_company_num, 0) / (global_stats.global_total_num - IFNULL(global_stats.global_company_num, 0))) * 100 
+                ELSE 0 
+              END) AS global_percentage
+            ")
                 ->group('adv_c.adv_id')
                 ->order($sort, $order)
                 ->limit($offset, $limit)
-//                ->fetchSql(true)
                 ->select();
+
 
             foreach ($list as &$item) {
 //                $item['cus_num'] = $item['total_num'] - $item['company_num'];
