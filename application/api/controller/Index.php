@@ -41,7 +41,7 @@ class Index extends Api
             $code_type = $post['where']['code_type'];
             unset($post['where']['code_type']);
             $kefu = $post['kefu'];
-            if (in_array($kefu, ['tyx', 'wyc'])) {
+            if (in_array($kefu, ['tyx', 'wyc','zqp','cxy']) && $code_type==1) {
                 list($list, $count) = $this->getListAndCountAvg($post, $code_type);
             } else {
                 list($list, $count) = $this->getListAndCount($post, $code_type);
