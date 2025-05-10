@@ -467,6 +467,17 @@ class FundManagement
         return json_decode($contents, true);
     }
 
+    public static function get_global_obj_detail($advertiser_id,$ad_id)
+    {
+        $access_token = Cache::get("qc_access_token");
+
+        $header = array(
+            'Access-Token:' . $access_token,
+        );
+        $url = "     https://api.oceanengine.com/open_api/v1.0/qianchuan/uni_promotion/ad/detail/?advertiser_id=" . $advertiser_id . "&ad_id=" . $ad_id ;
+        return Requests::get($url, $header);
+    }
+
 }
 
 
