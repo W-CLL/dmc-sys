@@ -25,20 +25,36 @@ define(['jquery', 'bootstrap', 'company', 'table', 'form'], function ($, undefin
                 // fixedRightNumber: 1,
                 columns: [
                     [
-                        {field: 'id', title: "ID"},
+                        // {field: 'id', title: "ID"},
                         {field: 'adv_id', title: "广告主id"},
                         {field: 'company_name', title: "账户名"},
-                        {field: 'total_num', title: "总操作次数[标准]",sortable:true},
-                        {field: 'company_num', title: "斑马操作次数[标准]",sortable:true},
-                        {field: 'cus_num', title: "客户操作次数[标准]",sortable:true},
-                        {field: 'global_total_num', title: "总操作次数[全域]",sortable:true},
-                        {field: 'global_company_num', title: "斑马操作次数[全域]",sortable:true},
-                        {field: 'global_cus_num', title: "客户操作次数[全域]",sortable:true},
+                        {field: 'total_num', title: "总次数[标]",sortable:true},
+                        {field: 'company_num', title: "斑马次数[标]",sortable:true},
+                        {field: 'cus_num', title: "客户次数[标]",sortable:true},
+                        {field: 'percentage', title: "[标准]百分比",sortable:true,formatter: function (value, row, index) {
+                            let result = value.replace(/%/g, '');
+                            if (result < 200) {
+                                return '<span style="color:red;">' +value+'</span>';
+                            }else{
+                                return '<span style="color:green;">' +value+'</span>';
+                            }
+                            }},
+                        {field: 'global_total_num', title: "总次数[全]",sortable:true},
+                        {field: 'global_company_num', title: "斑马次数[全]",sortable:true},
+                        {field: 'global_cus_num', title: "客户次数[全]",sortable:true},
+                        {field: 'global_percentage', title: "[全域]百分比",sortable:true,formatter: function (value, row, index) {
+                                let result = value.replace(/%/g, '');
+                                if (result < 200) {
+                                    return '<span style="color:red;">' +value+'</span>';
+                                }else{
+                                    return '<span style="color:green;">' +value+'</span>';
+                                }
+                            }},
                         {field: 'stand_cost', title: "标准消耗",sortable:true},
                         {field: 'global_cost', title: "全域消耗",sortable:true},
                         {field: 'mon_cost', title: "总消耗",sortable:true},
-                        {field: 'percentage', title: "[标准]百分比(斑马/客户)",sortable:true},
-                        {field: 'global_percentage', title: "[全域]百分比(斑马/客户)",sortable:true},
+
+
                         {field: 'kahuna', title: "负责人"},
                     ]
                 ],
@@ -77,20 +93,36 @@ define(['jquery', 'bootstrap', 'company', 'table', 'form'], function ($, undefin
                 // fixedRightNumber: 1,
                 columns: [
                     [
-                        {field: 'id', title: "ID"},
+                        // {field: 'id', title: "ID"},
                         {field: 'adv_id', title: "广告主id"},
                         {field: 'company_name', title: "账户名"},
-                        {field: 'total_num', title: "总操作次数[标准]"},
-                        {field: 'company_num', title: "斑马操作次数[标准]",sortable:true},
-                        {field: 'cus_num', title: "客户操作次数[标准]"},
-                        {field: 'global_total_num', title: "总操作次数[全域]"},
-                        {field: 'global_company_num', title: "斑马操作次数[全域]",sortable:true},
-                        {field: 'global_cus_num', title: "客户操作次数[全域]"},
+                        {field: 'total_num', title: "总次数[标]",sortable:true},
+                        {field: 'company_num', title: "斑马次数[标]",sortable:true},
+                        {field: 'cus_num', title: "客户次数[标]",sortable:true},
+                        {field: 'percentage', title: "[标准]百分比",sortable:true,formatter: function (value, row, index) {
+                                let result = value.replace(/%/g, '');
+                                if (result < 200) {
+                                    return '<span style="color:red;">' +value+'</span>';
+                                }else{
+                                    return '<span style="color:green;">' +value+'</span>';
+                                }
+                            }},
+                        {field: 'global_total_num', title: "总次数[全]",sortable:true},
+                        {field: 'global_company_num', title: "斑马次数[全]",sortable:true},
+                        {field: 'global_cus_num', title: "客户次数[全]",sortable:true},
+                        {field: 'global_percentage', title: "[全域]百分比",sortable:true,formatter: function (value, row, index) {
+                                let result = value.replace(/%/g, '');
+                                if (result < 200) {
+                                    return '<span style="color:red;">' +value+'</span>';
+                                }else{
+                                    return '<span style="color:green;">' +value+'</span>';
+                                }
+                            }},
                         {field: 'stand_cost', title: "标准消耗",sortable:true},
                         {field: 'global_cost', title: "全域消耗",sortable:true},
                         {field: 'mon_cost', title: "总消耗",sortable:true},
-                        {field: 'percentage', title: "[标准]百分比(斑马/客户)"},
-                        {field: 'global_percentage', title: "[全域]百分比(斑马/客户)"},
+
+
                         {field: 'kahuna', title: "负责人"},
                     ]
                 ],

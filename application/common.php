@@ -684,21 +684,26 @@ if (!function_exists('sendApiRes')) {
      * @param $url
      * @param array $params
      * @param string $method
+     * @param array $header
      * @return array
      */
-    function sendApiRes($url, array $params, string $method = 'GET'): array
+    function sendApiRes($url, array $params, string $method = 'GET',$header=[]): array
     {
+        $base_header = ['Content-Type'=> 'application/json'];
+        if($header){
+            $headers = array_merge($base_header,$header);
+        }
+
         try {
             $client = new Client(['verify' => false]);
             if ($method === 'POST') {
                 $response = $client->post($url, [
-                    'headers' => [
-                        'Content-Type' => 'application/json',
-                    ],
+                    'headers' => $headers??$base_header,
                     'json' => $params // 自动将数组转为 JSON 字符串
                 ]);
             } else {
                 $response = $client->get($url, [
+                    'headers' => $headers??$base_header,
                     'query' => $params
                 ]);
             }

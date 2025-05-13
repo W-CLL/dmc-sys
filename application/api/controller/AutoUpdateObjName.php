@@ -44,7 +44,7 @@ class AutoUpdateObjName extends Api
 //        $this->checkTimestamp(self::CACHE_KEY);
 
         $redis = Cache::store('redis');
-        $type= "normal";
+        $type = "normal";
         list($advList, $notWhiteCom) = $this->getAdvList($page, $user_name, $is_special);
         list($start_time, $end_time) = $this->getPersonStartTime($user_name);
 
@@ -57,11 +57,11 @@ class AutoUpdateObjName extends Api
             die;
         }
 
-        $list = sendApiRes("https://dmc.zebranumber.cn/index.php/api/auto_update_obj_name/getOptCountCollectionApi/",[
+        $list = sendApiRes("https://dmc.zebranumber.cn/index.php/api/auto_update_obj_name/getOptCountCollectionApi/", [
             'start_time' => $start_time,
             'end_time' => $end_time,
             'advList' => $advList
-        ],'POST')['data'];
+        ], 'POST')['data'];
         //获取本月的操作日志
 //        $list = $this->getOptCountCollection($comModel, $start_time, $end_time, $advList);
 
@@ -83,14 +83,14 @@ class AutoUpdateObjName extends Api
             $cusNum = $totalNum - $companyNum;
 
             if ($cusNum <= 0 || ($companyNum > 0 && ($companyNum / $cusNum) * 100 >= ($notWhiteCom[$item['company_name']] * 2))) {
-                continue;
+                $needComNum = 50;
+//                continue;
+            } else {
+                $actualComNum = $cusNum + ($cusNum * ($notWhiteCom[$item['company_name']] / 100));
+                $needComNum = $companyNum > 0 ? $actualComNum - $companyNum : $actualComNum;
+                $needComNum = (int)ceil($needComNum);
             }
-
-            $actualComNum = $cusNum + ($cusNum * ($notWhiteCom[$item['company_name']] / 100));
-            $needComNum = $companyNum > 0 ? $actualComNum - $companyNum : $actualComNum;
-            $needComNum = (int)ceil($needComNum);
-
-            $list = sendApiRes("https://dmc.zebranumber.cn/index.php/api/auto_update_obj_name/getObjListApi/",[
+            $list = sendApiRes("https://dmc.zebranumber.cn/index.php/api/auto_update_obj_name/getObjListApi/", [
                 $item['advertiser_id'], $needComNum
             ])['data'];
 
@@ -144,22 +144,22 @@ class AutoUpdateObjName extends Api
         }
         //获取非白名单公司
         if ($charge_name) {
-            $ownerCompanyNames = sendApiRes("https://dmc.zebranumber.cn/index.php/api/auto_update_obj_name/ownerCompanyNames/",[
+            $ownerCompanyNames = sendApiRes("https://dmc.zebranumber.cn/index.php/api/auto_update_obj_name/ownerCompanyNames/", [
                 $charge_name
             ])['data'];
             $name_where['company_name'] = ['in', $ownerCompanyNames];
         }
         $name_where['is_white'] = 0;
-        $notWhiteCom = sendApiRes("https://dmc.zebranumber.cn/index.php/api/auto_update_obj_name/notWhiteCom/",$name_where,'POST')['data'];
+        $notWhiteCom = sendApiRes("https://dmc.zebranumber.cn/index.php/api/auto_update_obj_name/notWhiteCom/", $name_where, 'POST')['data'];
         if (!$is_special) {
             //提取公司名
             $companyNames = array_keys($notWhiteCom);
-            $adv_list = sendApiRes("https://dmc.zebranumber.cn/index.php/api/auto_update_obj_name/getAdvListApi/",[
-                "company_name"=>$companyNames,
-                "page"=>$page,
-                "charge_name"=>$charge_name,
-                "limit"=>1000
-            ],'POST')['data'];
+            $adv_list = sendApiRes("https://dmc.zebranumber.cn/index.php/api/auto_update_obj_name/getAdvListApi/", [
+                "company_name" => $companyNames,
+                "page" => $page,
+                "charge_name" => $charge_name,
+                "limit" => 1000
+            ], 'POST')['data'];
             $adv_ids = array_column((array)$adv_list, 'adv_id');
         } else {
             $adv_ids = $this->handlerSpecialAdvIds($user_name);
@@ -364,7 +364,7 @@ class AutoUpdateObjName extends Api
                 continue;
             }
             $list = $objModel->where([
-                'obj_status' => ['not in', ['DELETE',  'FROZEN']],
+                'obj_status' => ['not in', ['DELETE', 'FROZEN']],
                 'lab_ad_type' => "LAB_AD",
                 'opt_status' => ['not in', ['DELETE', 'FROZEN']],
                 'adv_id' => $item['adv_id']
@@ -578,7 +578,7 @@ class AutoUpdateObjName extends Api
                 'adv_c.advertiser_id = company_stats.adv_id',
                 'left'
             )
-            ->where(['adv_c.advertiser_id' => ['in', $advList], 'total_stats.total_num' => ['>', 0], 'is_white'=>0])
+            ->where(['adv_c.advertiser_id' => ['in', $advList], 'total_stats.total_num' => ['>', 0], 'is_white' => 0])
             ->field("adv_c.*, total_stats.total_num, company_stats.company_num")
             ->order('total_stats.total_num desc')
             ->select();
@@ -609,7 +609,7 @@ class AutoUpdateObjName extends Api
                 'adv_c.advertiser_id = company_stats.adv_id',
                 'left'
             )
-            ->where(['adv_c.advertiser_id' => ['in', $advList], 'total_stats.total_num' => ['>', 0], 'is_white'=>0])
+            ->where(['adv_c.advertiser_id' => ['in', $advList], 'total_stats.total_num' => ['>', 0], 'is_white' => 0])
             ->field("adv_c.*, total_stats.total_num, company_stats.company_num")
             ->order('total_stats.total_num desc')
             ->select();
@@ -622,9 +622,9 @@ class AutoUpdateObjName extends Api
     {
         $objModel = new ObjModel();
         $list = $objModel->where([
-            'obj_status' => ['not in', ['DELETE',  'FROZEN']],
+            'obj_status' => ['not in', ['DELETE', 'FROZEN']],
             'lab_ad_type' => "LAB_AD",
-            'opt_status' => ['not in', ['DELETE',  'FROZEN']],
+            'opt_status' => ['not in', ['DELETE', 'FROZEN']],
             'adv_id' => $adv_id
         ])
             ->field('obj_id,adv_id')
@@ -636,7 +636,8 @@ class AutoUpdateObjName extends Api
     }
 
 
-    public function ownerCompanyNames($charge_name){
+    public function ownerCompanyNames($charge_name)
+    {
         $companyModel = new Company();
         return json($companyModel->where(['kahuna' => ['like', "%" . $charge_name . "%"]])->column('company_name'));
     }
@@ -653,7 +654,8 @@ class AutoUpdateObjName extends Api
     }
 
 
-    public function getAdvListApi(){
+    public function getAdvListApi()
+    {
         // 获取当前请求对象
         $request = \think\Request::instance();
         // 获取并解析JSON数据
