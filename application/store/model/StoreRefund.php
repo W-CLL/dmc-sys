@@ -68,7 +68,7 @@ class StoreRefund extends Model
             'type' => $transfer_records_data['account_type'],
             'store_id' => $transfer_records_data['store_id'],
 //            'company_id' => $transfer_records_data['company_id'],
-            'discount_percentage' => $transfer_records_data['discount_percentage'],
+//            'discount_percentage' => $transfer_records_data['discount_percentage'],
             'wallet_type' => $wallet_type,
         ];
         if($wallet_type == 1){
