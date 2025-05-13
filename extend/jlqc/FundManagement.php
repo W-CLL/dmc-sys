@@ -467,15 +467,30 @@ class FundManagement
         return json_decode($contents, true);
     }
 
-    public static function get_global_obj_detail($advertiser_id,$ad_id)
+    public static function get_global_obj_detail($advertiser_id, $ad_id)
     {
         $access_token = Cache::get("qc_access_token");
 
         $header = array(
             'Access-Token:' . $access_token,
         );
-        $url = "     https://api.oceanengine.com/open_api/v1.0/qianchuan/uni_promotion/ad/detail/?advertiser_id=" . $advertiser_id . "&ad_id=" . $ad_id ;
+        $url = "https://api.oceanengine.com/open_api/v1.0/qianchuan/uni_promotion/ad/detail/?advertiser_id=" . $advertiser_id . "&ad_id=" . $ad_id;
         return Requests::get($url, $header);
+    }
+
+
+    /**
+     * 查询账户累计积分
+     * @param $params
+     * 参数参考：https://open.oceanengine.com/labels/12/docs/1809254968749066?origin=left_nav
+     * @return mixed
+     */
+    public static function get_adv_score($params)
+    {
+        $access_token = Cache::get("qc_access_token");
+        $url = "https://api.oceanengine.com/open_api/v3.0/security/score_total/get/";
+        $params = array_merge($params, ['business_line' => "QIANCHUAN"]);
+        return sendApiRes($url, $params, 'GET', ['Access-Token' => $access_token])['data'];
     }
 
 }
