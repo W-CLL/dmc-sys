@@ -493,6 +493,27 @@ class FundManagement
         return sendApiRes($url, $params, 'GET', ['Access-Token' => $access_token])['data'];
     }
 
+
+    /**
+     * 获取建议预算
+     * 文档：https://open.oceanengine.com/labels/12/docs/1828257556490251?origin=left_nav
+     * @param $advertiser_id
+     * @param $aweme_id
+     * @param $marketing_goal
+     * @param $product_ids
+     * @param $ad_id
+     * @return mixed
+     */
+    public static function get_global_proposed_estimates($advertiser_id, $aweme_id, $marketing_goal, $product_ids, $ad_id)
+    {
+        $access_token = Cache::get("qc_access_token");
+        $header = array(
+            'Access-Token:' . $access_token,
+        );
+        $url = "https://api.oceanengine.com/open_api/v1.0/qianchuan/uni_aweme/suggest/budget/?advertiser_id=" . $advertiser_id. "&aweme_id=" . $aweme_id . "&marketing_goal=" . $marketing_goal . "&product_ids=" . json_encode($product_ids) . "&ad_id=" . $ad_id ;
+        return Requests::get($url, $header);
+    }
+
 }
 
 

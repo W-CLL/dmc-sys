@@ -2,7 +2,7 @@
 
 namespace app\api\controller;
 
-use app\admin\model\QcObj as ObjModel;
+use app\admin\model\QcGlobalObj as ObjModel;
 use app\common\controller\Api;
 use app\common\model\Queue;
 use GuzzleHttp\Psr7\Request;
@@ -142,7 +142,7 @@ class QcGlobalObj extends Api
             ->group('adv_id')->column('adv_id');
         foreach ($adv_list as $item) {
             $list = $obj_model
-                ->where(['opt_status' => ['NOT IN', ['DELETE', 'FROZEN']]])
+                ->where(['opt_status' => ['NOT IN', ['DELETE']]])
                 ->where(['adv_id' => $item])
                 ->column('obj_id');
             if ($list) {
@@ -152,7 +152,7 @@ class QcGlobalObj extends Api
                         'adv_id' => $item,
                         'obj_list' => $chunk
                     ];
-                    \think\Queue::push('app\job\UpdateObjStatus', $job_data, "updateObjStatus");
+                    \think\Queue::push('app\job\UpdateGlobalObjStatus', $job_data, "updateGlobalObjStatus");
                 }
             }
 
