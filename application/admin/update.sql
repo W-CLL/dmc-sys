@@ -259,6 +259,7 @@ CREATE TABLE `fa_adv_score`
     `year`                  varchar(20) NOT NULL COMMENT '年度',
     `one_class_score`       int(5) NOT NULL DEFAULT '0' COMMENT '一类违规年分',
     `two_three_class_score` int(5) NOT NULL DEFAULT '0' COMMENT '二，三类违规年分',
+    `status` tinyint(1) NOT NULL DEFAULT '1' COMMENT '1正常,0注销/未授权',
     `request_id`            varchar(60) DEFAULT NULL COMMENT '接口请求日志id',
     `create_time`           int(11) NOT NULL COMMENT '创建时间',
     `update_time`           int(11) NOT NULL COMMENT '更新时间',
