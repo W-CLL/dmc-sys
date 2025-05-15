@@ -79,7 +79,7 @@ class QueueRecord extends Backend
 
     public function rebuildOne($ids)
     {
-        $res = $this->model->rebuildOne($ids);
+        $res = $this->model->rebootOne($ids);
         if ($res) {
             $this->success('重启成功');
         } else {
@@ -101,7 +101,7 @@ class QueueRecord extends Backend
                 continue;
             }
             $i++;
-            $res = $this->model->rebuildOne($info['id']);
+            $res = $this->model->rebootOne($info['id']);
             if(!$res){
                 $this->error('本次重启了'.$i.'条记录');
             }

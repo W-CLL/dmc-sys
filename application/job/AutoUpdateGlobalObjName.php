@@ -37,7 +37,11 @@ class AutoUpdateGlobalObjName
                 }
             }
         } catch (Exception $e) {
-            $queueData->save(['id' => $queueData['id'], 'status' => 2, 'msg' => $e->getMessage()]);
+            if($this->checkRebootMsg($e->getMessage())){
+                $queueModel->rebootOne($queueData['id']);
+            }else {
+                $queueData->save(['id' => $queueData['id'], 'status' => 2, 'msg' => $e->getMessage()]);
+            }
             $job->delete();
             return '';
         }
@@ -59,19 +63,16 @@ class AutoUpdateGlobalObjName
         sleep($delay);
         $token = Cache::get('qc_access_token');
         $objInfo = FundManagement::get_global_obj_detail($data['adv_id'],$data['obj_id']);
-        $qcObj = new QcGlobalObj();
         if($objInfo['code'] !=0){
             throw new Exception($objInfo['message']);
         }
 
         $objDetail = $objInfo['data'];
         if(in_array($objDetail['opt_status'],['DELETE']) ){
-            $qcObj->where(['obj_id'=>$data['obj_id']])->update(['opt_status'=>$objDetail['opt_status']]);
             $this->deleteRedundantJob($queueData);
             throw new Exception("计划状态不符合更新,该计划状态为:".$this->convertStatus($objDetail['opt_status']));
         }
         if(in_array($objDetail['status'],['DELETE',  'FROZEN']) ){
-            $qcObj->where(['obj_id'=>$data['obj_id']])->update(['opt_status'=>$objDetail['status']]);
             $this->deleteRedundantJob($queueData);
             throw new Exception("计划状态不符合更新,该计划状态为:".$this->convertStatus($objDetail['opt_status']));
         }
@@ -185,6 +186,24 @@ class AutoUpdateGlobalObjName
             ],
             'multi_product_creative_list' => $objDetail['multi_product_creative_list'],
         );
+    }
+
+
+    // 检查需要重启的错误信息
+    private function checkRebootMsg($str){
+        $msg_arr = [
+            '系统开小差啦',
+            'Internal service timed out',
+            'Too many requests',
+            'remote or network error[remote]',
+            'SQLSTATE[42S02]',
+        ];
+        foreach ($msg_arr as $msg){
+            if (strpos($str, $msg) !== false) {
+                return true;
+            }
+        }
+        return false;
     }
 
 

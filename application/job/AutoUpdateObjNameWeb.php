@@ -49,7 +49,7 @@ class AutoUpdateObjNameWeb
             }
         } catch (Exception $e) {
             if(preg_match("/Undefined index*/iu", $e->getMessage())){
-                $queueModel->rebuildOne($queueData['id']);
+                $queueModel->rebootOne($queueData['id']);
                 Cache::set('web_edit_too_many_res',true,600);
             }else {
                 if(!in_array($e->getMessage(),['找不到广告主信息','找不到计划信息'])){
