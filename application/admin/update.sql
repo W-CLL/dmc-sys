@@ -251,4 +251,16 @@ CREATE TABLE `fa_qc_global_obj_opt_log`
     PRIMARY KEY (`id`, `opt_time`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
 
-
+--25-05-15
+CREATE TABLE `fa_adv_score`
+(
+    `id`                    int(11) NOT NULL AUTO_INCREMENT,
+    `adv_id`                varchar(50) NOT NULL COMMENT '广告主id',
+    `year`                  varchar(20) NOT NULL COMMENT '年度',
+    `one_class_score`       int(5) NOT NULL DEFAULT '0' COMMENT '一类违规年分',
+    `two_three_class_score` int(5) NOT NULL DEFAULT '0' COMMENT '二，三类违规年分',
+    `request_id`            varchar(60) DEFAULT NULL COMMENT '接口请求日志id',
+    `create_time`           int(11) NOT NULL COMMENT '创建时间',
+    `update_time`           int(11) NOT NULL COMMENT '更新时间',
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COMMENT='账户累计积分表';

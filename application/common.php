@@ -687,23 +687,23 @@ if (!function_exists('sendApiRes')) {
      * @param array $header
      * @return array
      */
-    function sendApiRes($url, array $params, string $method = 'GET',$header=[]): array
+    function sendApiRes($url, array $params, string $method = 'GET', array $header = []): array
     {
-        $base_header = ['Content-Type'=> 'application/json'];
-        if($header){
-            $headers = array_merge($base_header,$header);
+        $base_header = ['Content-Type' => 'application/json'];
+        if ($header) {
+            $headers = array_merge($base_header, $header);
         }
 
         try {
             $client = new Client(['verify' => false]);
             if ($method === 'POST') {
                 $response = $client->post($url, [
-                    'headers' => $headers??$base_header,
+                    'headers' => $headers ?? $base_header,
                     'json' => $params // 自动将数组转为 JSON 字符串
                 ]);
             } else {
                 $response = $client->get($url, [
-                    'headers' => $headers??$base_header,
+                    'headers' => $headers ?? $base_header,
                     'query' => $params
                 ]);
             }
@@ -809,5 +809,29 @@ if (!function_exists('generateTransferImg')) {
         imagedestroy($img);
         return $res;
     }
+}
+if (!function_exists('skipIfContainsError')) {
+    /**
+     * 匹配关键字
+     * @param string $message
+     * @param array $patterns
+     * @return bool
+     */
+    function skipIfContainsError(string $message, array $patterns = []): bool
+    {
+        $defaultPatterns = [
+            '广告主账号已禁用',
+            'No permission to operate account'
+        ];
+
+        $merged = array_merge($defaultPatterns, $patterns);
+        $escaped = array_map(function($p) {
+            return preg_quote($p, '/');
+        }, $merged);
+
+        return (bool)preg_match('/('.implode('|', $escaped).')/iu', $message);
+    }
+
+
 }
 

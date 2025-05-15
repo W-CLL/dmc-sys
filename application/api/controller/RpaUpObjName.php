@@ -97,7 +97,7 @@ class RpaUpObjName extends Api
             $queueData = [
                 'need_opt_num' => $needComNum,
                 'adv_id' => $item['advertiser_id'],
-                'obj_list' =>$rep['data'],
+                'obj_list' => $rep['data'],
             ];
 
             //一个广告主下的托管计划，总的操作次数，写入任务再平分次数到每个计划，进行延时修改
@@ -133,7 +133,7 @@ class RpaUpObjName extends Api
                 'adv_c.advertiser_id = company_stats.adv_id',
                 'left'
             )
-            ->where(['adv_c.advertiser_id' => ['in', $adv_list], 'total_stats.total_num' => ['>', 0], 'is_white'=>0])
+            ->where(['adv_c.advertiser_id' => ['in', $adv_list], 'total_stats.total_num' => ['>', 0], 'is_white' => 0])
             ->field("adv_c.*, total_stats.total_num, company_stats.company_num")
             ->order('total_stats.total_num desc')
             ->select();
@@ -146,18 +146,18 @@ class RpaUpObjName extends Api
 
         $objModel = new ObjModel();
         $count = $objModel->where([
-                'obj_status' => ['not in', ['DELETE','FROZEN']],
+                'obj_status' => ['not in', ['DELETE', 'FROZEN']],
                 'lab_ad_type' => "LAB_AD",
-                'opt_status' => ['not in', ['DELETE','FROZEN']],
+                'opt_status' => ['not in', ['DELETE', 'FROZEN']],
                 'adv_id' => $adv_id]
         )->count('id');
         //托管计划少于4个才去执行
         $list = [];
         if ($count < 4) {
             $list = $objModel->where([
-                'obj_status' => ['not in', ['DELETE',  'FROZEN']],
+                'obj_status' => ['not in', ['DELETE', 'FROZEN']],
 //                'lab_ad_type' => $lab_type,
-                'opt_status' => ['not in', ['DELETE',  'FROZEN']],
+                'opt_status' => ['not in', ['DELETE', 'FROZEN']],
                 'adv_id' => $adv_id
             ])
                 ->field('obj_id,adv_id')
@@ -211,8 +211,6 @@ class RpaUpObjName extends Api
     }
 
 
-
-
     /**
      * 获取计划信息
      * @param $adv_id
@@ -222,12 +220,12 @@ class RpaUpObjName extends Api
      * @throws DbException
      * @throws ModelNotFoundException
      */
-    public function getObjInfo( $adv_id,$obj_id): Json
+    public function getObjInfo($adv_id, $obj_id): Json
     {
 
         $obj = new ObjModel();
         $obj_info = $obj->where(['adv_id' => $adv_id, 'obj_status' => ['not in', ['DELETE']], 'obj_id' => $obj_id])->find();
-        if(!$obj_info){
+        if (!$obj_info) {
             return json([]);
         }
         return json($obj_info->getData());
@@ -244,13 +242,23 @@ class RpaUpObjName extends Api
     public function getAdvInfo($adv_id): Json
     {
         $company = new Company();
-        $com_info = $company->where(['advertiser_id' =>$adv_id])->find();
-        if(!$com_info){
+        $com_info = $company->where(['advertiser_id' => $adv_id])->find();
+        if (!$com_info) {
             return json([]);
         }
         return json($com_info->getData());
     }
 
+    /**
+     * 移除登录缓存
+     * @return void
+     */
+    public function rmWebCache()
+    {
+        dump(Cache::rm('need_login'));
+        dump(Cache::rm('web_last_adv_id'));
+        die;
+    }
 
     /**
      * 向正式服发送请求
@@ -276,7 +284,7 @@ class RpaUpObjName extends Api
                 ]);
             }
             $contents = $response->getBody()->getContents();
-            return ['data' =>json_decode($contents,true), 'status' => 0];
+            return ['data' => json_decode($contents, true), 'status' => 0];
         } catch (Exception|GuzzleException $e) {
             return ['data' => [], 'status' => -1, 'msg' => $e->getMessage()];
         }

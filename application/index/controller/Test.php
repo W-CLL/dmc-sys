@@ -20,8 +20,11 @@ use Requests;
 use thiagoalessio\TesseractOCR\TesseractOCR;
 use think\Cache;
 use think\Db;
+use think\db\exception\DataNotFoundException;
+use think\db\exception\ModelNotFoundException;
 use think\Env;
 use think\Exception;
+use think\exception\DbException;
 
 
 class Test extends Frontend
@@ -639,6 +642,22 @@ GROUP BY
 ";
         $a = Db::execute($sql);
         dump($a);
+        die;
+    }
+
+    /**
+     * @throws DataNotFoundException
+     * @throws ModelNotFoundException
+     * @throws DbException
+     * @throws GuzzleException
+     */
+    public function testGetAdvScore()
+    {
+        $adv_list = Db::name('company')->where(['adv_status'=>1])->page(1,5)->select();
+        foreach ($adv_list as $list){
+         $res =    FundManagement::get_adv_score(['advertiser_id'=>$list['advertiser_id'],'filtering'=>json_encode(['year'=>"2025"])]);
+            dump($res);
+        }
         die;
     }
 
