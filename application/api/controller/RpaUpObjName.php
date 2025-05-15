@@ -47,14 +47,14 @@ class RpaUpObjName extends Api
         //分页获取负责人下的广告主账户列表
         list($advList, $notWhiteCom) = $autoClass->getAdvList($page, $user_name, false);
         //获取消耗范围（一般为当月1号到当天）
-        list($start_time, $end_time) = $autoClass->getPersonStartTime($user_name);
+        list($start_time, $end_time) = getPersonStartTime($user_name);
 
         if (empty($advList)) {
             Cache::rm(self::CACHE_TYPE_NOT_LAB . '_page');
             echo "全部处理完了";
             die;
         }
-        $url = "https://dmc.zebranumber.cn/index.php/api/rpa_up_obj_name/getOptCountCollectionApi/";
+        $url = "https://dmc.zebranumber.cn/index.php/api/api/getRpaOptCountCollectionApi/";
         $params = [
             'start_time' => $start_time,
             'end_time' => $end_time,
@@ -84,7 +84,7 @@ class RpaUpObjName extends Api
             $needComNum = $companyNum > 0 ? $actualComNum - $companyNum : $actualComNum;
             $needComNum = (int)ceil($needComNum);
 
-            $url = "https://dmc.zebranumber.cn/index.php/api/rpa_up_obj_name/getObjListApi/";
+            $url = "https://dmc.zebranumber.cn/index.php/api/api/getRpaObjListApi/";
             $params = [$item['advertiser_id'], $needComNum];
             $rep = $this->sendApiRes($url, $params);
             if (isset($rep['msg'])) {
@@ -110,62 +110,7 @@ class RpaUpObjName extends Api
 
     }
 
-    public function getOptCountCollectionApi()
-    {
-        $params = input();
-        $start_time = $params['start_time'];
-        $end_time = $params['end_time'];
-        $adv_list = $params['adv_list'];
-        if (!is_array($adv_list)) {
-            // 处理解码失败的情况（如返回错误信息）
-            return json(['status' => -1, 'msg' => '参数格式错误']);
-        }
-        $comModel = new Company();
-        $list = $comModel
-            ->alias('adv_c')
-            ->join(
-                "(SELECT adv_id, COUNT(*) AS total_num FROM fa_qc_obj_opt_log WHERE opt_time BETWEEN " . $start_time . " AND " . $end_time . " GROUP BY adv_id) AS total_stats",
-                'adv_c.advertiser_id = total_stats.adv_id',
-                'left'
-            )
-            ->join(
-                "(SELECT adv_id, COUNT(*) AS company_num FROM fa_qc_obj_opt_log WHERE opt_time BETWEEN " . $start_time . " AND " . $end_time . " AND operator IN (SELECT name FROM fa_ad_operator WHERE status = 1) GROUP BY adv_id) AS company_stats",
-                'adv_c.advertiser_id = company_stats.adv_id',
-                'left'
-            )
-            ->where(['adv_c.advertiser_id' => ['in', $adv_list], 'total_stats.total_num' => ['>', 0], 'is_white'=>0])
-            ->field("adv_c.*, total_stats.total_num, company_stats.company_num")
-            ->order('total_stats.total_num desc')
-            ->select();
 
-        return json($list);
-    }
-
-    public function getObjListApi($adv_id, $needComNum)
-    {
-
-        $objModel = new ObjModel();
-        $count = $objModel->where([
-                'obj_status' => ['not in', ['DELETE','FROZEN']],
-                'lab_ad_type' => "LAB_AD",
-                'opt_status' => ['not in', ['DELETE','FROZEN']],
-                'adv_id' => $adv_id]
-        )->count('id');
-        //托管计划少于4个才去执行
-        $list = [];
-        if ($count < 4) {
-            $list = $objModel->where([
-                'obj_status' => ['not in', ['DELETE',  'FROZEN']],
-//                'lab_ad_type' => $lab_type,
-                'opt_status' => ['not in', ['DELETE',  'FROZEN']],
-                'adv_id' => $adv_id
-            ])
-                ->field('obj_id,adv_id')
-                ->limit($needComNum)
-                ->column('obj_id');
-        }
-        return json($list);
-    }
 
 
     public function checkQueueExecutionOver($fun_name)
@@ -212,44 +157,6 @@ class RpaUpObjName extends Api
 
 
 
-
-    /**
-     * 获取计划信息
-     * @param $adv_id
-     * @param $obj_id
-     * @return Json
-     * @throws DataNotFoundException
-     * @throws DbException
-     * @throws ModelNotFoundException
-     */
-    public function getObjInfo( $adv_id,$obj_id): Json
-    {
-
-        $obj = new ObjModel();
-        $obj_info = $obj->where(['adv_id' => $adv_id, 'obj_status' => ['not in', ['DELETE']], 'obj_id' => $obj_id])->find();
-        if(!$obj_info){
-            return json([]);
-        }
-        return json($obj_info->getData());
-    }
-
-    /**
-     * 获取广告主信息
-     * @param $adv_id
-     * @return Json
-     * @throws DataNotFoundException
-     * @throws ModelNotFoundException
-     * @throws DbException
-     */
-    public function getAdvInfo($adv_id): Json
-    {
-        $company = new Company();
-        $com_info = $company->where(['advertiser_id' =>$adv_id])->find();
-        if(!$com_info){
-            return json([]);
-        }
-        return json($com_info->getData());
-    }
 
 
     /**

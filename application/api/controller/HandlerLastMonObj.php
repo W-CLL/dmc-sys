@@ -46,7 +46,7 @@ class HandlerLastMonObj extends Api
         }
         //获取上个月整月的时间范围，如当月是4月，返回则是3.1-3.31的时间戳
         list($start_time, $end_time) = $this->getTimeRange();
-        $url = "https://dmc.zebranumber.cn/index.php/api/handler_last_mon_obj/getOptCountCollectionApi/";
+        $url = "https://dmc.zebranumber.cn/index.php/api/api/getAvOptCountCollectionApi/";
         $params = [
             'start_time' => $start_time,
             'end_time' => $end_time,
@@ -89,7 +89,7 @@ class HandlerLastMonObj extends Api
             }
             $needComNum = (int)ceil($needComNum);
 
-            $url = "https://dmc.zebranumber.cn/index.php/api/handler_last_mon_obj/getObjListApi/";
+            $url = "https://dmc.zebranumber.cn/index.php/api/api/getObjListApi/";
             $params = [
                 $item['advertiser_id'], $needComNum
             ];
@@ -116,33 +116,7 @@ class HandlerLastMonObj extends Api
     }
 
 
-    public function getOptCountCollectionApi()
-    {
-        $params = input();
-        $start_time = $params['start_time'];
-        $end_time = $params['end_time'] ;
-        $adv_list = $params['adv_list'] ;
-        $page = $params['page'] ;
-        if (!is_array($adv_list)) {
-            // 处理解码失败的情况（如返回错误信息）
-            return json(['status' => -1, 'msg' => '参数格式错误']);
-        }
-        $comModel = new Company();
-        $list = $comModel
-            ->alias('adv_c')
-            ->join(
-                "(SELECT adv_id, COUNT(*) AS cus_num FROM fa_qc_obj_opt_log WHERE opt_time BETWEEN " . $start_time . " AND " . $end_time . " AND operator NOT IN (SELECT name FROM fa_ad_operator WHERE status = 1) GROUP BY adv_id) AS cus_stats",
-                'adv_c.advertiser_id = cus_stats.adv_id',
-                'left'
-            )
-            ->where(['adv_c.advertiser_id' => ['in', $adv_list], 'cus_stats.cus_num' => ['>', 0], 'is_white'=>0])
-            ->field("adv_c.*, cus_stats.cus_num")
-            ->order('cus_stats.cus_num desc')
-            ->page($page,100)
-            ->select();
 
-        return json($list);
-    }
 
 
 
@@ -172,7 +146,7 @@ class HandlerLastMonObj extends Api
         }
 
         //获取公司下的广告主账户，每页1000条
-        return sendApiRes("https://dmc.zebranumber.cn/index.php/api/handler_last_mon_obj/getOwnerAdvListApi/",[$page,$charge_name])['data'];
+        return sendApiRes("https://dmc.zebranumber.cn/index.php/api/api/getOwnerAdvListApi/",[$page,$charge_name])['data'];
     }
 
     public function checkDayIsHandler($key)
@@ -206,38 +180,5 @@ class HandlerLastMonObj extends Api
         return [$start_time, $end_time];
     }
 
-
-
-    public function getObjListApi($adv_id, $needComNum)
-    {
-        $objModel = new ObjModel();
-        $list = $objModel->where([
-            'obj_status' => ['not in', ['DELETE', 'FROZEN']],
-            'lab_ad_type' => "LAB_AD",
-            'opt_status' => ['not in', ['DELETE', 'FROZEN']],
-            'adv_id' => $adv_id
-        ])
-            ->field('obj_id,adv_id')
-            ->limit($needComNum)
-            ->column('obj_id');
-
-        return json($list);
-    }
-
-
-    public function getOwnerAdvListApi($page, $charge_name){
-        $companyModel = new Company();
-        return json($companyModel
-            ->where(function ($query) use ($charge_name) {
-                if ($charge_name) {
-                    $query->where(['kahuna' => ['like', "%" . $charge_name . "%"]]);
-                }
-            })
-            ->where(['is_white' => 0,'adv_status'=>1])
-            ->order('advertiser_id desc')
-//            ->page($page)
-//            ->limit(100)
-            ->column('advertiser_id'));
-    }
 
 }

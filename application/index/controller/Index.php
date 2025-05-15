@@ -473,5 +473,56 @@ class Index extends Frontend
     }
 
 
+    public function testGlobalObjDetail(){
+        $access_token = Cache::get("qc_access_token");
+        $advertiser_id = 1775613163036679; // 1797085648174154\1819212567235594\1775613163036679
+        $ad_id = 1809897663232107; // 1797387404413012\1831627579371924\1810943670236252
+        $detail = FundManagement::get_global_obj_detail($advertiser_id, $ad_id);
+
+//        var_dump($detail['data']['multi_product_creative_list']);
+//        die;
+//        $res = FundManagement::get_global_proposed_estimates($access_token, $advertiser_id, $detail['data']['aweme_id'], $detail['data']['marketing_goal'], [(int)$detail['data']['multi_product_creative_list'][0]['product_id']], $detail['data']['ad_id']);
+//        var_dump($res);
+//        die;
+        $this->removeEmptyValues($detail['data']['multi_product_creative_list']);
+        $data = array(
+            'advertiser_id' => $advertiser_id,
+            'name' => $detail['data']['name'].'1',
+            'ad_id' => $detail['data']['ad_id'],
+            'delivery_setting' => [
+                'qcpx_mode' => $detail['data']['delivery_setting']['qcpx_mode'],
+                'budget' => $detail['data']['delivery_setting']['budget'],
+                'video_schedule_type' => $detail['data']['delivery_setting']['video_schedule_type'],
+                'start_time' => $detail['data']['delivery_setting']['start_time'],
+                'end_time' => $detail['data']['delivery_setting']['end_time'],
+            ],
+            'multi_product_creative_list' => $detail['data']['multi_product_creative_list'],
+        );
+        $url = "https://api.oceanengine.com/open_api/v1.0/qianchuan/uni_aweme/ad/update/";
+        $header = array(
+            'Access-Token:' . $access_token,
+            'Content-Type:application/json',
+        );
+        $res = \Requests::post($url, json_encode($data, JSON_UNESCAPED_UNICODE), $header);
+        var_dump($res);
+    }
+
+
+    protected function removeEmptyValues(&$array) {
+
+        foreach ($array as $key => &$value) {
+            // 如果值是数组，则递归处理
+            if (is_array($value)) {
+                $this->removeEmptyValues($value);
+            }
+
+            // 如果值为空且不是数组，则删除该键
+            if (empty($value)) {
+                unset($array[$key]);
+            }
+        }
+    }
+
+
 
 }
