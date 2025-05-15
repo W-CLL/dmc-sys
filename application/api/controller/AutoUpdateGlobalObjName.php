@@ -58,9 +58,6 @@ class AutoUpdateGlobalObjName extends Api
         }
         $queue = new Queue();
         foreach ($list as $item) {
-            if ($item['advertiser_id'] != '1775613163036679') {
-                continue;
-            }
             $totalNum = (int)$item['total_num'];
             $companyNum = (int)$item['company_num'];
             $cusNum = $totalNum - $companyNum;
