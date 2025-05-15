@@ -48,7 +48,15 @@ class AutoUpdateObjNameWeb
                 }
             }
         } catch (Exception $e) {
-            $queueData->save(['id' => $queueData['id'], 'status' => 2, 'msg' => $e->getMessage()]);
+            if(preg_match("/Undefined index*/iu", $e->getMessage())){
+                $queueModel->rebuildOne($queueData['id']);
+                Cache::set('web_edit_too_many_res',true,600);
+            }else {
+                if(!in_array($e->getMessage(),['找不到广告主信息','找不到计划信息'])){
+                    Cache::set('need_login', true, 300);
+                }
+                $queueData->save(['id' => $queueData['id'], 'status' => 2, 'msg' => $e->getMessage()]);
+            }
             $job->delete();
             return '';
         }
@@ -110,7 +118,7 @@ class AutoUpdateObjNameWeb
         $res = $this->sendApiRes($url, $params, "POST");
 
         if (isset($res['data']['status']) && $res['data']['status'] == 'fail') {
-            Cache::set('need_login', true, 300);
+
             list($key, $msg_res) = $this->skipIfContainsError($res['data']['msg']);
             if ($msg_res) {
                 $this->delQueue($obj_info['adv_id'], $obj_info['obj_id'], $queueData['id'], $key);

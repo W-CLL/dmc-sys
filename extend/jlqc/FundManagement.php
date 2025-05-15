@@ -514,6 +514,19 @@ class FundManagement
         return Requests::get($url, $header);
     }
 
+    /**
+     * 查询账户违规积分明细
+     * @param array $params
+     * 参数参考：https://open.oceanengine.com/labels/12/docs/1809254532005028?origin=left_nav
+     * @return mixed
+     */
+    public static function get_adv_score_list(array $params)
+    {
+        $access_token = Cache::get("qc_access_token");
+        $url = "https://api.oceanengine.com/open_api/v3.0/security/score_violation_event/get/";
+        $params = array_merge($params, ['business_line' => "QIANCHUAN"]);
+        return sendApiRes($url, $params, 'GET', ['Access-Token' => $access_token])['data'];
+    }
 }
 
 

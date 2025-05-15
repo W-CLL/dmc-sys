@@ -97,7 +97,7 @@ class RpaUpObjName extends Api
             $queueData = [
                 'need_opt_num' => $needComNum,
                 'adv_id' => $item['advertiser_id'],
-                'obj_list' =>$rep['data'],
+                'obj_list' => $rep['data'],
             ];
 
             //一个广告主下的托管计划，总的操作次数，写入任务再平分次数到每个计划，进行延时修改
@@ -110,8 +110,16 @@ class RpaUpObjName extends Api
 
     }
 
-
-
+    /**
+     * 移除登录缓存
+     * @return void
+     */
+    public function rmWebCache()
+    {
+        dump(Cache::rm('need_login'));
+        dump(Cache::rm('web_last_adv_id'));
+        die;
+    }
 
     public function checkQueueExecutionOver($fun_name)
     {
@@ -183,7 +191,7 @@ class RpaUpObjName extends Api
                 ]);
             }
             $contents = $response->getBody()->getContents();
-            return ['data' =>json_decode($contents,true), 'status' => 0];
+            return ['data' => json_decode($contents, true), 'status' => 0];
         } catch (Exception|GuzzleException $e) {
             return ['data' => [], 'status' => -1, 'msg' => $e->getMessage()];
         }
