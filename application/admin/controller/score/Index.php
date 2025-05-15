@@ -65,10 +65,10 @@ class Index extends Backend
                 ]
             ];
 
-            $list = FundManagement::get_adv_score_list($base_params);
-            $total_page = $list['data']['page_info']['total_page'];
-            $last_page = ($total_page +1) - $page;
-            $base_params['page'] = $last_page;
+//            $list = FundManagement::get_adv_score_list($base_params);
+//            $total_page = $list['data']['page_info']['total_page'];
+//            $last_page = ($total_page +1) - $page;
+//            $base_params['page'] = $last_page;
             $list = FundManagement::get_adv_score_list($base_params);
 
             if($list['code'] != 0){
