@@ -71,19 +71,19 @@ class AutoUpdateObjNameAvg
         sleep($data['delay']);
         $token = Cache::get('qc_access_token');
         $objInfo = FundManagement::get_ad_detail($token, $data['adv_id'],$data['obj_id']);
-        $qcObj = new QcObj();
+//        $qcObj = new QcObj();
         if($objInfo['code'] !=0){
             throw new Exception($objInfo['message']);
         }
 
         $objDetail = $objInfo['data'];
         if(in_array($objDetail['opt_status'],['DELETE','FROZEN']) ){
-           $qcObj->where(['obj_id'=>$data['obj_id']])->update(['opt_status'=>$objDetail['opt_status']]);
+//           $qcObj->where(['obj_id'=>$data['obj_id']])->update(['opt_status'=>$objDetail['opt_status']]);
            $this->deleteRedundantJob($queueData);
             throw new Exception("计划状态不符合更新,该计划状态为:".$this->convertStatus($objDetail['opt_status']));
         }
         if(in_array($objDetail['status'],['DELETE',  'FROZEN']) ){
-            $qcObj->where(['obj_id'=>$data['obj_id']])->update(['opt_status'=>$objDetail['status']]);
+//            $qcObj->where(['obj_id'=>$data['obj_id']])->update(['opt_status'=>$objDetail['status']]);
             $this->deleteRedundantJob($queueData);
             throw new Exception("计划状态不符合更新,该计划状态为:".$this->convertStatus($objDetail['opt_status']));
         }
@@ -133,10 +133,11 @@ class AutoUpdateObjNameAvg
         //日常销售-商品-搜索-托管
         if(isset($array['marketing_scene']) && $array['marketing_scene'] == "SEARCH"){
             unset($array['audience']['new_customer']);
-            if(isset($array['multi_product_creative_list'])){
-                unset($array['programmatic_creative_card']);
-                unset($array['programmatic_creative_media_list']);
-                unset($array['programmatic_creative_title_list']);
+            $programmatic = ['programmatic_creative_card',"multi_product_creative_list","programmatic_creative_media_list","programmatic_creative_title_list"];
+            foreach ($programmatic as $item){
+                if(!$array[$item]){
+                    unset($array[$item]);
+                }
             }
         }
 

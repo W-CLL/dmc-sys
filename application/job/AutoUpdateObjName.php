@@ -133,13 +133,13 @@ class AutoUpdateObjName
         //日常销售-商品-搜索-托管
         if(isset($array['marketing_scene']) && $array['marketing_scene'] == "SEARCH"){
             unset($array['audience']['new_customer']);
-            if(isset($array['multi_product_creative_list'])){
-                unset($array['programmatic_creative_card']);
-                unset($array['programmatic_creative_media_list']);
-                unset($array['programmatic_creative_title_list']);
-            }
+            $programmatic = ['programmatic_creative_card',"multi_product_creative_list","programmatic_creative_media_list","programmatic_creative_title_list"];
+           foreach ($programmatic as $item){
+               if(!$array[$item]){
+                   unset($array[$item]);
+               }
+           }
         }
-
         if(isset($array['audience']['new_customer']) && $array['audience']['new_customer']=="NO_BUY_DOUYIN"){
             $array['audience']['new_customer'] = "NO_BUY";
         }
