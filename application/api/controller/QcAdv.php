@@ -27,7 +27,7 @@ class QcAdv extends Api
     {
 //        Cache::rm('qc_adv_status_page');
 //        die;
-        $token = Cache::get("qc_access_token");
+
         $page = Cache::get('qc_adv_status_page', 1);
         echo $page;
 //        die;
@@ -38,7 +38,7 @@ class QcAdv extends Api
             Cache::rm('qc_adv_status_page');
             die;
         }
-        $res = FundManagement::get_adv_info($token, urlencode(json_encode($all)));
+        $res = FundManagement::get_adv_info($all);
         $numbers = [];
         if ($res['code'] == 40002) {
             //将一些没权限的账号设置为0

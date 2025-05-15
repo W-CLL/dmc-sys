@@ -404,17 +404,16 @@ class FundManagement
     /**
      * 获取千川广告账户全量信息
      * 如果包含没有访问权限的ID,将返回no permission error
-     * @param $access_token
-     * @param $advertiser_ids
+     * @param array $advertiser_ids
      * @return mixed
      */
-    public static function get_adv_info($access_token, $advertiser_ids)
+    public static function get_adv_info(array $advertiser_ids)
     {
         $header = array(
-            'Access-Token:' . $access_token,
+            'Access-Token:' .Cache::get("qc_access_token"),
         );
 
-        $url = "https://ad.oceanengine.com/open_api/2/advertiser/info?advertiser_ids=" . $advertiser_ids;
+        $url = "https://ad.oceanengine.com/open_api/2/advertiser/info?advertiser_ids=" . json_encode($advertiser_ids);
 //        dump($url);
 //        die;
         return Requests::get($url, $header);

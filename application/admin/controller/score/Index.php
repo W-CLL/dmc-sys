@@ -27,6 +27,7 @@ class Index extends Backend
 
             $list = $scoreModel
 //                ->where($where)
+                    ->where(['status'=>1])
                 ->order($sort, $order)
                 ->limit($offset,$limit)
                 ->select();
@@ -59,17 +60,24 @@ class Index extends Backend
                 'business_line'=>"QIANCHUAN",
                 "page"=>$page,
                 "page_size"=>$limit,
-                "filtering"=>[
+                "filtering"=>json_encode([
                     'start_time'=>$start_time,
                     'end_time'=>$end_time,
-                ]
+                ])
             ];
+
 
 //            $list = FundManagement::get_adv_score_list($base_params);
 //            $total_page = $list['data']['page_info']['total_page'];
 //            $last_page = ($total_page +1) - $page;
 //            $base_params['page'] = $last_page;
             $list = FundManagement::get_adv_score_list($base_params);
+           $result =  FundManagement::get_adv_info([$adv_id]);
+
+           if($result['code'] == 40002){
+               $scoreModel->where(['id'=>$ids])->update(['status'=>0]);
+                $this->error('账户已经注销！');
+           }
 
             if($list['code'] != 0){
                 $this->error($list['message']." 请联系管理员");
