@@ -23,7 +23,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                 columns: [
                     [
                         {field: 'id', title: "ID"},
-                        {field: 'adv_id', title: "广告主id"},
+                        {field: 'adv_id', title: "千川id"},
                         {field: 'name', title: "账户名称"},
 
                         {field: 'adv_status', title: "账号状态"},
