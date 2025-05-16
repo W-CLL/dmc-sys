@@ -132,6 +132,7 @@ class Api
         $page = $data['page'];
         $charge_name = $data['charge_name'];
         $limit = $data['limit'];
+        $min_cost = $data['min_cost']??0;//最少消耗
         $comCostModel = new QcAdvDayCost();
         //获取公司下的广告主账户，每页1000条
         return json($comCostModel
@@ -143,6 +144,7 @@ class Api
                     $query->where(['com.kahuna' => ['like', "%" . $charge_name . "%"]]);
                 }
             })
+            ->having('mon_cost > '.$min_cost)
             ->field('cc.*,sum(cc.cost) as mon_cost')
             ->group('cc.adv_id')
             ->order('mon_cost desc')

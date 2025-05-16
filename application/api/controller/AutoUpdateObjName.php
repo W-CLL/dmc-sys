@@ -2,16 +2,13 @@
 
 namespace app\api\controller;
 
-use app\admin\model\Company;
 use app\admin\model\CompanySetting;
 use app\admin\model\QcObj as ObjModel;
 use app\common\controller\Api;
 use app\common\model\QcAdvDayCost;
 use app\common\model\Queue;
-use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use think\Cache;
-use think\Collection;
 use think\Db;
 use think\db\exception\DataNotFoundException;
 use think\db\exception\ModelNotFoundException;
@@ -75,9 +72,6 @@ class AutoUpdateObjName extends Api
         }
         $queue = new Queue();
         foreach ($list as $item) {
-            if ($item['advertiser_id'] == '1816678114059481') {
-                continue;
-            }
             $totalNum = (int)$item['total_num'];
             $companyNum = (int)$item['company_num'];
             $cusNum = $totalNum - $companyNum;
@@ -142,22 +136,25 @@ class AutoUpdateObjName extends Api
                 $charge_name = $operator[$user_name];
             }
         }
+        $base_url = "https://dmc.zebranumber.cn/index.php/api/api/";
+//        $base_url = "http://dmc-new.com.cn:8084/index.php/api/api/";
         //获取非白名单公司
         if ($charge_name) {
-            $ownerCompanyNames = sendApiRes("https://dmc.zebranumber.cn/index.php/api/api/ownerCompanyNamesApi/", [
+            $ownerCompanyNames = sendApiRes($base_url."ownerCompanyNamesApi/", [
                 $charge_name
             ])['data'];
             $name_where['company_name'] = ['in', $ownerCompanyNames];
         }
         $name_where['is_white'] = 0;
-        $notWhiteCom = sendApiRes("https://dmc.zebranumber.cn/index.php/api/api/notWhiteComApi/", $name_where, 'POST')['data'];
+        $notWhiteCom = sendApiRes($base_url."notWhiteComApi/", $name_where, 'POST')['data'];
         if (!$is_special) {
             //提取公司名
             $companyNames = array_keys($notWhiteCom);
-            $adv_list = sendApiRes("https://dmc.zebranumber.cn/index.php/api/api/getAdvListApi/", [
+            $adv_list = sendApiRes($base_url."/getAdvListApi/", [
                 "company_name" => $companyNames,
                 "page" => $page,
                 "charge_name" => $charge_name,
+                "min_cost" => "50000",
                 "limit" => 1000
             ], 'POST')['data'];
             $adv_ids = array_column((array)$adv_list, 'adv_id');
