@@ -84,7 +84,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                 exportDataType: 'basic',
                 columns: [
                     [
-                        {field: 'advertiser_id', title: "广告主id"},
+                        {field: 'advertiser_id', title: "千川id"},
                         {field: 'event_id', title: "违规单id"},
                         {field: 'ad_id', title: "计划id"},
                         {field: 'material_id', title: "素材id"},
