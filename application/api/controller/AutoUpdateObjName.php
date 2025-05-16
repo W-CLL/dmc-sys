@@ -54,7 +54,7 @@ class AutoUpdateObjName extends Api
             die;
         }
 
-        $list = sendApiRes("https://dmc.zebranumber.cn/index.php/api/api/getOptCountCollectionApi/", [
+        $list = sendApiRes(API_BASE_URL."/getOptCountCollectionApi/", [
             'start_time' => $start_time,
             'end_time' => $end_time,
             'advList' => $advList
@@ -84,7 +84,7 @@ class AutoUpdateObjName extends Api
                 $needComNum = $companyNum > 0 ? $actualComNum - $companyNum : $actualComNum;
                 $needComNum = (int)ceil($needComNum);
             }
-            $list = sendApiRes("https://dmc.zebranumber.cn/index.php/api/api/getObjListApi/", [
+            $list = sendApiRes(API_BASE_URL."/getObjListApi/", [
                 $item['advertiser_id'], $needComNum
             ])['data'];
 
@@ -136,21 +136,19 @@ class AutoUpdateObjName extends Api
                 $charge_name = $operator[$user_name];
             }
         }
-        $base_url = "https://dmc.zebranumber.cn/index.php/api/api/";
-//        $base_url = "http://dmc-new.com.cn:8084/index.php/api/api/";
         //获取非白名单公司
         if ($charge_name) {
-            $ownerCompanyNames = sendApiRes($base_url."ownerCompanyNamesApi/", [
+            $ownerCompanyNames = sendApiRes(API_BASE_URL."/ownerCompanyNamesApi/", [
                 $charge_name
             ])['data'];
             $name_where['company_name'] = ['in', $ownerCompanyNames];
         }
         $name_where['is_white'] = 0;
-        $notWhiteCom = sendApiRes($base_url."notWhiteComApi/", $name_where, 'POST')['data'];
+        $notWhiteCom = sendApiRes(API_BASE_URL."notWhiteComApi/", $name_where, 'POST')['data'];
         if (!$is_special) {
             //提取公司名
             $companyNames = array_keys($notWhiteCom);
-            $adv_list = sendApiRes($base_url."/getAdvListApi/", [
+            $adv_list = sendApiRes(API_BASE_URL."/getAdvListApi/", [
                 "company_name" => $companyNames,
                 "page" => $page,
                 "charge_name" => $charge_name,

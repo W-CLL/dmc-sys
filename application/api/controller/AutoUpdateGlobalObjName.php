@@ -43,7 +43,7 @@ class AutoUpdateGlobalObjName extends Api
             die;
         }
 
-        $list = sendApiRes("https://dmc.zebranumber.cn/index.php/api/api/getGlobalOptCountCollectionApi/", [
+        $list = sendApiRes(API_BASE_URL."/getGlobalOptCountCollectionApi/", [
             'start_time' => $start_time,
             'end_time' => $end_time,
             'advList' => $advList
@@ -69,7 +69,7 @@ class AutoUpdateGlobalObjName extends Api
                 $needComNum = $companyNum > 0 ? $actualComNum - $companyNum : $actualComNum;
                 $needComNum = (int)ceil($needComNum);
             }
-            $list = sendApiRes("https://dmc.zebranumber.cn/index.php/api/api/getGlobalObjListApi/", [
+            $list = sendApiRes(API_BASE_URL."/getGlobalObjListApi/", [
                 $item['advertiser_id'], $needComNum
             ])['data'];
 
@@ -123,16 +123,16 @@ class AutoUpdateGlobalObjName extends Api
         }
         //获取非白名单公司
         if ($charge_name) {
-            $ownerCompanyNames = sendApiRes("https://dmc.zebranumber.cn/index.php/api/api/ownerCompanyNamesApi/", [
+            $ownerCompanyNames = sendApiRes(API_BASE_URL."/ownerCompanyNamesApi/", [
                 $charge_name
             ])['data'];
             $name_where['company_name'] = ['in', $ownerCompanyNames];
         }
         $name_where['is_white'] = 0;
-        $notWhiteCom = sendApiRes("https://dmc.zebranumber.cn/index.php/api/api/notWhiteComApi/", $name_where, 'POST')['data'];
+        $notWhiteCom = sendApiRes(API_BASE_URL."/notWhiteComApi/", $name_where, 'POST')['data'];
         //提取公司名
         $companyNames = array_keys($notWhiteCom);
-        $adv_list = sendApiRes("https://dmc.zebranumber.cn/index.php/api/api/getAdvListApi/", [
+        $adv_list = sendApiRes(API_BASE_URL."/getAdvListApi/", [
             "company_name" => $companyNames,
             "page" => $page,
             "charge_name" => $charge_name,

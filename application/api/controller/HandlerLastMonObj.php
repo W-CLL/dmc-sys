@@ -46,7 +46,7 @@ class HandlerLastMonObj extends Api
         }
         //获取上个月整月的时间范围，如当月是4月，返回则是3.1-3.31的时间戳
         list($start_time, $end_time) = $this->getTimeRange();
-        $url = "https://dmc.zebranumber.cn/index.php/api/api/getAvOptCountCollectionApi/";
+        $url = API_BASE_URL."/getAvOptCountCollectionApi/";
         $params = [
             'start_time' => $start_time,
             'end_time' => $end_time,
@@ -89,7 +89,7 @@ class HandlerLastMonObj extends Api
             }
             $needComNum = (int)ceil($needComNum);
 
-            $url = "https://dmc.zebranumber.cn/index.php/api/api/getObjListApi/";
+            $url = API_BASE_URL."/getObjListApi/";
             $params = [
                 $item['advertiser_id'], $needComNum
             ];
@@ -146,7 +146,7 @@ class HandlerLastMonObj extends Api
         }
 
         //获取公司下的广告主账户，每页1000条
-        return sendApiRes("https://dmc.zebranumber.cn/index.php/api/api/getOwnerAdvListApi/",[$page,$charge_name])['data'];
+        return sendApiRes(API_BASE_URL."/getOwnerAdvListApi/",[$page,$charge_name])['data'];
     }
 
     public function checkDayIsHandler($key)

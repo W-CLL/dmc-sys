@@ -1,6 +1,6 @@
 <?php
 
-namespace app\api\controller;
+namespace app\api\controller\online_api\v1;
 
 use app\admin\model\Company;
 use app\admin\model\CompanySetting;

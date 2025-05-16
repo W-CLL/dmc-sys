@@ -11,7 +11,6 @@ use think\queue\Job;
 
 class AutoUpdateGlobalObjName
 {
-    protected $base_url = "https://dmc.zebranumber.cn/index.php/api/api";
 
     public function fire(Job $job, $data)
     {
@@ -215,7 +214,7 @@ class AutoUpdateGlobalObjName
 
     // 此处推送的data数据，需要包含主键id，不然批量更新无法操作
     private function pushUpdateData(array $data){
-        $pushRedisApiUrl = $this->base_url."/pushRedisApi/";
+        $pushRedisApiUrl = API_BASE_URL."/pushRedisApi/";
         $params = [
             "key_name" => "updateGlobalObjStatus",
             "value" => json_encode($data,  JSON_UNESCAPED_UNICODE)
@@ -227,7 +226,7 @@ class AutoUpdateGlobalObjName
     }
 
     private function getId(array $where, string $table_name){
-        $getIdApiUrl = $this->base_url."/getIdApi/";
+        $getIdApiUrl = API_BASE_URL."/getIdApi/";
         $params = [
             "table_name" => $table_name,
             "where" => $where,

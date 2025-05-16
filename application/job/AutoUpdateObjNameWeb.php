@@ -209,8 +209,8 @@ class AutoUpdateObjNameWeb
      */
     private function getObjAndAdvInfo($adv_id, $obj_id)
     {
-        $obj_url = "http://dmc.zebranumber.cn/index.php/api/api/getObjInfo/";
-        $adv_url = "http://dmc.zebranumber.cn/index.php/api/api/getAdvInfo/";
+        $obj_url = API_BASE_URL."/getObjInfo/";
+        $adv_url = API_BASE_URL."/getAdvInfo/";
 
         $adv_rep = $this->sendApiRes($adv_url, [$adv_id]);
         if (!$adv_rep['data']) {

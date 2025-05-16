@@ -54,7 +54,7 @@ class RpaUpObjName extends Api
             echo "全部处理完了";
             die;
         }
-        $url = "https://dmc.zebranumber.cn/index.php/api/api/getRpaOptCountCollectionApi/";
+        $url = API_BASE_URL."/getRpaOptCountCollectionApi/";
         $params = [
             'start_time' => $start_time,
             'end_time' => $end_time,
@@ -84,7 +84,7 @@ class RpaUpObjName extends Api
             $needComNum = $companyNum > 0 ? $actualComNum - $companyNum : $actualComNum;
             $needComNum = (int)ceil($needComNum);
 
-            $url = "https://dmc.zebranumber.cn/index.php/api/api/getRpaObjListApi/";
+            $url = API_BASE_URL."/getRpaObjListApi/";
             $params = [$item['advertiser_id'], $needComNum];
             $rep = $this->sendApiRes($url, $params);
             if (isset($rep['msg'])) {
