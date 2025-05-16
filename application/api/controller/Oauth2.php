@@ -4,6 +4,7 @@ namespace app\api\controller;
 
 
 use app\admin\model\Company;
+use app\admin\model\QcGlobalObj;
 use app\common\controller\Api;
 use app\common\model\Queue;
 use app\store\model\TransferRecords;
@@ -564,6 +565,29 @@ class Oauth2 extends Api
 
     public function btNotice(){
         return 1;
+    }
+
+
+    public function updateGlobalObjStatus(){
+        for ($i = 0; $i <= 1000; $i++){
+            $data = Cache::store('redis')->handler()->lpop('updateGlobalObjStatus');
+            if (empty($data)){
+                break;
+            }
+            $data = json_decode($data, true);
+            $save[] = $data;
+        }
+        if (empty($save)){
+            echo "无数据不更新";
+            die;
+        }
+        $qcGlobalObjModel = new QcGlobalObj();
+        $res = $qcGlobalObjModel->saveAll($save);
+        if ($res){
+            echo "更新成功，总更新条数：".count($save);
+        }else{
+            echo "更新失败";
+        }
     }
 
 

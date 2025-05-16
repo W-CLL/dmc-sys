@@ -232,7 +232,7 @@ Class Recharge extends Store{
             if (!$order_number){
                 foreach (self::$unique_identifier as $key=>$vel) {
                     if ($v["Name"] == $vel) {
-                        if (is_numeric($v['Value']) && $v["Value"] != 0) {
+                        if (ctype_digit($v['Value']) && $v["Value"] != 0) {
                             if (!empty((int)$v['Value'])) {
                                 $order_number = $v['Value'];
                             }

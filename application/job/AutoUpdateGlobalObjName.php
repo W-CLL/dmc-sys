@@ -11,6 +11,7 @@ use think\queue\Job;
 
 class AutoUpdateGlobalObjName
 {
+    protected $base_url = "https://dmc.zebranumber.cn/index.php/api/api";
 
     public function fire(Job $job, $data)
     {
@@ -69,12 +70,16 @@ class AutoUpdateGlobalObjName
 
         $objDetail = $objInfo['data'];
         if(in_array($objDetail['opt_status'],['DELETE']) ){
+            $id = $this->getId(['obj_id'=>$data['obj_id']],'qc_global_obj');
+            $this->pushUpdateData(['opt_status'=>$objDetail['opt_status'],'id' => $id]);
             $this->deleteRedundantJob($queueData);
-            throw new Exception("计划状态不符合更新,该计划状态为:".$this->convertStatus($objDetail['opt_status']));
+            throw new Exception("计划状态不符合更新,该计划操作状态为:".$this->convertStatus($objDetail['opt_status']));
         }
         if(in_array($objDetail['status'],['DELETE',  'FROZEN']) ){
+            $id = $this->getId(['obj_id'=>$data['obj_id']],'qc_global_obj');
+            $this->pushUpdateData(['opt_status'=>$objDetail['opt_status'],'id' => $id]);
             $this->deleteRedundantJob($queueData);
-            throw new Exception("计划状态不符合更新,该计划状态为:".$this->convertStatus($objDetail['opt_status']));
+            throw new Exception("计划状态不符合更新,该计划投放状态为:".$this->convertStatus($objDetail['status']));
         }
         $this->removeEmptyValues($objDetail['multi_product_creative_list']);
         $updateData = $this->buildData($objDetail);
@@ -148,12 +153,13 @@ class AutoUpdateGlobalObjName
     private function checkResultMsg($res){
         $msg_arr = [
             '低效素材',
-            '不在素材库中',
+            '不在素材库',
             '服务内部错误',
             'No permission',
             '抖音原生视频的imageModel',
             '当前广告主状态已禁用',
             '计划状态不符合更新',
+            '账户已失去该抖音号下对应店铺的商品全域推广权限',
         ];
         foreach ($msg_arr as $msg){
             if (strpos($res['message'], $msg) !== false) {
@@ -204,6 +210,33 @@ class AutoUpdateGlobalObjName
             }
         }
         return false;
+    }
+
+
+    // 此处推送的data数据，需要包含主键id，不然批量更新无法操作
+    private function pushUpdateData(array $data){
+        $pushRedisApiUrl = $this->base_url."/pushRedisApi/";
+        $params = [
+            "key_name" => "updateGlobalObjStatus",
+            "value" => json_encode($data,  JSON_UNESCAPED_UNICODE)
+        ];
+        $result = sendApiRes($pushRedisApiUrl,$params);
+        if ($result['status'] != 0){
+            throw new Exception($result['msg']);
+        }
+    }
+
+    private function getId(array $where, string $table_name){
+        $getIdApiUrl = $this->base_url."/getIdApi/";
+        $params = [
+            "table_name" => $table_name,
+            "where" => $where,
+        ];
+        $result = sendApiRes($getIdApiUrl,$params,'POST');
+        if ($result['status'] != 0){
+            throw new Exception($result['msg']);
+        }
+        return $result['data'];
     }
 
 

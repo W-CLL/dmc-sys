@@ -7,10 +7,12 @@ use app\admin\model\CompanySetting;
 use app\admin\model\QcObj as ObjModel;
 use app\admin\model\QcGlobalObj as GlobalObjModel;
 use app\common\model\QcAdvDayCost;
+use think\Cache;
 use think\db\exception\DataNotFoundException;
 use think\db\exception\ModelNotFoundException;
 use think\exception\DbException;
 use think\response\Json;
+use think\Db;
 
 class Api
 {
@@ -194,7 +196,7 @@ class Api
     {
         $objModel = new GlobalObjModel();
         $list = $objModel->where([
-            'obj_status' => ['not in', ['DELETE']],
+            'obj_status' => ['not in', ['DELETE',  'FROZEN']],
             'opt_status' => ['not in', ['DELETE']],
             'marketing_goal' => 'VIDEO_PROM_GOODS',    // 只获取推商品的计划【推直播暂不支持修改】
             'adv_id' => $adv_id
@@ -327,6 +329,17 @@ class Api
 
 
 
+    // 插入线上redis的API。value为数组时，调用前需要用json_encode()处理
+    public function pushRedisApi(string $key_name, $value){
+        return Cache::store('redis')->handler()->rPush($key_name, $value);
+    }
+
+    public function getIdApi(){
+        $POST = input();
+        $table_name = $POST['table_name'];
+        $where = $POST['where'];
+        return json(Db::name($table_name)->where($where)->value('id'));
+    }
 
 
 }
