@@ -52,9 +52,10 @@ class AutoUpdateObjNameWeb
                 $queueModel->rebootOne($queueData['id']);
                 Cache::set('web_edit_too_many_res',true,600);
             }else {
-                if(!in_array($e->getMessage(),['找不到广告主信息','找不到计划信息'])){
-                    Cache::set('need_login', true, 300);
+                if(in_array($e->getMessage(),['找不到广告主信息','找不到计划信息'])){
+                    $this->delQueue($data['adv_id'], $data['obj_id'], $queueData['id'], "is_del_obj");
                 }
+                Cache::set('need_login', true, 300);
                 $queueData->save(['id' => $queueData['id'], 'status' => 2, 'msg' => $e->getMessage()]);
             }
             $job->delete();
