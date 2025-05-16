@@ -107,9 +107,9 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                     ]
                 ],
                 queryParams:function (params) {
-                    // let time_data = document.getElementById('dateRange').value.split(' - ');
-                    // params.start_date = time_data[0];
-                    // params.end_date = time_data[1];
+                    let time_data = document.getElementById('dateRange').value.split(' - ');
+                    params.start_date = time_data[0];
+                    params.end_date = time_data[1];
                     params.ids = document.getElementById('ids').value;
                     return params;
                 }

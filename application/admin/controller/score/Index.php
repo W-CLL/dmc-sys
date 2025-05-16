@@ -92,8 +92,8 @@ class Index extends Backend
             $limit = input("limit", 10);
             $page = $offset / $limit;
             $page = $page + 1;
-            $start_time = input("start_date", date('Y-01-01 00:00:00'));
-            $end_time = input("end_date", date('Y-m-d 23:59:59'));
+            $start_time = input("start_date", date('Y-01-01'));
+            $end_time = input("end_date", date('Y-m-d'));
             $adv_id = $scoreModel->where(['id' => $ids])->value('adv_id');
             $base_params = [
                 'advertiser_id' => (int)$adv_id,
@@ -101,8 +101,8 @@ class Index extends Backend
                 "page" => $page,
                 "page_size" => $limit,
                 "filtering" => json_encode([
-                    'start_time' => $start_time,
-                    'end_time' => $end_time,
+                    'start_time' => $start_time." 00:00:00",
+                    'end_time' => $end_time." 23:59:59",
                 ])
             ];
 
