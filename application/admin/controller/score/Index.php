@@ -115,7 +115,7 @@ class Index extends Backend
             $result = FundManagement::get_adv_info([$adv_id]);
 
             if ($result['code'] == 40002) {
-                $scoreModel->where(['id' => $ids])->update(['status' => 0]);
+//                $scoreModel->where(['id' => $ids])->update(['status' => 0]);
                 $this->error('账户已经注销！');
             }
 
