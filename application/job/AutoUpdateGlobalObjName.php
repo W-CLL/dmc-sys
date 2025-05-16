@@ -202,6 +202,8 @@ class AutoUpdateGlobalObjName
             'Too many requests',
             'remote or network error[remote]',
             'SQLSTATE[42S02]',
+            '计划正在更新中',
+            '存在正在处理的全域推广项目'
         ];
         foreach ($msg_arr as $msg){
             if (strpos($str, $msg) !== false) {
