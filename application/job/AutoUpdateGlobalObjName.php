@@ -77,7 +77,7 @@ class AutoUpdateGlobalObjName
         }
         if(in_array($objDetail['status'],['DELETE',  'FROZEN']) ){
             $id = $this->getId(['obj_id'=>$data['obj_id']],'qc_global_obj');
-            $this->pushUpdateData(['opt_status'=>$objDetail['opt_status'],'id' => $id]);
+            $this->pushUpdateData(['obj_status'=>$objDetail['status'],'id' => $id]);
             $this->deleteRedundantJob($queueData);
             throw new Exception("计划状态不符合更新,该计划投放状态为:".$this->convertStatus($objDetail['status']));
         }
