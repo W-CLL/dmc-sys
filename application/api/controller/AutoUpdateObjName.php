@@ -144,7 +144,7 @@ class AutoUpdateObjName extends Api
             $name_where['company_name'] = ['in', $ownerCompanyNames];
         }
         $name_where['is_white'] = 0;
-        $notWhiteCom = sendApiRes(API_BASE_URL."notWhiteComApi/", $name_where, 'POST')['data'];
+        $notWhiteCom = sendApiRes(API_BASE_URL."/notWhiteComApi/", $name_where, 'POST')['data'];
         if (!$is_special) {
             //提取公司名
             $companyNames = array_keys($notWhiteCom);
