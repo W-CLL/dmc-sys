@@ -19,9 +19,9 @@ class CsQueueExeState extends Backend
 
         $startDate = strtotime($start_date);
         $endDate = strtotime($end_date . " 23:59:59");
-if($startDate&&$endDate){
-    $where['create_time'] = [ 'between', [$startDate, $endDate]];
-}
+        if($startDate&&$endDate){
+            $where['create_time'] = [ 'between', [$startDate, $endDate]];
+        }
         // 公共字段处理
         if ($status !== '') {
             $where['status'] = $status;
@@ -41,6 +41,9 @@ if($startDate&&$endDate){
                 break;
             case '2':
                 $where['queue_name'] = 'autoUpdateObjNameWeb';
+                break;
+            case '3':
+                $where['queue_name'] = 'autoUpdateGlobalObjName';
                 break;
             default:
                 $where['queue_name'] = ['like', '%autoUpdateObjName%'];
