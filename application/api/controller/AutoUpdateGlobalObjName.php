@@ -29,7 +29,7 @@ class AutoUpdateGlobalObjName extends Api
     {
         $page = Cache::get('chunk_obj_global_page', 1);
         if (!$is_special && $page == 1) {
-            checkQueueExecutionOver(self::GLOBAL_CACHE_KEY);
+            checkQueueExecutionOver(self::GLOBAL_CACHE_KEY, 'autoUpdateGlobalObjName', 'chunkAutoGlobalObj');
         }
         $redis = Cache::store('redis');
         list($advList, $notWhiteCom) = $this->getAdvList($page, $user_name, $is_special);
