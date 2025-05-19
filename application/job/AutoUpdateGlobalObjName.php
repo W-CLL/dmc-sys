@@ -159,6 +159,8 @@ class AutoUpdateGlobalObjName
             '当前广告主状态已禁用',
             '计划状态不符合更新',
             '账户已失去该抖音号下对应店铺的商品全域推广权限',
+            '用户没有绑定千川权限',
+            '体验分低于60分'
         ];
         foreach ($msg_arr as $msg){
             if (strpos($res['message'], $msg) !== false) {
