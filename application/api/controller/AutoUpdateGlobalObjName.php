@@ -76,6 +76,9 @@ class AutoUpdateGlobalObjName extends Api
             if (!$list) {
                 continue;
             }
+            if($this->specialAdvObj($item['advertiser_id'],$user_name)){
+                $list = $this->specialAdvObj($item['advertiser_id'],$user_name);
+            }
             $queueData = [
                 'need_opt_num' => $needComNum,
                 'adv_id' => $item['advertiser_id'],
@@ -136,10 +139,28 @@ class AutoUpdateGlobalObjName extends Api
             "company_name" => $companyNames,
             "page" => $page,
             "charge_name" => $charge_name,
-            "limit" => 1000
+            "limit" => 1000,
+            "type" => 2
         ], 'POST')['data'];
         $adv_ids = array_column((array)$adv_list, 'adv_id');
         return [$adv_ids, $notWhiteCom];
+    }
+
+
+    // 某些客户指定了一条计划用于修改
+    private function specialAdvObj($adv_id,$user_name){
+        $special = [
+            'mmc' => [
+                '1829163931608537' => ["1832152428880217"] // 比如这个户只允许刷1832152428880217这个计划，就放在数组里，如果涉及两条或者以上，直接在数组上继续加即可，返回去方法内顶替掉$list
+            ]
+        ];
+        if(!isset($special[$user_name])){
+            return false;
+        }
+        if(isset($special[$user_name][$adv_id])){
+            return $special[$user_name][$adv_id];
+        }
+        return false;
     }
 
 }

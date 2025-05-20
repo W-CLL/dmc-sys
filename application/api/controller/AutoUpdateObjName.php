@@ -153,7 +153,8 @@ class AutoUpdateObjName extends Api
                 "page" => $page,
                 "charge_name" => $charge_name,
                 "min_cost" => "50000",
-                "limit" => 1000
+                "limit" => 1000,
+                "type" => 1
             ], 'POST')['data'];
             $adv_ids = array_column((array)$adv_list, 'adv_id');
         } else {

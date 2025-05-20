@@ -71,6 +71,7 @@ class HandlerLastMonObj extends Api
         foreach ($list as $item) {
             //本月没有标准消耗就跳过
             $has_cost = $cost_model->where([
+                'adv_id' => $item['advertiser_id'],
                 'cost_date' => ['between', [strtotime(date('Y-m-01')), time()]],
                 'type' => 1,
             ])

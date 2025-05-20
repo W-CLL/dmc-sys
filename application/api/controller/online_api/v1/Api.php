@@ -135,12 +135,13 @@ class Api
         $charge_name = $data['charge_name'];
         $limit = $data['limit'];
         $min_cost = $data['min_cost']??0;//最少消耗
+        $type = $data['type'];
         $comCostModel = new QcAdvDayCost();
         //获取公司下的广告主账户，每页1000条
         return json($comCostModel
             ->alias('cc')
             ->join('company com', 'cc.adv_id=com.advertiser_id', 'left')
-            ->where(['com.company_name' => ['in', $companyNames], 'cc.cost_date' => ['between', [strtotime(date('Y-m-01')), time()]]])
+            ->where(['com.company_name' => ['in', $companyNames], 'cc.cost_date' => ['between', [strtotime(date('Y-m-01')), time()]], 'cc.type' => $type])
             ->where(function ($query) use ($charge_name) {
                 if ($charge_name) {
                     $query->where(['com.kahuna' => ['like', "%" . $charge_name . "%"]]);
