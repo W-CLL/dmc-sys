@@ -13,7 +13,7 @@ class ChunkAutoObjWeb
     public function fire(Job $job, $data)
     {
         $jobId = json_decode($job->getRawBody(), true)['id'];
-        $queueModel = new \app\common\model\Queue();
+        $queueModel = new Queue();
         $queueData = $queueModel->where('job_id', $jobId)->find();
         if (!$queueData) {
             $job->delete();
@@ -38,7 +38,7 @@ class ChunkAutoObjWeb
     /**
      *
      */
-    protected function doJob($data, $queueData)
+    protected function doJob($data)
     {
         $queue = new Queue();
         //平均分开到每个计划需要更新多少次
@@ -47,12 +47,7 @@ class ChunkAutoObjWeb
         $singleAccountNeedNum = round($needNum / $accountNum);
         for ($i = 0; $i < $singleAccountNeedNum; $i++) {
             foreach ($data['obj_list'] as $item) {
-//                if (isset($data['is_abnormal']) && $data['is_abnormal']) {
-//                    $seconds = 0;
-//                } else {
-                    $seconds = rand(2, 7);
-//                }
-//                $seconds = 3;
+                $seconds = rand(2, 7);
                 $upData = [
                     'adv_id' => $data['adv_id'],
                     'obj_id' => $item,

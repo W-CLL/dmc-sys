@@ -226,6 +226,7 @@ ALTER TABLE fa_queue_record
 CREATE INDEX idx_opt_time_adv_id ON fa_qc_obj_opt_log (opt_time, adv_id);
 CREATE INDEX idx_operator ON fa_qc_obj_opt_log (operator);
 CREATE INDEX idx_opt_operator_time ON fa_qc_obj_opt_log (operator, opt_time, adv_id);
+
 ALTER TABLE fa_qc_global_obj_opt_log
     ADD INDEX idx_time_adv_operator (opt_time, adv_id, operator);
 ALTER TABLE fa_ad_operator
@@ -265,3 +266,10 @@ CREATE TABLE `fa_adv_score`
     `update_time`           int(11) NOT NULL COMMENT '更新时间',
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COMMENT='账户累计积分表';
+--2025-05-20
+--全域日志索引
+ALTER TABLE fa_queue_record
+    ADD INDEX idx_status_queue_name (status, queue_name);
+
+CREATE INDEX idx_opt_time_adv_id ON fa_qc_global_obj_opt_log (opt_time, adv_id);
+CREATE INDEX idx_operator ON fa_qc_global_obj_opt_log (operator);
