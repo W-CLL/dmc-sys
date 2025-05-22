@@ -106,8 +106,6 @@ class UpdateAdvDayCost
                 "advertiser_id" => $advId,
                 "start_date" => $job_data['date'],
                 "end_date" => $job_data['date'],
-//                "start_date" => "2025-01-08",
-//                "end_date" => "2025-01-08",
                 "page" => 1,
                 "fields" => ['stat_cost'],
                 "page_size" => 100,

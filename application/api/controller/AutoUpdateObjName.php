@@ -114,9 +114,6 @@ class AutoUpdateObjName extends Api
      * @param  $user_name
      * @param $is_special
      * @return array
-     * @throws DataNotFoundException
-     * @throws DbException
-     * @throws ModelNotFoundException
      */
     public function getAdvList($page, $user_name, $is_special): array
     {

@@ -21,15 +21,11 @@ class QcObj extends Api
 
     public function getAllAdvIds()
     {
-        $list = Cache::rm('company_list_obj');
-//        if (!$list) {
-            $list = Db::name('company')
-                ->where('adv_status', 1)
-                ->order('advertiser_id', 'desc')
-                ->column('advertiser_id');
-//            Cache::set('company_list_obj', $list, 21600);
-//        }
-        return $list;
+
+        return Db::name('company')
+            ->where('adv_status', 1)
+            ->order('advertiser_id', 'desc')
+            ->column('advertiser_id');
     }
 
     public function getNewObjRecursive($pageSize = 200, $type = "VIDEO_PROM_GOODS")

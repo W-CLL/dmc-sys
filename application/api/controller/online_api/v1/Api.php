@@ -294,15 +294,20 @@ class Api
      * 获取计划信息
      * @param $adv_id
      * @param $obj_id
+     * @param string $type
      * @return Json
      * @throws DataNotFoundException
      * @throws DbException
      * @throws ModelNotFoundException
      */
-    public function getObjInfo( $adv_id,$obj_id): Json
+    public function getObjInfo($adv_id, $obj_id, string $type='stand'): Json
     {
+        if($type=="stand"){
+            $obj = new ObjModel();
+        }else{
+            $obj = new GlobalObjModel();
+        }
 
-        $obj = new ObjModel();
         $obj_info = $obj->where(['adv_id' => $adv_id, 'obj_status' => ['not in', ['DELETE']], 'obj_id' => $obj_id])->find();
         if(!$obj_info){
             return json([]);

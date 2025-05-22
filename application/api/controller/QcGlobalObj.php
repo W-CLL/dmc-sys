@@ -162,6 +162,9 @@ class QcGlobalObj extends Api
     }
 
 
+    /**
+     * @throws \Exception
+     */
     public function getGlobalObjEveryDay()
     {
         $yesterday = date('Y-m-d', strtotime('-1 day'));

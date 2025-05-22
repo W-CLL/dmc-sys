@@ -67,18 +67,13 @@ class InsertDayGlobalObj
 //        sleep(10);
         $requests = $this->buildGuzzleRequest($data['adv_list'],$data['params']);
         list($insertData,$error,$need_rebuild) = $this->sendGuzzleRequest($requests);
-        echo date('m-d H:i:s');
         if($need_rebuild){
-            echo "部分需要重新处理";
             $job_data = [
                 'adv_list'=>$need_rebuild,
                 'params'=>$data['params']
             ];
             \think\Queue::later(20,'app\job\InsertDayGlobalObj', $job_data, "insertDayGlobalObj");
         }
-//        if($error){
-//            throw new Exception(json_encode($error));
-//        }
         if(empty($insertData)){
             echo "都是空的";
             return true;
@@ -111,11 +106,6 @@ class InsertDayGlobalObj
             $exitedIds[] = $objModel->where(['adv_id'=>$key,'obj_id' => ['in', $item]])->column('obj_id');
         }
         $exitedIds = array_merge(...$exitedIds);
-
-//        $keys = array_keys($adv);
-//        $values = array_values($adv);
-//        $flattenedValues = array_merge(...$values);
-//        $exitedIds = $objModel->where(['obj_id' => ['in', $flattenedValues]])->column('obj_id');
         $afterData = array_filter($list, function ($item) use ($exitedIds) {
             return !in_array($item['obj_id'], $exitedIds);
         });

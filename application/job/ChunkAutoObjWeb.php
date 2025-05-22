@@ -57,7 +57,13 @@ class ChunkAutoObjWeb
                 if ($i == $singleAccountNeedNum - 1) {
                     $upData['last_one'] = true;
                 }
-             $queue->addQueue('web修改' . $item . '计划名称', 'app\job\AutoUpdateObjNameWeb', 'autoUpdateObjNameWeb', $upData, '', '延迟' . $seconds . '秒执行');
+                if($data['type'] == 'stand'){
+                    $queue->addQueue('web修改' . $item . '计划名称', 'app\job\AutoUpdateObjNameWeb', 'autoUpdateObjNameWeb', $upData, '', '延迟' . $seconds . '秒执行');
+                }
+                if($data['type'] == "global"){
+                    $queue->addQueue('全域web修改' . $item . '计划名称', 'app\job\AutoUpdateObjNameGlobalWeb', 'autoUpdateObjNameGlobalWeb', $upData, '', '延迟' . $seconds . '秒执行');
+
+                }
             }
         }
         return true;

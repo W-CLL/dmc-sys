@@ -64,6 +64,7 @@ class UpdateAdvDayGlobalCost
     }
 
     /**
+     * @throws Exception
      */
     protected function doJob($data)
     {
@@ -122,11 +123,9 @@ class UpdateAdvDayGlobalCost
     }
 
 
-
     /**
      * 构建请求
-     * @param $advIds
-     * @param $filter
+     * @param $data
      * @return array
      */
     protected function buildGuzzleRequest($data): array
