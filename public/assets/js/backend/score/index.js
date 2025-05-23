@@ -94,10 +94,19 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                 ],
                 queryParams: function (params) {
                     params.advertiser_id = document.getElementById('account_id').value;
+                    params.com_name = document.getElementById('com_name').value;
+                    params.kahuna = document.getElementById('kahuna').value;
                     return params;
                 }
             });
+            $('#tj1').on('click', function () {
+                $("#index-table").bootstrapTable('refresh');
+            });
 
+// 下拉框变更自动刷新
+            $('#account_id').on('changed.bs.select', function () {
+                $("#index-table").bootstrapTable('refresh');
+            });
             // 为表格绑定事件
             Table.api.bindevent(table);
         },

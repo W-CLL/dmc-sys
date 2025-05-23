@@ -37,19 +37,27 @@ class Index extends Backend
             $order = input("order", "desc");
             $offset = input("offset", 0);
             $limit = input("limit", 10);
-            $filter = input("filter", '');
 
             $where = [];
-            if ($filter != '') {
-                $filter = (array)json_decode($filter, true);
-                $where = $this->screen_filter($filter);
+
+            $adv_id = input('advertiser_id');
+            $com_name = input('com_name');
+            $kahuna= input('kahuna');
+            if($adv_id){
+                $where['sco.adv_id'] = $adv_id;
+            }
+            if($com_name){
+                $where['com.company_name'] = ['like',"%".$com_name."%"];
+            }
+            if($kahuna){
+                $where['com.kahuna'] = ['like',"%".$kahuna."%"];
             }
 
             $list = $scoreModel
                 ->alias('sco')
                 ->join('company com', 'sco.adv_id=com.advertiser_id', 'left')
                 ->field('sco.*,com.company_name,com.kahuna,com.name')
-//                ->where($where)
+                ->where($where)
                 ->where(['sco.status' => 1])
                 ->order($sort, $order)
                 ->limit($offset, $limit)
@@ -70,14 +78,20 @@ class Index extends Backend
                 }
             }
 
-            $count = $scoreModel->where($where)->count();
+            $count = $scoreModel
+                ->alias('sco')
+                ->join('company com', 'sco.adv_id=com.advertiser_id', 'left')
+                ->field('sco.*,com.company_name,com.kahuna,com.name')
+                ->where($where)
+                ->where(['sco.status' => 1])
+                ->count();
             $result = array("total" => $count, "rows" => $list);
 
             return json($result);
         }
-        $account_data = Db::name("company")
-            ->field("id,advertiser_id")
-            ->group("advertiser_id")
+        $account_data = Db::name("adv_score")
+            ->field("id,adv_id")
+            ->group("adv_id")
             ->select();
 
         $this->assign('account_data', $account_data ?: []);

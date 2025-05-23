@@ -14,14 +14,34 @@
                                             <label class="control-label">千川id</label>
                                             <div>
                                                 <select data-live-search="true" name="account_id" id="account_id" class="form-control selectpicker">
-                                                    <option value=$account_data"0" selected="selected">无</option>
+                                                    <option value="0" selected="selected">无</option>
                                                     {foreach $account_data  as $vo}
-                                                    <option value="{$vo.advertiser_id}">{$vo.advertiser_id}</option>
+                                                    <option value="{$vo.adv_id}">{$vo.adv_id}</option>
                                                     {/foreach}
                                                 </select>
                                             </div>
                                         </div>
                                     </div>
+
+                                <div class="col-xs-3 col-sm-3 col-md-3">
+                                    <div class="form-group">
+                                        <!--<input type="hidden" class="operate" data-name="com_name" value="="/>-->
+                                        <label class="control-label">公司名称</label>
+                                        <div>
+                                            <label for="com_name"></label><input type="text" class="form-control" name="com_name" id="com_name" placeholder="请输入公司名" value=""/>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-xs-3 col-sm-3 col-md-3">
+                                    <div class="form-group">
+                                        <!--<input type="hidden" class="operate" data-name="kahuna" value="="/>-->
+                                        <label class="control-label">负责人</label>
+                                        <div>
+                                            <label for="kahuna"></label><input type="text" class="form-control" name="kahuna" id="kahuna" placeholder="请输入负责人" value=""/>
+                                        </div>
+                                    </div>
+                                </div>
 
 
                                 <div class="col-xs-6 col-sm-6 col-md-3">
@@ -29,7 +49,7 @@
                                         <label class="control-label"></label>
                                         <div class="row">
                                             <div class="col-xs-3">
-                                                <input type="button"  id="tj"  class="btn btn-success btn-block" value="提交"/>
+                                                <input type="button"  id="tj1"  class="btn btn-success btn-block" value="提交"/>
                                             </div>
                                             <div class="col-xs-3">
                                                 <input type="reset" class="btn btn-primary btn-block" value="重置"/>
@@ -53,5 +73,6 @@
         </div>
     </div>
 </div>
+
 
 
