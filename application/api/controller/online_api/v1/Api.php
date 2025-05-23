@@ -37,7 +37,7 @@ class Api
         $data = json_decode($jsonData, true);
         $start_time = $data['start_time'];
         $end_time = $data['end_time'];
-        $advList = $data['advList'];
+        $adv_list = $data['adv_list'];
         $list = $comModel
             ->alias('adv_c')
             ->join(
@@ -50,7 +50,7 @@ class Api
                 'adv_c.advertiser_id = company_stats.adv_id',
                 'left'
             )
-            ->where(['adv_c.advertiser_id' => ['in', $advList], 'total_stats.total_num' => ['>', 0], 'is_white' => 0])
+            ->where(['adv_c.advertiser_id' => ['in', $adv_list], 'total_stats.total_num' => ['>', 0], 'is_white' => 0])
             ->field("adv_c.*, total_stats.total_num, company_stats.company_num")
             ->order('total_stats.total_num desc')
             ->select();
@@ -63,6 +63,7 @@ class Api
     public function getAvOptCountCollectionApi(): Json
     {
         $params = input();
+        $table = $params['table'] ;
         $start_time = $params['start_time'];
         $end_time = $params['end_time'] ;
         $adv_list = $params['adv_list'] ;
@@ -75,7 +76,7 @@ class Api
         $list = $comModel
             ->alias('adv_c')
             ->join(
-                "(SELECT adv_id, COUNT(*) AS cus_num FROM fa_qc_obj_opt_log WHERE opt_time BETWEEN " . $start_time . " AND " . $end_time . " AND operator NOT IN (SELECT name FROM fa_ad_operator WHERE status = 1) GROUP BY adv_id) AS cus_stats",
+                "(SELECT adv_id, COUNT(*) AS cus_num FROM ". $table ." WHERE opt_time BETWEEN " . $start_time . " AND " . $end_time . " AND operator NOT IN (SELECT name FROM fa_ad_operator WHERE status = 1) GROUP BY adv_id) AS cus_stats",
                 'adv_c.advertiser_id = cus_stats.adv_id',
                 'left'
             )
@@ -171,7 +172,7 @@ class Api
         $data = json_decode($jsonData, true);
         $start_time = $data['start_time'];
         $end_time = $data['end_time'];
-        $advList = $data['advList'];
+        $adv_list = $data['adv_list'];
         $list = $comModel
             ->alias('adv_c')
             ->join(
@@ -184,7 +185,7 @@ class Api
                 'adv_c.advertiser_id = company_stats.adv_id',
                 'left'
             )
-            ->where(['adv_c.advertiser_id' => ['in', $advList], 'total_stats.total_num' => ['>', 0], 'is_white' => 0])
+            ->where(['adv_c.advertiser_id' => ['in', $adv_list], 'total_stats.total_num' => ['>', 0], 'is_white' => 0])
             ->field("adv_c.*, total_stats.total_num, company_stats.company_num")
             ->order('total_stats.total_num desc')
             ->select();
@@ -193,7 +194,7 @@ class Api
     }
 
 
-    // 全域调用
+    // 全域、平均调用
     public function getGlobalObjListApi($adv_id, $needComNum): Json
     {
         $objModel = new GlobalObjModel();

@@ -57,7 +57,7 @@ class AutoUpdateObjName extends Api
         $list = sendApiRes(API_BASE_URL."/getOptCountCollectionApi/", [
             'start_time' => $start_time,
             'end_time' => $end_time,
-            'advList' => $advList
+            'adv_list' => $advList
         ], 'POST')['data'];
         //获取本月的操作日志
 //        $list = $this->getOptCountCollection($comModel, $start_time, $end_time, $advList);

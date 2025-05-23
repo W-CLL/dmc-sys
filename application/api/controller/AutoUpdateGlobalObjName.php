@@ -46,7 +46,7 @@ class AutoUpdateGlobalObjName extends Api
         $list = sendApiRes(API_BASE_URL."/getGlobalOptCountCollectionApi/", [
             'start_time' => $start_time,
             'end_time' => $end_time,
-            'advList' => $advList
+            'adv_list' => $advList
         ], 'POST')['data'];
 
         if (empty($list)) {

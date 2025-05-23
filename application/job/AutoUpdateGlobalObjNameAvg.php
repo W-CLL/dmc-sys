@@ -4,11 +4,10 @@ namespace app\job;
 
 use app\job\Base\BaseUpdateGlobalJob;
 
-class AutoUpdateGlobalObjName extends BaseUpdateGlobalJob
+class AutoUpdateGlobalObjNameAvg extends BaseUpdateGlobalJob
 {
-
     protected function getQueueModelClass(): string
     {
-        return '\app\common\model\Queue';
+        return '\app\common\model\QueueAvg';
     }
 }
