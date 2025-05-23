@@ -85,9 +85,6 @@ class InsertDayObj
             ];
             \think\Queue::push('app\job\InsertDayObj', $job_data, "insertDayObj");
         }
-//        if($error){
-//            throw new Exception(json_encode($error));
-//        }
         if(empty($insertData)){
             echo "都是空的";
             return true;
@@ -180,11 +177,8 @@ class InsertDayObj
             'concurrency' => 10,  // 控制并发数
             'fulfilled' => function ($response, $index) use (&$insertData, $requests, &$error,&$need_rebuild) {
                 $resData = json_decode($response->getBody()->getContents(), true);
-
                 $requestInfo = $requests[$index]['params'];
                 $requestAdvId = $requestInfo['advertiser_id'];
-
-//                $insertData = [];    // ？
                 if (!empty($resData) && $resData['code'] == 0 && !empty($resData['data']['list'])) {
                     foreach ($resData['data']['list'] as $item) {
                         $insertData[] = [
@@ -211,7 +205,6 @@ class InsertDayObj
                     }
                 }elseif($resData['code'] !=0){
                     if(!$this->skipIfContainsError($resData['message'])){
-//                        $error[] = $resData['message'];
                         $need_rebuild[] = $requestAdvId;
                     };
                 }

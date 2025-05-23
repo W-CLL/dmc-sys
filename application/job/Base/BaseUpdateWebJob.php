@@ -111,7 +111,8 @@ abstract class BaseUpdateWebJob
             'no_permission' => '/No permission to operate account/iu',
             "not_normal" => '/当前计划存在其他问.*/iu',
             "not_found_obj" => '/找不到计划信息.*/iu',
-            "is_del_obj" => "/删除/iu"
+            "is_del_obj" => "/删除/iu",
+            "not_support"=>"已不再支持商品标准推广的计划操作，请尽快迁移至全域推广"
         ];
         foreach ($keywords as $key => $pattern) {
             if (preg_match($pattern, $message)) {
@@ -124,7 +125,7 @@ abstract class BaseUpdateWebJob
     private function delQueue($adv_id, $obj_id, $queue_record_id, $key): void
     {
         $queue = new Queue();
-        if ($adv_id && $key == "not_found") {
+        if ($adv_id && in_array($key, ["not_found","not_support"])) {
             $queue->where([
                 'job_data' => ['like', "%" . $adv_id . "%"],
                 'status' => 0,

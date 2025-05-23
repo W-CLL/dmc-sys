@@ -161,7 +161,7 @@ class AutoUpdateObjName extends Api
         return [$adv_ids, $notWhiteCom];
     }
 
-    protected function handlerSpecialAdvIds($user_name)
+    protected function handlerSpecialAdvIds($user_name): array
     {
         switch ($user_name) {
 

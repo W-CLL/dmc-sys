@@ -10,6 +10,7 @@ use app\common\model\QcAdvDayCost;
 use think\Cache;
 use think\db\exception\DataNotFoundException;
 use think\db\exception\ModelNotFoundException;
+use think\Exception;
 use think\exception\DbException;
 use think\response\Json;
 use think\Db;
@@ -17,14 +18,14 @@ use think\Db;
 class Api
 {
     // 标准、全域共用
-    public function ownerCompanyNamesApi($charge_name)
+    public function ownerCompanyNamesApi($charge_name): Json
     {
         $companyModel = new Company();
         return json($companyModel->where(['kahuna' => ['like', "%" . $charge_name . "%"]])->column('company_name'));
     }
 
     //标准调用
-    public function getOptCountCollectionApi()
+    public function getOptCountCollectionApi(): Json
     {
 //        return json($advList);
         $comModel = new Company();
@@ -59,7 +60,7 @@ class Api
 
 
     //平均调用
-    public function getAvOptCountCollectionApi()
+    public function getAvOptCountCollectionApi(): Json
     {
         $params = input();
         $start_time = $params['start_time'];
@@ -89,7 +90,7 @@ class Api
 
 
     // 标准、平均共用
-    public function getObjListApi($adv_id, $needComNum)
+    public function getObjListApi($adv_id, $needComNum): Json
     {
         $objModel = new ObjModel();
         $list = $objModel->where([
@@ -109,7 +110,7 @@ class Api
 
 
     // 全域、标准共用
-    public function notWhiteComApi()
+    public function notWhiteComApi(): Json
     {
         // 获取当前请求对象
         $request = \think\Request::instance();
@@ -122,7 +123,7 @@ class Api
 
 
     // 全域、标准共用
-    public function getAdvListApi()
+    public function getAdvListApi(): Json
     {
         // 获取当前请求对象
         $request = \think\Request::instance();
@@ -158,7 +159,7 @@ class Api
 
 
     // 全域调用
-    public function getGlobalOptCountCollectionApi()
+    public function getGlobalOptCountCollectionApi(): Json
     {
 //        return json($advList);
         $comModel = new Company();
@@ -193,7 +194,7 @@ class Api
 
 
     // 全域调用
-    public function getGlobalObjListApi($adv_id, $needComNum)
+    public function getGlobalObjListApi($adv_id, $needComNum): Json
     {
         $objModel = new GlobalObjModel();
         $list = $objModel->where([
@@ -213,7 +214,8 @@ class Api
 
 
     // 平均调用
-    public function getOwnerAdvListApi($page, $charge_name){
+    public function getOwnerAdvListApi($page, $charge_name): Json
+    {
         $companyModel = new Company();
         return json($companyModel
             ->where(function ($query) use ($charge_name) {
@@ -230,7 +232,7 @@ class Api
 
 
     // 元素调用
-    public function getRpaOptCountCollectionApi()
+    public function getRpaOptCountCollectionApi(): Json
     {
         $params = input();
         $start_time = $params['start_time'];
@@ -263,7 +265,11 @@ class Api
 
 
     // 元素调用
-    public function getRpaObjListApi($adv_id, $needComNum)
+
+    /**
+     * @throws Exception
+     */
+    public function getRpaObjListApi($adv_id, $needComNum): Json
     {
 
         $objModel = new ObjModel();
@@ -340,7 +346,8 @@ class Api
         return Cache::store('redis')->handler()->rPush($key_name, $value);
     }
 
-    public function getIdApi(){
+    public function getIdApi(): Json
+    {
         $POST = input();
         $table_name = $POST['table_name'];
         $where = $POST['where'];

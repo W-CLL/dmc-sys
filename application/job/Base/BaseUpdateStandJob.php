@@ -55,7 +55,10 @@ abstract class BaseUpdateStandJob
         }
     }
 
-    protected function doJob($data, $queueData)
+    /**
+     * @throws Exception
+     */
+    protected function doJob($data, $queueData): array
     {
         // 可选延迟
         if (isset($data['delay'])) {
@@ -124,8 +127,9 @@ abstract class BaseUpdateStandJob
         if ($res['code'] == 0 && $res['message'] == "OK") {
             return [true, '处理成功'];
         } else {
-            if ($this->checkResultMsg($res)) {
-                $this->deleteRedundantJob($queueData);
+            list($status,$key) = $this->checkResultMsg($res);
+            if ($status) {
+                $this->deleteRedundantJob($queueData,$key,$data['adv_id']);
             }
             throw new Exception($res['message'] . json_encode($updateData));
         }
@@ -163,7 +167,7 @@ abstract class BaseUpdateStandJob
         }
     }
 
-    public function convertStatus($status)
+    public function convertStatus($status): string
     {
         switch ($status) {
             case 'DELETE':
@@ -177,7 +181,7 @@ abstract class BaseUpdateStandJob
         }
     }
 
-    private function checkResultMsg($res)
+    private function checkResultMsg($res): array
     {
         $msg_arr = [
             '低效素材',
@@ -186,30 +190,37 @@ abstract class BaseUpdateStandJob
             '商品托管计划',
             'No permission',
             '抖音原生视频的imageModel',
-            '当前广告主状态已禁用',
             '计划状态不符合更新',
             '搜索计划只支持',
             '成本稳投通投广告不',
+            "is_forbidden"=>'当前广告主状态已禁用',
+            "not_support"=>"已不再支持商品标准推广的计划操作，请尽快迁移至全域推广"
         ];
 
-        foreach ($msg_arr as $msg) {
-            if (strpos($res['message'], $msg) !== false) {
-                return true;
+        foreach ($msg_arr as $key=> $msg) {
+            if (strpos($res['message'], $msg)) {
+                return [true,$key];
             }
         }
 
-        return false;
+        return [false,null];
     }
 
-    protected function deleteRedundantJob($queueData)
+    protected function deleteRedundantJob($queueData,$is_del_adv=false,$adv_id='')
     {
         $queue = new $this->queueModel();
+
         $where = [
             'job_name' => $queueData['job_name'],
             'queue_name' => $queueData['queue_name'],
             'status' => ['in', [0, 2]],
             'id' => ['neq', $queueData['id']]
         ];
+        if(in_array($is_del_adv ,['not_support','is_forbidden']) && $adv_id){
+            $where['job_data'] = ['like',"%".$adv_id."%"];
+            unset($where['job_name']);
+        }
+
         $queue->where($where)->delete();
     }
 }
