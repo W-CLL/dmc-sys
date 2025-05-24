@@ -870,8 +870,8 @@ if(!function_exists('apiFieldValidate')){
 
 
 if (!defined('API_BASE_URL')) {
-//    define('API_BASE_URL', 'https://dmc.zebranumber.cn/index.php/api/online_api/v1/api');
-    define('API_BASE_URL', 'http://dmc-new.com.cn:8084/index.php/api/online_api/v1/api');  // 本地测试改这里
+    define('API_BASE_URL', 'https://dmc.zebranumber.cn/index.php/api/online_api/v1/api');
+//    define('API_BASE_URL', 'http://dmc-new.com.cn:8084/index.php/api/online_api/v1/api');  // 本地测试改这里
 }
 
 
