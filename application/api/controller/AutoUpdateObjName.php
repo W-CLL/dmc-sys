@@ -76,7 +76,7 @@ class AutoUpdateObjName extends Api
 
             if ($cusNum <= 0 || ($companyNum > 0 && ($companyNum / $cusNum) * 100 >= ($notWhiteCom[$item['company_name']] * 2))) {
                 $needComNum = 50;
-//                continue;
+                continue;
             } else {
                 $actualComNum = $cusNum + ($cusNum * ($notWhiteCom[$item['company_name']] / 100));
                 $needComNum = $companyNum > 0 ? $actualComNum - $companyNum : $actualComNum;
