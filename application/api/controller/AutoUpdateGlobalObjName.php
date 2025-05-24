@@ -29,7 +29,7 @@ class AutoUpdateGlobalObjName extends Api
     {
         $page = Cache::get('chunk_obj_global_page', 1);
         if (!$is_special && $page == 1) {
-            checkQueueExecutionOver(self::GLOBAL_CACHE_KEY, 'autoUpdateGlobalObjName', 'chunkAutoGlobalObj');
+            checkQueueExecutionOver('autoUpdateGlobalObjName','chunkAutoGlobalObj');
         }
         $redis = Cache::store('redis');
         list($advList, $notWhiteCom) = $this->getAdvList($page, $user_name, $is_special);
@@ -100,13 +100,9 @@ class AutoUpdateGlobalObjName extends Api
      * 获取公司设置
      * @param $page
      * @param  $user_name
-     * @param $is_special
      * @return array
-     * @throws DataNotFoundException
-     * @throws DbException
-     * @throws ModelNotFoundException
      */
-    public function getAdvList($page, $user_name, $is_special): array
+    public function getAdvList($page, $user_name): array
     {
         $operator = [
             'zqp' => "张秋萍",

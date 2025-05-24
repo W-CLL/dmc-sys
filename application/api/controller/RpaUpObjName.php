@@ -2,19 +2,11 @@
 
 namespace app\api\controller;
 
-use app\admin\model\Company;
-use app\admin\model\QcObj as ObjModel;
+
 use app\common\controller\Api;
 use app\common\model\Queue;
-use GuzzleHttp\Client;
-use GuzzleHttp\Exception\GuzzleException;
 use think\Cache;
 use think\Db;
-use think\db\exception\DataNotFoundException;
-use think\db\exception\ModelNotFoundException;
-use think\Exception;
-use think\exception\DbException;
-use think\response\Json;
 
 
 /**
@@ -32,10 +24,14 @@ class RpaUpObjName extends Api
 
     const WEB_STRAND_KEY = 'web_strand_key';
 
-    private function processObjList($user_name, $cacheKey, $apiUrl, $listApiUrl, $type)
+    private function processObjList($user_name, $cacheKey, $apiUrl, $listApiUrl, $type,$modelName,$main_queue)
     {
         $page = Cache::get($cacheKey . '_page', 1);
-        $autoClass = new AutoUpdateObjName();
+        if ($page == 1) {
+            checkQueueExecutionOver($main_queue,"chunkAutoObjWeb");
+        }
+
+        $autoClass = new $modelName();
         list($advList, $notWhiteCom) = $autoClass->getAdvList($page, $user_name, false);
         list($start_time, $end_time) = getPersonStartTime($user_name);
         if (empty($advList)) {
@@ -112,7 +108,9 @@ class RpaUpObjName extends Api
             self::CACHE_TYPE_NOT_LAB,
             API_BASE_URL."/getOptCountCollectionApi/",
             API_BASE_URL."/getRpaObjListApi/",
-            'stand'
+            'stand',
+            "app\api\controller\AutoUpdateObjName",
+            "autoUpdateObjNameWeb"
         );
     }
 
@@ -123,63 +121,12 @@ class RpaUpObjName extends Api
             self::WEB_GLOBAL_KEY,
             API_BASE_URL."/getGlobalOptCountCollectionApi/",
             API_BASE_URL."/getGlobalObjListApi/",
-            'global'
+            'global',
+            "app\api\controller\AutoUpdateGlobalObjName",
+            "autoUpdateObjNameGlobalWeb"
         );
     }
 
 
-
-    /**
-     * 移除登录缓存
-     * @return void
-     */
-    public function rmWebCache()
-    {
-        dump(Cache::rm('need_login'));
-        dump(Cache::rm('web_last_adv_id'));
-        die;
-    }
-
-    public function checkQueueExecutionOver($fun_name)
-    {
-//         生成时间参数
-//        $todayStart = strtotime('today');
-        $todayStart = strtotime(date('Y-m-01'));
-        $todayEnd = strtotime('tomorrow') - 1;
-
-        // 构造原生SQL（使用命名占位符）
-        $sql = "SELECT COUNT(*) AS count 
-            FROM fa_queue_record 
-            WHERE (
-                (queue_name = :queue1 
-                AND status = 0 
-                AND create_time BETWEEN :start1 AND :end1)
-                OR 
-                (queue_name = :queue2 
-                AND status = 0 
-                AND create_time BETWEEN :start2 AND :end2)
-            )
-            AND TIME(FROM_UNIXTIME(create_time)) NOT BETWEEN '09:00:00' AND '09:02:00'";
-
-        // 执行查询（使用ThinkPHP的数据库组件）
-        $count = Db::query($sql, [
-            'queue1' => 'autoUpdateObjNameWeb',
-            'queue2' => 'chunkAutoObjWeb',
-            'start1' => $todayStart,
-            'end1' => $todayEnd,
-            'start2' => $todayStart,
-            'end2' => $todayEnd
-        ])[0]['count'];
-
-        if ($count <= 50) {
-            Cache::store('redis')->set(self::WEB_STRAND_KEY . '_over', 1);
-            Cache::store('redis')->set(self::WEB_GLOBAL_KEY . '_over', 1);
-        }
-        $canRun = Cache::store('redis')->get($fun_name . '_over');
-        if ($canRun != 1) {
-            echo "时辰未到";
-            die;
-        }
-    }
 
 }

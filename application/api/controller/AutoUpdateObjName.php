@@ -36,10 +36,8 @@ class AutoUpdateObjName extends Api
     {
         $page = Cache::get('chunk_obj_page', 1);
         if (!$is_special && $page == 1) {
-            checkQueueExecutionOver(self::CACHE_KEY);
+            checkQueueExecutionOver('autoUpdateObjName','chunkAutoObj');
         }
-//        $this->checkTimestamp(self::CACHE_KEY);
-
         $redis = Cache::store('redis');
         $type = "normal";
         list($advList, $notWhiteCom) = $this->getAdvList($page, $user_name, $is_special);
@@ -151,7 +149,7 @@ class AutoUpdateObjName extends Api
                 "company_name" => $companyNames,
                 "page" => $page,
                 "charge_name" => $charge_name,
-                "min_cost" => "50000",
+                "min_cost" => "0",
                 "limit" => 1000,
                 "type" => 1
             ], 'POST')['data'];

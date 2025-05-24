@@ -7,46 +7,17 @@ use think\Db;
 if (!function_exists('checkQueueExecutionOver')) {
 
     /**
-     * @param $fun_name
+     * 检查队列执行情况，决定脚本重新生成
+     * @param string $main_queue_name
+     * @param string $chunk_queue_name
      * @return void
      */
-    function checkQueueExecutionOver($fun_name, $queue_name1 = 'autoUpdateObjName', $queue_name2 = 'chunkAutoObj')
+    function checkQueueExecutionOver(string $main_queue_name, string $chunk_queue_name)
     {
-//         生成时间参数
-//        $todayStart = strtotime('today');
-        $todayStart = strtotime(date('Y-m-01'));
-        $todayEnd = strtotime('tomorrow') - 1;
-
-        // 构造原生SQL（使用命名占位符）
-        $sql = "SELECT COUNT(*) AS count 
-            FROM fa_queue_record 
-            WHERE (
-                (queue_name = :queue1 
-                AND status = 0 
-                AND create_time BETWEEN :start1 AND :end1)
-                OR 
-                (queue_name = :queue2 
-                AND status = 0 
-                AND create_time BETWEEN :start2 AND :end2)
-            )
-            AND TIME(FROM_UNIXTIME(create_time)) NOT BETWEEN '09:00:00' AND '09:02:00'";
-
-        // 执行查询（使用ThinkPHP的数据库组件）
-        $count = Db::query($sql, [
-            'queue1' => $queue_name1,
-            'queue2' => $queue_name2,
-            'start1' => $todayStart,
-            'end1' => $todayEnd,
-            'start2' => $todayStart,
-            'end2' => $todayEnd
-        ])[0]['count'];
-
-        if ($count <= 50) {
-            Cache::store('redis')->set($fun_name . '_over', 1);
-        }
-        $canRun = Cache::store('redis')->get($fun_name . '_over');
-        if ($canRun != 1) {
-            echo "时辰未到";
+        $main_queue_name_num = getQueueNumWithKey($main_queue_name);
+        $chunk_queue_name_num = getQueueNumWithKey($chunk_queue_name);
+        if($main_queue_name_num > 50 || $chunk_queue_name_num){
+            echo "还有".$main_queue_name_num."条任务，没有执行完";
             die;
         }
     }
@@ -119,5 +90,14 @@ if(!function_exists('delNoPermission')){
             }
         }
         return true;
+    }
+}
+
+if(!function_exists("getQueueNumWithKey")){
+    function getQueueNumWithKey($queue_key,$db=1)
+    {
+        $redis = Cache::store('redis')->handler();
+        $redis->rawCommand('SELECT', $db);
+        return $redis->llen('queues:'.$queue_key);
     }
 }
