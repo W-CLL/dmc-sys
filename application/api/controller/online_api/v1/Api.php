@@ -177,7 +177,7 @@ class Api
             'page' => ["require" => 'page 必填'],
             'charge_name' => ["require" => 'charge_name 必填'],
             'limit' => ["require" => 'limit 必填'],
-            'min_cost' => ["require" => 'min_cost 必填'],
+            'type' => ["require" => 'type 必填'],
         ];
         $error = apiFieldValidate($rule_message, $data);
         if ($error) {
