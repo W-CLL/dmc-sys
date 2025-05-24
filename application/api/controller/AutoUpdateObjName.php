@@ -138,10 +138,12 @@ class AutoUpdateObjName extends Api
             $ownerCompanyNames = sendApiRes(API_BASE_URL."/ownerCompanyNamesApi/", [
                 $charge_name
             ])['data'];
+            isset($ownerCompanyNames['status']) ?die($ownerCompanyNames['msg']):'';
             $name_where['company_name'] = ['in', $ownerCompanyNames];
         }
         $name_where['is_white'] = 0;
         $notWhiteCom = sendApiRes(API_BASE_URL."/notWhiteComApi/", $name_where, 'POST')['data'];
+        isset($notWhiteCom['status']) ?die($notWhiteCom['msg']):'';
         if (!$is_special) {
             //提取公司名
             $companyNames = array_keys($notWhiteCom);
@@ -153,6 +155,7 @@ class AutoUpdateObjName extends Api
                 "limit" => 1000,
                 "type" => 1
             ], 'POST')['data'];
+            isset($adv_list['status']) ?die($adv_list['msg']):'';
             $adv_ids = array_column((array)$adv_list, 'adv_id');
         } else {
             $adv_ids = $this->handlerSpecialAdvIds($user_name);
@@ -232,7 +235,6 @@ class AutoUpdateObjName extends Api
 //                ->select();
                 ->find();
 
-// 改用JOIN查询（更高效）
             $percentage = $qc_company_setting
                 ->alias('s')
                 ->join('company c', 's.company_name = c.company_name')

@@ -41,7 +41,8 @@ class QcObjOptLog extends Api
         }
         foreach ($advIds as $id) {
             $twoDaysAgo = (new DateTime('today'))->modify('-2 days')->getTimestamp();
-            $objIds = $objModel->where('adv_id', $id)
+            //2025-5-22号标准商品全下线了，只有推直播间的了marketing_goal
+            $objIds = $objModel->where(['adv_id'=>$id,'marketing_goal'=>"LIVE_PROM_GOODS"])
                 ->where(function ($query) use ($twoDaysAgo) {
                     $query->where(function ($q) use ($twoDaysAgo) {
                         $q->where('obj_create_time', '<=', $twoDaysAgo)

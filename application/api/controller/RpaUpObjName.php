@@ -43,7 +43,6 @@ class RpaUpObjName extends Api
             echo "全部处理完了";
             die;
         }
-
         // 请求统计 API
         $rep = sendApiRes($apiUrl, [
             'start_time' => $start_time,
@@ -72,11 +71,9 @@ class RpaUpObjName extends Api
             if ($cusNum <= 0 || ($companyNum > 0 && ($companyNum / $cusNum) * 100 >= ($notWhiteCom[$item['company_name']] * 2))) {
                 continue;
             }
-
             $actualComNum = $cusNum + ($cusNum * ($notWhiteCom[$item['company_name']] / 100));
             $needComNum = $companyNum > 0 ? $actualComNum - $companyNum : $actualComNum;
             $needComNum = (int)ceil($needComNum);
-
             // 获取对象列表
             $rep = sendApiRes($listApiUrl, [$item['advertiser_id'], $needComNum]);
             if (isset($rep['msg'])) {
@@ -113,7 +110,7 @@ class RpaUpObjName extends Api
         $this->processObjList(
             $user_name,
             self::CACHE_TYPE_NOT_LAB,
-            API_BASE_URL."/getRpaOptCountCollectionApi/",
+            API_BASE_URL."/getOptCountCollectionApi/",
             API_BASE_URL."/getRpaObjListApi/",
             'stand'
         );

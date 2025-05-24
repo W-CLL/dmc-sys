@@ -834,10 +834,44 @@ if (!function_exists('skipIfContainsError')) {
 
 
 }
+if(!function_exists('apiFieldValidate')){
+    /**
+     * 参数验证
+     * @param array $rule_message
+     * ['字段名' => [
+     * "验证规则" => "错误提示",
+     * "array" => "必须是数组"
+     * ]];
+     * @param array $validate_fields
+     * 需要验证的字段，必须是数组
+     * @return array|mixed|null
+     */
+    function apiFieldValidate(array $rule_message, array $validate_fields)
+    {
+        if ($rule_message) {
+            $rule = [];
+            $message = []; // 初始化消息数组
+            foreach ($rule_message as $key => $item) {
+                $rule_key = array_keys($item);
+                $rule[$key] = implode('|', $rule_key);
+
+                foreach ($rule_key as $value) {
+                    $message[$key . "." . $value] = $item[$value];
+                }
+            }
+            $validate = \think\Validate::make($rule, $message);
+            if (!$validate->check($validate_fields)) {
+                return $validate->getError();
+            }
+        }
+        return null;
+    }
+}
+
 
 if (!defined('API_BASE_URL')) {
-    define('API_BASE_URL', 'https://dmc.zebranumber.cn/index.php/api/online_api/v1/api');
-//    define('API_BASE_URL', 'http://dmc.cn:8084/index.php/api/online_api/v1/api');  // 本地测试改这里
+//    define('API_BASE_URL', 'https://dmc.zebranumber.cn/index.php/api/online_api/v1/api');
+    define('API_BASE_URL', 'http://dmc-new.com.cn:8084/index.php/api/online_api/v1/api');  // 本地测试改这里
 }
 
 
