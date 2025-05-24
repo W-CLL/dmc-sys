@@ -142,7 +142,6 @@ class Api
         $rule_message = [
             'is_white' => [
                 "require" => 'is_white 必填',
-                "array" => "is_white必须是数组"
             ],
             "company_name"=>[
                 "array" => "company_name必须是数组"
