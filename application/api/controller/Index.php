@@ -41,7 +41,7 @@ class Index extends Api
             $code_type = $post['where']['code_type'];
             unset($post['where']['code_type']);
             $kefu = $post['kefu'];
-            if (in_array($kefu, ['tyx', 'wyc','zqp','cxy','mmc']) && $code_type==1) {
+            if (in_array($kefu, ['tyx', 'wyc','zqp','cxy','mmc']) && in_array($code_type, [1,4])) {
                 list($list, $count) = $this->getListAndCountAvg($post, $code_type);
             } else {
                 list($list, $count) = $this->getListAndCount($post, $code_type);
@@ -63,7 +63,6 @@ class Index extends Api
 
     public function getListAndCountAvg($post, $code_type)
     {
-        $post['where']['queue_name'] = "autoUpdateObjNameAvg";
         $list = Db::name("queue_record_avg")
             ->where($post['where'])
             ->order($post['sort'], $post['order'])

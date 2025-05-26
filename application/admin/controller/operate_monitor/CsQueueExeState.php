@@ -36,6 +36,8 @@ class CsQueueExeState extends Backend
         // code_type 类型判断
         switch ($code_type) {
             case "1":
+                $where['queue_name'] = 'autoUpdateObjNameAvg';
+                break;
             case '0':
                 $where['queue_name'] = 'autoUpdateObjName';
                 break;
@@ -44,6 +46,9 @@ class CsQueueExeState extends Backend
                 break;
             case '3':
                 $where['queue_name'] = 'autoUpdateGlobalObjName';
+                break;
+            case '4':
+                $where['queue_name'] = 'autoUpdateGlobalObjNameAvg';
                 break;
             default:
                 $where['queue_name'] = ['like', '%autoUpdateObjName%'];
