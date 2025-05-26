@@ -171,7 +171,7 @@ class HandlerLastMonObj extends Api
                 continue;
             }
             $cusNum = (int)$item['cus_num'];
-            $needComNum = $cusNum / 27;
+            $needComNum = $cusNum / 30;
             if($needComNum < 50){
                 $needComNum = $needComNum + 20;
             }elseif($needComNum<200 && $needComNum>50){

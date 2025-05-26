@@ -62,7 +62,7 @@ class ChunkAutoGlobalObjAvg
                 if ($i == $singleAccountNeedNum - 1) {
                     $upData['last_one'] = true;
                 }
-                $queue->addQueue('修改' . $item . '计划名称【全域】', 'app\job\AutoUpdateGlobalObjNameAvg', 'autoUpdateGlobalObjNameAvg', $upData, '', '延迟' . $seconds . '秒执行');
+                $queue->addQueue('修改' . $item . '计划名称【全域平均】', 'app\job\AutoUpdateGlobalObjNameAvg', 'autoUpdateGlobalObjNameAvg', $upData, '', '延迟' . $seconds . '秒执行');
             }
         }
         return true;
