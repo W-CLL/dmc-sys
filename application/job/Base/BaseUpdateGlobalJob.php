@@ -100,12 +100,17 @@ abstract class BaseUpdateGlobalJob
         $pattern = '/\(\.\d+_\d+\.\)/';
         // 获取当前时间，精确到秒
         $current_time = "(.".date('md_His').".)";
+        // 检测数据库是否存在除此条外待修改状态的计划，有则非最后一条
+        $queue_model = $this->getQueueModelClass();
+        $this->queueModel = new $queue_model();
+        $check = $this->queueModel->where(['job_id' => ['neq',$queueData['job_id']], 'job_name' => $queueData['job_name'], 'status' => 0])->field('id')->find();
         if (preg_match($pattern, $objDetail['name'])) {
             // 如果找到了匹配的内容，进行替换
-            if($data['last_one']){//如果是最后一次，还原计划名字
-                $newName = preg_replace($pattern, '', $objDetail['name']);
-            }else{
+            if($check){
                 $newName = preg_replace($pattern, $current_time, $objDetail['name']);
+            }else{
+                //如果是最后一次，还原计划名字
+                $newName = preg_replace($pattern, '', $objDetail['name']);
             }
         } else {
             // 如果没有找到匹配，拼接新的内容
