@@ -112,7 +112,8 @@ abstract class BaseUpdateWebJob
             "not_normal" => '/当前计划存在其他问.*/iu',
             "not_found_obj" => '/找不到计划信息.*/iu',
             "is_del_obj" => "/删除/iu",
-            "not_support"=>"已不再支持商品标准推广的计划操作，请尽快迁移至全域推广"
+            "not_support"=>"已不再支持商品标准推广的计划操作，请尽快迁移至全域推广",
+            "not_dy"=>"/无此抖音号的使用权限/iu"
         ];
         foreach ($keywords as $key => $pattern) {
             if (preg_match($pattern, $message)) {
@@ -134,7 +135,7 @@ abstract class BaseUpdateWebJob
             ])->delete();
             return;
         }
-        if ($obj_id && in_array($key, ["not_normal", "not_found_obj", 'is_del_obj'])) {
+        if ($obj_id && in_array($key, ["not_normal", "not_found_obj", 'is_del_obj','not_dy'])) {
             $queue->where([
                 'job_name' => ['like', "%" . $obj_id . "%"],
                 'status' => ['in', [0, 2]],

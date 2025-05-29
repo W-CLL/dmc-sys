@@ -526,6 +526,19 @@ class FundManagement
         $params = array_merge($params, ['business_line' => "QIANCHUAN"]);
         return sendApiRes($url, $params, 'GET', ['Access-Token' => $access_token])['data'];
     }
+
+    /**
+     * 获取账户下素材列表和数据
+     * @param array $params
+     * 参数参考：https://open.oceanengine.com/labels/12/docs/1810701753348235?origin=left_nav
+     * @return mixed
+     */
+    public static function get_stand_adv_material_list(array $params)
+    {
+        $access_token = Cache::get("qc_access_token");
+        $url = "https://api.oceanengine.com/open_api/v1.0/qianchuan/material/get/";
+        return sendApiRes($url, $params, 'GET', ['Access-Token' => $access_token])['data'];
+    }
 }
 
 

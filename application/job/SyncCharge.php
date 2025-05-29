@@ -59,7 +59,11 @@ class SyncCharge
                 }
             }
         } catch (Exception $e) {
-            $queueData->save(['id' => $queueData['id'], 'status' => 2, 'msg' => $e->getMessage()]);
+            if($queueData){
+                $queueData->save(['id' => $queueData['id'], 'status' => 2, 'msg' => $e->getMessage()]);
+            }else{
+                echo "找不到队列";
+            }
             $job->delete();
             return '';
         }
