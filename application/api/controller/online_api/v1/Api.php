@@ -437,7 +437,8 @@ class Api
 
     public function getHasCost(){
         $cost_model = new QcAdvDayCost();
-        $POST = input();
+        $rawData = file_get_contents('php://input');
+        $POST = json_decode($rawData, true);
         $rule_message = [
             'where' => [
                 "require" => 'where 必填',
@@ -452,7 +453,7 @@ class Api
             $cost_model->where($POST['where'])
             ->field('sum(cost) as total_cost')
             ->group('adv_id')
-            ->find()->toArray()
+            ->find()
         );
     }
 }
