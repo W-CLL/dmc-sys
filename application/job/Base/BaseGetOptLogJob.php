@@ -112,7 +112,8 @@ abstract class BaseGetOptLogJob
     protected function handleInsertData(array $data, int $advId): bool
     {
         $insertData = [];
-        $model = new ($this->getLogModelClass());
+        $model_class = $this->getLogModelClass();
+        $model = new $model_class();
 
         foreach ($data as $item) {
             // 检查是否已存在该记录
