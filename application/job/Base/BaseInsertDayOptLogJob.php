@@ -107,6 +107,7 @@ abstract class BaseInsertDayOptLogJob
 
     /**
      * 插入日志数据
+     * @throws Exception
      */
     protected function handleInsertData($data, $advId)
     {
@@ -140,7 +141,13 @@ abstract class BaseInsertDayOptLogJob
                 'opt_time' => strtotime($item['create_time']),
             ];
         }
-
-        return $insertData ? $objOptLogModel->saveAll($insertData) : true;
+        if($insertData){
+            $res =  $objOptLogModel->saveAll($insertData);
+            if(!$res){
+                throw  new Exception($res);
+            }
+        }
+        return true;
+//        return $insertData ? $objOptLogModel->saveAll($insertData) : true;
     }
 }

@@ -108,6 +108,7 @@ abstract class BaseGetOptLogJob
      * @param array $data
      * @param int $advId
      * @return bool
+     * @throws Exception
      */
     protected function handleInsertData(array $data, int $advId): bool
     {
@@ -143,7 +144,14 @@ abstract class BaseGetOptLogJob
             ];
         }
 
-        return $insertData ? $model->saveAll($insertData) : true;
+        if($insertData){
+            $res =  $model->saveAll($insertData);
+            if(!$res){
+                throw  new Exception($res);
+            }
+        }
+        return true;
+
     }
 
     /**
