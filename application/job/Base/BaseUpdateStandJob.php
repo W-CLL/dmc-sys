@@ -100,12 +100,23 @@ abstract class BaseUpdateStandJob
         $pattern = '/\(\.\d+_\d+\.\)/';
         $current_time = "(." . date('md_His') . ".)";
 
+        $queue_model = $this->getQueueModelClass();
+        $this->queueModel = new $queue_model();
+        $check = $this->queueModel->where(['job_id' => ['neq',$queueData['job_id']], 'job_name' => $queueData['job_name'], 'status' => 0])->field('id')->find();
         if (preg_match($pattern, $objDetail['name'])) {
-            $newName = $data['last_one']
-                ? preg_replace($pattern, '', $objDetail['name'])
-                : preg_replace($pattern, $current_time, $objDetail['name']);
+            // 如果找到了匹配的内容,就还原
+//            if($check){
+//                $newName = preg_replace($pattern, $current_time, $objDetail['name']);
+//            }else{
+            //如果是最后一次，还原计划名字
+            $newName = preg_replace($pattern, '', $objDetail['name']);
+//            }
         } else {
-            $newName = $objDetail['name'] . $current_time;
+            // 如果没有找到匹配，拼接新的内容
+            $newName =  $objDetail['name'] . $current_time;
+            if(!$check){//最后一个
+                $newName = $objDetail['name'].'.';
+            }
         }
 
         $updateData['name'] = $newName;
