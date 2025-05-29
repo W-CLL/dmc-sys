@@ -435,4 +435,24 @@ class Api
     }
 
 
+    public function getHasCost(){
+        $cost_model = new QcAdvDayCost();
+        $POST = input();
+        $rule_message = [
+            'where' => [
+                "require" => 'where 必填',
+                "array" => 'where 必须是数组',
+            ],
+        ];
+        $error = apiFieldValidate($rule_message, $POST);
+        if ($error) {
+            return json(['status' => -1, 'msg' => $error]);
+        }
+        return json(
+            $cost_model->where($POST['where'])
+            ->field('sum(cost) as total_cost')
+            ->group('adv_id')
+            ->find()->toArray()
+        );
+    }
 }
