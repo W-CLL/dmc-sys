@@ -71,14 +71,13 @@ class HandlerLastMonObj extends Api
         $cost_model = new QcAdvDayCost();
         foreach ($list as $item) {
             //本月没有标准消耗就跳过
-            $has_cost = $cost_model->where([
-                'adv_id' => $item['advertiser_id'],
-                'cost_date' => ['between', [strtotime(date('Y-m-01')), time()]],
-                'type' => 1,
-            ])
-                ->field('sum(cost) as total_cost')
-                ->group('adv_id')
-                ->find();
+            $has_cost = sendApiRes(API_BASE_URL."/getHasCost/",[
+                'where' => [
+                    'adv_id' => $item['advertiser_id'],
+                    'cost_date' => ['between', [strtotime(date('Y-m-01')), time()]],
+                    'type' => 1,
+                ]
+            ],"POST")['data'];
             if ($has_cost && $has_cost['total_cost'] < 100) {
                 continue;
             }
@@ -156,17 +155,15 @@ class HandlerLastMonObj extends Api
             die;
         }
         $queue = new QueueAvg();
-        $cost_model = new QcAdvDayCost();
         foreach ($list as $item) {
-            //本月没有标准消耗就跳过
-            $has_cost = $cost_model->where([
+            //本月没有消耗就跳过
+            $has_cost =  sendApiRes(API_BASE_URL."/getHasCost/",[
+                'where' => [
                 'adv_id' => $item['advertiser_id'],
                 'cost_date' => ['between', [strtotime(date('Y-m-01')), time()]],
                 'type' => 2,
-            ])
-                ->field('sum(cost) as total_cost')
-                ->group('adv_id')
-                ->find();
+                ]
+            ],"POST")['data'];
             if ($has_cost && $has_cost['total_cost'] < 100) {
                 continue;
             }
