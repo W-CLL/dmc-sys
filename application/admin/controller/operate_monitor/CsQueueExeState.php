@@ -50,12 +50,13 @@ class CsQueueExeState extends Backend
             case '4':
                 $where['queue_name'] = 'autoUpdateGlobalObjNameAvg';
                 break;
+            case '5':
+                $where['queue_name'] = 'autoUpdateObjNameGlobalWeb';
+                break;
             default:
                 $where['queue_name'] = ['like', '%autoUpdateObjName%'];
                 break;
         }
-
-        // 非 code_type=1，统一补充 create_time 查询范围
 
 
     }
