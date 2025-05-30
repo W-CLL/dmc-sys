@@ -449,11 +449,16 @@ class Api
         if ($error) {
             return json(['status' => -1, 'msg' => $error]);
         }
+        $list = $cost_model->where($POST['where'])
+            ->field("adv_id, SUM(cost) AS total_cost")
+            ->group("adv_id")
+            ->select();
+        $result = [];
+        foreach ($list as $item) {
+            $result[$item['adv_id']] = (float)$item['total_cost'];
+        }
         return json(
-            $cost_model->where($POST['where'])
-            ->field('sum(cost) as total_cost')
-            ->group('adv_id')
-            ->find()
+            $result
         );
     }
 }
