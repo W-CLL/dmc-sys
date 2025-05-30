@@ -30,91 +30,91 @@ class HandlerLastMonObj extends Api
      * @throws ModelNotFoundException
      * @throws GuzzleException
      */
-    public function index($user_name)
-    {
-        //检查当天是不是已经执行了
-        $page = Cache::get(self::NORMAL_CACHE_KEY.'_page', 1);
-        if($page == 1){
-            $this->checkDayIsHandler(self::NORMAL_CACHE_KEY);
-        }
-        //分页获取负责人的广告账号
-        if(Cache::has('last_mon_adv_list')){
-            $advList = unserialize(Cache::get('last_mon_adv_list'));
-        }else{
-            $advList= $this->getOwnerAdvList($page, $user_name);
-            Cache::set('last_mon_adv_list',serialize($advList));
-        }
-        //获取上个月整月的时间范围，如当月是4月，返回则是3.1-3.31的时间戳
-        list($start_time, $end_time) = $this->getTimeRange();
-        $url = API_BASE_URL."/getAvOptCountCollectionApi/";
-        $params = [
-            'table' => 'fa_qc_obj_opt_log',
-            'start_time' => $start_time,
-            'end_time' => $end_time,
-            'adv_list' =>$advList,
-            'page' =>$page,
-        ];
-       $rep =  sendApiRes($url,$params,"POST");
-       if(isset($rep['msg'])){
-           echo $rep['msg'];
-           die;
-       }
-       $list = $rep['data'];
-        if (empty($list)) {
-            echo "全部处理完了";
-            Cache::rm(self::NORMAL_CACHE_KEY.'_page');
-            Cache::rm("last_mon_adv_list");
-            Cache::set(self::NORMAL_CACHE_KEY, strtotime(date('Y-m-d')));
-            die;
-        }
-        $queue = new QueueAvg();
-        $cost_model = new QcAdvDayCost();
-        foreach ($list as $item) {
-            //本月没有标准消耗就跳过
-            $has_cost = sendApiRes(API_BASE_URL."/getHasCost/",[
-                'where' => [
-                    'adv_id' => $item['advertiser_id'],
-                    'cost_date' => ['between', [strtotime(date('Y-m-01')), time()]],
-                    'type' => 1,
-                ]
-            ],"POST")['data'];
-            if ($has_cost && $has_cost['total_cost'] < 100) {
-                continue;
-            }
-            $cusNum = (int)$item['cus_num'];
-            $needComNum = $cusNum / 27;
-            if($needComNum < 50){
-                $needComNum = $needComNum + 20;
-            }elseif($needComNum<200 && $needComNum>50){
-                $needComNum = ($needComNum * 0.3) + $needComNum;
-            }
-            $needComNum = (int)ceil($needComNum);
-
-            $url = API_BASE_URL."/getObjListApi/";
-            $params = [
-                $item['advertiser_id'], $needComNum
-            ];
-            $rep =  sendApiRes($url,$params);
-            if(isset($rep['msg'])){
-                echo $rep['msg'];
-                die;
-            }
-
-            if (!$rep['data']) {
-                continue;
-            }
-            $queueData = [
-                'need_opt_num' => $needComNum,
-                'adv_id' => $item['advertiser_id'],
-                'obj_list' => $rep['data']
-            ];
-            //一个广告主下的托管计划，总的操作次数，写入任务再平分次数到每个计划，进行延时修改
-            $queue->addQueue('平均分块处理自动化', 'app\job\ChunkAutoObjAvg', 'chunkAutoObjAvg', $queueData);
-        }
-        $page++;
-        Cache::set(self::NORMAL_CACHE_KEY.'_page', $page);
-        $this->index($user_name);
-    }
+//    public function index($user_name)
+//    {
+//        //检查当天是不是已经执行了
+//        $page = Cache::get(self::NORMAL_CACHE_KEY.'_page', 1);
+//        if($page == 1){
+//            $this->checkDayIsHandler(self::NORMAL_CACHE_KEY);
+//        }
+//        //分页获取负责人的广告账号
+//        if(Cache::has('last_mon_adv_list')){
+//            $advList = unserialize(Cache::get('last_mon_adv_list'));
+//        }else{
+//            $advList= $this->getOwnerAdvList($page, $user_name);
+//            Cache::set('last_mon_adv_list',serialize($advList));
+//        }
+//        //获取上个月整月的时间范围，如当月是4月，返回则是3.1-3.31的时间戳
+//        list($start_time, $end_time) = $this->getTimeRange();
+//        $url = API_BASE_URL."/getAvOptCountCollectionApi/";
+//        $params = [
+//            'table' => 'fa_qc_obj_opt_log',
+//            'start_time' => $start_time,
+//            'end_time' => $end_time,
+//            'adv_list' =>$advList,
+//            'page' =>$page,
+//        ];
+//       $rep =  sendApiRes($url,$params,"POST");
+//       if(isset($rep['msg'])){
+//           echo $rep['msg'];
+//           die;
+//       }
+//       $list = $rep['data'];
+//        if (empty($list)) {
+//            echo "全部处理完了";
+//            Cache::rm(self::NORMAL_CACHE_KEY.'_page');
+//            Cache::rm("last_mon_adv_list");
+//            Cache::set(self::NORMAL_CACHE_KEY, strtotime(date('Y-m-d')));
+//            die;
+//        }
+//        $queue = new QueueAvg();
+//        $cost_model = new QcAdvDayCost();
+//        foreach ($list as $item) {
+//            //本月没有标准消耗就跳过
+//            $has_cost = sendApiRes(API_BASE_URL."/getHasCost/",[
+//                'where' => [
+//                    'adv_id' => $item['advertiser_id'],
+//                    'cost_date' => ['between', [strtotime(date('Y-m-01')), time()]],
+//                    'type' => 1,
+//                ]
+//            ],"POST")['data'];
+//            if ($has_cost && $has_cost['total_cost'] < 100) {
+//                continue;
+//            }
+//            $cusNum = (int)$item['cus_num'];
+//            $needComNum = $cusNum / 27;
+//            if($needComNum < 50){
+//                $needComNum = $needComNum + 20;
+//            }elseif($needComNum<200 && $needComNum>50){
+//                $needComNum = ($needComNum * 0.3) + $needComNum;
+//            }
+//            $needComNum = (int)ceil($needComNum);
+//
+//            $url = API_BASE_URL."/getObjListApi/";
+//            $params = [
+//                $item['advertiser_id'], $needComNum
+//            ];
+//            $rep =  sendApiRes($url,$params);
+//            if(isset($rep['msg'])){
+//                echo $rep['msg'];
+//                die;
+//            }
+//
+//            if (!$rep['data']) {
+//                continue;
+//            }
+//            $queueData = [
+//                'need_opt_num' => $needComNum,
+//                'adv_id' => $item['advertiser_id'],
+//                'obj_list' => $rep['data']
+//            ];
+//            //一个广告主下的托管计划，总的操作次数，写入任务再平分次数到每个计划，进行延时修改
+//            $queue->addQueue('平均分块处理自动化', 'app\job\ChunkAutoObjAvg', 'chunkAutoObjAvg', $queueData);
+//        }
+//        $page++;
+//        Cache::set(self::NORMAL_CACHE_KEY.'_page', $page);
+//        $this->index($user_name);
+//    }
 
 
     public function globalHandler($user_name)
@@ -151,20 +151,31 @@ class HandlerLastMonObj extends Api
             echo "全部处理完了";
             Cache::rm(self::GLOBAL_CACHE_KEY.'_page');
             Cache::rm("last_mon_global_adv_list");
+            Cache::rm("this_month_adv_has_cost_list");
             Cache::set(self::GLOBAL_CACHE_KEY, strtotime(date('Y-m-d')));
             die;
+        }
+        // 获取本月广告主的消耗 ps：$costList = ['adv_id' => 'sum(cost)']
+        if(Cache::has('this_month_adv_has_cost_list')){
+            $costList = unserialize(Cache::get('this_month_adv_has_cost_list'));
+        }else{
+            $result =  sendApiRes(API_BASE_URL."/getHasCost/",[
+                'where' => [
+                    'cost_date' => ['between', [strtotime(date('Y-m-01')), time()]],
+                    'type' => 2,
+                ]
+            ],"POST");
+            if (isset($result['msg'])){
+                echo $result['msg'];
+                die;
+            }
+            $costList = $result['data'];
+            Cache::set('this_month_adv_has_cost_list',serialize($costList));
         }
         $queue = new QueueAvg();
         foreach ($list as $item) {
             //本月没有消耗就跳过
-            $has_cost =  sendApiRes(API_BASE_URL."/getHasCost/",[
-                'where' => [
-                'adv_id' => $item['advertiser_id'],
-                'cost_date' => ['between', [strtotime(date('Y-m-01')), time()]],
-                'type' => 2,
-                ]
-            ],"POST")['data'];
-            if ($has_cost && $has_cost['total_cost'] < 100) {
+            if (isset($costList[$item['advertiser_id']]) && $costList[$item['advertiser_id']] < 100) {
                 continue;
             }
             $cusNum = (int)$item['cus_num'];
