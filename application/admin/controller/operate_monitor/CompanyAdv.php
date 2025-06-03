@@ -33,6 +33,7 @@ class CompanyAdv extends Backend
             $limit = input("limit", 10);
             $is_white = input('is_white');
             $company_name = input("company_name");
+            $advertiser_id =  input("advertiser_id");
 
             $list = $this->companyModel
                 ->field("company_name,advertiser_id,is_white,monitor_percentage")
@@ -46,6 +47,9 @@ class CompanyAdv extends Backend
             if($is_white === '1' || $is_white === '0'){
                 $list = $list->where(['is_white' => $is_white]);
             }
+            if($advertiser_id){
+                $list = $list->where(['advertiser_id' => $advertiser_id]);
+            }
             $list = $list->select();
             $count = $this->companyModel->where(function ($query) use ($company_name){
                 if($company_name){
@@ -54,6 +58,9 @@ class CompanyAdv extends Backend
             });
             if($is_white === '1' || $is_white === '0'){
                 $count = $count->where(['is_white' => $is_white]);
+            }
+            if($advertiser_id){
+                $count = $count->where(['advertiser_id' => $advertiser_id]);
             }
             $count = $count->count();
             foreach ($list as &$item){
