@@ -30,17 +30,22 @@ class AdList extends Backend
             $end_time = strtotime(input("end_date") . ' 23:59:59' ?: date("Y-m-d", time()) . ' 23:59:59');
             $kahuna = input("kahuna");
             $advertiser_id = input("advertiser_id");
+            $list_where = [];
             if (!empty($kahuna) || $user_name) {
                 $kahuna = $this->check($kahuna, $user_name);
                 if(is_array($kahuna)){
                     $where['kahuna'] = ['in', $kahuna];
+                    $list_where['com.kahuna'] = ['in', $kahuna];
                 }else{
                     $where['kahuna'] = ['like', "%$kahuna%"];
+                    $list_where['com.kahuna'] = ['like', "%$kahuna%"];
                 }
             }
             if (!empty($advertiser_id)) {
                 $where['advertiser_id'] = ['=', $advertiser_id];
+                $list_where['com.advertiser_id'] = $advertiser_id;
             }
+
             $qcAdvModel = new QcAdvDayCost();
             $list = $qcAdvModel
                 ->alias('adv_c')
@@ -66,20 +71,21 @@ class AdList extends Backend
                     'left'
                 )
                 ->where(['adv_c.cost_date' => ['between', [$start_time, $end_time]]])
-                ->where(function ($query) use ($advertiser_id, $kahuna) {
-                    $whereStr = [];
-                    if ($advertiser_id) {
-                        $whereStr['com.advertiser_id'] = $advertiser_id;
-                    }
-                    if ($kahuna) {
-                        if (is_array($kahuna)) {
-                            $whereStr['com.kahuna'] = ['in', $kahuna];
-                        } else {
-                            $whereStr['com.kahuna'] = ['like', "%$kahuna%"];
-                        }
-                    }
-                    $query->where($whereStr);
-                })
+                ->where($list_where)
+//                ->where(function ($query) use ($advertiser_id, $kahuna) {
+//                    $whereStr = [];
+//                    if ($advertiser_id) {
+//                        $whereStr['com.advertiser_id'] = $advertiser_id;
+//                    }
+//                    if ($kahuna) {
+//                        if (is_array($kahuna)) {
+//                            $whereStr['com.kahuna'] = ['in', $kahuna];
+//                        } else {
+//                            $whereStr['com.kahuna'] = ['like', "%$kahuna%"];
+//                        }
+//                    }
+//                    $query->where($whereStr);
+//                })
                 ->field("adv_c.*, SUM(cost) AS mon_cost,
                  SUM(CASE WHEN adv_c.type = 1 THEN cost ELSE 0 END) AS stand_cost,
                   SUM(CASE WHEN adv_c.type = 2 THEN cost ELSE 0 END) AS global_cost,
@@ -95,10 +101,11 @@ class AdList extends Backend
                 ELSE 0
                 END) as global_percentage
                  ")
+                ->cache(true,3600)
                 ->group('adv_c.adv_id')
                 ->order($sort, $order)
                 ->limit($offset, $limit)
-//                ->cache(true,3600)
+
 //                ->fetchSql(true)
                 ->select();
 
