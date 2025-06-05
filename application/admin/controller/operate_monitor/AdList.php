@@ -98,6 +98,7 @@ class AdList extends Backend
                 ->group('adv_c.adv_id')
                 ->order($sort, $order)
                 ->limit($offset, $limit)
+                ->cache(true,3600)
 //                ->fetchSql(true)
                 ->select();
 
