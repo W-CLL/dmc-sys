@@ -362,7 +362,8 @@ class Oauth2 extends Api
             $res1 = FundManagement::get_ad_info($access_token, json_encode([$split], JSON_UNESCAPED_UNICODE));
             if ($res1['code'] == 0 && $res1['data']['account_detail_list'][0]['optimizer_name'] != $advertiser_ids_info[$split]) {
                 $arr['kahuna'] = $res1['data']['account_detail_list'][0]['optimizer_name'];
-                if (!Db::name('company')->where(['advertiser_id' => $split])->update($arr)) {
+                $res = Db::name('company')->where(['advertiser_id' => $split])->update($arr);  // 有更新则返回1,无更新返回0，出错返回报错 故下面使用is_int判断
+                if (!is_int($res)) {
                     throw new \Exception('出错');
                 }
             }
