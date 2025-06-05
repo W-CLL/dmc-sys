@@ -116,7 +116,14 @@ abstract class BaseUpdateGlobalJob
             // 如果没有找到匹配，拼接新的内容
             $newName =  $objDetail['name'] . $current_time;
             if(!$check){//最后一个
-                $newName = $objDetail['name'].'.';
+                // 检查末尾是否有5个连续的.
+                if (preg_match('/\.{5}$/', $objDetail['name'])) {
+                    // 清除末尾的.
+                    $newName = rtrim($objDetail['name'], '.');
+                } else {
+                    // 拼接一个.
+                    $newName = $objDetail['name'] . '.';
+                }
             }
         }
         // 将提取的中文字符拼接当前时间
