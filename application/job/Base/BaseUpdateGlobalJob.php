@@ -183,7 +183,7 @@ abstract class BaseUpdateGlobalJob
             '低效素材',
             '不在素材库',
             '服务内部错误',
-            'No permission',
+            'permission',
             '抖音原生视频的imageModel',
             '当前广告主状态已禁用',
             '计划状态不符合更新',
@@ -191,7 +191,8 @@ abstract class BaseUpdateGlobalJob
             '用户没有绑定千川权限',
             '体验分低于60分',
             '找不到或在抖店已删除',
-            '您传入的抖音号id有误'
+            '您传入的抖音号id有误',
+            '不支持传入http类型图片ID',
         ];
         foreach ($msg_arr as $msg){
             if (strpos($res['message'], $msg) !== false) {
