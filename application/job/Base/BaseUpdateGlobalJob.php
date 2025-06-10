@@ -190,7 +190,8 @@ abstract class BaseUpdateGlobalJob
             '账户已失去该抖音号下对应店铺的商品全域推广权限',
             '用户没有绑定千川权限',
             '体验分低于60分',
-            '找不到或在抖店已删除'
+            '找不到或在抖店已删除',
+            '您传入的抖音号id有误'
         ];
         foreach ($msg_arr as $msg){
             if (strpos($res['message'], $msg) !== false) {
