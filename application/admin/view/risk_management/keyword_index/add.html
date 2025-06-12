@@ -1,0 +1,35 @@
+
+<form id="add-form" class="form-horizontal" role="form" data-toggle="validator" method="POST" action="">
+    {:token()}
+    <div class="form-group" style="flex-direction: column">
+        <label class="control-label col-xs-12 col-sm-2">关键词:</label>
+        <div class="col-xs-12 col-sm-8">
+            <textarea id="c-content" data-rule="required" class="form-control editor" rows="5" name="keyword" cols="50"></textarea>
+            <h6 class="hint" style="margin-top: 5px">提示:批量添加请回车换行输入【关键词不允许重复】</h6>
+        </div>
+
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">标签:</label>
+        <div class="col-xs-12 col-sm-8">
+            <select data-live-search="true" name="tag_id" id="tag_id" class="form-control selectpicker">
+                <option value="" selected="selected">请选择</option>
+                {foreach $tag_list as $vo}
+                <option value="{$vo.id}">{$vo.name}</option>
+                {/foreach}
+            </select>
+            <h6 class="hint" style="margin-top: 5px">提示:如无需要标签，请先在标签列表中添加标签</h6>
+        </div>
+    </div>
+
+    <div class="form-group layer-footer">
+        <label class="control-label col-xs-12 col-sm-2"></label>
+        <div class="col-xs-12 col-sm-8">
+            <button type="submit" class="btn btn-success btn-embossed disabled">{:__('OK')}</button>
+            <button type="reset" class="btn btn-default btn-embossed">{:__('Reset')}</button>
+        </div>
+    </div>
+</form>
+
+
+

@@ -1,0 +1,34 @@
+<form id="edit-form" class="form-horizontal" role="form" data-toggle="validator" method="POST" action="">
+    {:token()}
+    <input type="hidden" name="id" value="{$row.id}">
+
+    <div class="form-group">
+        <label for="c-discount_percentage" class="control-label col-xs-12 col-sm-2">关键词:</label>
+        <div class="col-xs-12 col-sm-4">
+            <input id="c-discount_percentage"  class="form-control" name="keyword" type="text" value="{$row.keyword}" placeholder="请输入关键词" />
+        </div>
+    </div>
+
+
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">标签:</label>
+        <div class="col-xs-12 col-sm-8">
+            <select  class="form-control selectpicker" name="tag_id" data-live-search="true">
+                <option value="">请选择</option>
+                {foreach $tag_list as $k => $v}
+                <option value="{$v.id}"  {if $row.tag_id == $v.id}selected{/if}>{$v.name}</option>
+                {/foreach}
+            </select>
+        </div>
+    </div>
+
+
+
+    <div class="form-group layer-footer">
+        <label class="control-label col-xs-12 col-sm-2"></label>
+        <div class="col-xs-12 col-sm-8">
+            <button type="submit" class="btn btn-primary btn-embossed disabled">{:__('OK')}</button>
+            <button type="reset" class="btn btn-default btn-embossed">{:__('Reset')}</button>
+        </div>
+    </div>
+</form>
