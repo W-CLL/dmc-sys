@@ -293,7 +293,6 @@ CREATE TABLE `fa_keyword` (
                               `create_time` int(11) NOT NULL,
                               `update_time` int(11) DEFAULT NULL,
                               PRIMARY KEY (`id`),
-                              UNIQUE KEY `only` (`keyword`) USING BTREE,
                               KEY `tag` (`tag_id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
