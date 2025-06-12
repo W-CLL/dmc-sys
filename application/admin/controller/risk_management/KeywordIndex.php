@@ -44,12 +44,12 @@ class KeywordIndex extends Backend
             if(empty($params['tag_id'])){
                 $this->error('请选择标签！');
             }
-            $cleaned = str_replace(["\r"], '', $params['risk_management']);  // 移除所有换行符残留
+            $cleaned = str_replace(["\r"], '', $params['keyword']);  // 移除所有换行符残留
             $keywordArr = array_filter(array_map('trim', explode("\n", $cleaned)));
 
             $insertData = array_map(function ($value) use ($params) {
                 return [
-                    'risk_management' => $value,
+                    'keyword' => $value,
                     'tag_id' => $params['tag_id'],
                 ];
             }, $keywordArr);
@@ -57,15 +57,15 @@ class KeywordIndex extends Backend
             // 传入keyword去重
             $uniqueNames = [];
             foreach ($insertData as $item) {
-                if (!isset($uniqueNames[$item['risk_management']])) {
-                    $uniqueNames[$item['risk_management']] = $item;
+                if (!isset($uniqueNames[$item['keyword']])) {
+                    $uniqueNames[$item['keyword']] = $item;
                 }
             }
             $insertData = array_values($uniqueNames);
 
             if (!empty($insertData)) {
                 foreach ($insertData as $key => $item) {
-                    $data = $KeywordModel->where(['risk_management' => $item['risk_management']])->find();
+                    $data = $KeywordModel->where(['keyword' => $item['keyword']])->find();
                     if ($data) {
                         unset($insertData[$key]);
                     }
@@ -97,14 +97,14 @@ class KeywordIndex extends Backend
         if ($this->request->isPost()) {
             $this->token();
             $data['id'] = input("id");
-            $data['risk_management'] = input("risk_management");
+            $data['keyword'] = input("keyword");
             $data['tag_id'] = input("tag_id");
 
             if (empty($data['id'])) {
                 $this->error("数据异常，请刷新后重试");
             }
 
-            $res = $KeywordModel->where(['risk_management' => $data['risk_management']])->find();
+            $res = $KeywordModel->where(['keyword' => $data['keyword']])->find();
             if ($res) {
                 $this->error('该关键词已存在，请检查！');
             }

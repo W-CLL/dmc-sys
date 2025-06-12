@@ -284,7 +284,7 @@ CREATE TABLE `fa_tag` (
                           `update_time` int(11) DEFAULT NULL,
                           PRIMARY KEY (`id`),
                           UNIQUE KEY `name` (`name`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `fa_keyword` (
                               `id` int(11) unsigned NOT NULL AUTO_INCREMENT COMMENT 'id',
@@ -295,7 +295,7 @@ CREATE TABLE `fa_keyword` (
                               PRIMARY KEY (`id`),
                               UNIQUE KEY `only` (`keyword`) USING BTREE,
                               KEY `tag` (`tag_id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `fa_mark_log` (
                                `id` int(11) unsigned NOT NULL AUTO_INCREMENT COMMENT 'id',
