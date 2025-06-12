@@ -14,7 +14,6 @@
         <label class="control-label col-xs-12 col-sm-2">标签:</label>
         <div class="col-xs-12 col-sm-8">
             <select  class="form-control selectpicker" name="tag_id" data-live-search="true">
-                <option value="">请选择</option>
                 {foreach $tag_list as $k => $v}
                 <option value="{$v.id}"  {if $row.tag_id == $v.id}selected{/if}>{$v.name}</option>
                 {/foreach}

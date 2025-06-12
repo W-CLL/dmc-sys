@@ -104,10 +104,16 @@ class KeywordIndex extends Backend
                 $this->error("数据异常，请刷新后重试");
             }
 
+            if (empty($data['tag_id'])){
+                $this->error('标签不允许为空！');
+            }
+
             $res = $KeywordModel->where(['keyword' => $data['keyword']])->find();
             if ($res) {
                 $this->error('该关键词已存在，请检查！');
             }
+
+
 
             $result = $KeywordModel->update($data);
             if (!$result) {
