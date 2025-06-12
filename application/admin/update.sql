@@ -273,3 +273,40 @@ ALTER TABLE fa_queue_record
 
 CREATE INDEX idx_opt_time_adv_id ON fa_qc_global_obj_opt_log (opt_time, adv_id);
 CREATE INDEX idx_operator ON fa_qc_global_obj_opt_log (operator);
+
+
+
+--2025-06-12
+CREATE TABLE `fa_tag` (
+                          `id` int(11) unsigned NOT NULL AUTO_INCREMENT COMMENT 'id',
+                          `name` varchar(500) NOT NULL COMMENT '标签名称',
+                          `create_time` int(11) NOT NULL,
+                          `update_time` int(11) DEFAULT NULL,
+                          PRIMARY KEY (`id`),
+                          UNIQUE KEY `name` (`name`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `fa_keyword` (
+                              `id` int(11) unsigned NOT NULL AUTO_INCREMENT COMMENT 'id',
+                              `tag_id` int(11) NOT NULL COMMENT '标签id',
+                              `keyword` varchar(500) NOT NULL COMMENT '关键词',
+                              `create_time` int(11) NOT NULL,
+                              `update_time` int(11) DEFAULT NULL,
+                              PRIMARY KEY (`id`),
+                              UNIQUE KEY `only` (`keyword`) USING BTREE,
+                              KEY `tag` (`tag_id`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `fa_mark_log` (
+                               `id` int(11) unsigned NOT NULL AUTO_INCREMENT COMMENT 'id',
+                               `admin_id` int(11) NOT NULL,
+                               `operator` varchar(100) NOT NULL COMMENT '操作人',
+                               `adv_id` varchar(50) NOT NULL COMMENT '千川id',
+                               `title` varchar(100) NOT NULL COMMENT '标题',
+                               `content` longtext NOT NULL COMMENT '内容',
+                               `create_time` bigint(11) NOT NULL,
+                               PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+
