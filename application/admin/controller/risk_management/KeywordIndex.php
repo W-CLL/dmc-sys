@@ -37,35 +37,29 @@ class KeywordIndex extends Backend
     public function add()
     {
         $TagModel = new Tag();
+        $KeywordModel = new Keyword();
         $this->token();
         if ($this->request->isPost()) {
-            $KeywordModel = new Keyword();
             $params = $this->request->post();
             if(empty($params['tag_id'])){
                 $this->error('请选择标签！');
             }
-            $cleaned = str_replace(["\r"], '', $params['keyword']);  // 移除所有换行符残留
-            $keywordArr = array_filter(array_map('trim', explode("\n", $cleaned)));
+            $cleaned = str_replace('，', ',', $params['keyword']); // 把中文的，转换成英文的,
+            $keywordArr = array_filter(array_map('trim', explode(",", $cleaned))); // 转数组
 
-            $insertData = array_map(function ($value) use ($params) {
-                return [
-                    'keyword' => $value,
-                    'tag_id' => $params['tag_id'],
-                ];
-            }, $keywordArr);
 
             // 传入keyword去重
             $uniqueNames = [];
-            foreach ($insertData as $item) {
-                if (!isset($uniqueNames[$item['keyword']])) {
-                    $uniqueNames[$item['keyword']] = $item;
+            foreach ($keywordArr as $item) {
+                if (!isset($uniqueNames[$item])) {
+                    $uniqueNames[$item] = $item;
                 }
             }
             $insertData = array_values($uniqueNames);
 
             if (!empty($insertData)) {
                 foreach ($insertData as $key => $item) {
-                    $data = $KeywordModel->where(['keyword' => $item['keyword']])->find();
+                    $data = $KeywordModel->where("FIND_IN_SET(:word, keyword)", ['word' => $item])->find();
                     if ($data) {
                         unset($insertData[$key]);
                     }
@@ -76,15 +70,16 @@ class KeywordIndex extends Backend
             } else {
                 $this->error('所填数据为空，请检查！');
             }
-
-
-            $res = $KeywordModel->saveAll($insertData);
+            $insert['keyword'] = implode(',', $insertData);
+            $insert['tag_id'] =  $params['tag_id'];
+            $res = $KeywordModel->save($insert);
             if (!$res) {
                 $this->error('添加失败！');
             }
             $this->success('添加成功！');
         }
-        $tag_list = $TagModel->select();
+        $use_tab = $KeywordModel->distinct(true)->column('tag_id');
+        $tag_list = $TagModel->where(['id' => ['not in', $use_tab]])->select();
         $this->view->assign("tag_list", $tag_list);
         return $this->view->fetch();
     }
@@ -108,12 +103,33 @@ class KeywordIndex extends Backend
                 $this->error('标签不允许为空！');
             }
 
-            $res = $KeywordModel->where(['keyword' => $data['keyword']])->find();
-            if ($res) {
-                $this->error('该关键词已存在，请检查！');
+            $cleaned = str_replace('，', ',', $data['keyword']); // 把中文的，转换成英文的,
+            $keywordArr = array_filter(array_map('trim', explode(",", $cleaned))); // 转数组
+
+
+            // 传入keyword去重
+            $uniqueNames = [];
+            foreach ($keywordArr as $item) {
+                if (!isset($uniqueNames[$item])) {
+                    $uniqueNames[$item] = $item;
+                }
             }
+            $insertData = array_values($uniqueNames);
 
-
+            if (!empty($insertData)) {
+                foreach ($insertData as $key => $item) {
+                    $check = $KeywordModel->where("FIND_IN_SET(:word, keyword)", ['word' => $item])->where(['id' => ['neq', $data['id']]])->find();
+                    if ($check) {
+                        unset($insertData[$key]);
+                    }
+                }
+                if (empty($insertData)) {
+                    $this->error('所填数据已存在，请检查！');
+                }
+            } else {
+                $this->error('所填数据为空，请检查！');
+            }
+            $data['keyword'] = implode(',', $insertData);
 
             $result = $KeywordModel->update($data);
             if (!$result) {
@@ -123,7 +139,8 @@ class KeywordIndex extends Backend
         }
         $row = $KeywordModel->where('id', $ids)->find();
         $this->view->assign("row", $row);
-        $tag_list = $TagModel->select();
+        $use_tab = $KeywordModel->distinct(true)->column('tag_id');
+        $tag_list = $TagModel->where(['id' => ['not in', $use_tab]])->whereOr('id', $row['tag_id'])->select();
         $this->view->assign("tag_list", $tag_list);
 
         return $this->view->fetch();

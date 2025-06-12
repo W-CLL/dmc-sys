@@ -4,8 +4,10 @@
 
     <div class="form-group">
         <label for="c-discount_percentage" class="control-label col-xs-12 col-sm-2">关键词:</label>
-        <div class="col-xs-12 col-sm-4">
-            <input id="c-discount_percentage"  class="form-control" name="keyword" type="text" value="{$row.keyword}" placeholder="请输入关键词" />
+        <div class="col-xs-12 col-sm-10">
+<!--            <input id="c-discount_percentage"  class="form-control" name="keyword" type="text" value="{$row.keyword}" data-role='tagsinput' placeholder="请输入关键词" />-->
+            <textarea id="c-discount_percentage" data-rule="required" class="form-control" rows="8" style="width: 100%; height: 200px;" name="keyword">{$row.keyword}</textarea>
+
         </div>
     </div>
 

@@ -289,7 +289,7 @@ CREATE TABLE `fa_tag` (
 CREATE TABLE `fa_keyword` (
                               `id` int(11) unsigned NOT NULL AUTO_INCREMENT COMMENT 'id',
                               `tag_id` int(11) NOT NULL COMMENT '标签id',
-                              `keyword` varchar(500) NOT NULL COMMENT '关键词',
+                              `keyword` longtext NOT NULL COMMENT '关键词',
                               `create_time` int(11) NOT NULL,
                               `update_time` int(11) DEFAULT NULL,
                               PRIMARY KEY (`id`),
