@@ -4,10 +4,12 @@ namespace app\index\controller;
 
 use app\admin\model\Company;
 use app\admin\model\Company as CompanyModel;
+use app\admin\model\MarkLog;
 use app\admin\model\QcObjOptLog;
 use app\common\controller\Frontend;
 use app\common\model\QcAdvDayCost;
 use app\common\model\Queue;
+use app\admin\model\Tag;
 use app\qcdatahandle\controller\ComFun;
 use fast\Random;
 use GuzzleHttp\Client;
@@ -660,5 +662,67 @@ GROUP BY
         }
         die;
     }
+
+    public function dsadas(){
+        $dimensions =  ['ad_id'];
+        $metrics = ['stat_cost'];
+        $filters = [
+
+        ];
+        $order_by = [
+            [
+                'type' => 2,
+                'field' => 'stat_cost'
+            ]
+        ];
+        $start_time = "2025-06-01 00:00:00";
+        $end_time = "2025-06-30 23:59:59";
+        $arr = [
+            'advertiser_id' => 1826807488376899,
+            'data_topic' => 'SITE_PROMOTION_PRODUCT_AD',
+            'dimensions' => json_encode($dimensions),
+            'metrics' => json_encode($metrics),
+            'filters' => json_encode($filters),
+            'start_time' => $start_time,
+            'end_time' => $end_time,
+            'order_by' => json_encode($order_by),
+            'page' => 1,
+            'page_size' => 200
+        ];
+        $res1 = FundManagement::obtain_global_data($arr);
+        var_dump($res1);
+    }
+
+
+    /**
+     * @param $id    -修改目标id
+     * @param $update_data   -修改数据
+     * @return MarkLog
+     * @throws DbException
+     * @throws Exception
+     */
+    public function insLog($id, $update_data){
+        $info = MODEL::get($id)->toArray();    // 把model改成对应表模型
+        if (!$info){
+            throw new Exception('源数据不存在');
+        }
+        $content = '';
+        foreach ($update_data as $key => $item){
+            if ($info[$key] != $item){
+                $content  .= $key . ": " . $info[$key] . " -> " . $item . "\n";
+            }
+        }
+        if (!$content){
+            throw new Exception('无修改数据');
+        }
+        $log = [
+            'admin_id' => $this->auth->id,
+            'operator' => $this->auth->username,
+            'adv_id' => $info['adv_id'],  // $info里的如果跟表设置的字段不一致，请自行修改
+            'content' => $content,
+        ];
+        return MarkLog::create($log);
+    }
+
 
 }
