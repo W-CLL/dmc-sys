@@ -31,7 +31,21 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', 'bootstrap-table-fixe
                         {checkbox: true},
                         {field: 'id', title: "id", sortable: true},
                         {field: 'tag.name', title:"标签"},
-                        {field: 'keyword', title:"关键词"},
+                        {field: 'keyword', title:"关键词",formatter: function (value) {
+                                if (!value) return '';
+                                // 将字符串按逗号分割成数组
+                                const ids = value.split(',');
+                                // 定义每行显示的数量
+                                const itemsPerRow = 5;
+                                // 分块处理：每三个一组
+                                const rows = [];
+                                for (let i = 0; i < ids.length; i += itemsPerRow) {
+                                    const row = ids.slice(i, i + itemsPerRow).join(', '); // 每组最多三个
+                                    rows.push(row);
+                                }
+                                // 用 <br> 连接各组，实现每三组换一行
+                                return rows.join('<br>');
+                            }},
                         {field: 'create_time', title: "创建时间", formatter: Table.api.formatter.datetime, operate: 'RANGE', addclass: 'datetimerange', sortable: true},
                         {field: 'operate', title: __('Operate'), table: table, events: Table.api.events.operate, formatter: Table.api.formatter.operate}
 
