@@ -44,6 +44,12 @@ class KeywordIndex extends Backend
             if(empty($params['tag_id'])){
                 $this->error('请选择标签！');
             }
+            if(empty($params['sort'])){
+                $this->error('请填写权重值！');
+            }
+            if($KeywordModel->where('sort', $params['sort'])->find()){
+                $this->error('权重值已存在，请检查！');
+            }
             $cleaned = str_replace('，', ',', $params['keyword']); // 把中文的，转换成英文的,
             $keywordArr = array_filter(array_map('trim', explode(",", $cleaned))); // 转数组
 
@@ -61,17 +67,16 @@ class KeywordIndex extends Backend
                 foreach ($insertData as $key => $item) {
                     $data = $KeywordModel->where("FIND_IN_SET(:word, keyword)", ['word' => $item])->find();
                     if ($data) {
-                        unset($insertData[$key]);
+//                        unset($insertData[$key]);
+                        $this->error("所填数据【".$item."】已存在，请检查！");
                     }
-                }
-                if (empty($insertData)) {
-                    $this->error('所填数据已存在，请检查！');
                 }
             } else {
                 $this->error('所填数据为空，请检查！');
             }
             $insert['keyword'] = implode(',', $insertData);
             $insert['tag_id'] =  $params['tag_id'];
+            $insert['sort'] =  $params['sort'];
             $res = $KeywordModel->save($insert);
             if (!$res) {
                 $this->error('添加失败！');

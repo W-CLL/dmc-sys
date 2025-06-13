@@ -30,6 +30,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', 'bootstrap-table-fixe
                     [
                         {checkbox: true},
                         {field: 'id', title: "id", sortable: true},
+                        {field: 'sort', title: "权重值"},
                         {field: 'tag.name', title:"标签"},
                         {field: 'keyword', title:"关键词",formatter: function (value) {
                                 if (!value) return '';
