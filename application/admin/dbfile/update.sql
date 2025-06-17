@@ -260,7 +260,7 @@ CREATE TABLE `fa_adv_score`
     `year`                  varchar(20) NOT NULL COMMENT '年度',
     `one_class_score`       int(5) NOT NULL DEFAULT '0' COMMENT '一类违规年分',
     `two_three_class_score` int(5) NOT NULL DEFAULT '0' COMMENT '二，三类违规年分',
-    `status` tinyint(1) NOT NULL DEFAULT '1' COMMENT '1正常,0注销/未授权',
+    `status`                tinyint(1) NOT NULL DEFAULT '1' COMMENT '1正常,0注销/未授权',
     `request_id`            varchar(60) DEFAULT NULL COMMENT '接口请求日志id',
     `create_time`           int(11) NOT NULL COMMENT '创建时间',
     `update_time`           int(11) NOT NULL COMMENT '更新时间',
@@ -273,39 +273,3 @@ ALTER TABLE fa_queue_record
 
 CREATE INDEX idx_opt_time_adv_id ON fa_qc_global_obj_opt_log (opt_time, adv_id);
 CREATE INDEX idx_operator ON fa_qc_global_obj_opt_log (operator);
-
-
-
---2025-06-12
-CREATE TABLE `fa_tag` (
-                          `id` int(11) unsigned NOT NULL AUTO_INCREMENT COMMENT 'id',
-                          `name` varchar(500) NOT NULL COMMENT '标签名称',
-                          `create_time` int(11) NOT NULL,
-                          `update_time` int(11) DEFAULT NULL,
-                          PRIMARY KEY (`id`),
-                          UNIQUE KEY `name` (`name`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE `fa_keyword` (
-                              `id` int(11) unsigned NOT NULL AUTO_INCREMENT COMMENT 'id',
-                              `tag_id` int(11) NOT NULL COMMENT '标签id',
-                              `keyword` longtext NOT NULL COMMENT '关键词',
-                              `create_time` int(11) NOT NULL,
-                              `update_time` int(11) DEFAULT NULL,
-                              PRIMARY KEY (`id`),
-                              KEY `tag` (`tag_id`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE `fa_mark_log` (
-                               `id` int(11) unsigned NOT NULL AUTO_INCREMENT COMMENT 'id',
-                               `admin_id` int(11) NOT NULL,
-                               `operator` varchar(100) NOT NULL COMMENT '操作人',
-                               `adv_id` varchar(50) NOT NULL COMMENT '千川id',
-                               `content` longtext NOT NULL COMMENT '内容',
-                               `create_time` bigint(11) NOT NULL,
-                               PRIMARY KEY (`id`),
-                               KEY `normal` (`admin_id`,`operator`,`adv_id`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-
-
