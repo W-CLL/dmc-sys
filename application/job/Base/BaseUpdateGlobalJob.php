@@ -95,6 +95,10 @@ abstract class BaseUpdateGlobalJob
             throw new Exception("计划状态不符合更新,该计划投放状态为:".$this->convertStatus($objDetail['status']));
         }
         $this->removeEmptyValues($objDetail['multi_product_creative_list']);
+        foreach ($objDetail['multi_product_creative_list'] as $key => $item) {
+            $objDetail['multi_product_creative_list'][$key]['block_video_material'] = $objDetail['multi_product_creative_list'][$key]['block_material'];
+            unset($objDetail['multi_product_creative_list'][$key]['block_material']);
+        }// 傻逼字节字段命名变更，进行重赋值
         $updateData = $this->buildData($objDetail);
         $updateData['advertiser_id'] = (int)$data['adv_id'];
         $pattern = '/\(\.\d+_\d+\.\)/';
