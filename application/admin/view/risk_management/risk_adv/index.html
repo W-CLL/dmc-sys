@@ -61,7 +61,7 @@
                         <label class="control-label">处理状态</label>
                             <select class="form-control selectpicker" name="handle_status" data-live-search="false">
                                 {foreach $handle_status_list as $k => $v}
-                                <option value="{$k}" {if $row.handle_status== $k}selected{
+                                <option value="{$k}" {if $row["handle_status"]== $k}selected{
                                 /if}>{$v}</option>
                                 {/foreach}
                             </select>

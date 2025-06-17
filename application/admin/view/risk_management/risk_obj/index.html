@@ -21,7 +21,7 @@
     </div>
 </div>
 
-<script id="customformtpl" type="text/html">
+<script id="search-tpl" type="text/html">
     <form action="" class="form-commonsearch">
         <div style="border-radius:2px;margin-bottom:10px;background:#f5f5f5;padding:15px 20px;">
             <div class="row" style="width: 100%;display: flex;">
@@ -36,39 +36,27 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-xs-3 col-sm-2 col-md-3">
-                    <div class="form-group">
-                        <input type="hidden" class="operate" data-name="keyword" value="like"/>
-                        <label class="control-label">公司名</label>
-                        <div>
-                            <label>
-                                <input class="form-control" type="text" name="keyword" value=""/>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xs-3 col-sm-2 col-md-3">
-                    <div class="form-group">
-                        <input type="hidden" class="operate" data-name="staff" value="like"/>
-                        <label class="control-label">客服/巡查/商务</label>
-                        <div>
-                            <label>
-                                <input class="form-control" type="text" name="staff" value=""/>
-                            </label>
-                        </div>
-                    </div>
-                </div>
+<!--                <div class="col-xs-3 col-sm-2 col-md-3">-->
+<!--                    <div class="form-group">-->
+<!--                        <input type="hidden" class="operate" data-name="company_name" value="like"/>-->
+<!--                        <label class="control-label">公司名</label>-->
+<!--                        <div>-->
+<!--                            <label>-->
+<!--                                <input class="form-control" type="text" name="company_name" value=""/>-->
+<!--                            </label>-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                </div>-->
+
                 <div class="col-xs-3 col-sm-2 col-md-3">
                     <div class="form-group">
                         <input type="hidden" class="operate" data-name="handle_status" value="="/>
-                        <label class="control-label">处理状态</label>
-                            <select class="form-control selectpicker" name="handle_stats" data-live-search="true">
-                                {foreach $handle_status_list as $k => $v}
-                                <option value="{$k}" {if $row.handle_status== $k}selected{
-                                /if}>{$v}</option>
-                                {/foreach}
-                            </select>
-
+                        <label class="control-label">计划状态</label>
+                        <select class="form-control selectpicker" name="handle_status" data-live-search="false">
+                            {foreach $obj_status as $k => $v}
+                            <option value="{$k}">{$v}</option>
+                            {/foreach}
+                        </select>
                     </div>
                 </div>
 

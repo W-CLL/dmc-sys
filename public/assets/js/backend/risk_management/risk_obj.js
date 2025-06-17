@@ -15,124 +15,36 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
 
             // 初始化表格
             table.bootstrapTable({
-                // ... 其他配置 ...
-                search: false, // 禁用默认搜索
-                commonSearch: false, // 启用普通表单搜索
+                search: true, // 禁用默认搜索
+                commonSearch: true, // 启用普通表单搜索
                 searchFormVisible: true, // 控制搜索栏是否显示在页面上
                 url: $.fn.bootstrapTable.defaults.extend.index_url,
-                pk: 'id',
-                sortName: 'id',
                 fixedColumns: true,
                 fixedRightNumber: 1,
+                searchFormTemplate: 'search-tpl',
                 columns: [
                     [
                         {checkbox: true},
                         {field: 'id', title: __('Id'),visible: false},
-                        {field: 'money', title: "金额"},
-                        {field: 'transfer_direction', title: "类型", formatter: function(value,row,index) {
-                            if (row.transfer_direction == 1){
-                                return "转入"
-                            }else if (row.transfer_direction == 2){
-                                return "转出"
-                            }
-                            }, operate: 'LIKE'},
-                        {field: 'transfer_serial', title: "转账编号"},
-                        {field: 'status', title: "状态", formatter: function(value,row,index) {
-                                if (row.status == 0){
-                                    return "未开始转账"
-                                }else if (row.status == 1){
-                                    return "成功"
-                                }else if (row.status == 2){
-                                    return "失败"
-                                }else if (row.status == 3){
-                                    return "未转账"
-                                }else if (row.status == 4){
-                                    return "转账中"
-                                }else if (row.status == 5){
-                                    return "查询转账状态失败"
-                                }else if (row.status == 6){
-                                    return "转账成功，扣款或加钱失败"
+                        {field: 'adv_id', title: "千川id"},
+                        {field: 'obj_id', title: "计划id"},
+                        {field: 'product_ids', title: "商品id(只列举12个)",formatter: function (value) {
+                                if (!value) return '';
+                                // 将字符串按逗号分割成数组
+                                const ids = value.split(';');
+                                // 定义每行显示的数量
+                                const itemsPerRow = 3;
+                                // 分块处理：每三个一组
+                                const rows = [];
+                                for (let i = 0; i < ids.length; i += itemsPerRow) {
+                                    const row = ids.slice(i, i + itemsPerRow).join(', '); // 每组最多三个
+                                    rows.push(row);
                                 }
-                            }, operate: 'LIKE'},
-                        {field: 'explain', title: "失败原因"},
-                        {field: 'image', title: "转账截图", formatter: function(value,row,index) {
-                                if (row.image){
-                                    return `<a href="/` + row.image +`" target="_blank" class="thumbnail"><img src="/` + row.image + `"class="img-responsive"></a>`
-                                }
-                            }, operate: 'LIKE'},
-
-                        {field: 'create_time', title:"时间" ,formatter: Table.api.formatter.datetime},
-                        // {field: 'operate', title: __('Operate'), table: table, events: Table.api.events.operate, formatter: Table.api.formatter.operate},
-                    ]
-                ]
-            });
-
-            // 为表格绑定事件
-            Table.api.bindevent(table);
-        },
-        store_list: function () {
-            Controller.api.bindevent();
-            // 初始化表格参数配置
-            Table.api.init({
-                extend: {
-                    index_url: 'transfer_records/store_list?store_id=' + $("#store_id").val(),
-                    table: 'transfer_records',
-                }
-            });
-
-            var table = $("#table");
-
-            // 初始化表格
-            table.bootstrapTable({
-                // ... 其他配置 ...
-                search: false, // 禁用默认搜索
-                commonSearch: false, // 启用普通表单搜索
-                searchFormVisible: true, // 控制搜索栏是否显示在页面上
-                url: $.fn.bootstrapTable.defaults.extend.index_url,
-                pk: 'id',
-                sortName: 'id',
-                fixedColumns: true,
-                fixedRightNumber: 1,
-                columns: [
-                    [
-                        {checkbox: true},
-                        {field: 'id', title: __('Id'),visible: false},
-                        {field: 'advertiser_id',title:"千川id"},
-                        {field: 'money', title: "金额"},
-                        {field: 'transfer_direction', title: "类型", formatter: function(value,row,index) {
-                                if (row.transfer_direction == 1){
-                                    return "转入"
-                                }else if (row.transfer_direction == 2){
-                                    return "转出"
-                                }
-                            }, operate: 'LIKE'},
-                        {field: 'transfer_serial', title: "转账编号"},
-                        {field: 'status', title: "状态", formatter: function(value,row,index) {
-                                if (row.status == 0){
-                                    return "未开始转账"
-                                }else if (row.status == 1){
-                                    return "成功"
-                                }else if (row.status == 2){
-                                    return "失败"
-                                }else if (row.status == 3){
-                                    return "未转账"
-                                }else if (row.status == 4){
-                                    return "转账中"
-                                }else if (row.status == 5){
-                                    return "查询转账状态失败"
-                                }else if (row.status == 6){
-                                    return "转账成功，扣款或加钱失败"
-                                }
-                            }, operate: 'LIKE'},
-                        {field: 'explain', title: "失败原因"},
-                        {field: 'image', title: "转账截图", formatter: function(value,row,index) {
-                                if (row.image){
-                                    return `<a href="/` + row.image +`" target="_blank" class="thumbnail"><img src="/` + row.image + `"class="img-responsive"></a>`
-                                }
-                            }, operate: 'LIKE'},
-
-                        {field: 'create_time', title:"时间" ,formatter: Table.api.formatter.datetime},
-                        // {field: 'operate', title: __('Operate'), table: table, events: Table.api.events.operate, formatter: Table.api.formatter.operate},
+                                // 用 <br> 连接各组，实现每三组换一行
+                                return rows.join('<br>');
+                            }},
+                        {field: 'status_text', title: "计划状态"},
+                        {field: 'obj_create_time', title:"计划创建时间" ,formatter: Table.api.formatter.datetime},
                     ]
                 ]
             });

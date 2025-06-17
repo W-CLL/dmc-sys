@@ -273,3 +273,7 @@ ALTER TABLE fa_queue_record
 
 CREATE INDEX idx_opt_time_adv_id ON fa_qc_global_obj_opt_log (opt_time, adv_id);
 CREATE INDEX idx_operator ON fa_qc_global_obj_opt_log (operator);
+--2025-06-17
+--用于标识一些删除，终止，完成的计划
+ALTER TABLE fa_qc_global_obj
+    ADD COLUMN `is_handle` tinyint(1) NOT NULL DEFAULT '0' COMMENT '0未处理1已经处理';
