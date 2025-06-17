@@ -39,13 +39,13 @@ class QcAdv extends Api
             $numbers = $matches[0];
             $companyModel->where(['advertiser_id' => ['IN', $numbers]])->update(['adv_status' => 0]);
         } else {
-            $disable_adv =[];
-            foreach ($res['data'] as $item){
-                if($item['status'] == "STATUS_DISABLE"){
+            $disable_adv = [];
+            foreach ($res['data'] as $item) {
+                if ($item['status'] == "STATUS_DISABLE") {
                     $disable_adv[] = $item['id'];
                 }
             }
-            if($disable_adv){
+            if ($disable_adv) {
                 $companyModel->where(['advertiser_id' => ['IN', $disable_adv]])->update(['adv_status' => 0]);
             }
         }
@@ -62,15 +62,15 @@ class QcAdv extends Api
      */
     public function chunkAdvForGetAwemeList()
     {
-      $adv_list =   Db::name('company')
+        $adv_list = Db::name('company')
             ->where('adv_status', 1)
             ->order('advertiser_id', 'desc')
             ->column('advertiser_id');
         $chunks = array_chunk($adv_list, 20);
-        foreach ($chunks as $chunk){
+        foreach ($chunks as $chunk) {
             $job_data = [
                 'adv_list' => $chunk,
-                'params'=>['page'=>1,'page_size'=>100]
+                'params' => ['page' => 1, 'page_size' => 100]
             ];
             \think\Queue::push('app\job\InsertAdvAweme', $job_data, "insertAdvAweme");
         }
@@ -88,25 +88,73 @@ class QcAdv extends Api
     {
         $aweme_model = new AdvAweme();
         $adv_list = $aweme_model
-            ->where('status', "EFFECTIVE")
-            ->field('adv_id,aweme_id')
+            ->alias('aw')
+            ->join('company com', 'aw.adv_id=com.advertiser_id', 'left')
+            ->where(['aw.status' => "EFFECTIVE", 'com.adv_status' => 1])
+            ->field('aw.adv_id,aw.aweme_id')
+//            ->fetchSql(true)
             ->select();
 
         $chunks = array_chunk((array)$adv_list, 20);
         foreach ($chunks as $chunk) {
             $job_data = [];
-            foreach ($chunk as $item){
+            foreach ($chunk as $item) {
                 $job_data[] = [
-                    'adv_id'=>$item['adv_id'],
-                    'aweme_id'=>$item['aweme_id'],
-                    'params'=>[
-                        'filtering'=> json_encode(['tab' => 'ALL']),
+                    'adv_id' => $item['adv_id'],
+                    'aweme_id' => $item['aweme_id'],
+                    'params' => [
+                        'filtering' => json_encode(['tab' => 'ALL']),
                         'page' => 1,
                         'page_size' => 100
                     ]
                 ];
             }
             \think\Queue::push('app\job\InsertAwemeGoods', $job_data, "insertAwemeGoods");
+        }
+        echo "分割完成";
+    }
+
+    public function chunkObjGoodsList($start_time = '', $end_time = '')
+    {
+        if (!$start_time && !$end_time) {
+            $start_time = date('Y-m-d');
+            $end_time = date('Y-m-d');
+        }
+        $com_model = new Company();
+        $obj_model = new \app\admin\model\QcGlobalObj();
+        $adv_list = $com_model->where(['adv_status' => 1])->column('advertiser_id');
+        foreach ($adv_list as $item) {
+            $obj_list = $obj_model->where([
+                'is_handle' => 0,
+                'adv_id' => $item,
+                'marketing_goal'=>['<>',"LIVE_PROM_GOODS"],
+                "obj_create_time"=>['>=',"1740758400"]
+            ])->column('obj_status','obj_id');
+            if (!$obj_list) {
+                continue;
+            }
+            if (count($obj_list) > 30) {
+                $chunks = array_chunk($obj_list, 30,true);
+                foreach ($chunks as $chunk) {
+                    $job_data = [
+                        'adv_id' => $item,
+                        'obj_ids' => $chunk,
+                        'start_time' => $start_time,
+                        'end_time' => $end_time,
+                        "fields" => json_encode(['product_show_count_for_roi2'])
+                    ];
+                    \think\Queue::push('app\job\risk_job\InsertObjProduct', $job_data, "insertObjProduct");
+                }
+            } else {
+                $job_data = [
+                    'adv_id' => $item,
+                    'obj_ids' => $obj_list,
+                    'start_time' => $start_time,
+                    'end_time' => $end_time,
+                    "fields" => json_encode(['product_show_count_for_roi2'])
+                ];
+                \think\Queue::push('app\job\risk_job\InsertObjProduct', $job_data, "insertObjProduct");
+            }
         }
         echo "分割完成";
     }

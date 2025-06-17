@@ -410,7 +410,7 @@ class FundManagement
     public static function get_adv_info(array $advertiser_ids)
     {
         $header = array(
-            'Access-Token:' .Cache::get("qc_access_token"),
+            'Access-Token:' . Cache::get("qc_access_token"),
         );
 
         $url = "https://ad.oceanengine.com/open_api/2/advertiser/info?advertiser_ids=" . json_encode($advertiser_ids);
@@ -509,7 +509,7 @@ class FundManagement
         $header = array(
             'Access-Token:' . $access_token,
         );
-        $url = "https://api.oceanengine.com/open_api/v1.0/qianchuan/uni_aweme/suggest/budget/?advertiser_id=" . $advertiser_id. "&aweme_id=" . $aweme_id . "&marketing_goal=" . $marketing_goal . "&product_ids=" . json_encode($product_ids) . "&ad_id=" . $ad_id ;
+        $url = "https://api.oceanengine.com/open_api/v1.0/qianchuan/uni_aweme/suggest/budget/?advertiser_id=" . $advertiser_id . "&aweme_id=" . $aweme_id . "&marketing_goal=" . $marketing_goal . "&product_ids=" . json_encode($product_ids) . "&ad_id=" . $ad_id;
         return Requests::get($url, $header);
     }
 

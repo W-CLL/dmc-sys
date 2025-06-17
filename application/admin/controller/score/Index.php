@@ -42,15 +42,15 @@ class Index extends Backend
 
             $adv_id = input('advertiser_id');
             $com_name = input('com_name');
-            $kahuna= input('kahuna');
-            if($adv_id){
+            $kahuna = input('kahuna');
+            if ($adv_id) {
                 $where['sco.adv_id'] = $adv_id;
             }
-            if($com_name){
-                $where['com.company_name'] = ['like',"%".$com_name."%"];
+            if ($com_name) {
+                $where['com.company_name'] = ['like', "%" . $com_name . "%"];
             }
-            if($kahuna){
-                $where['com.kahuna'] = ['like',"%".$kahuna."%"];
+            if ($kahuna) {
+                $where['com.kahuna'] = ['like', "%" . $kahuna . "%"];
             }
 
             $list = $scoreModel
@@ -63,15 +63,15 @@ class Index extends Backend
                 ->limit($offset, $limit)
                 ->select();
 
-            $adv_ids = array_column($list,'adv_id');
+            $adv_ids = array_column($list, 'adv_id');
 
             $info_list = FundManagement::get_adv_info($adv_ids);
-           if($info_list['code'] !=0){
-               $this->error('获取失败: '.$info_list['message']);
-           }
+            if ($info_list['code'] != 0) {
+                $this->error('获取失败: ' . $info_list['message']);
+            }
             foreach ($list as &$item) {
-                foreach ($info_list['data'] as $info){
-                    if($item['adv_id'] == $info['id']){
+                foreach ($info_list['data'] as $info) {
+                    if ($item['adv_id'] == $info['id']) {
                         $item['reason'] = $info['reason'];
                         $item['adv_status'] = $this->statusMap[$info['status']];
                     }
@@ -115,8 +115,8 @@ class Index extends Backend
                 "page" => $page,
                 "page_size" => $limit,
                 "filtering" => json_encode([
-                    'start_time' => $start_time." 00:00:00",
-                    'end_time' => $end_time." 23:59:59",
+                    'start_time' => $start_time . " 00:00:00",
+                    'end_time' => $end_time . " 23:59:59",
                 ])
             ];
 

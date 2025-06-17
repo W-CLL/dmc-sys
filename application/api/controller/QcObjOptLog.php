@@ -139,15 +139,23 @@ class QcObjOptLog extends Api
             echo "时间不对不执行".date('Y-m-d H:i:s');
             die;
         }
+        $twoDaysAgo = (new DateTime('today'))->modify('-2 days')->getTimestamp();
         $objModel = new \app\admin\model\QcGlobalObj();
         $queue = new Queue();
-        $advIds = $objModel->group('adv_id')->order('adv_id')->column('adv_id');
+        $advIds = $objModel->alias('obj')
+            ->join('company com','obj.adv_id=com.advertiser_id','left')
+            ->where(['com.adv_status'=>1])
+            ->group('obj.adv_id')
+            ->order('obj.adv_id')
+            ->column('obj.adv_id');
+
         if ($start_date&&$end_date) {
             $s = date("Y-m-d H:i:s",$start_date);
             $e = date("Y-m-d H:i:s",$end_date) ;
         }
+
         foreach ($advIds as $id) {
-            $twoDaysAgo = (new DateTime('today'))->modify('-2 days')->getTimestamp();
+
             $objIds = $objModel->where('adv_id', $id)
                 ->where(function ($query) use ($twoDaysAgo) {
                     $query->where(function ($q) use ($twoDaysAgo) {

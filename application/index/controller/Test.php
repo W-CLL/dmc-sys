@@ -694,35 +694,27 @@ GROUP BY
     }
 
 
-    /**
-     * @param $id    -修改目标id
-     * @param $update_data   -修改数据
-     * @return MarkLog
-     * @throws DbException
-     * @throws Exception
-     */
-    public function insLog($id, $update_data){
-        $info = MODEL::get($id)->toArray();    // 把model改成对应表模型
-        if (!$info){
-            throw new Exception('源数据不存在');
-        }
-        $content = '';
-        foreach ($update_data as $key => $item){
-            if ($info[$key] != $item){
-                $content  .= $key . ": " . $info[$key] . " -> " . $item . "\n";
-            }
-        }
-        if (!$content){
-            throw new Exception('无修改数据');
-        }
-        $log = [
-            'admin_id' => $this->auth->id,
-            'operator' => $this->auth->username,
-            'adv_id' => $info['adv_id'],  // $info里的如果跟表设置的字段不一致，请自行修改
-            'content' => $content,
-        ];
-        return MarkLog::create($log);
+
+    public function testWatch()
+    {
+        $watch = new MultiProcessWatch();
+        $watch->watch();
+//        $watch->stop();
+//        $watch->status();
     }
 
+    public function test_robot()
+    {
+//      $list =   Api::get_department();
+//      $member_list =   Api::get_department_member(0,7);
+//      $res=   Api::create_group('测试机器人','WangChunLong',['WangChunLong','PanHaoWei','LuoWenJing01']);
+        $res1 = Api::get_group_message("wr2KqeaQAAlsSH_QRbu7GJ2J8652_eCg");
+
+//      dump($list);
+//      dump($member_list);
+//      dump($res);
+      dump($res1);
+      die;
+    }
 
 }
