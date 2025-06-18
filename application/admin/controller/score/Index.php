@@ -83,7 +83,7 @@ class Index extends Backend
                 ->join('company com', 'sco.adv_id=com.advertiser_id', 'left')
                 ->field('sco.*,com.company_name,com.kahuna,com.name')
                 ->where($where)
-                ->where(['sco.status' => 1])
+                ->where(['sco.status' => 1,'com.adv_status'=>1])
                 ->count();
             $result = array("total" => $count, "rows" => $list);
 
