@@ -62,7 +62,7 @@ class RiskAdv extends Backend
         if ($this->request->isAjax()) {
             $where = [];
             $sort = input("sort", "adv_id");
-            $order = input("order", "asc");
+            $order = input("order", "desc");
             $offset = input("offset", 0);
             $limit = input("limit", 10);
             $this->_filter($where, $advIdFilter);

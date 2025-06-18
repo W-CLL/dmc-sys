@@ -16,7 +16,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', 'bootstrap-table-fixe
             // 初始化表格
             table.bootstrapTable({
                 url: $.fn.bootstrapTable.defaults.extend.index_url,
-                sortName: 'adv_id',
+                sortName: 'one_class_score',
                 fixedColumns: true, // 固定列代码
                 fixedRightNumber: 1, // 固定右侧第一列
                 search: false, // 禁用默认搜索
