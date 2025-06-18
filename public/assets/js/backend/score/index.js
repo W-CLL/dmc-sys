@@ -25,7 +25,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         {field: 'id', title: "ID"},
                         {
                             field: 'adv_id', title: "千川id", formatter: function (value, row, index) {
-                                if (row.one_class_score >= 6 && row.adv_status != "已禁用") {
+                                if (row.one_class_score >= 4 && row.adv_status != "已禁用") {
                                     return '<span style="color:red;">' + value + '</span>';
                                 }
                                 if (row.two_three_class_score >=24 && row.adv_status != "已禁用") {
@@ -59,7 +59,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                             title: "(严重)违规",
                             sortable: true,
                             formatter: function (value, row, index) {
-                                if (value >= 6 && row.adv_status != "已禁用") {
+                                if (value >= 4 && row.adv_status != "已禁用") {
                                     return '<span style="color:red;">' + value + '</span>';
                                 }
                                 return value;
