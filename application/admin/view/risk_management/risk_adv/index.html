@@ -21,7 +21,7 @@
 <script id="search-tpl" type="text/html">
     <form action="" class="form-commonsearch">
         <div style="border-radius:2px;margin-bottom:10px;background:#f5f5f5;padding:15px 20px;">
-            <div class="row" style="width: 100%;display: flex;">
+            <div class="row" style="width: 80%;display: flex;">
                 <div class="col-xs-3 col-sm-2 col-md-3">
                     <div class="form-group">
                         <input type="hidden" class="operate" data-name="keyword" value="like"/>
@@ -61,27 +61,38 @@
                         <label class="control-label">处理状态</label>
                             <select class="form-control selectpicker" name="handle_status" data-live-search="false">
                                 {foreach $handle_status_list as $k => $v}
-                                <option value="{$k}" {if $row["handle_status"]== $k}selected{
-                                /if}>{$v}</option>
+                                <option value="{$k}">{$v}</option>
                                 {/foreach}
                             </select>
                     </div>
                 </div>
 
-
-                <div class="col-xs-6 col-sm-6 col-md-3">
+                <div class="col-xs-3 col-sm-2 col-md-3">
+                    <div class="form-group">
+                        <input type="hidden" class="operate" data-name="sys_tag" value="="/>
+                        <label class="control-label">系统标签</label>
+                        <select class="form-control selectpicker" name="sys_tag" data-live-search="false">
+                            <option value="0">请选择</option>
+                            {foreach $tag_list as $k => $v}
+                            <option value="{$k}">{$v}</option>
+                            {/foreach}
+                        </select>
+                    </div>
+                </div>
+                <div class="col-xs-6 col-sm-6 col-md-6">
                     <div class="form-group">
                         <label class="control-label"></label>
                         <div class="row">
-                            <div class="col-xs-3">
+                            <div class="col-xs-6">
                                 <input type="submit" class="btn btn-success btn-block" value="提交"/>
                             </div>
-                            <div class="col-xs-3">
+                            <div class="col-xs-6">
                                 <input type="reset" class="btn btn-primary btn-block" value="重置"/>
                             </div>
                         </div>
                     </div>
                 </div>
+
             </div>
         </div>
     </form>

@@ -48,6 +48,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', 'bootstrap-table-fixe
                         },
                         {field: 'sys_tag_text', title: "系统标签"},
                         {field: 'tag_text', title: "人工标签"},
+                        {field: 'keywords', title: "命中词"},
                         {field: 'status_text', title: "处理状态"},
                         {field: 'kahuna', title: "客服"},
                         {field: 'check_staff', title: "巡查"},

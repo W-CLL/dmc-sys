@@ -47,12 +47,17 @@ class RiskAdv extends Backend
                 $where['ra.handle_status'] = $params['handle_status'];
             }
         }
+        if (isset($params['sys_tag'])) {
+                $where['ra.sys_tag'] = $params['sys_tag'];
+        }
     }
 
 
     public function index()
     {
         $risk_adv_model = new AdvStats();
+        $tag_model = new Tag();
+        $tag = $tag_model->column('name', 'id');
         if ($this->request->isAjax()) {
             $where = [];
             $sort = input("sort", "adv_id");
@@ -75,6 +80,7 @@ class RiskAdv extends Backend
                 'ra.check_staff' => 'check_staff',
                 'ra.business_staff' => 'business_staff',
                 'ra.sys_tag' => 'sys_tag',
+                'ra.keywords' => 'keywords',
                 'ra.handle_status' => 'handle_status',
                 'ra.tag' => 'tag',
                 'ra.remark' => 'remark',
@@ -83,8 +89,7 @@ class RiskAdv extends Backend
                 's.one_class_score' => 'one_class_score',
                 'COUNT(rop.obj_id)' => 'total_obj',
             ];
-            $tag_model = new Tag();
-            $tag = $tag_model->column('name', 'id');
+
             foreach ($tag as $id => $name) {
                 $field['SUM(CASE WHEN rop.sys_tag = ' . $id . ' THEN 1 ELSE 0 END)'] = 'sys_tag' . $id . '_count';
             }
@@ -133,6 +138,8 @@ class RiskAdv extends Backend
             return json($result);
         }
         $this->assign('handle_status_list', $this->handle_status);
+
+        $this->assign('tag_list', $tag);
         return $this->view->fetch();
     }
 
