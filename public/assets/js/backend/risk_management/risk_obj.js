@@ -30,19 +30,26 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         {field: 'obj_id', title: "计划id"},
                         {field: 'sys_tag_text', title: "标签"},
                         {field: 'key_words', title: "命中词"},
-                        {field: 'product_ids', title: "商品id(只列举12个)",formatter: function (value) {
+                        {field: 'product_ids', title: "商品id(只列举12个)",    formatter: function (value) {
                                 if (!value) return '';
-                                // 将字符串按逗号分割成数组
-                                const ids = value.split(';');
-                                // 定义每行显示的数量
+
+                                // 将字符串按分号分割成数组（去掉空值）
+                                const ids = value.split(';').filter(Boolean);
+
+                                // 定义每行显示的商品数量
                                 const itemsPerRow = 3;
-                                // 分块处理：每三个一组
+
+                                // 构建带链接的商品 ID 列表
                                 const rows = [];
                                 for (let i = 0; i < ids.length; i += itemsPerRow) {
-                                    const row = ids.slice(i, i + itemsPerRow).join(', '); // 每组最多三个
-                                    rows.push(row);
+                                    const rowItems = ids.slice(i, i + itemsPerRow).map(id => {
+                                        const url = `https://haohuo.jinritemai.com/ecommerce/trade/detail/index.html?id=${id}&channel_id=0&channel_type=0&origin_type=ecp_preview`;
+                                        return `<a href="${url}" target="_blank">${id}</a>`;
+                                    });
+                                    rows.push(rowItems.join(', '));
                                 }
-                                // 用 <br> 连接各组，实现每三组换一行
+
+                                // 使用 <br> 换行连接所有行
                                 return rows.join('<br>');
                             }},
                         {field: 'status_text', title: "计划状态"},
