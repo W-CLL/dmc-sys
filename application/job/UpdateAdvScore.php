@@ -169,8 +169,12 @@ class UpdateAdvScore
                     $one_score = 0;
                     $two_score = 0;
                     foreach ($resData['data']['score_info_list'] as $item) {
-                        $one_score = $item['illegal_type'] == "ONECLASS" ? $item['score'] : 0;
-                        $two_score = $item['illegal_type'] == "TWOTHREECLASS" ? $item['score'] : 0;
+                        if($item['illegal_type'] == "ONECLASS" && $one_score ==0 ){
+                            $one_score = $item['score'];
+                        }
+                        if($item['illegal_type'] == "TWOTHREECLASS" && $two_score ==0){
+                            $two_score = $item['score'];
+                        }
                     }
                     $insertData[] = [
                         "one_class_score" => $one_score,
