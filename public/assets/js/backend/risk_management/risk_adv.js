@@ -28,7 +28,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', 'bootstrap-table-fixe
                         {checkbox: true},
                         {field: 'adv_id', title: "千川id"},
                         {field: 'company_name', title: "公司名"},
-                        {field: 'one_class_score', title: "严重违规积分"},
+                        {field: 'one_class_score', title: "严重违规积分",sortable: true},
                         {
                             field: 'tag_obj_count', title: "标签计划数", formatter: function (value) {
                                 if (!value) return '';
