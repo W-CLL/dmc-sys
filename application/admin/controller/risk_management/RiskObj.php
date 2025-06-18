@@ -37,38 +37,42 @@ class RiskObj extends Backend
 
     private function _filter(&$where)
     {
-        $params = input();
-        if ($params['keyword']) {
-            $where['keyword'] = '';
+        $params = json_decode(input('filter'), true);
+
+        if (!empty($params['keyword'])) {
+            $where['ro.name'] = ['like',"%".$params['keyword']."%"];
         }
-        $start_time = strtotime(input("start_date") ?: date("Y-m-01"));
-        $end_time = strtotime(input("end_date") . ' 23:59:59' ?: date("Y-m-d", time()) . ' 23:59:59');
-        $kahuna = input("kahuna");
-        $advertiser_id = input("advertiser_id");
-        if (!empty($advertiser_id)) {
-            $where['advertiser_id'] = ['=', $advertiser_id];
-            $list_where['com.advertiser_id'] = $advertiser_id;
+        if(!isset($params['sys_tag'])){
+            $where['ro.sys_tag'] = ['>',0];
+        }elseif(strlen($params['sys_tag'])>0){
+            $where['ro.sys_tag'] = $params['sys_tag'];
         }
+        if(!empty($params['obj_status'])){
+            $where['qo.obj_status'] = $params['obj_status'];
+        }
+
     }
 
     public function index($ids = null, $adv_id = '')
     {
         $risk_obj_model = new ObjProduct();
+        $tag_model = new Tag();
+        $tag = $tag_model->column('name', 'id');
         $info = Db::name('risk_adv')->where(['id' => $ids])->find();
         if (!$info && !$adv_id) {
             $this->error('账户不存在');
         }
         if ($this->request->isAjax()) {
             $where = [];
-            $sort = input("sort", "mon_cost");
-            $order = input("order", "desc");
             $offset = input("offset", 0);
             $limit = input("limit", 10);
+            $this->_filter($where);
 
             $list = $risk_obj_model->alias('ro')
                 ->join('qc_global_obj qo', 'ro.obj_id=qo.obj_id', 'left')
                 ->field('ro.*,qo.obj_status,qo.name,qo.obj_create_time')
                 ->where(['ro.adv_id' => $adv_id])
+                ->where($where)
                 ->group('ro.obj_id')
 //                ->order($sort, $order)
                 ->limit($offset, $limit)
@@ -79,18 +83,22 @@ class RiskObj extends Backend
                 $product_ids = $risk_obj_model->where(['obj_id' => $item['obj_id']])->limit(12)->column('product_id');
                 $item['product_ids'] = implode(';', $product_ids);
                 $item['status_text'] = $this->obj_status[$item['obj_status']];
+                $item['sys_tag_text'] = $item['sys_tag'] ? $tag[$item['sys_tag']] : '-';
             }
             // 查询总数
             $countQuery = $risk_obj_model->alias('ro')
                 ->join('qc_global_obj qo', 'ro.obj_id=qo.obj_id', 'left')
                 ->where(['ro.adv_id' => $adv_id])
+                ->where($where)
                 ->group('ro.obj_id')->count();
             $result = array("total" => $countQuery, "rows" => $list);
             return json($result);
         }
         $this->assign('handle_status_list', $this->handle_status);
+        $this->assign('tag_list', $tag);
         $this->assign('obj_status', $this->obj_status);
         $this->assign('adv_id', $info['adv_id']);
+        $this->assign('company_name', Db::name('company')->where(['advertiser_id'=>$info['adv_id']])->value('company_name'));
         return $this->view->fetch();
     }
 }

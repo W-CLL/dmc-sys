@@ -28,6 +28,8 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         {field: 'id', title: __('Id'),visible: false},
                         {field: 'adv_id', title: "千川id"},
                         {field: 'obj_id', title: "计划id"},
+                        {field: 'sys_tag_text', title: "标签"},
+                        {field: 'key_words', title: "命中词"},
                         {field: 'product_ids', title: "商品id(只列举12个)",formatter: function (value) {
                                 if (!value) return '';
                                 // 将字符串按逗号分割成数组
