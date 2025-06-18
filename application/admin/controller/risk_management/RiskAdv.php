@@ -29,6 +29,7 @@ class RiskAdv extends Backend
             $advIds = (new \app\common\model\ObjProduct)->where('name', 'like', '%' . $params['keyword'] . '%')
                 ->group('adv_id')
                 ->column('adv_id');
+
             if (!empty($advIds)) {
                 $advIdFilter = $advIds;
             } else {
@@ -47,8 +48,8 @@ class RiskAdv extends Backend
                 $where['ra.handle_status'] = $params['handle_status'];
             }
         }
-        if (isset($params['sys_tag'])) {
-                $where['ra.sys_tag'] = $params['sys_tag'];
+        if (!empty($params['sys_tag'])) {
+            $where['ra.sys_tag'] = $params['sys_tag'];
         }
     }
 
@@ -110,6 +111,7 @@ class RiskAdv extends Backend
                 ->order($sort, $order)
                 ->limit($offset, $limit)
                 ->select();
+
             foreach ($list as &$item) {
                 $item['sys_tag_text'] = $item['sys_tag'] ? $tag[$item['sys_tag']] : '正常';
                 $item['tag_text'] = $item['tag'] ? $tag[$item['tag']] : '-';
