@@ -131,6 +131,7 @@ class RiskAdv extends Backend
                 ->join((new \app\common\model\AdvScore)->getTable() . ' s', 'ra.adv_id = s.adv_id', 'LEFT')
                 ->join((new \app\common\model\ObjProduct)->getTable() . ' rop', 'ra.adv_id = rop.adv_id', 'LEFT')
                 ->where($where)
+                ->where(['c.adv_status'=>1])//直接过滤已注销的账户
                 ->where(function ($query) use ($staff) {
                     $query->whereOr(['ra.check_staff' => ['like', "%" . $staff . "%"]])
                         ->whereOr(['c.kahuna' => ['like', "%" . $staff . "%"]])
