@@ -96,8 +96,10 @@ abstract class BaseUpdateGlobalJob
         }
         $this->removeEmptyValues($objDetail['multi_product_creative_list']);
         foreach ($objDetail['multi_product_creative_list'] as $key => $item) {
-            $objDetail['multi_product_creative_list'][$key]['block_video_material'] = $objDetail['multi_product_creative_list'][$key]['block_material'];
-            unset($objDetail['multi_product_creative_list'][$key]['block_material']);
+            if(isset($objDetail['multi_product_creative_list'][$key]['block_material'])){
+                $objDetail['multi_product_creative_list'][$key]['block_video_material'] = $objDetail['multi_product_creative_list'][$key]['block_material'];
+                unset($objDetail['multi_product_creative_list'][$key]['block_material']);
+            }
         }// 傻逼字节字段命名变更，进行重赋值
         $updateData = $this->buildData($objDetail);
         $updateData['advertiser_id'] = (int)$data['adv_id'];
