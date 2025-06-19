@@ -12,7 +12,6 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', 'bootstrap-table-fixe
             });
 
             var table = $("#table");
-
             // 初始化表格
             table.bootstrapTable({
                 url: $.fn.bootstrapTable.defaults.extend.index_url,
@@ -32,17 +31,13 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', 'bootstrap-table-fixe
                         {
                             field: 'tag_obj_count', title: "标签计划数", formatter: function (value) {
                                 if (!value) return '';
-                                // 将字符串按逗号分割成数组
                                 const ids = value.split(';');
-                                // 定义每行显示的数量
                                 const itemsPerRow = 1;
-                                // 分块处理：每三个一组
                                 const rows = [];
                                 for (let i = 0; i < ids.length; i += itemsPerRow) {
                                     const row = ids.slice(i, i + itemsPerRow).join(', '); // 每组最多三个
                                     rows.push(row);
                                 }
-                                // 用 <br> 连接各组，实现每三组换一行
                                 return rows.join('<br>');
                             }
                         },
@@ -88,7 +83,49 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', 'bootstrap-table-fixe
                     ]
                 ],
             });
+            var cacheKey = location.pathname;
+            var savedParams = sessionStorage.getItem('searchParams_' + cacheKey);
+            if (savedParams) {
+                try {
+                    savedParams = JSON.parse(savedParams);
+                    for (var key in savedParams) {
+                        var field = $('[name="' + key + '"]');
+                        if (field.length) {
+                            var value = savedParams[key];
+                            if (field.is('select')) {
+                                field.val(value);                     // 设值
+                                if ($.fn.selectpicker && field.hasClass('selectpicker')) {
+                                    field.selectpicker('refresh');
+                                }      // 更新 selectpicker UI
+                                field.trigger('change');              // 触发事件（有些表格依赖）
+                            } else {
+                                field.val(value);                     // 普通 input
+                            }
+                        }
+                    }
 
+                    // 延迟触发一次搜索，确保 DOM 和 Table 初始化后再刷新
+                    setTimeout(function () {
+                        $('.form-commonsearch').submit();
+                    }, 300);
+                } catch (e) {
+                    console.warn("恢复搜索参数失败", e);
+                }
+            }
+
+            $(document).on("click", ".btn-magic, .btn-primary", function () {
+
+                var searchParams = {};
+                $('form.form-commonsearch input, form.form-commonsearch select').each(function () {
+                    var name = $(this).attr('name');
+                    var val = $(this).val();
+                    if (val) {
+                        searchParams[name] = val;
+                    }
+                });
+
+                sessionStorage.setItem('searchParams_' + cacheKey, JSON.stringify(searchParams));
+            });
             // 为表格绑定事件
             Table.api.bindevent(table);
         },
