@@ -32,14 +32,8 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         {field: 'key_words', title: "命中词"},
                         {field: 'product_ids', title: "商品id(只列举12个)",    formatter: function (value) {
                                 if (!value) return '';
-
-                                // 将字符串按分号分割成数组（去掉空值）
                                 const ids = value.split(';').filter(Boolean);
-
-                                // 定义每行显示的商品数量
                                 const itemsPerRow = 3;
-
-                                // 构建带链接的商品 ID 列表
                                 const rows = [];
                                 for (let i = 0; i < ids.length; i += itemsPerRow) {
                                     const rowItems = ids.slice(i, i + itemsPerRow).map(id => {
