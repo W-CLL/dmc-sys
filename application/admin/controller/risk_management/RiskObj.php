@@ -185,9 +185,9 @@ class RiskObj extends Backend
     {
 
         $model = new ObjProduct();
-        $adv_id = $model->where(['id' => $ids])->value('adv_id');
-        if (!$adv_id) {
-            $this->error('千川记录不存在');
+        $obj = $model->where(['id' => $ids])->value('obj_id');
+        if (!$obj) {
+            $this->error('计划不存在');
         }
         $log_model = new MarkLog();
         if ($this->request->isAjax()) {
@@ -195,7 +195,7 @@ class RiskObj extends Backend
                 'handle_status' => "处理状态",
                 'remark' => '备注',
             ];
-            $list = $log_model->where(['adv_id' => $adv_id])->order('create_time desc')->select();
+            $list = $log_model->where(['obj_id' => $obj])->order('create_time desc')->select();
             foreach ($list as &$item) {
                 $content = explode(';', rtrim($item['content'], ';'));
                 $result = [];
@@ -218,7 +218,7 @@ class RiskObj extends Backend
                 }
                 $item['contents'] = implode(';',$result);
             }
-            $count = $log_model->where(['adv_id' => $adv_id])->order('create_time desc')->count();
+            $count = $log_model->where(['obj_id' => $obj])->order('create_time desc')->count();
             $result = array("total" => $count, "rows" => $list);
             return json($result);
         }
