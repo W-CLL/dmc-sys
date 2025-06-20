@@ -84,6 +84,7 @@ class RiskAdv extends Backend
                 'c.company_name' => 'company_name',
                 'c.kahuna' => 'kahuna',
                 's.one_class_score' => 'one_class_score',
+                's.two_three_class_score' => 'two_three_class_score',
                 'COUNT(rop.obj_id)' => 'total_obj',
             ];
 
