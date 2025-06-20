@@ -88,14 +88,14 @@ abstract class BaseUpdateObjStatusJob
             echo "没有列表\n";
             return true;
         }
-
         $requests = $this->buildGuzzleRequest($data);
         list($updateData, $error) = $this->sendGuzzleRequest($requests);
-
+//        dump($error);
         if ($error) {
-            throw new Exception(json_encode($error));
+            echo "类名";
+            echo static::class;
+            \think\Queue::later(20,static::class, $error,$this->getQueueName());
         }
-
         if ($updateData) {
             return $this->updateObjStatus($updateData);
         }
@@ -149,9 +149,6 @@ abstract class BaseUpdateObjStatusJob
             'concurrency' => 10,
             'fulfilled' => function ($response, $index) use (&$updateData, $requests, &$error) {
                 $resData = json_decode($response->getBody()->getContents(), true);
-                if ($resData['code'] != 0) {
-                    $error[] = $resData['message'];
-                }
 
                 $requestInfo = $requests[$index]['params'];
                 $requestAdvId = $requestInfo['advertiser_id'];
@@ -168,6 +165,16 @@ abstract class BaseUpdateObjStatusJob
                             'obj_status' => $resData['data']['status']
                         ],
                     ];
+                }
+
+                if ($resData['code'] != 0) {
+//                    echo $resData['message'];
+                    if(!skipIfContainsError($resData['message'],['当前广告主状态已禁用'])){
+                        dump($resData['message']);
+//                        die;
+                        $error['adv_id'] = $requestAdvId;
+                        $error['obj_id'][] = $requestObjId;
+                    };
                 }
             },
             'rejected' => function ($reason, $index) use (&$error) {
