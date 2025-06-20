@@ -76,3 +76,13 @@ CREATE TABLE `fa_risk_obj_product`
     KEY             `obj_product_idx` (`obj_id`,`product_id`) USING BTREE,
     KEY             `product_idx` (`product_id`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT=1519545 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--2025-6-20
+ALTER TABLE fa_mark_log
+    ADD COLUMN `obj_id` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci  DEFAULT NULL  COMMENT '计划id';
+
+ALTER TABLE fa_risk_obj_product
+    ADD COLUMN `remark` text  DEFAULT NULL  COMMENT '备注';
+
+ALTER TABLE fa_risk_obj_product
+    ADD COLUMN `handle_status` tinyint(1) NOT NULL DEFAULT '0' COMMENT '0未处理1已经处理';

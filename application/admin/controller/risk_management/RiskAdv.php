@@ -2,14 +2,10 @@
 
 namespace app\admin\controller\risk_management;
 
-use app\admin\model\Company;
 use app\admin\model\MarkLog;
 use app\admin\model\Tag;
 use app\common\controller\Backend;
-use app\common\model\AdvScore;
 use app\common\model\AdvStats;
-use app\common\model\ObjProduct;
-use app\common\model\QcAdvDayCost;
 use think\Db;
 use think\db\exception\DataNotFoundException;
 use think\db\exception\ModelNotFoundException;
@@ -241,8 +237,8 @@ class RiskAdv extends Backend
                 foreach ($content as $value) {
                     if (preg_match('/([^:]+):\s*(.+)\s*->\s*(.+)/', $value, $matches)) {
                         $field = trim($matches[1]);
-                        $old_value = trim($matches[2]);
-                        $new_value = trim($matches[3]);
+                        $old_value = trim($matches[2])?:"-";
+                        $new_value = trim($matches[3])?:"-";
 
                         // 获取中文字段名
                         $chinese_field = $fields_map[$field] ?? $field;
@@ -252,10 +248,15 @@ class RiskAdv extends Backend
                             $new_value = $this->handle_status[$new_value] ?? $new_value;
                         }
                         // 拼接结果
-                        $result[] = "$chinese_field:$old_value->$new_value";
+                        $result[] = $chinese_field."：".$old_value." 修改为：".$new_value;
                     }
                 }
+                $item['type'] = '处理账户';
+                if($item['obj_id']){
+                    $item['type'] = '处理计划';
+                }
                 $item['contents'] = implode(';',$result);
+
             }
 
 

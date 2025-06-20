@@ -130,7 +130,6 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', 'bootstrap-table-fixe
             Table.api.bindevent(table);
         },
         get_log_list: function () {
-            console.log("sdfkj");
             Controller.api.bindevent();
             // 初始化表格参数配置
             Table.api.init({
@@ -152,8 +151,18 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', 'bootstrap-table-fixe
                 columns: [
                     [
                         {field: 'adv_id', title: "千川id"},
+                        {field: 'obj_id', title: "计划id"},
                         {field: 'operator', title: "操作人"},
-                        {field: 'contents', title: "操作记录"},
+                        {field: 'type', title: "处理类型"},
+                        {
+                            field: 'contents',
+                            title: "操作记录",
+                            formatter: function (value) {
+                                if (!value) return '';
+                                const items = value.split(";");
+                                return items.filter(item => item.trim()).join('<br>');
+                            }
+                        },
                         {field: 'create_time', title: "操作时间",formatter: Table.api.formatter.datetime},
                     ]
                 ],

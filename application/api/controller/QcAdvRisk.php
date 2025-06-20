@@ -12,7 +12,9 @@ use think\Cache;
 use think\Db;
 use think\db\exception\DataNotFoundException;
 use think\db\exception\ModelNotFoundException;
+use think\Exception;
 use think\exception\DbException;
+use think\exception\PDOException;
 
 
 /**
@@ -48,6 +50,28 @@ class QcAdvRisk extends Api
             \think\Queue::push('app\job\risk_job\UpdateAdvStats', $chunk, "updateAdvStats");
         }
         echo "全部处理完了";
+    }
+
+    /**
+     * @return void
+     * @throws Exception
+     * @throws PDOException
+     */
+    public function clearIsDelAdvProduct()
+    {
+
+        $adv_ids = Db::name('risk_obj_product')
+            ->alias('ro')
+            ->join('company com','ro.adv_id=com.advertiser_id','left')
+            ->where(['com.adv_status'=>0])
+            ->group('ro.adv_id')
+            ->column('com.advertiser_id');
+        if($adv_ids){
+            $res = Db::name('risk_obj_product')->where(['adv_id'=>['in',$adv_ids]])->delete();
+            echo "已删除".$res."条";
+        }else{
+            echo "没有数据需要处理";
+        }
     }
 
 

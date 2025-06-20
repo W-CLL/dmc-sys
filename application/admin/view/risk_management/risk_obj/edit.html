@@ -1,0 +1,40 @@
+<form id="edit-form" class="form-horizontal" role="form" data-toggle="validator" method="POST" action="">
+    {:token()}
+    <input type="hidden" name="id" value="{$row.id}">
+    <div class="form-group">
+        <label for="c-adv-id" class="control-label col-xs-12 col-sm-2">千川id:</label>
+        <div class="col-xs-12 col-sm-4">
+            <input id="c-adv-id"  class="form-control" name="check_staff" disabled value="{$row.adv_id}" />
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">处理状态:</label>
+        <div class="col-xs-12 col-sm-4">
+            <select class="form-control selectpicker" name="handle_status" data-live-search="false">
+                {foreach $handle_status_list as $k => $v}
+                <option value="{$k}" {if ($row["handle_status"] == $k)} selected{/if} >{$v}</option>
+                {/foreach}
+            </select>
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-remark" class="control-label col-xs-12 col-sm-2">自定义备注:</label>
+        <div class="col-xs-12 col-sm-8">
+            <textarea id="c-remark" class="form-control" name="remark"  placeholder="请输入备注">{$row.remark}</textarea>
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-sys-tag" class="control-label col-xs-12 col-sm-2">系统标签:</label>
+        <div class="col-xs-12 col-sm-4">
+            <input id="c-sys-tag"  class="form-control" name="sys_tag" disabled value="{$row.sys_tag?$tag_list[$row.sys_tag]:'正常'}" />
+        </div>
+    </div>
+
+    <div class="form-group layer-footer">
+        <label class="control-label col-xs-12 col-sm-2"></label>
+        <div class="col-xs-12 col-sm-8">
+            <button type="submit" class="btn btn-primary btn-embossed ">{:__('OK')}</button>
+            <button type="reset" class="btn btn-default btn-embossed">{:__('Reset')}</button>
+        </div>
+    </div>
+</form>
