@@ -166,7 +166,7 @@ class RiskObj extends Backend
             'admin_id' => $this->auth->id,
             'operator' => $this->auth->username,
             'adv_id' => $info['adv_id'],  // $info里的如果跟表设置的字段不一致，请自行修改
-            'obj_id' => isset($info['obj_id'])?$info['adv_id']:'',
+            'obj_id' => $info['obj_id'] ?? '',
             'content' => $content,
         ];
         return MarkLog::create($log);
