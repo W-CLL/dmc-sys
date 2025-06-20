@@ -117,7 +117,7 @@ class QcAdv extends Api
     public function chunkObjGoodsList($start_time = '', $end_time = '')
     {
         if (!$start_time && !$end_time) {
-            $start_time = date('Y-m-d');
+            $start_time = date('Y-m-d', strtotime('-1 day'));
             $end_time = date('Y-m-d');
         }
         $com_model = new Company();
@@ -127,8 +127,8 @@ class QcAdv extends Api
             $obj_list = $obj_model->where([
                 'is_handle' => 0,
                 'adv_id' => $item,
-                'marketing_goal'=>['<>',"LIVE_PROM_GOODS"],
-                "obj_create_time"=>['>=',"1740758400"]
+                'marketing_goal'=>"VIDEO_PROM_GOODS",
+                "obj_create_time"=>['>=',"1740758400"]//2025-3月之后的创建的计划
             ])->column('obj_status','obj_id');
             if (!$obj_list) {
                 continue;
