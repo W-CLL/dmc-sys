@@ -48,6 +48,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                             }},
                         {field: 'status_text', title: "计划状态"},
                         {field: 'handle_status_text', title: "处理状态"},
+                        {field: 'remark', title: "备注"},
                         {field: 'obj_create_time', title:"计划创建时间" ,formatter: Table.api.formatter.datetime},
                         {
                             field: 'operate', title: __('Operate'),
