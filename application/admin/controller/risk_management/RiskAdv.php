@@ -87,13 +87,13 @@ class RiskAdv extends Backend
                 'COUNT(rop.obj_id)' => 'total_obj',
             ];
 
-            foreach ($tag as $id => $name) {
-                $field['SUM(CASE WHEN rop.sys_tag = ' . $id . ' THEN 1 ELSE 0 END)'] = 'sys_tag' . $id . '_count';
-            }
-            $fields = array_merge($base_field, $field);
+//            foreach ($tag as $id => $name) {
+//                $field['SUM(CASE WHEN rop.sys_tag = ' . $id . ' THEN 1 ELSE 0 END)'] = 'sys_tag' . $id . '_count';
+//            }
+//            $fields = array_merge($base_field, $field);
             $list = $risk_adv_model
                 ->alias('ra')
-                ->field($fields)
+                ->field($base_field)
                 ->join((new \app\admin\model\Company)->getTable() . ' c', 'ra.adv_id = c.advertiser_id', 'LEFT')
                 ->join((new \app\common\model\AdvScore)->getTable() . ' s', 'ra.adv_id = s.adv_id', 'LEFT')
                 ->join((new \app\common\model\ObjProduct)->getTable() . ' rop', 'ra.adv_id = rop.adv_id', 'LEFT')
@@ -116,18 +116,19 @@ class RiskAdv extends Backend
 
                 $item['status_text'] = $this->handle_status[(int)$item['handle_status']];
                 foreach ($tag as $id => $name) {
-                    $item['tag_obj_count'] = $item['tag_obj_count'] . $name . "数：" . $item['sys_tag' . $id . '_count'] . "条;";
+                    $true_num = Db::name('risk_obj_product')->where(['adv_id'=>$item['adv_id'],'handle_status'=>['in',[0,1,2]],'sys_tag'=>$id])->count();
+                    $item['tag_obj_count'] = $item['tag_obj_count'] . $name . "数：" . $true_num . "条;";
                 }
             }
             // 查询总数
             $countQuery = $risk_adv_model
                 ->alias('ra')
-                ->field($fields)
+                ->field($base_field)
                 ->join((new \app\admin\model\Company)->getTable() . ' c', 'ra.adv_id = c.advertiser_id', 'LEFT')
                 ->join((new \app\common\model\AdvScore)->getTable() . ' s', 'ra.adv_id = s.adv_id', 'LEFT')
                 ->join((new \app\common\model\ObjProduct)->getTable() . ' rop', 'ra.adv_id = rop.adv_id', 'LEFT')
                 ->where($where)
-                ->where(['c.adv_status'=>1])//直接过滤已注销的账户
+                ->where(['c.adv_status'=>1])//直接过滤已注销的账户,不统计已经完成的计划
                 ->where(function ($query) use ($staff) {
                     $query->whereOr(['ra.check_staff' => ['like', "%" . $staff . "%"]])
                         ->whereOr(['c.kahuna' => ['like', "%" . $staff . "%"]])
@@ -237,9 +238,8 @@ class RiskAdv extends Backend
                 foreach ($content as $value) {
                     if (preg_match('/([^:]+):\s*(.+)\s*->\s*(.+)/', $value, $matches)) {
                         $field = trim($matches[1]);
-                        $old_value = trim($matches[2])?:"-";
-                        $new_value = trim($matches[3])?:"-";
-
+                        $old_value = (isset($matches[2]) && trim($matches[2], " \n\r\t\v") !== '') ? trim($matches[2], " \n\r\t\v") : "-";
+                        $new_value = (isset($matches[3]) && trim($matches[3], " \n\r\t\v") !== '') ? trim($matches[3], " \n\r\t\v") : "-";
                         // 获取中文字段名
                         $chinese_field = $fields_map[$field] ?? $field;
                         // 处理 handle_status 的值映射

@@ -108,6 +108,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', 'bootstrap-table-fixe
                     setTimeout(function () {
                         $('.form-commonsearch').submit();
                     }, 300);
+                    sessionStorage.removeItem('searchParams_' + cacheKey);
                 } catch (e) {
                     console.warn("恢复搜索参数失败", e);
                 }

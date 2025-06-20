@@ -41,7 +41,6 @@ class RiskObj extends Backend
     ];
 
     protected $handle_status = [ '正常', '跟进中', '已删除', '已完成'];
-
     private function _filter(&$where)
     {
         $params = json_decode(input('filter'), true);
@@ -56,6 +55,11 @@ class RiskObj extends Backend
         }
         if(!empty($params['obj_status'])){
             $where['qo.obj_status'] = $params['obj_status'];
+        }
+        if (isset($params['handle_status'])) {
+            if ($params['handle_status'] != '-1') {
+                $where['ro.handle_status'] = $params['handle_status'];
+            }
         }
 
     }
@@ -90,7 +94,9 @@ class RiskObj extends Backend
                 $product_ids = $risk_obj_model->where(['obj_id' => $item['obj_id'],'is_del'=>0])->limit(12)->column('product_id');
                 $item['product_ids'] = implode(';', $product_ids);
                 $item['status_text'] = $this->obj_status[$item['obj_status']];
+                $item['handle_status_text'] = $this->handle_status[$item['handle_status']];
                 $item['sys_tag_text'] = $item['sys_tag'] ? $tag[$item['sys_tag']] : '-';
+
 //                $item['check_staff'] = $info['check_staff'];
 //                $item['business_staff'] = $info['business_staff'];
             }
@@ -121,14 +127,14 @@ class RiskObj extends Backend
         }
         $before = $info->toArray();
         if ($this->request->isPost()) {
-            $data['id'] = input("id");
+//            $data['id'] = input("id");
             $data['handle_status'] = input("handle_status");
             $data['remark'] = input("remark");
-            if (empty($data['id'])) {
+            if (empty(input("id"))) {
                 $this->error("数据异常，请刷新后重试");
             }
             try {
-                $info->save($data);
+                $info->where(['obj_id'=>$before['obj_id']])->update($data);
                 $this->saveLog($before, $data);
             } catch (Exception $exception) {
                 $this->error("保存失败:" . $exception->getMessage());
@@ -201,12 +207,13 @@ class RiskObj extends Backend
                 $result = [];
                 foreach ($content as $value) {
                     if (preg_match('/([^:]+):\s*(.+)\s*->\s*(.+)/', $value, $matches)) {
-                        $field = trim($matches[1]);
-                        $old_value = trim($matches[2])?:"-";
-                        $new_value = trim($matches[3])?:"-";
 
+                        $field = trim($matches[1]);
+                        $old_value = (isset($matches[2]) && trim($matches[2], " \n\r\t\v") !== '') ? trim($matches[2], " \n\r\t\v") : "-";
+                        $new_value = (isset($matches[3]) && trim($matches[3], " \n\r\t\v") !== '') ? trim($matches[3], " \n\r\t\v") : "-";
                         // 获取中文字段名
                         $chinese_field = $fields_map[$field] ?? $field;
+
                         // 处理 handle_status 的值映射
                         if ($field === 'handle_status') {
                             $old_value = $this->handle_status[$old_value] ?? $old_value;

@@ -47,6 +47,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                                 return rows.join('<br>');
                             }},
                         {field: 'status_text', title: "计划状态"},
+                        {field: 'handle_status_text', title: "处理状态"},
                         {field: 'obj_create_time', title:"计划创建时间" ,formatter: Table.api.formatter.datetime},
                         {
                             field: 'operate', title: __('Operate'),
@@ -90,7 +91,6 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
 
             // 初始化表格
             table.bootstrapTable({
-                // ... 其他配置 ...
                 url: $.fn.bootstrapTable.defaults.extend.index_url,
                 pk: 'id',
                 pageSize: 10,
@@ -99,8 +99,14 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                 columns: [
                     [
                         {field: 'adv_id', title: "千川id"},
+                        {field: 'obj_id', title: "计划id"},
                         {field: 'operator', title: "操作人"},
-                        {field: 'contents', title: "操作记录"},
+                        {field: 'contents', title: "操作记录",
+                            formatter: function (value) {
+                                if (!value) return '';
+                                const items = value.split(";");
+                                return items.filter(item => item.trim()).join('<br>');
+                            }},
                         {field: 'create_time', title: "操作时间",formatter: Table.api.formatter.datetime},
                     ]
                 ],
