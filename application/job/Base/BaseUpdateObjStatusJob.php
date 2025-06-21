@@ -173,7 +173,7 @@ abstract class BaseUpdateObjStatusJob
                         dump($resData['message']);
 //                        die;
                         $error['adv_id'] = $requestAdvId;
-                        $error['obj_id'][] = $requestObjId;
+                        $error['obj_list'][] = $requestObjId;
                     };
                 }
             },
