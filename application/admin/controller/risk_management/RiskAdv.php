@@ -15,6 +15,7 @@ use think\exception\DbException;
 class RiskAdv extends Backend
 {
     protected $handle_status = ['-1' => '无', '正常', '跟进中', '已注销', '已处理'];
+    protected $obj_handle_status = [ '正常', '跟进中', '已删除', '已完成'];
 
     private function _filter(&$where, &$advIdFilter = null)
     {
@@ -67,6 +68,7 @@ class RiskAdv extends Backend
                 $staff = $where['ra.staff'];
                 unset($where['ra.staff']);
             }
+            $order_filed = $sort.' '.$order.',adv_id desc';
 
             if ($advIdFilter !== null) {
                 $where['ra.adv_id'] = ['in', $advIdFilter];
@@ -106,7 +108,7 @@ class RiskAdv extends Backend
                         ->whereOr(['ra.business_staff' => ['like', "%" . $staff . "%"]]);
                 })
                 ->group('ra.adv_id, c.company_name, s.one_class_score')
-                ->order($sort, $order)
+                ->order($order_filed)
                 ->limit($offset, $limit)
                 ->select();
 
@@ -236,6 +238,12 @@ class RiskAdv extends Backend
             foreach ($list as &$item) {
                 $content = explode(';', rtrim($item['content'], ';'));
                 $result = [];
+                $item['type'] = '处理账户';
+                $handle_status = $this->handle_status;
+                if($item['obj_id']){
+                    $item['type'] = '处理计划';
+                    $handle_status = $this->obj_handle_status;
+                }
                 foreach ($content as $value) {
                     if (preg_match('/([^:]+):\s*(.+)\s*->\s*(.+)/', $value, $matches)) {
                         $field = trim($matches[1]);
@@ -245,17 +253,14 @@ class RiskAdv extends Backend
                         $chinese_field = $fields_map[$field] ?? $field;
                         // 处理 handle_status 的值映射
                         if ($field === 'handle_status') {
-                            $old_value = $this->handle_status[$old_value] ?? $old_value;
-                            $new_value = $this->handle_status[$new_value] ?? $new_value;
+                            $old_value =$handle_status[$old_value] ?? $old_value;
+                            $new_value = $handle_status[$new_value] ?? $new_value;
                         }
                         // 拼接结果
                         $result[] = $chinese_field."：".$old_value." 修改为：".$new_value;
                     }
                 }
-                $item['type'] = '处理账户';
-                if($item['obj_id']){
-                    $item['type'] = '处理计划';
-                }
+
                 $item['contents'] = implode(';',$result);
 
             }

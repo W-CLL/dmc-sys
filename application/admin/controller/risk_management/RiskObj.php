@@ -151,6 +151,46 @@ class RiskObj extends Backend
 
 
     /**
+     * @throws Exception
+     */
+    public function edit_all()
+    {
+        $model = new ObjProduct();
+        if ($this->request->isPost()) {
+            $params = input();
+            if(!$params['ids']){
+                $this->error('至少提交一条数据');
+            }
+            $ids = explode(',',$params['ids']);
+            Db::startTrans();
+            try {
+                foreach ($ids as $id) {
+                    $save_data = [
+                        'handle_status' => $params['handle_status'],
+                        'remark' => $params['remark'],
+                        'update_time'=>time()
+                    ];
+                    $info = $model->where(['id' => $id])->find();
+                    if($info){
+                        $before_data = $info->toArray();
+                        $info->where(['obj_id'=>$before_data['obj_id']])->update($save_data);
+                        unset($save_data['update_time']);
+                        $this->saveLog($before_data, $save_data);
+                    }
+                }
+                Db::commit();
+                $this->success('保存成功!');
+            }catch (Exception $e){
+                Db::rollback();
+                $this->error($e->getMessage());
+            }
+        }
+        $this->assign('handle_status_list', $this->handle_status);
+
+        return $this->view->fetch();
+    }
+
+    /**
      * 插入修改日志
      * @throws Exception
      */

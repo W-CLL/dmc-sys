@@ -78,6 +78,46 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
 
             // 为表格绑定事件
             Table.api.bindevent(table);
+            /* 获取选中的id */
+            function getIdSelections() {
+                return $.map($("#table").bootstrapTable('getSelections'), function(row) {
+                    return row.id
+                });
+            }
+            $(document).on('click', '.btn-edit-all', function () {
+                var checkids = getIdSelections();
+                if (checkids.length === 0) {
+                    layer.msg("请先选择至少一条记录");
+                    return false;
+                }
+                layer.open({
+                    type: 2,
+                    title: '批量设置',
+                    area: ['800px', '600px'],
+                    content: '../../edit_all',
+                    fixed: false, // 不固定
+                    shadeClose: true,
+                    btn: ['提交', '取消'],
+                    btnAlign: 'c',
+                    yes: function(index, layero){
+                        var body = layer.getChildFrame('body', index);
+                        var handle_status = body.find("select[name='handle_status']")[0].value;
+                        var remark = body.find("textarea[name='remark']").val();
+                        Fast.api.ajax({
+                            url: 'risk_management/risk_obj/edit_all',
+                            data: {
+                                ids: checkids.join(','),
+                                handle_status: handle_status,
+                                remark: remark,
+                            }
+                        }, function (data, ret) {
+                            table.bootstrapTable('refresh', {});
+                            Layer.close(index);
+                        });
+                    },
+                });
+            });
+
         },
         get_log_list: function () {
             Controller.api.bindevent();
