@@ -142,7 +142,8 @@ class QcGlobalObj extends Api
             ->group('adv_id')->column('adv_id');
         foreach ($adv_list as $item) {
             $list = $obj_model
-                ->where(['opt_status' => ['NOT IN', ['DELETE']]])
+                ->where(['obj_status' => ['NOT IN', ['DELETE']]])
+                ->whereOr(['opt_status' => ['NOT IN', ['DELETE']]])
                 ->where(['adv_id' => $item])
                 ->column('obj_id');
             if ($list) {
