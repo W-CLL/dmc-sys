@@ -118,7 +118,7 @@ class QcObj extends Api
         //2025-5-22号标准商品全下线了，只有推直播间的了marketing_goal,状态也只更新直播间的
         foreach ($adv_list as $item) {
             $list = $obj_model
-                ->where(['opt_status' => ['NOT IN', ['DELETE', 'FROZEN']]])
+                ->where(['obj_status' => ['NOT IN', ['DELETE', 'FROZEN']]])
                 ->where(['adv_id' => $item,'marketing_goal'=>"LIVE_PROM_GOODS"])
                 ->column('obj_id');
             if($list){
