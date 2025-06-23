@@ -119,7 +119,7 @@ class RiskAdv extends Backend
 
                 $item['status_text'] = $this->handle_status[(int)$item['handle_status']];
                 foreach ($tag as $id => $name) {
-                    $true_num = Db::name('risk_obj_product')->where(['adv_id'=>$item['adv_id'],'handle_status'=>['in',[0,1,2]],'sys_tag'=>$id])->count();
+                    $true_num = Db::name('risk_obj_product')->where(['adv_id'=>$item['adv_id'],'handle_status'=>['in',[0,1]],'sys_tag'=>$id])->count();
                     $item['tag_obj_count'] = $item['tag_obj_count'] . $name . "数：" . $true_num . "条;";
                 }
             }
