@@ -196,16 +196,17 @@ class RiskAdv extends Backend
                 $content .= $key . ": " . $info[$key] . " -> " . $item . ";";
             }
         }
-        if (!$content) {
-            throw new Exception('无修改数据');
+        if ($content) {
+            $log = [
+                'admin_id' => $this->auth->id,
+                'operator' => $this->auth->username,
+                'adv_id' => $info['adv_id'],  // $info里的如果跟表设置的字段不一致，请自行修改
+                'content' => $content,
+            ];
+            return MarkLog::create($log);
         }
-        $log = [
-            'admin_id' => $this->auth->id,
-            'operator' => $this->auth->username,
-            'adv_id' => $info['adv_id'],  // $info里的如果跟表设置的字段不一致，请自行修改
-            'content' => $content,
-        ];
-        return MarkLog::create($log);
+        return true;
+
     }
 
     /**
