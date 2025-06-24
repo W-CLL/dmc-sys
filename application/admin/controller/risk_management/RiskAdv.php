@@ -161,6 +161,7 @@ class RiskAdv extends Backend
             $data['check_staff'] = input("check_staff");
             $data['business_staff'] = input("business_staff");
             $data['remark'] = input("remark");
+            $data['tag'] = input("tag_id");
             if (empty($data['id'])) {
                 $this->error("数据异常，请刷新后重试");
             }
@@ -236,6 +237,7 @@ class RiskAdv extends Backend
                 'tag' => '人工标签',
             ];
             $list = $log_model->where(['adv_id' => $adv_id])->order('create_time desc')->select();
+            $tag_list = Db::name('tag')->column('name','id');
             foreach ($list as &$item) {
                 $content = explode(';', rtrim($item['content'], ';'));
                 $result = [];
@@ -256,6 +258,10 @@ class RiskAdv extends Backend
                         if ($field === 'handle_status') {
                             $old_value =$handle_status[$old_value] ?? $old_value;
                             $new_value = $handle_status[$new_value] ?? $new_value;
+                        }
+                        if($field == 'tag'){
+                            $old_value = $tag_list[$old_value]??$old_value;
+                            $new_value = $tag_list[$new_value]??$new_value;
                         }
                         // 拼接结果
                         $result[] = $chinese_field."：".$old_value." 修改为：".$new_value;

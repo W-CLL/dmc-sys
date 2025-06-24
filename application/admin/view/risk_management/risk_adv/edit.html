@@ -48,6 +48,7 @@
         <label class="control-label col-xs-12 col-sm-2">人工标签:</label>
         <div class="col-xs-12 col-sm-4">
             <select  class="form-control selectpicker" name="tag_id" data-live-search="false">
+                <option value="" >正常</option>
                 {foreach $tag_list as $id => $name}
                 <option value="{$id}"  {if $row.tag == $id}selected{/if}>{$name}</option>
                 {/foreach}
