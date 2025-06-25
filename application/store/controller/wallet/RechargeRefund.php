@@ -232,6 +232,8 @@ class RechargeRefund extends Store
                                                 ->dec("public_spending_credit_limit", $store["public_spending_credit_limit"]);
                                         }
                                     } else {
+                                        $money_log['balance_surplus'] = $store['public_money'] + $money_log["actual_money"];
+                                        $money_log['credit_limit_surplus'] = $store['public_credit_limit'];
                                         $sql->inc("public_money", $money_log["actual_money"]);
                                     }
                                     $sql->update(["update_time" => time()]);
@@ -259,6 +261,8 @@ class RechargeRefund extends Store
                                                 ->dec("private_spending_credit_limit", $store["private_spending_credit_limit"]);
                                         }
                                     } else {
+                                        $money_log['balance_surplus'] = $store['private_money'] + $money_log["actual_money"];
+                                        $money_log['credit_limit_surplus'] = $store['private_credit_limit'];
                                         $sql->inc("private_money", $money_log["actual_money"]);
                                     }
                                     $sql->update(["update_time" => time()]);
