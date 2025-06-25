@@ -4,6 +4,7 @@ namespace app\store\controller\wallet;
 
 
 use app\common\controller\Store;
+use app\store\model\StoreRefund;
 use jlqc\FundManagement;
 use think\Cache;
 use think\Db;
@@ -82,6 +83,7 @@ class RechargeTransfer extends Store
                 if (!$transfer_records_id) {
                     throw new Exception("生成转账记录失败");
                 }
+                $this->inheritanceRatio($advertiser_id_initiate, $advertiser_id_target, $money); // 继承返点比例
 
                 //发起转账
                 list($data, $biz_request_no) = FundManagement::create_transfer($access_token, $transfer_records_id, $advertiser_id, $advertiser_id_initiate, $target_account_detail_list, $transfer_direction, $remark);
@@ -141,6 +143,46 @@ class RechargeTransfer extends Store
         $this->assign("company_data", $company_data);
         return $this->view->fetch();
     }
+
+
+    /**
+     * @param $advertiser_id_initiate
+     * @param $advertiser_id_target
+     * @param $money
+     * @return void
+     * @throws Exception
+     * 同级互转继承返点比例
+     */
+    private function inheritanceRatio($advertiser_id_initiate, $advertiser_id_target, $money)
+    {
+        $store_refund_model = new StoreRefund();
+        $info = $store_refund_model->getOneRefundInfo($advertiser_id_initiate);
+        if ($info) {
+            $wallet = [];
+            if($info['wallet']+$info['credit'] < $money){
+                throw new Exception("本次同级互转最大金额不得超过：".($info['wallet']+$info['credit']));
+            }
+            if ($info['credit'] >= $money){
+                $wallet['credit'] = $money;
+                $wallet['wallet'] = 0;
+            }else{
+                $wallet['credit'] = $info['credit'];
+                $wallet['wallet'] = $money - $info['credit'];
+            }
+            $data = [
+                'money' => $money,
+                'store_id' => $info['store_id'],
+                'discount_percentage' => $info['discount_percentage'],
+                'platform_id' => $advertiser_id_target,
+                'account_type' => $info['type'],
+            ];
+            $store_refund_model->addStoreRefundRecord($wallet, $data);
+            $info->wallet -= $wallet['wallet'];
+            $info->credit -= $wallet['credit'];
+            $info->save(); // 扣除原本号的金额记录
+        }
+    }
+
 
     public function get_qc_money($advertiser_id = '')
     {

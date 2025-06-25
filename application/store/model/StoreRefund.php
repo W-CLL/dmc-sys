@@ -265,4 +265,18 @@ class StoreRefund extends Model
     }
 
 
+    /**
+     * 获取该户的退款记录[只传id版]
+     * @param $platform_id  = 平台id【千川id or 子钱包id】
+     */
+    public function getOneRefundInfo($platform_id)
+    {
+        return self::where('platform_id', $platform_id)
+            ->where('credit > 0 OR wallet > 0')
+            ->order('id desc')
+            ->order('update_time desc')
+            ->find();
+    }
+
+
 }
