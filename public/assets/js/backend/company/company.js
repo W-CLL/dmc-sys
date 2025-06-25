@@ -77,21 +77,6 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                                         return true;
                                     }
                                 },
-                                {
-                                    name: "transfer_records",
-                                    text: "计划列表", // 按钮名称
-                                    classname: 'btn btn-xs btn-success btn-magic ',
-                                    // classname: 'btn btn-xs btn-success btn-magic btn-dialog',
-                                    icon: 'fa fa-magic',
-                                    url: function(row) {
-                                        return '/TBlQxHczkR.php/operate_monitor/obj/details?ad_id=' + row.advertiser_id;
-                                    }, // 指向控制器对应方法
-                                    confirm: '查看当前用户计划列表',
-                                    visible: function(row) {
-                                        // 返回true时按钮显示,返回false隐藏
-                                        return true;
-                                    }
-                                },
                             ], table: table, events: Table.api.events.operate, formatter: Table.api.formatter.operate
                         }
                     ]
