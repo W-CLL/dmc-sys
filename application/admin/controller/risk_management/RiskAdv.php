@@ -33,6 +33,11 @@ class RiskAdv extends Backend
                 $advIdFilter = [0];
             }
         }
+
+        if (!empty($params['adv_id'])) {
+            $where['ra.adv_id'] = $params['adv_id'];
+        }
+
         if (isset($params['company_name'])) {
             $where['c.company_name'] = ['like', '%' . $params['company_name'] . '%'];
         }
