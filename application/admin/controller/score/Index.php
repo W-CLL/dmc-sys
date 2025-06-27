@@ -64,6 +64,9 @@ class Index extends Backend
                 ->select();
 
             $adv_ids = array_column($list, 'adv_id');
+            if(!$adv_ids){
+                $this->error('没有找到对应违规账户！');
+            }
 
             $info_list = FundManagement::get_adv_info($adv_ids);
             if ($info_list['code'] != 0) {
