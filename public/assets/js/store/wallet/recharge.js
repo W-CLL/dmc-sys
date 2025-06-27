@@ -30,10 +30,17 @@ define(['jquery', 'bootstrap', 'store', 'table', 'form'], function ($, undefined
             });
             // 给表单绑定事件
             Form.api.bindevent($("#edit-form"), function () {
+
                 setTimeout(function () {
                     location.reload();
                 }, 1500);
                 return true;
+            }, function() {
+                // 提交完成后重新启用按钮
+                $(".btn-primary").removeClass("disabled");
+            }, function() {
+                // 提交前禁用按钮
+                $(".btn-primary").addClass("disabled");
             });
 
             $('#type').on('change', function() {
@@ -52,8 +59,8 @@ define(['jquery', 'bootstrap', 'store', 'table', 'form'], function ($, undefined
                     type: 1,
                     area: ['680px', '520px'],
                     content: "<h5 style='margin: 20px'>" +
-                            "<p>需明确可见甲方付款人抬头、日期、金额以及乙方收款抬头、银行卡号、银行信息。</p>" +
-                            "<p>图片打码是隐藏客户信息，上传请勿打码！以免系统识别不到！</p>" +
+                        "<p>需明确可见甲方付款人抬头、日期、金额以及乙方收款抬头、银行卡号、银行信息。</p>" +
+                        "<p>图片打码是隐藏客户信息，上传请勿打码！以免系统识别不到！</p>" +
                         "<img style='width: 600px' src='/example/1718868742692.jpg'>"+
                         "<img style='width: 600px' src='/example/1718868827655.jpg'>"+
                         "</h5>" //这里content是一个普通的String

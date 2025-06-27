@@ -94,7 +94,7 @@
         <div class="form-group" style="display: none" >
             <label class="control-label col-xs-12 col-sm-2"></label>
             <div class="col-xs-12 col-sm-8">
-                <input type="text" style="width: 200px" class="form-control" id="order_num" name="order_num" value="" data-rule="required" />
+                <label for="order_num"></label><label for="order_num"></label><input type="text" style="width: 200px" class="form-control" id="order_num" name="order_num" value="" data-rule="required" />
             </div>
         </div>
     </div>
@@ -131,14 +131,18 @@
             <div class="form-group" >
                 <label class="control-label col-xs-12 col-sm-2">提取金额(公):</label>
                 <div class="col-xs-12 col-sm-8">
-                    <input type="number" style="width: 200px" class="form-control"  name="public_credit_limit_money" value="" data-rule="required" />
+                    <label>
+                        <input type="number" style="width: 200px" class="form-control"  name="public_credit_limit_money" value="" data-rule="required" />
+                    </label>
                 </div>
             </div>
 
             <div class="form-group" >
                 <label class="control-label col-xs-12 col-sm-2">提取金额(私):</label>
                 <div class="col-xs-12 col-sm-8">
-                    <input type="number" style="width: 200px" class="form-control"  name="private_credit_limit_money" value="" data-rule="required" />
+                    <label>
+                        <input type="number" style="width: 200px" class="form-control"  name="private_credit_limit_money" value="" data-rule="required" />
+                    </label>
                 </div>
             </div>
 
@@ -151,7 +155,6 @@
                 <button type="submit" class="btn btn-primary btn-embossed disabled">提交</button>
             </div>
         </div>
-    </div>
 </form>
 
 
