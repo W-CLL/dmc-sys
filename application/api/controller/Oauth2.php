@@ -16,6 +16,8 @@ use Requests;
 use think\Cache;
 use think\Db;
 use think\Env;
+use think\Exception;
+use think\exception\PDOException;
 
 
 class Oauth2 extends Api
@@ -335,9 +337,17 @@ class Oauth2 extends Api
 
     }
 
-    public function updateKahuna()
+    /**
+     * 更新负责人
+     * @param bool $cancel_day_update
+     * 取消一天限制
+     * @return void
+     * @throws Exception
+     * @throws PDOException
+     */
+    public function updateKahuna(bool $cancel_day_update=false)
     {
-        if (Cache::get('kahuna_run_status') == 1) {
+        if (Cache::get('kahuna_run_status') == 1 && !$cancel_day_update) {
             echo "今日已经更新完毕";
             return;
         }
