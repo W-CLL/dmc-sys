@@ -460,15 +460,16 @@ class Index extends Frontend
 
     public function updatePolicy(){
         $date = date('Y-m-d');
-        if($date != '2025-05-07'){
-            echo "非2025-05-07禁止访问";
+        if($date != '2025-07-03'){
+            echo "非2025-07-03禁止访问";
             return;
         }
-        $ids_bp = [1,3,4,11,12];  // 白牌对私1.035  对公1.015
-        $ids_pp = [5,8];   // 品牌对私1.04  对公1.02
-        Db::name('store')->where(['group_id'=>['in',$ids_bp]])->update(['private_discount_percentage' => 1.035,'public_discount_percentage' => 1.015]);
-        Db::name('store')->where(['group_id'=>['in',$ids_pp]])->update(['private_discount_percentage' => 1.04,'public_discount_percentage' => 1.02]);
-        Db::name('company')->where(['discount_percentage' => ['neq',0]])->update(['discount_percentage' => 1.04]);
+//        $ids_bp = [1,3,4,11,12];
+//        $ids_pp = [5,8];
+        $ids = [1,3,4,5,6,7,8,10,11,12];
+        Db::name('store')->where(['group_id'=>['in',$ids]])->update(['private_discount_percentage' => 1.03,'public_discount_percentage' => 1.0]);
+//        Db::name('store')->where(['group_id'=>['in',$ids_pp]])->update(['private_discount_percentage' => 1.03,'public_discount_percentage' => 1.0]);
+        Db::name('company')->where(['discount_percentage' => ['neq',0]])->update(['discount_percentage' => 1.03]);
         echo "更新完成";
     }
 
