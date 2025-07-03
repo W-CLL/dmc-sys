@@ -10,7 +10,7 @@ use app\common\model\QcAdvDayCost;
 class AdList extends Backend
 {
     protected $username = [
-        '王跟' => ['王倚澄'],
+        '王跟' => ['谭玉霞'],
         '张跟' => ['张秋萍'],
         '陈跟' => ['陈秀玉'],
         '莫跟' => ['莫美春'],
