@@ -88,7 +88,7 @@ define(['jquery', 'bootstrap', 'company', 'table', 'form'], function ($, undefin
                 pk: 'id',
                 sortName: 'mon_cost',
                 pageSize: 10,
-                pageList: [10, 15, 20],
+                pageList: [10, 15, 20,50,100],
                 // fixedColumns: true,
                 // fixedRightNumber: 1,
                 columns: [
