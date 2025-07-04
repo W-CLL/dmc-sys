@@ -16,7 +16,7 @@ if (!function_exists('checkQueueExecutionOver')) {
     {
         $main_queue_name_num = getQueueNumWithKey($main_queue_name);
         $chunk_queue_name_num = getQueueNumWithKey($chunk_queue_name);
-        if($main_queue_name_num > 50 || $chunk_queue_name_num){
+        if($main_queue_name_num > 10 || $chunk_queue_name_num){
             echo "还有".$main_queue_name_num."条任务，没有执行完";
             die;
         }

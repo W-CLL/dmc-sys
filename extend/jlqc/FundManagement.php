@@ -528,7 +528,7 @@ class FundManagement
     }
 
     /**
-     * 获取账户下素材列表和数据
+     * 获取标准账户下素材列表和数据
      * @param array $params
      * 参数参考：https://open.oceanengine.com/labels/12/docs/1810701753348235?origin=left_nav
      * @return mixed
@@ -539,6 +539,24 @@ class FundManagement
         $url = "https://api.oceanengine.com/open_api/v1.0/qianchuan/material/get/";
         return sendApiRes($url, $params, 'GET', ['Access-Token' => $access_token])['data'];
     }
+
+    /**
+     * 获取全域推广计划下素材
+     * @param array $params
+     * advertiser_id     必填     number     千川广告账户ID
+     * ad_id             必填     number     计划id
+     * filtering         必填     object     过滤条件
+     * 参数参考：https://open.oceanengine.com/labels/12/docs/1804363488115850
+     * @return mixed
+     */
+    public static function get_global_adv_material_list(array $params)
+    {
+        $access_token = Cache::get("qc_access_token");
+        $url = "https://api.oceanengine.com/open_api/v1.0/qianchuan/uni_promotion/ad/material/get/";
+        return sendApiRes($url, $params, 'GET', ['Access-Token' => $access_token])['data'];
+    }
+
+
 }
 
 

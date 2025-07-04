@@ -3,6 +3,7 @@
 namespace app\job\Base;
 
 use app\common\model\Queue;
+use app\common\controller\NameRuleManager;
 use think\Cache;
 use think\Exception;
 use think\queue\Job;
@@ -72,6 +73,9 @@ abstract class BaseUpdateWebJob
 
         $url = $this->getEditApiUrl();
 
+        // 生成新的计划名称
+        $newName = $this->generateNewName($obj_info['name'] ?? '', $data['adv_id'], $data['obj_id'], $queueData);
+
         $params = [
             'account_id' => $obj_info['adv_id'],
             'account_name' => $com_info['name'],
@@ -79,6 +83,7 @@ abstract class BaseUpdateWebJob
             'last_one' => $data['last_one'],
             'need_login' => !Cache::get('need_login'),
             'need_change' => true,
+            'new_name' => $newName, // 添加新的计划名称
         ];
 
         if (Cache::has('web_last_adv_id') && Cache::get('web_last_adv_id') == $data['adv_id']) {
@@ -171,5 +176,56 @@ abstract class BaseUpdateWebJob
     protected function buildGetObjParams($adv_id, $obj_id): array
     {
         return [$adv_id, $obj_id];
+    }
+
+    /**
+     * 生成新的计划名称（使用多规则循环）
+     * @param string $originalName 原始计划名称
+     * @param string $advId 广告主ID
+     * @param string $objId 计划ID
+     * @param array $queueData 队列数据
+     * @return string
+     */
+    private function generateNewName($originalName, $advId, $objId, $queueData)
+    {
+        // 检查是否还有其他待执行的任务
+        $queue = new Queue();
+        $hasOtherTasks = $queue->where([
+            'job_id' => ['neq', $queueData['job_id']],
+            'job_name' => $queueData['job_name'],
+            'status' => 0
+        ])->field('id')->find();
+
+        // 检查当前名称是否已被修改
+        list($isModified, $matchedRuleKey, $matchedContent) = NameRuleManager::checkNameModified($originalName);
+
+        if ($isModified) {
+            // 如果已被修改，则还原名称
+            $currentRule = NameRuleManager::getCurrentRule($advId, $objId);
+            $restoredName = NameRuleManager::restoreName($originalName, $currentRule['rule']);
+
+            echo "【RPA任务】还原计划名称: {$originalName} -> {$restoredName} (使用规则: {$currentRule['rule']['name']})\n";
+
+            // 更新到下一个规则
+            NameRuleManager::updateRuleIndex($advId, $objId);
+
+            return $restoredName;
+        } else {
+            // 如果未被修改，则应用当前规则进行修改
+            $currentRule = NameRuleManager::getCurrentRule($advId, $objId);
+            $currentRule['rule']['key'] = $currentRule['key']; // 添加key到rule中
+
+            if (!$hasOtherTasks) {
+                // 如果是最后一个任务，使用简单的点号标记
+                $modifiedName = $originalName . '.';
+                echo "【RPA任务】最后任务简单标记: {$originalName} -> {$modifiedName}\n";
+            } else {
+                // 使用当前规则生成修改后的名称
+                $modifiedName = NameRuleManager::generateModifiedName($originalName, $currentRule, $advId, $objId);
+                echo "【RPA任务】修改计划名称: {$originalName} -> {$modifiedName} (使用规则: {$currentRule['rule']['name']})\n";
+            }
+
+            return $modifiedName;
+        }
     }
 }

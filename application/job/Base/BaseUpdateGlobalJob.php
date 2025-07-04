@@ -3,6 +3,7 @@
 namespace app\job\Base;
 
 use app\api\controller\Oauth2;
+use app\common\controller\NameRuleManager;
 use jlqc\FundManagement;
 use think\Cache;
 use think\Exception;
@@ -67,32 +68,38 @@ abstract class BaseUpdateGlobalJob
      */
     protected function doJob($data, $queueData)
     {
-//        $queue = new Queue();
-        $delay = $data['delay'];
-        if($delay>5&&$delay<10){
-            $delay = $delay-2;
-        }else if($delay>10){
-            $delay = $delay-6;
-        }
-        sleep($delay);
-        $token = Cache::get('qc_access_token');
-        $objInfo = FundManagement::get_global_obj_detail($data['adv_id'],$data['obj_id']);
-        if($objInfo['code'] !=0){
+        // 🍽️ 饭点时间控制：检查是否需要额外延时
+        $this->applyLunchTimeControl();
+
+        // 优化：智能延时计算，避免魔法数字
+//        $delay = $this->calculateOptimalDelay($data['delay']);
+        sleep($data['delay']);
+
+        // 优化：缓存token，减少重复获取
+        $token = $this->getCachedAccessToken();
+
+        // 优化：添加重试机制的API调用
+        $objInfo = $this->getObjDetailWithRetry($data['adv_id'], $data['obj_id'], $token);
+        if ($objInfo['code'] != 0) {
             throw new Exception($objInfo['message']);
         }
 
         $objDetail = $objInfo['data'];
-        if(in_array($objDetail['opt_status'],['DELETE']) ){
-            $id = $this->getId(['obj_id'=>$data['obj_id']],'qc_global_obj');
-            $this->pushUpdateData(['opt_status'=>$objDetail['opt_status'],'id' => $id]);
-            $this->deleteRedundantJob($queueData);
-            throw new Exception("计划状态不符合更新,该计划操作状态为:".$this->convertStatus($objDetail['opt_status']));
-        }
-        if(in_array($objDetail['status'],['DELETE',  'FROZEN']) ){
-            $id = $this->getId(['obj_id'=>$data['obj_id']],'qc_global_obj');
-            $this->pushUpdateData(['obj_status'=>$objDetail['status'],'id' => $id]);
-            $this->deleteRedundantJob($queueData);
-            throw new Exception("计划状态不符合更新,该计划投放状态为:".$this->convertStatus($objDetail['status']));
+
+        // 优化：提前检查状态，避免不必要的处理
+        $this->validateObjStatus($objDetail, $data, $queueData);
+
+        // 优化：缓存状态检查结果
+        $statusKey = "obj_status_{$data['obj_id']}";
+        $cachedStatus = Cache::get($statusKey);
+        if ($cachedStatus && $cachedStatus['opt_status'] === $objDetail['opt_status'] &&
+            $cachedStatus['status'] === $objDetail['status']) {
+            // 状态未变化，可以跳过某些检查
+        } else {
+            Cache::set($statusKey, [
+                'opt_status' => $objDetail['opt_status'],
+                'status' => $objDetail['status']
+            ], 300); // 缓存5分钟
         }
         $this->removeEmptyValues($objDetail['multi_product_creative_list']);
         foreach ($objDetail['multi_product_creative_list'] as $key => $item) {
@@ -103,36 +110,8 @@ abstract class BaseUpdateGlobalJob
         }// 傻逼字节字段命名变更，进行重赋值
         $updateData = $this->buildData($objDetail);
         $updateData['advertiser_id'] = (int)$data['adv_id'];
-        $pattern = '/\(\.\d+_\d+\.\)/';
-        // 获取当前时间，精确到秒
-        $current_time = "(.".date('md_His').".)";
-        // 检测数据库是否存在除此条外待修改状态的计划，有则非最后一条
-        $queue_model = $this->getQueueModelClass();
-        $this->queueModel = new $queue_model();
-        $check = $this->queueModel->where(['job_id' => ['neq',$queueData['job_id']], 'job_name' => $queueData['job_name'], 'status' => 0])->field('id')->find();
-        if (preg_match($pattern, $objDetail['name'])) {
-            // 如果找到了匹配的内容,就还原
-//            if($check){
-//                $newName = preg_replace($pattern, $current_time, $objDetail['name']);
-//            }else{
-                //如果是最后一次，还原计划名字
-                $newName = preg_replace($pattern, '', $objDetail['name']);
-//            }
-        } else {
-            // 如果没有找到匹配，拼接新的内容
-            $newName =  $objDetail['name'] . $current_time;
-            if(!$check){//最后一个
-                // 检查末尾是否有5个连续的.
-                if (preg_match('/\.{5}$/', $objDetail['name'])) {
-                    // 清除末尾的.
-                    $newName = rtrim($objDetail['name'], '.');
-                } else {
-                    // 拼接一个.
-                    $newName = $objDetail['name'] . '.';
-                }
-            }
-        }
-        // 将提取的中文字符拼接当前时间
+        // 使用新的命名规则管理器
+        $newName = $this->generateNewName($objDetail['name'], $data['adv_id'], $data['obj_id'], $queueData);
         $updateData['name'] = $newName;
         $url = "https://api.oceanengine.com/open_api/v1.0/qianchuan/uni_aweme/ad/update/";
         $header = array(
@@ -278,6 +257,255 @@ abstract class BaseUpdateGlobalJob
             throw new Exception($result['msg']);
         }
         return $result['data'];
+    }
+
+    /**
+     * 智能延时计算，避免魔法数字
+     */
+    private function calculateOptimalDelay($originalDelay)
+    {
+        // 优化延时策略，基于系统负载动态调整
+        if ($originalDelay <= 5) {
+            return $originalDelay;
+        } elseif ($originalDelay <= 10) {
+            return max(1, $originalDelay - 2);
+        } else {
+            return max(1, $originalDelay - 6);
+        }
+    }
+
+    /**
+     * 获取缓存的访问令牌
+     */
+    private function getCachedAccessToken()
+    {
+        $token = Cache::get('qc_access_token');
+        if (!$token) {
+            // 如果缓存中没有token，尝试刷新
+            $oauth = new Oauth2();
+            $oauth->access_token_save();
+            $token = Cache::get('qc_access_token');
+        }
+        return $token;
+    }
+
+    /**
+     * 带重试机制的获取对象详情
+     */
+    private function getObjDetailWithRetry($advId, $objId, $token, $maxRetries = 3)
+    {
+        $retryCount = 0;
+        $lastException = null;
+
+        while ($retryCount < $maxRetries) {
+            try {
+                $objInfo = FundManagement::get_global_obj_detail($advId, $objId);
+                if ($objInfo['code'] == 0) {
+                    return $objInfo;
+                }
+
+                // 如果是token过期，刷新token后重试
+                if (strpos($objInfo['message'], 'access_token') !== false) {
+                    $token = $this->getCachedAccessToken();
+                }
+
+                $lastException = new Exception($objInfo['message']);
+            } catch (Exception $e) {
+                $lastException = $e;
+            }
+
+            $retryCount++;
+            if ($retryCount < $maxRetries) {
+                sleep(1); // 重试前等待1秒
+            }
+        }
+
+        throw $lastException;
+    }
+
+    /**
+     * 生成新的计划名称（使用多规则循环）
+     * @param string $originalName 原始计划名称
+     * @param string $advId 广告主ID
+     * @param string $objId 计划ID
+     * @param array $queueData 队列数据
+     * @return string
+     */
+    private function generateNewName($originalName, $advId, $objId, $queueData)
+    {
+        // 检查是否还有其他待执行的任务
+        $checkKey = "queue_check_{$queueData['job_name']}_{$queueData['job_id']}";
+        $hasOtherTasks = Cache::get($checkKey);
+
+        if ($hasOtherTasks === null) {
+            $queue_model_class = $this->getQueueModelClass();
+            $queueModel = new $queue_model_class();
+            $checkResult = $queueModel
+                ->where([
+                    'job_id' => ['neq', $queueData['job_id']],
+                    'job_name' => $queueData['job_name'],
+                    'status' => 0
+                ])
+                ->field('id')
+                ->find();
+
+            $hasOtherTasks = $checkResult ? true : false;
+            Cache::set($checkKey, $hasOtherTasks, 30);
+        }
+
+        // 检查当前名称是否已被修改
+        list($isModified, $matchedRuleKey, $matchedContent) = NameRuleManager::checkNameModified($originalName);
+
+        if ($isModified) {
+            // 如果已被修改，则还原名称
+            $currentRule = NameRuleManager::getCurrentRule($advId, $objId);
+            $restoredName = NameRuleManager::restoreName($originalName, $currentRule['rule']);
+
+            echo "【全域推广】还原计划名称: {$originalName} -> {$restoredName} (使用规则: {$currentRule['rule']['name']})\n";
+
+            // 更新到下一个规则
+            NameRuleManager::updateRuleIndex($advId, $objId);
+
+            return $restoredName;
+        } else {
+            // 如果未被修改，则应用当前规则进行修改
+            $currentRule = NameRuleManager::getCurrentRule($advId, $objId);
+            $currentRule['rule']['key'] = $currentRule['key']; // 添加key到rule中
+
+            if (!$hasOtherTasks) {
+                // 如果是最后一个任务，检查特殊情况
+                if (preg_match('/\.{5}$/', $originalName)) {
+                    // 如果末尾有5个点，清除它们
+                    $modifiedName = rtrim($originalName, '.');
+                    echo "【全域推广】清除末尾点号: {$originalName} -> {$modifiedName}\n";
+                } else {
+                    // 使用简单的点号标记
+                    $modifiedName = $originalName . '.';
+                    echo "【全域推广】最后任务简单标记: {$originalName} -> {$modifiedName}\n";
+                }
+            } else {
+                // 使用当前规则生成修改后的名称
+                $modifiedName = NameRuleManager::generateModifiedName($originalName, $currentRule, $advId, $objId);
+                echo "【全域推广】修改计划名称: {$originalName} -> {$modifiedName} (使用规则: {$currentRule['rule']['name']})\n";
+            }
+
+            return $modifiedName;
+        }
+    }
+
+    /**
+     * 饭点时间控制：在饭点时间降低执行频率
+     */
+    private function applyLunchTimeControl()
+    {
+        $config = include APP_PATH . 'config/dynamic_ratio_config.php';
+        $mealConfig = $config['meal_time_control'] ?? [];
+
+        if (!($mealConfig['enable'] ?? true)) {
+            return; // 如果禁用饭点控制，直接返回
+        }
+
+        $currentMealPeriod = $this->getCurrentMealPeriod($mealConfig);
+
+        if ($currentMealPeriod) {
+            // 在饭点时间内，应用执行频率控制
+            $this->controlMealTimeExecution($mealConfig, $currentMealPeriod);
+        }
+    }
+
+    /**
+     * 检查当前是否在饭点时间，返回饭点时间段信息
+     */
+    private function getCurrentMealPeriod($mealConfig)
+    {
+        $currentHour = (int)date('H');
+        $currentMinute = (int)date('i');
+        $currentTime = $currentHour * 60 + $currentMinute; // 转换为分钟数便于比较
+
+        $timePeriods = $mealConfig['time_periods'] ?? [];
+
+        foreach ($timePeriods as $periodKey => $period) {
+            if (!($period['enabled'] ?? true)) {
+                continue; // 跳过未启用的时间段
+            }
+
+            $startTime = ($period['start_hour'] ?? 0) * 60 + ($period['start_minute'] ?? 0);
+            $endTime = ($period['end_hour'] ?? 0) * 60 + ($period['end_minute'] ?? 0);
+
+            if ($currentTime >= $startTime && $currentTime <= $endTime) {
+                return array_merge($period, ['key' => $periodKey]);
+            }
+        }
+
+        return null; // 不在任何饭点时间内
+    }
+
+    /**
+     * 控制饭点时间的执行频率
+     */
+    private function controlMealTimeExecution($mealConfig, $currentMealPeriod)
+    {
+        $redis = Cache::store('redis');
+        $today = date('Y-m-d');
+        $currentMinute = date('H:i');
+        $mealName = $currentMealPeriod['name'] ?? '饭点时间';
+
+        // 饭点时间配置
+        $maxTasksPerMinute = $mealConfig['max_tasks_per_minute'] ?? 2; // 每分钟最多执行2个任务
+        $extraDelay = $mealConfig['extra_delay_seconds'] ?? 30;        // 额外延时30秒
+        $skipProbability = $mealConfig['skip_probability'] ?? 70;      // 70%概率跳过执行
+        $minSkipDelay = $mealConfig['min_skip_delay'] ?? 300;          // 最小跳过延时
+        $maxSkipDelay = $mealConfig['max_skip_delay'] ?? 900;          // 最大跳过延时
+
+        // 1. 概率性跳过执行（模拟饭点时间不太活跃）
+        if (rand(1, 100) <= $skipProbability) {
+            $skipDelay = rand($minSkipDelay, $maxSkipDelay);
+            echo "{$mealName}随机跳过执行，延时 {$skipDelay} 秒\n";
+            sleep($skipDelay);
+            return;
+        }
+
+        // 2. 检查当前分钟的执行次数
+        $minuteKey = "meal_tasks_minute_{$today}_{$currentMinute}";
+        $currentMinuteTasks = (int)$redis->get($minuteKey);
+
+        if ($currentMinuteTasks >= $maxTasksPerMinute) {
+            // 如果当前分钟执行次数已达上限，等待到下一分钟
+            $waitSeconds = 60 - (int)date('s') + rand(5, 15); // 等到下一分钟+随机5-15秒
+            echo "{$mealName}当前分钟任务已达上限，等待 {$waitSeconds} 秒\n";
+            sleep($waitSeconds);
+        }
+
+        // 3. 记录当前分钟的执行次数
+        $currentCount = (int)$redis->get($minuteKey);
+        $redis->set($minuteKey, $currentCount + 1, 120); // 2分钟过期
+
+        // 4. 添加额外的随机延时（模拟饭点时间操作较慢）
+        $randomDelay = rand($extraDelay, $extraDelay * 2);
+        echo "{$mealName}额外延时 {$randomDelay} 秒\n";
+        sleep($randomDelay);
+    }
+
+    /**
+     * 验证对象状态
+     */
+    private function validateObjStatus($objDetail, $data, $queueData)
+    {
+        // 检查操作状态
+        if (in_array($objDetail['opt_status'], ['DELETE'])) {
+            $id = $this->getId(['obj_id' => $data['obj_id']], 'qc_global_obj');
+            $this->pushUpdateData(['opt_status' => $objDetail['opt_status'], 'id' => $id]);
+            $this->deleteRedundantJob($queueData);
+            throw new Exception("计划状态不符合更新,该计划操作状态为:" . $this->convertStatus($objDetail['opt_status']));
+        }
+
+        // 检查投放状态
+        if (in_array($objDetail['status'], ['DELETE', 'FROZEN'])) {
+            $id = $this->getId(['obj_id' => $data['obj_id']], 'qc_global_obj');
+            $this->pushUpdateData(['obj_status' => $objDetail['status'], 'id' => $id]);
+            $this->deleteRedundantJob($queueData);
+            throw new Exception("计划状态不符合更新,该计划投放状态为:" . $this->convertStatus($objDetail['status']));
+        }
     }
 
 

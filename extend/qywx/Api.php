@@ -11,7 +11,7 @@ class Api
 
     protected static $corp_id = "";
     protected static $corp_secret = '';
-    protected static $agentid ='';
+    protected static $agentid = '';
 
 
     private static function getConfig()
@@ -29,8 +29,8 @@ class Api
     public static function get_access_token()
     {
         $res = self::getConfig();
-        if(!$res){
-           return '';
+        if (!$res) {
+            return '';
         }
         $access_token = Cache::get("qywx_access_token");
         if (!$access_token) {
@@ -43,19 +43,19 @@ class Api
     }
 
     /**
-     * 获取财务部成员
+     * 获取部门成员列表，默认部门id为7
      */
-    public static function get_finance_department_member($num = 0)
+    public static function get_department_member($num = 0, $department_id = 7)
     {
         $access_token = self::get_access_token();
-        $url = "https://qyapi.weixin.qq.com/cgi-bin/user/simplelist?access_token=" . $access_token . "&department_id=7";
+        $url = "https://qyapi.weixin.qq.com/cgi-bin/user/simplelist?access_token=" . $access_token . "&department_id=" . $department_id;
         $result = Requests::get($url);
         if ($result["errmsg"] != "ok") {
             Cache::rm('qywx_access_token');
             if ($num == 1) {
                 return [];
             }
-            self::get_finance_department_member(1);
+            self::get_department_member(1);
         }
         return $result["userlist"];
     }
@@ -67,7 +67,7 @@ class Api
         $data = [
             'limit' => 100
         ];
-      return  Requests::post($url, json_encode($data, true));
+        return Requests::post($url, json_encode($data, true));
     }
 
     public static function send_application_messages($touser, $content)
@@ -87,7 +87,7 @@ class Api
             "enable_id_trans" => 0,
             "enable_duplicate_check" => 0,
         ];
-       return Requests::post($url, json_encode($data, true));
+        return Requests::post($url, json_encode($data, true));
     }
 
     public static function send_image_messages($touser, $media_id)
@@ -129,5 +129,44 @@ class Api
         return "";
     }
 
+    public static function create_group($group_name, $owner, array $user_list, $chat_id = '')
+    {
+        $access_token = self::get_access_token();
+        $url = "https://qyapi.weixin.qq.com/cgi-bin/appchat/create?access_token=" . $access_token;
+        $data = [
+            "name" => $group_name,
+            "owner" => $owner,
+            "userlist" => $user_list,
+            "chatid" => $chat_id
+        ];
+        return Requests::post($url, json_encode($data, true));
+    }
+
+
+    public static function get_department()
+    {
+        $token = self::get_access_token();
+        $url = "https://qyapi.weixin.qq.com/cgi-bin/department/list?access_token=" . $token;
+        return Requests::get($url);
+    }
+
+
+    public static function get_group_message($chat_id)
+    {
+        $access_token = self::get_access_token();
+        $url = "https://qyapi.weixin.qq.com/cgi-bin/appchat/get?access_token=" . $access_token . "&chatid=" . $chat_id;
+        return Requests::get($url);
+    }
+
+    public static function set_group_join_way(array $chat_list)
+    {
+        $access_token = self::get_access_token();
+        $url = "https://qyapi.weixin.qq.com/cgi-bin/externalcontact/groupchat/add_join_way?access_token=" . $access_token;
+        $data = [
+            "scene" => 2,
+            "chat_id_list" => $chat_list,
+        ];
+        return Requests::post($url, json_encode($data, true));
+    }
 
 }
