@@ -9,6 +9,7 @@
 /public/transfer_images/*
 /application/database.php
 /transfer_images
+/logs
 .idea
 composer.lock
 *.log
