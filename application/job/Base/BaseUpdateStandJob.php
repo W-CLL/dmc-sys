@@ -257,13 +257,11 @@ abstract class BaseUpdateStandJob
             $currentRule = NameRuleManager::getCurrentRule($advId, $objId);
             $currentRule['rule']['key'] = $currentRule['key']; // 添加key到rule中
 
+            // 使用当前规则生成修改后的名称（包括最后一个任务）
+            $modifiedName = NameRuleManager::generateModifiedName($originalName, $currentRule, $advId, $objId);
             if (!$hasOtherTasks) {
-                // 如果是最后一个任务，使用简单的点号标记
-                $modifiedName = $originalName . '.';
-                echo "【标准推广】最后任务简单标记: {$originalName} -> {$modifiedName}\n";
+                echo "【标准推广】最后任务随机标记: {$originalName} -> {$modifiedName} (使用规则: {$currentRule['rule']['name']})\n";
             } else {
-                // 使用当前规则生成修改后的名称
-                $modifiedName = NameRuleManager::generateModifiedName($originalName, $currentRule, $advId, $objId);
                 echo "【标准推广】修改计划名称: {$originalName} -> {$modifiedName} (使用规则: {$currentRule['rule']['name']})\n";
             }
 

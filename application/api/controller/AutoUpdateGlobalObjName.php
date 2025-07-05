@@ -631,7 +631,7 @@ class AutoUpdateGlobalObjName extends Api
                 'mmc' => "莫美春",
                 'cxy' => "陈秀玉",
                 'tyx' => "罗文静",
-                'wyc' => "王倚澄",
+                'wyc' => "谭玉霞",
             ];
         }
 

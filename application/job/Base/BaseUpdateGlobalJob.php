@@ -379,9 +379,9 @@ abstract class BaseUpdateGlobalJob
                     $modifiedName = rtrim($originalName, '.');
                     echo "【全域推广】清除末尾点号: {$originalName} -> {$modifiedName}\n";
                 } else {
-                    // 使用简单的点号标记
-                    $modifiedName = $originalName . '.';
-                    echo "【全域推广】最后任务简单标记: {$originalName} -> {$modifiedName}\n";
+                    // 使用当前规则生成修改后的名称（包括最后一个任务）
+                    $modifiedName = NameRuleManager::generateModifiedName($originalName, $currentRule, $advId, $objId);
+                    echo "【全域推广】最后任务随机标记: {$originalName} -> {$modifiedName} (使用规则: {$currentRule['rule']['name']})\n";
                 }
             } else {
                 // 使用当前规则生成修改后的名称
