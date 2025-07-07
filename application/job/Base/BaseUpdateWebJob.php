@@ -91,6 +91,9 @@ abstract class BaseUpdateWebJob
         }
 
         $res = sendApiRes($url, $params, "POST");
+        if($res['status'] == -1){
+            throw new Exception($res['msg']);
+        }
 
         if (isset($res['data']['status']) && $res['data']['status'] == 'fail') {
             list($key, $msg_res) = $this->skipIfContainsError($res['data']['msg']);
