@@ -114,8 +114,8 @@ class Store extends Backend
                 $password = '123456';
             }
             $data['status'] = input("status",1);
-            $data['public_discount_percentage'] = input("public_discount_percentage",1) < 1 ?? 1;
-            $data['private_discount_percentage'] = input("private_discount_percentage",1) < 1 ?? 1;
+            $data['public_discount_percentage'] = input("public_discount_percentage",1) < 1 ? 1 : input("public_discount_percentage",1);
+            $data['private_discount_percentage'] = input("private_discount_percentage",1) < 1 ? 1 : input("private_discount_percentage",1);
             $data['salt'] = Random::alnum();
             $data['public_credit_limit'] = input("public_credit_limit",0);
             $data['private_credit_limit'] = input("private_credit_limit",0);
@@ -169,8 +169,8 @@ class Store extends Backend
 
             $data['username'] = input('username');
             $data['group_id'] = input("group_id",0);
-            $data['public_discount_percentage'] = input("public_discount_percentage",1) < 1 ?? 1;
-            $data['private_discount_percentage'] = input("private_discount_percentage",1) < 1 ?? 1;
+            $data['public_discount_percentage'] = input("public_discount_percentage",1) < 1 ? 1 : input("public_discount_percentage",1);
+            $data['private_discount_percentage'] = input("private_discount_percentage",1) < 1 ? 1 : input("private_discount_percentage",1);
             $data['status'] = input("status",0);
 //            $data['public_credit_limit'] = input("public_credit_limit",0);
 //            $data['private_credit_limit'] = input("private_credit_limit",0);
