@@ -129,6 +129,23 @@ class Api
         return json($list);
     }
 
+    /**
+     * 根据千川账户id+条件返回所有计划id
+     * @param $adv_id
+     * @param array $where
+     * @return Json
+     */
+    public function getObjList($adv_id,array $where =[]): Json
+    {
+        $objModel = new ObjModel();
+        $list = $objModel
+            ->where(['adv_id'=>$adv_id])
+            ->where($where)
+            ->column('obj_id');
+
+        return json($list);
+    }
+
 
 
     // 全域、标准共用
