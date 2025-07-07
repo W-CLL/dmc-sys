@@ -604,8 +604,18 @@ class AutoUpdateObjName extends Api
             $startTime = ($period['start_hour'] ?? 0) * 60 + ($period['start_minute'] ?? 0);
             $endTime = ($period['end_hour'] ?? 0) * 60 + ($period['end_minute'] ?? 0);
 
-            if ($currentTime >= $startTime && $currentTime <= $endTime) {
-                return array_merge($period, ['key' => $periodKey]);
+            // 检查是否为跨天时间段（结束时间小于开始时间）
+            if ($endTime < $startTime) {
+                // 跨天时间段：如23:30-01:30
+                // 当前时间在开始时间之后（今天晚上）或结束时间之前（明天凌晨）
+                if ($currentTime >= $startTime || $currentTime <= $endTime) {
+                    return array_merge($period, ['key' => $periodKey]);
+                }
+            } else {
+                // 同一天内的时间段：如12:00-13:30
+                if ($currentTime >= $startTime && $currentTime <= $endTime) {
+                    return array_merge($period, ['key' => $periodKey]);
+                }
             }
         }
 

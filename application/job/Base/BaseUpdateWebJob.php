@@ -197,26 +197,40 @@ abstract class BaseUpdateWebJob
         ])->field('id')->find();
 
         // 检查当前名称是否已被修改
-        list($isModified, $matchedRuleKey, $matchedContent) = NameRuleManager::checkNameModified($originalName);
+        list($isModified, $matchedRuleKey, $matchedContent, $isLegacyRule) = NameRuleManager::checkNameModified($originalName);
 
         if ($isModified) {
-            // 如果已被修改，则还原名称
-            $currentRule = NameRuleManager::getCurrentRule($advId, $objId);
-            $restoredName = NameRuleManager::restoreName($originalName, $currentRule['rule']);
+            if ($isLegacyRule) {
+                // 如果是旧规则，直接还原并应用新规则
+                $restoredName = NameRuleManager::restoreLegacyName($originalName, $matchedRuleKey);
+                echo "【RPA任务】检测到旧规则标记，还原名称: {$originalName} -> {$restoredName} (旧规则: {$matchedRuleKey})\n";
 
-            echo "【RPA任务】还原计划名称: {$originalName} -> {$restoredName} (使用规则: {$currentRule['rule']['name']})\n";
+                // 应用新规则进行修改
+                $currentRule = NameRuleManager::getCurrentRule($advId, $objId);
+                $currentRule['rule']['key'] = $currentRule['key'];
+                $modifiedName = NameRuleManager::generateModifiedName($restoredName, $currentRule['rule'], $advId, $objId);
+                echo "【RPA任务】应用新规则: {$restoredName} -> {$modifiedName} (新规则: {$currentRule['rule']['name']})\n";
 
-            // 更新到下一个规则
-            NameRuleManager::updateRuleIndex($advId, $objId);
+                return $modifiedName;
+            } else {
+                // 如果是新规则，按原逻辑还原
+                $currentRule = NameRuleManager::getCurrentRule($advId, $objId);
+                $restoredName = NameRuleManager::restoreName($originalName, $currentRule['rule']);
 
-            return $restoredName;
+                echo "【RPA任务】还原计划名称: {$originalName} -> {$restoredName} (使用规则: {$currentRule['rule']['name']})\n";
+
+                // 更新到下一个规则
+                NameRuleManager::updateRuleIndex($advId, $objId);
+
+                return $restoredName;
+            }
         } else {
             // 如果未被修改，则应用当前规则进行修改
             $currentRule = NameRuleManager::getCurrentRule($advId, $objId);
             $currentRule['rule']['key'] = $currentRule['key']; // 添加key到rule中
 
             // 使用当前规则生成修改后的名称（包括最后一个任务）
-            $modifiedName = NameRuleManager::generateModifiedName($originalName, $currentRule, $advId, $objId);
+            $modifiedName = NameRuleManager::generateModifiedName($originalName, $currentRule['rule'], $advId, $objId);
             if (!$hasOtherTasks) {
                 echo "【RPA任务】最后任务随机标记: {$originalName} -> {$modifiedName} (使用规则: {$currentRule['rule']['name']})\n";
             } else {

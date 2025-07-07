@@ -55,19 +55,40 @@
 
 ## 🕐 **时间段检测逻辑**
 
-### 智能时间检测：
+### 智能时间检测（支持跨天时间段）：
 ```php
 function getCurrentMealPeriod() {
     $currentTime = 当前小时 * 60 + 当前分钟;
-    
+
     foreach (所有时间段) {
-        if (时间段启用 && 当前时间在范围内) {
-            return 时间段信息;
+        if (!时间段启用) continue;
+
+        $startTime = 开始小时 * 60 + 开始分钟;
+        $endTime = 结束小时 * 60 + 结束分钟;
+
+        if ($endTime < $startTime) {
+            // 跨天时间段：如23:30-01:30
+            if ($currentTime >= $startTime || $currentTime <= $endTime) {
+                return 时间段信息;
+            }
+        } else {
+            // 同一天时间段：如12:00-13:30
+            if ($currentTime >= $startTime && $currentTime <= $endTime) {
+                return 时间段信息;
+            }
         }
     }
-    
+
     return null; // 不在任何饭点时间
 }
+```
+
+### 跨天时间段示例：
+```
+宵夜时间：23:30-01:30
+- 23:30-23:59 ✅ 检测到（今天晚上）
+- 00:00-01:30 ✅ 检测到（明天凌晨）
+- 01:31-23:29 ❌ 不在时间段内
 ```
 
 ### 支持的时间段：
@@ -145,12 +166,12 @@ function getCurrentMealPeriod() {
 
 ### 3. **添加更多时间段**
 ```php
-// 添加夜宵时间
+// 添加夜宵时间（跨天时间段）
 'night_snack' => [
     'name' => '夜宵时间',
-    'start_hour' => 21,
+    'start_hour' => 23,         // 23:30开始
     'start_minute' => 30,
-    'end_hour' => 22,
+    'end_hour' => 1,            // 01:30结束（第二天）
     'end_minute' => 30,
     'enabled' => true,
 ],

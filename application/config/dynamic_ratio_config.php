@@ -141,6 +141,15 @@ return [
                 'end_minute' => 30,         // 结束分钟30分
                 'enabled' => true,          // 是否启用
             ],
+            // 宵夜时间
+            'yexiao' => [
+                'name' => '宵夜时间',
+                'start_hour' => 23,         // 开始时间23点
+                'start_minute' => 30,        // 开始分钟30分
+                'end_hour' => 01,           // 结束时间01点
+                'end_minute' => 30,         // 结束分钟30分
+                'enabled' => true,          // 是否启用
+            ],
         ],
 
         // Job执行层面的控制

@@ -239,26 +239,40 @@ abstract class BaseUpdateStandJob
         ])->field('id')->find();
 
         // 检查当前名称是否已被修改
-        list($isModified, $matchedRuleKey, $matchedContent) = NameRuleManager::checkNameModified($originalName);
+        list($isModified, $matchedRuleKey, $matchedContent, $isLegacyRule) = NameRuleManager::checkNameModified($originalName);
 
         if ($isModified) {
-            // 如果已被修改，则还原名称
-            $currentRule = NameRuleManager::getCurrentRule($advId, $objId);
-            $restoredName = NameRuleManager::restoreName($originalName, $currentRule['rule']);
+            if ($isLegacyRule) {
+                // 如果是旧规则，直接还原并应用新规则
+                $restoredName = NameRuleManager::restoreLegacyName($originalName, $matchedRuleKey);
+                echo "【标准推广】检测到旧规则标记，还原名称: {$originalName} -> {$restoredName} (旧规则: {$matchedRuleKey})\n";
 
-            echo "【标准推广】还原计划名称: {$originalName} -> {$restoredName} (使用规则: {$currentRule['rule']['name']})\n";
+                // 应用新规则进行修改
+                $currentRule = NameRuleManager::getCurrentRule($advId, $objId);
+                $currentRule['rule']['key'] = $currentRule['key'];
+                $modifiedName = NameRuleManager::generateModifiedName($restoredName, $currentRule['rule'], $advId, $objId);
+                echo "【标准推广】应用新规则: {$restoredName} -> {$modifiedName} (新规则: {$currentRule['rule']['name']})\n";
 
-            // 更新到下一个规则
-            NameRuleManager::updateRuleIndex($advId, $objId);
+                return $modifiedName;
+            } else {
+                // 如果是新规则，按原逻辑还原
+                $currentRule = NameRuleManager::getCurrentRule($advId, $objId);
+                $restoredName = NameRuleManager::restoreName($originalName, $currentRule['rule']);
 
-            return $restoredName;
+                echo "【标准推广】还原计划名称: {$originalName} -> {$restoredName} (使用规则: {$currentRule['rule']['name']})\n";
+
+                // 更新到下一个规则
+                NameRuleManager::updateRuleIndex($advId, $objId);
+
+                return $restoredName;
+            }
         } else {
             // 如果未被修改，则应用当前规则进行修改
             $currentRule = NameRuleManager::getCurrentRule($advId, $objId);
             $currentRule['rule']['key'] = $currentRule['key']; // 添加key到rule中
 
             // 使用当前规则生成修改后的名称（包括最后一个任务）
-            $modifiedName = NameRuleManager::generateModifiedName($originalName, $currentRule, $advId, $objId);
+            $modifiedName = NameRuleManager::generateModifiedName($originalName, $currentRule['rule'], $advId, $objId);
             if (!$hasOtherTasks) {
                 echo "【标准推广】最后任务随机标记: {$originalName} -> {$modifiedName} (使用规则: {$currentRule['rule']['name']})\n";
             } else {
@@ -308,8 +322,18 @@ abstract class BaseUpdateStandJob
             $startTime = ($period['start_hour'] ?? 0) * 60 + ($period['start_minute'] ?? 0);
             $endTime = ($period['end_hour'] ?? 0) * 60 + ($period['end_minute'] ?? 0);
 
-            if ($currentTime >= $startTime && $currentTime <= $endTime) {
-                return array_merge($period, ['key' => $periodKey]);
+            // 检查是否为跨天时间段（结束时间小于开始时间）
+            if ($endTime < $startTime) {
+                // 跨天时间段：如23:30-01:30
+                // 当前时间在开始时间之后（今天晚上）或结束时间之前（明天凌晨）
+                if ($currentTime >= $startTime || $currentTime <= $endTime) {
+                    return array_merge($period, ['key' => $periodKey]);
+                }
+            } else {
+                // 同一天内的时间段：如12:00-13:30
+                if ($currentTime >= $startTime && $currentTime <= $endTime) {
+                    return array_merge($period, ['key' => $periodKey]);
+                }
             }
         }
 
