@@ -327,6 +327,8 @@ class RechargeRefund extends Store
                                     ->dec("private_spending_credit_limit", $transfer_records_info["deduction_credit_limit"])
                                     ->update(["update_time" => time()]);
                             }
+                            $store_refund_model = new StoreRefund();
+                            $store_refund_model->getRealRefundRebate($transfer_records_data);  // 删除记录
                         }
                         //转账失败
                         $this->error("转账失败," . $transfer_detail_data['data']['transfer_target_record_list'][0]['transfer_capital_record_list'][0]['fail_reason']);
