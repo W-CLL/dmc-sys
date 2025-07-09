@@ -395,7 +395,9 @@ class SubWallet extends Store
                 }else{
                     throw new \Exception('未知的账户类型');
                 }
-                $this->RefundModel->getRealRefundRebate($insert_data,2);
+                if($swtl_info['transfer_direction'] == 1){
+                    $this->RefundModel->getRealRefundRebate($insert_data,2);
+                }
                 if($store[$spending_field] < $swtl_info['deduction_credit_limit']){
                     $change = $this->StoreModel->where('id',$store['id'])->inc($balance_field,$swtl_info['deduction_balance'] + $swtl_info['deduction_credit_limit'] - $store[$spending_field])
                         ->inc($limit_field,$store[$spending_field])
