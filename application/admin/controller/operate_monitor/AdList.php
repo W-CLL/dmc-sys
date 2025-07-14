@@ -71,21 +71,8 @@ class AdList extends Backend
                     'left'
                 )
                 ->where(['adv_c.cost_date' => ['between', [$start_time, $end_time]]])
+                ->where('adv_c.cost','>', '0')
                 ->where($list_where)
-//                ->where(function ($query) use ($advertiser_id, $kahuna) {
-//                    $whereStr = [];
-//                    if ($advertiser_id) {
-//                        $whereStr['com.advertiser_id'] = $advertiser_id;
-//                    }
-//                    if ($kahuna) {
-//                        if (is_array($kahuna)) {
-//                            $whereStr['com.kahuna'] = ['in', $kahuna];
-//                        } else {
-//                            $whereStr['com.kahuna'] = ['like', "%$kahuna%"];
-//                        }
-//                    }
-//                    $query->where($whereStr);
-//                })
                 ->field("adv_c.*, SUM(cost) AS mon_cost,
                  SUM(CASE WHEN adv_c.type = 1 THEN cost ELSE 0 END) AS stand_cost,
                   SUM(CASE WHEN adv_c.type = 2 THEN cost ELSE 0 END) AS global_cost,
@@ -105,8 +92,6 @@ class AdList extends Backend
                 ->group('adv_c.adv_id')
                 ->order($sort, $order)
                 ->limit($offset, $limit)
-
-//                ->fetchSql(true)
                 ->select();
 
             foreach ($list as &$item) {
@@ -134,7 +119,14 @@ class AdList extends Backend
             }
 
             // 查询总数
-            $countQuery = $companyModel->where($where);
+            $countQuery=  $qcAdvModel
+                ->alias('adv_c')
+                ->join('company com', 'adv_c.adv_id = com.advertiser_id', 'left')
+                ->where(['adv_c.cost_date' => ['between', [$start_time, $end_time]]])
+                ->where('adv_c.cost','>', '0')
+                ->where($list_where) ->group('adv_c.adv_id');
+
+//            $countQuery = $companyModel->where($where);
             $count = $countQuery->count();
             $result = array("total" => $count, "rows" => $list);
             return json($result);
