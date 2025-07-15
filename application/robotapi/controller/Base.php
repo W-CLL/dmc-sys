@@ -35,6 +35,9 @@ class Base extends Controller
     protected function check($account, $encrypted_data)
     {
         $info = Db::name("external_accounts")->where(["platform" => 'robot_api'])->find();
+        if(!$info){
+            return false;
+        }
         if($info["account"] == $account && decrypt($encrypted_data)){
             return true;
         }
