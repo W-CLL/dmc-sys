@@ -34,11 +34,11 @@ class Base extends Controller
 
     protected function check($account, $encrypted_data)
     {
-        $info = Db::name("external_accounts")->where(["platform" => 'robot_api'])->find();
+        $info = Db::name("external_accounts")->where(["platform" => 'robot_api', "account" => $account])->find();
         if(!$info){
             return false;
         }
-        if($info["account"] == $account && decrypt($encrypted_data)){
+        if(decrypt($encrypted_data)){
             return true;
         }
         return false;
@@ -108,7 +108,7 @@ class Base extends Controller
         }
 
         // 4. 解密数据
-        $data = json_decode(decrypt($encrypted_data), true);
+        $data = json_decode(decrypt($encrypted_data, $account), true);
 
         // 5. 参数验证
         $validate = $this->service->validateParam($data, $validationType);
@@ -123,7 +123,7 @@ class Base extends Controller
         }
 
         // 7. 返回成功响应
-        $dataResponse = is_array($res) ? encryption($res) : [];
+        $dataResponse = is_array($res) ? encryption($res, $account) : [];
         return build_json(200, $dataResponse, $successMsg);
     }
 

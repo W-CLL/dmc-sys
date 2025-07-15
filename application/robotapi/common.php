@@ -30,14 +30,15 @@ if (!function_exists('encryption')) {
 
     /**
      * @param $data array 待加密数据【传入数组】
+     * @param string $account 账号
      * @return string
      * @throws \think\db\exception\DataNotFoundException
      * @throws \think\db\exception\ModelNotFoundException
      * @throws \think\exception\DbException
      */
-    function encryption(array $data)
+    function encryption(array $data, string $account)
     {
-        $info = Db::name("external_accounts")->where(["platform" => 'robot_api'])->find();
+        $info = Db::name("external_accounts")->where(["platform" => 'robot_api', "account" => $account])->find();
         $iv = generate_random_string(16);
         $json_data = json_encode($data, JSON_UNESCAPED_UNICODE);
         return base64_encode($iv . openssl_encrypt($json_data, 'AES-128-CBC', $info["secret"], OPENSSL_RAW_DATA, $iv));
@@ -48,14 +49,15 @@ if (!function_exists('encryption')) {
 if (!function_exists('decrypt')) {
     /**
      * @param $data string 待解密数据【json】
+     * @param string $account 账号
      * @return false|string
      * @throws \think\db\exception\DataNotFoundException
      * @throws \think\db\exception\ModelNotFoundException
      * @throws \think\exception\DbException
      */
-    function decrypt(string $data)
+    function decrypt(string $data, string $account)
     {
-        $info = Db::name("external_accounts")->where(["platform" => 'robot_api'])->find();
+        $info = Db::name("external_accounts")->where(["platform" => 'robot_api', "account" => $account])->find();
         $decoded = base64_decode($data);
         $iv = substr($decoded, 0, 16);
         try {
