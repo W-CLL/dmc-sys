@@ -52,7 +52,8 @@ class FundManagement
      * @param $access_token
      * @param $params
      * ['advertiser_id'=>"广告id",
-     * 'object_id'=>"操作对象ID, 1 <= len <= 20 , 可以为campaign_id、ad_id、creative_id， 各种id可以随意组合",
+     * 'object_id'=>"操作对象ID，单条",
+     * 'object_type'=>"AD",
      * 'start_date'=>"日志查询开始时间，格式 "2019-07-24 21:46:57"",
      * 'end_date'=>"日志查询结束时间，格式 "2019-07-24 21:46:57"",
      * 'page'=>"页码  * 默认值: 1"
@@ -61,7 +62,7 @@ class FundManagement
      */
     public static function get_opt_log($access_token, $params)
     {
-        $base_url = "https://ad.oceanengine.com/open_api/2/tools/log_search";
+        $base_url = "https://api.oceanengine.com/open_api/v1.0/qianchuan/tools/log_search";
         $url = buildUrlWithParams($base_url, $params);
         $header = array(
             'Access-Token:' . $access_token,
@@ -242,7 +243,7 @@ class FundManagement
         $header = array(
             'Access-Token:' . $access_token
         );
-        $url = "https://api.oceanengine.com/open_api/v3.0/cg_transfer/query_transfer_balance/?biz_request_no=" . $biz_request_no . "&agent_id=" . $agent_id . "&account_id_list=" . $account_id_list;
+        $url = "https://api.oceanengine.com/open_api/v3.0/cg_transfer/query_transfer_balance/?biz_request_no=" . $biz_request_no . "&agent_id=" . $agent_id . "&account_id_list=" . json_encode($account_id_list, JSON_UNESCAPED_UNICODE);
         return Requests::get($url, $header);
     }
 
@@ -556,6 +557,37 @@ class FundManagement
         return sendApiRes($url, $params, 'GET', ['Access-Token' => $access_token])['data'];
     }
 
+
+
+
+    /**
+     * $params = [
+     * 'advertiser_id' => 1826807488376899,
+     * 'data_topic' => 'SITE_PROMOTION_PRODUCT_AD',
+     * 'dimensions' => json_encode(['ad_id']),  // 有其他值，自行查询 https://open.oceanengine.com/labels/12/docs/1823296280645708
+     * 'metrics' => json_encode(['stat_cost']),  // 同上
+     * 'filters' => json_encode([]),   // 详情看文档
+     * 'start_time' => $start_time,   // 格式为 yyyy-MM-dd HH:mm:ss
+     * 'end_time' => $end_time,    // 格式为 yyyy-MM-dd HH:mm:ss
+     * 'order_by' => json_encode($order_by),   // 详情看文档
+     * 'page' => 1,
+     * 'page_size' => 200
+     * ];
+     * 文档：https://open.oceanengine.com/labels/12/docs/1823297941140569?origin=left_nav
+     * 获取全域数据
+     */
+    public static function obtain_global_data($params){
+        $access_token = Cache::get("qc_access_token");
+        $url = "https://api.oceanengine.com/open_api/v1.0/qianchuan/report/uni_promotion/data/get/";
+        return sendApiRes($url, $params, 'GET', ['Access-Token' => $access_token])['data'];
+    }
+
+
+    public static function get_wallet_balance($params){
+        $access_token = Cache::get("qc_access_token");
+        $url = "https://api.oceanengine.com/open_api/v3.0/shared_wallet/wallet_balance/get/";
+        return sendApiRes($url, $params, 'GET', ['Access-Token' => $access_token])['data'];
+    }
 
 }
 

@@ -1,19 +1,19 @@
 <?php
 
-namespace app\store\controller\wallet;
+namespace app\index\controller;
 
-
-use app\common\controller\Store;
-
+use app\common\controller\Frontend;
+use app\robotapi\model\QueueRobot;
 use qywx\Api;
 use think\Cache;
 use think\Db;
 use txy\TextRecognition;
 
-
-class Recharge extends Store
+class Reserve extends Frontend
 {
-
+    protected $noNeedLogin = '*';
+    protected $noNeedRight = '*';
+    protected $layout = 'default';
     protected static $payee = [
         "广州斑马数字科技有限公司",
         "罗文静",
@@ -70,22 +70,24 @@ class Recharge extends Store
         "户名",
         "姓名", // ocr识别失败?返回一个"姓名"键
     ];
-   // 修改这些字段需要同时修改 Recharge.php
+
 
     public function index()
     {
-
+        $token = input('token','');
+        if (empty($token) || !Cache::store('redis')->handler()->exists("token_to_group:" . $token)) {
+            $this->error("token失效", '');
+        }
         if ($this->request->isAjax()) {
-//            $type = input("type");
-            $store = Db::name("store")->where(['id' => $this->auth->id])->find();
-
-//            if ($type == 1){
-
+            $group_id = Cache::store('redis')->handler()->get("token_to_group:" . $token);
+            $callback_data = Cache::store('redis')->handler()->get("token_to_data:" . $token);
+            $store_id = Db::name("wechat_group")->where(["group_id" => $group_id])->value("bind_store_id");
+            $store = Db::name("store")->where(['id' => $store_id])->find();
             $order_num = input("order_num");
             $redis = Cache::store('redis')->handler();
             $order = $redis->get($order_num);
             if (empty($order)) {
-                $this->error("充值失败，请刷新后重试");
+                $this->error("备款充值失败，请刷新后重试。");
             }
             $redis->del($order_num);
             $order = json_decode($order, true);
@@ -168,7 +170,10 @@ class Recharge extends Store
                     "balance_surplus" => $before_money + $actual_money,
                     "credit_limit_surplus" => $before_limit + $deduction_credit_limit
                 ]);
+                $msg = $explain;
+                $msg .= "\n【钱包余额：".($before_money + $actual_money)."，授信余额：".($before_limit + $deduction_credit_limit)."】";
                 // 提交事务
+                $this->callback(json_decode($callback_data, true), $msg);
                 Db::commit();
             } catch (\Exception $e) {
                 // 回滚事务
@@ -186,14 +191,11 @@ class Recharge extends Store
             }
             $this->success();
         }
-        $data = Db::name("store")->where('id', $this->auth->id)->field('public_money,private_money,public_credit_limit,private_credit_limit,public_spending_credit_limit,private_spending_credit_limit,public_discount_percentage,private_discount_percentage')->find();
-        $this->assign("data", $data);
         return $this->view->fetch();
     }
 
     public function get_image_info()
     {
-
         $image = input("image");
         $config_data = Db::name("qc_config")->where("id", 2)->find();
         $data = TextRecognition::get_image_info($config_data['secret'], $config_data['api_key'], request()->domain() . $image);
@@ -265,5 +267,21 @@ class Recharge extends Store
         return json(['code' => 0, "msg" => "识别失败"]);
     }
 
-}
 
+    private function callback($data, $msg){
+        $url = $data["callback_url"];
+        $params = [
+            "group_wxid" => $data["group_id"],
+            "sender_name" => $data['callback_data']["sender_name"],
+            "message" => $msg,
+            "msg_wxid" => $data['callback_data']["msg_uuid"],
+        ];
+        $queue = new QueueRobot();
+        $queue->addQueue('回调请求', 'app\robotapi\job\RobotBaseJob', 'robotBaseJob',[
+            "job_class" => '\app\robotapi\job\sendMsg\Send',
+            "url" => $url,
+            "params" => $params,
+        ]);
+    }
+
+}

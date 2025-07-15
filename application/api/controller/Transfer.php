@@ -21,7 +21,8 @@ class Transfer extends Api
     //检查转账中状态的转账记录并更新
     public function transfer_records_save()
     {
-        $transfer_records_data = Db::name("transfer_records")->where(["status"=>['not in',[0,1,2,6]], 'create_time' => ['<', time() - 60]])->select();
+        // 此处只处理来自dmc后台发起的转账，如若大体逻辑变更应同时修改机器人接口的逻辑。文件名：QueryTransferInfo.php
+        $transfer_records_data = Db::name("transfer_records")->where(["status"=>['not in',[0,1,2,6]], 'create_time' => ['<', time() - 60], 'from' => 1])->select();
         if (empty($transfer_records_data)) {
             return "暂无更新";
         }
@@ -295,7 +296,7 @@ class Transfer extends Api
         $account_type = 'AGENT';
         $biz_request_no = generate_random_string(10, true);
         $list = Db::name('share_wallet_transfer_log')
-            ->where(['status' => ['=', 0], 'transfer_serial' => ['neq', ''], 'create_time' => ['<', time() - 60]])
+            ->where(['status' => ['=', 0], 'transfer_serial' => ['neq', ''], 'create_time' => ['<', time() - 60], 'from' => ['=', 1]])
             ->select();
         Db::startTrans();
         try {
