@@ -38,7 +38,7 @@ class Base extends Controller
         if(!$info){
             return false;
         }
-        if(decrypt($encrypted_data)){
+        if(decrypt($encrypted_data, $account)){
             return true;
         }
         return false;
