@@ -51,7 +51,7 @@ class QcSharedWallet
                 Cache::get("qc_access_token"),
                 Env::get('dmc_ad_config.advertiser_id'),
                 'AGENT',
-                $this->generate_random_string(16),
+                generate_random_string(16),
                 $data['insert_data']['main_wallet_id'],
                 $target_wallet_detail_list,
                 $transfer_direction,
@@ -97,33 +97,6 @@ class QcSharedWallet
                 throw new Exception('扣款失败');
             }
         }
-    }
-
-    private function generate_random_string($length = 10, $use_millisecond = false, $type = 'NUMBER_AND_LETTERS')
-    {
-        switch ($type) {
-            case 'ONLY_NUMBER':
-                $characters = '0123456789';
-                break;
-            case 'ONLY_LETTERS':
-                $characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-                break;
-            default:
-                $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-                break;
-        }
-
-        $charactersLength = strlen($characters);
-        $randomString = '';
-        if ($use_millisecond) {
-            $timeStamp = microtime(true);
-            $ms = (int)(($timeStamp - floor($timeStamp)) * 1000);
-            $randomString = date('YmdHis') . str_pad($ms, 3, '0', STR_PAD_LEFT);
-        }
-        for ($i = 0; $i < $length; $i++) {
-            $randomString .= $characters[rand(0, $charactersLength - 1)];
-        }
-        return $randomString;
     }
 
 }
