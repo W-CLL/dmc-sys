@@ -52,6 +52,10 @@ class QcPeerTransfer extends Controller
      */
     public function validateParam($data, $type = 0)
     {
+        $check = $this->checkGroup($data['group_id']);
+        if($check !== true){
+            return [false, $check];
+        }
         switch ($type) {
             case 1: // get
                 return [false, '不允许使用'];
@@ -132,5 +136,15 @@ class QcPeerTransfer extends Controller
             "total_money" => $total_money / 100000,
             "grant_balance" => $grant_balance / 100000,
         ];
+    }
+
+    private function checkGroup($group_id)
+    {
+        $wechat_group = new WechatGroup();
+        $store_id = $wechat_group->getStoreId($group_id);
+        if (!$store_id) {
+            return "尚未绑定商户，请先联系客服绑定商户";
+        }
+        return true;
     }
 }

@@ -127,6 +127,10 @@ class QcAccountFunds extends Controller
      */
     public function validateParam($data, $type = 0)
     {
+        $check = $this->checkGroup($data['group_id']);
+        if($check !== true){
+            return [false, $check];
+        }
         switch ($type) {
             case 1: // get
                 if (!is_array($data)) {
@@ -278,6 +282,16 @@ class QcAccountFunds extends Controller
         return [$discount_percentage, $balance, $credit_limit, $rebate];
     }
 
+
+    private function checkGroup($group_id)
+    {
+        $wechat_group = new WechatGroup();
+        $store_id = $wechat_group->getStoreId($group_id);
+        if (!$store_id) {
+            return "尚未绑定商户，请先联系客服绑定商户";
+        }
+        return true;
+    }
 
 
 }
