@@ -51,6 +51,7 @@ class QcAccountFunds extends Controller
             'group_id' => $data['group_id'],
             'msg_uuid' => $data['callback_data']['msg_uuid'],
             'sender_name' => $data['callback_data']['sender_name'],
+            'time' => $data['callback_data']['time'],
         ];
         $queue = new QueueRobot();
         $queue->addQueue('千川账户【转账】', 'app\robotapi\job\RobotBaseJob', 'robotBaseJob', $array);

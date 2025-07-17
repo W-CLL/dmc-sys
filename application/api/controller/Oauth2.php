@@ -8,6 +8,7 @@ use app\admin\model\QcGlobalObj;
 use app\common\controller\Api;
 use app\common\model\Queue;
 use app\store\model\TransferRecords;
+use app\store\model\ShareWalletTransferLog;
 use fast\Random;
 use jlqc\AccountRelationship;
 use jlqc\FundManagement;
@@ -242,7 +243,7 @@ class Oauth2 extends Api
     public function genTransferImageUrl()
     {
         $list = Db::name("transfer_records")
-            ->where(["status" => 1])
+            ->where(["status" => 1,"from" => 1]) // 仅处理dmc充值的
             ->whereNull("image")
             ->whereNotNull('transfer_serial')
 //            ->where(["create_time" => [">", strtotime('today midnight')]])
@@ -325,6 +326,116 @@ class Oauth2 extends Api
         if($update){
             $res =  $transfer_model->saveAll($update);
             if($res){
+                return "执行成功";
+            }
+        }
+        if($error){
+            return json_encode($error);
+        }
+
+        return '执行成功2';
+
+
+    }
+
+
+    public function shareWalletTransferImageUrl()
+    {
+        $swtl_model = new ShareWalletTransferLog();
+        $list = $swtl_model
+            ->where(["status" => 1,"from" => 1]) // 仅处理dmc充值的
+            ->whereNull("image")
+            ->whereNotNull('transfer_serial')
+//            ->where(["create_time" => [">", strtotime('today midnight')]])
+//            ->where(["create_time" => ["<", time() - 300]])
+            ->limit(30)
+            ->order('create_time desc')
+            ->select();
+        if(!$list){
+            return "没有需要处理的数据";
+        }
+        $update = [];
+        $error = [];
+        foreach ($list as $k => $v) {
+            $transfer_detail = FundManagement::check_transfer_detail(
+                Cache::get("qc_access_token"),
+                Env::get('dmc_ad_config.advertiser_id'),
+                'AGENT',
+                generate_random_string(10, true),
+                $v['transfer_serial']
+            );
+            if($transfer_detail['code'] != 0){
+                $error[] = $transfer_detail['message'].$v['id'];
+                $update[] = [
+                    'id'=>$v['id'],
+                    'image'=>$transfer_detail['message']
+                ];
+                continue;
+            }
+            $main_wallet_info = [
+                'name' => "广州斑马数字科技有限公司共享钱包",
+                'wallet_id' => $v['main_wallet_id']
+            ];
+            $res = FundManagement::get_wallet_info_list(
+                Cache::get("qc_access_token"),
+                Env::get('dmc_ad_config.advertiser_id'),
+                json_encode([(int)$v['sub_wallet_id']]),
+                'AGENT');
+            if($res['code'] != 0){
+                $error[] = $res['message'].$v['id'];
+                $update[] = [
+                    'id'=>$v['id'],
+                    'image'=>$res['message']
+                ];
+                continue;
+            }
+            $sub_wallet_info = [
+                'name' => $res['data']['wallet_info'][0]['common_wallet_info']['wallet_name'],
+                'wallet_id' => $v['sub_wallet_id']
+            ];
+            $money = number_format($v['money'], 2);
+            if ($v['transfer_direction'] == 1) {
+                $transfer_type = "加款";
+                $transfer_in = $sub_wallet_info['name'] . "\n钱包ID：" . $sub_wallet_info['wallet_id'];
+                $transfer_out = $main_wallet_info['name'] . "\n钱包ID：" . $main_wallet_info['wallet_id'];
+            } else if ($v['transfer_direction'] == 2) {
+                $transfer_type = "退款";
+                $money = '-'.$money;
+                $transfer_in = $main_wallet_info['name'] . "\n钱包ID：" . $main_wallet_info['wallet_id'];
+                $transfer_out = $sub_wallet_info['name'] . "\n钱包ID：" . $sub_wallet_info['wallet_id'];
+            }
+            $img_data = [
+                $transfer_detail['data']['transfer_finish_time'],
+                $transfer_out,
+                $transfer_in,
+                $transfer_type,
+                '巨量广告/千川/本地推',
+                $money,
+                'OPENAPI'];
+            $day = date('Ymd', $v['create_time']);
+            $path = ROOT_PATH . 'public/share_wallet_images/' . $day . '/';
+            $file_name = (int)round(microtime(true) * 1000) . '.png';
+            if (!file_exists($path)) {
+                $created = mkdir($path, 0755, true);
+                if (!$created) {
+                    // 错误处理
+                    throw new Exception("目录创建失败: {$path}");
+                }
+            }
+            $headerTexts = ['转账时间', '转出方', '转入方', '转账类型', '业务平台', '转账总金额', '操作人'];
+            $result = generateTransferImg($img_data, $headerTexts, $path, $file_name);
+            if ($result) {
+                $update[] = [
+                    'id'=>$v['id'],
+                    'image'=>'share_wallet_images/' . $day . '/' . $file_name
+                ];
+            } else {
+                dump($result);
+            }
+        }
+        if($update){
+            $update_res =  $swtl_model->saveAll($update);
+            if($update_res){
                 return "执行成功";
             }
         }

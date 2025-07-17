@@ -33,14 +33,18 @@ class QueryWalletTransferInfo
             if (!isset($transfer_detail['code']) || !isset($transfer_detail['message']) || $transfer_detail['code'] != 0 && $transfer_detail['message'] != "OK") {
                 throw new Exception("查询转账信息失败");
             }
+            $operate = $transfer_data["transfer_direction"] == 1 ? "共享钱包充值" : "共享钱包退款";
+            $img_url = '';
             Db::startTrans();
             try {
                 switch ($transfer_detail['data']['transfer_status']){
                     case "TRANSFER_SUCCESS":
                         $store_model = new StoreModel();
                         $store_info = $store_model->where("id", $transfer_data["store_id"])->lock(true)->find();
+                        $img_url = $this->createTransferImg($transfer_data,$transfer_detail);
                         if(!$transfer_log_model->where(["id" => $data["swtl_id"]])->update([
                             "status" => 1,
+                            "image" => $img_url,
                             "update_time" => time()
                         ])){
                             throw new Exception("更新转账信息失败");
@@ -58,7 +62,7 @@ class QueryWalletTransferInfo
                             throw new Exception("更新累计额度发生错误");
                         }
                         Db::commit();
-                        $msg = "转账成功！\n钱包余额：" . $store_money_log_data["balance_surplus"] . "\n授信余额：" . $store_money_log_data["credit_limit_surplus"];
+                        $msg = "{$operate}成功！\n钱包余额：" . $store_money_log_data["balance_surplus"] . "\n授信余额：" . $store_money_log_data["credit_limit_surplus"];
                         break;
                     case "TRANSFER_FAILURE":
                         if(!$transfer_log_model->where(["id" => $data["swtl_id"]])->update([
@@ -72,7 +76,7 @@ class QueryWalletTransferInfo
                             throw new Exception("退款失败");
                         }
                         Db::commit();
-                        $msg = "转账失败，失败原因：".$transfer_detail['data']['transfer_wallet_record_list'][0]['transfer_capital_record_list'][0]['fail_reason'];
+                        $msg = "{$operate}失败\n失败原因：".$transfer_detail['data']['transfer_wallet_record_list'][0]['transfer_capital_record_list'][0]['fail_reason'];
                         break;
                     default:
                         return false;
@@ -82,7 +86,7 @@ class QueryWalletTransferInfo
                 throw new Exception($e->getMessage()); // 重新抛出异常
             }
             // 发起回调，扔队列
-            $this->callBack($data, $msg);
+            $this->callBack($data, $msg, $img_url);
             return true;
         }catch (Exception $e){
 //            $this->callBack($data, "服务内部错误");
@@ -203,13 +207,83 @@ class QueryWalletTransferInfo
         return true;
     }
 
+    private function createTransferImg($transfer_data,$transfer_detail){
+        if($transfer_detail['data']['transfer_status'] != 'TRANSFER_SUCCESS'){
+            return '';
+        }
+        $transfer_info = $transfer_detail['data']['transfer_wallet_record_list'][0];
+        $main_wallet_info = [
+            'name' => "广州斑马数字科技有限公司共享钱包",
+            'wallet_id' => $transfer_info['main_wallet_id']
+        ];
+        $res = FundManagement::get_wallet_info_list(
+            Cache::get("qc_access_token"),
+            Env::get('dmc_ad_config.advertiser_id'),
+            json_encode([$transfer_info['sub_wallet_id']]),
+            'AGENT');
+        if($res['code'] != 0){
+            throw new Exception("获取钱包信息失败");
+        }
+        $sub_wallet_info = [
+            'name' => $res['data']['wallet_info'][0]['common_wallet_info']['wallet_name'],
+            'wallet_id' => $transfer_info['sub_wallet_id']
+        ];
+        $money = number_format($transfer_data['money'], 2);
+        if ($transfer_data['transfer_direction'] == 1) {
+            $transfer_type = "加款";
+            $transfer_in = $sub_wallet_info['name'] . "\n钱包ID：" . $sub_wallet_info['wallet_id'];
+            $transfer_out = $main_wallet_info['name'] . "\n钱包ID：" . $main_wallet_info['wallet_id'];
+        } else if ($transfer_data['transfer_direction'] == 2) {
+            $transfer_type = "退款";
+            $money = '-'.$money;
+            $transfer_in = $main_wallet_info['name'] . "\n钱包ID：" . $main_wallet_info['wallet_id'];
+            $transfer_out = $sub_wallet_info['name'] . "\n钱包ID：" . $sub_wallet_info['wallet_id'];
+        }
+        $img_data = [
+            $transfer_detail['data']['transfer_finish_time'],
+            $transfer_out,
+            $transfer_in,
+            $transfer_type,
+            '巨量广告/千川/本地推',
+            $money,
+            'OPENAPI'];
+        $day = date('Ymd');
+        $path = ROOT_PATH . 'public/share_wallet_images/' . $day . '/';
+        $file_name = (int)round(microtime(true) * 1000) . '.png';
+        if (!file_exists($path)) {
+            $created = mkdir($path, 0755, true);
+            if (!$created) {
+                // 错误处理
+                throw new Exception("目录创建失败: {$path}");
+            }
+        }
+        $headerTexts = ['转账时间', '转出方', '转入方', '转账类型', '业务平台', '转账总金额', '操作人'];
+        $res = generateTransferImg($img_data, $headerTexts, $path, $file_name);
+        if ($res) {
+            return 'share_wallet_images/' . $day . '/' . $file_name;
+        } else {
+            throw new Exception($res);
+        }
+    }
 
-    private function callback($data, $msg){
+
+
+
+    private function callback($data, $msg, $img_url = ''){
         $url = $data["callback_data"]["url"];
+        $msg = "您于" . date("Y-m-d H:i:s", $data["callback_data"]["time"])."发起的请求结果如下：\n" . $msg;
+        $msg_data = ["msg" => $msg];
+        if(!empty($img_url)){
+            $imagePath = ROOT_PATH . "public/" .$img_url;
+            $imageData = file_get_contents($imagePath);
+            // 可以使用 gzip 压缩图片二进制数据
+            $compressedData = gzencode($imageData, 9); // 9 是最高压缩等级
+            $msg_data['img_data'] = base64_encode($compressedData);
+        }
         $params = [
             "group_wxid" => $data["callback_data"]["group_id"],
             "sender_name" => $data["callback_data"]["sender_name"],
-            "message" => $msg,
+            "message" => $msg_data,
             "msg_wxid" => $data["callback_data"]["msg_uuid"],
         ];
         $queue = new QueueRobot();

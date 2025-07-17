@@ -56,6 +56,19 @@ define(['jquery', 'bootstrap', 'company', 'table', 'form'], function ($, undefin
                                 }
                             }, operate: 'LIKE'},
                         {field: 'fail_reason', title: "失败原因"},
+                        {
+                            field: 'image',
+                            title: "转账截图",
+                            width: "600", // 设置固定宽度，单位是 px
+                            formatter: function(value, row, index) {
+                                if (row.image) {
+                                    return `<a href="/${row.image}" target="_blank" class="thumbnail">
+                        <img src="/${row.image}" class="img-responsive" style="max-width: 100%; height: auto;">
+                    </a>`;
+                                }
+                            },
+                            operate: 'LIKE'
+                        },
                         {field: 'create_time', title:"创建时间" ,formatter: Table.api.formatter.datetime},
                         {field: 'update_time', title:"更新时间" ,formatter: Table.api.formatter.datetime},
                     ]

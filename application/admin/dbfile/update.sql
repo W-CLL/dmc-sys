@@ -277,3 +277,8 @@ CREATE INDEX idx_operator ON fa_qc_global_obj_opt_log (operator);
 --用于标识一些删除，终止，完成的计划
 ALTER TABLE fa_qc_global_obj
     ADD COLUMN `is_handle` tinyint(1) NOT NULL DEFAULT '0' COMMENT '0未处理1已经处理';
+
+
+--2025-07-17
+ALTER TABLE fa_share_wallet_transfer_log
+    ADD COLUMN `image` varchar(255) COMMENT '方舟截图';

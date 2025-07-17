@@ -22,6 +22,8 @@ class RobotBaseJob
             if ($isJobDone) {
                 $queueData->save(['id' => $queueData['id'], 'status' => 1, 'msg' => "处理完成"]);
                 $job->delete();
+            }else{
+                throw new Exception('失败');
             }
             return true;
         }catch (Exception|\Exception $e){

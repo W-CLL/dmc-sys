@@ -79,6 +79,7 @@ class Reserve extends Frontend
             $this->error("token失效", '');
         }
         if ($this->request->isAjax()) {
+            $time = time();
             $group_id = Cache::store('redis')->handler()->get("token_to_group:" . $token);
             $callback_data = Cache::store('redis')->handler()->get("token_to_data:" . $token);
             $store_id = Db::name("wechat_group")->where(["group_id" => $group_id])->value("bind_store_id");
@@ -172,6 +173,7 @@ class Reserve extends Frontend
                 ]);
                 $msg = $explain;
                 $msg .= "\n【钱包余额：".($before_money + $actual_money)."，授信余额：".($before_limit + $deduction_credit_limit)."】";
+                $msg = "您于" . date("Y-m-d H:i:s", $time)."提交备款充值：\n" .$msg;
                 // 提交事务
                 $this->callback(json_decode($callback_data, true), $msg);
                 Db::commit();
@@ -273,7 +275,7 @@ class Reserve extends Frontend
         $params = [
             "group_wxid" => $data["group_id"],
             "sender_name" => $data['callback_data']["sender_name"],
-            "message" => $msg,
+            "message" => ['msg' => $msg],
             "msg_wxid" => $data['callback_data']["msg_uuid"],
         ];
         $queue = new QueueRobot();

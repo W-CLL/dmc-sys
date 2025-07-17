@@ -29,7 +29,7 @@ class SubWalletTransferDetails extends Backend
             $list = $TransferLogModel
                 ->with('store,storeMoneyLog')
                 ->where($where)
-                ->field("id,store_id,sub_wallet_id,main_wallet_id,transfer_direction,money,rebate,actual_money,transfer_serial,status,fail_reason,create_time,update_time,account_type")
+                ->field("id,store_id,sub_wallet_id,main_wallet_id,transfer_direction,money,rebate,actual_money,transfer_serial,status,fail_reason,create_time,update_time,account_type,image")
                 ->order($sort, $order)
                 ->limit($offset,$limit)
                 ->select();

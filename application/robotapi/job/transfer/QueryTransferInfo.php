@@ -7,6 +7,7 @@ use app\robotapi\model\StoreRefund;
 use app\robotapi\model\TransferRecords;
 use app\robotapi\model\Store;
 use app\robotapi\model\StoreMoneyLog;
+use app\robotapi\model\Company;
 use think\Db;
 use think\Cache;
 use think\Env;
@@ -50,20 +51,22 @@ class QueryTransferInfo
     private function QcPeerTransfer($transfer_records_data, $transfer_detail_data, $data)
     {
         $transfer_records_model = new TransferRecords();
+        $img_url = '';
         switch ($transfer_detail_data['data']['transfer_status']){
             case 'TRANSFER_FAILED':
                 $transfer_records_model->where(["id" => $data["transfer_records_id"]])->update(['status' => 2, 'explain' => $transfer_detail_data['data']['transfer_target_record_list'][0]['transfer_capital_record_list'][0]['fail_reason']]);
-                $msg = "同级互转失败，失败原因：" . $transfer_detail_data['data']['transfer_target_record_list'][0]['transfer_capital_record_list'][0]['fail_reason'];
+                $msg = "同级互转失败\n失败原因：" . $transfer_detail_data['data']['transfer_target_record_list'][0]['transfer_capital_record_list'][0]['fail_reason'];
                 break;
             case 'TRANSFER_SUCCESS':
-                $transfer_records_model->where(["id" => $data["transfer_records_id"]])->update(['status' => 1]);
+                $img_url = $this->createTransferImg($transfer_records_data,$transfer_detail_data);
+                $transfer_records_model->where(["id" => $data["transfer_records_id"]])->update(['status' => 1, 'image' => $img_url]);
                 $msg = "同级互转成功";
                 break;
             default :
                 return false;
         }
         // 发起回调，扔队列
-        $this->callBack($data["callback_data"], $msg);
+        $this->callBack($data["callback_data"], $msg, $img_url);
         return true;
     }
 
@@ -71,6 +74,8 @@ class QueryTransferInfo
     private function QcAccountTransfer($transfer_records_data, $transfer_detail_data, $data)
     {
         $transfer_records_model = new TransferRecords();
+        $img_url = '';
+        $operate = $transfer_records_data["transfer_direction"] == 1 ? "千川充值" : "千川退款";
         switch ($transfer_detail_data['data']['transfer_status']){
             case 'TRANSFER_FAILED':
                 if(!$transfer_records_model->where(["id" => $data["transfer_records_id"]])->update(['status' => 2, 'explain' => $transfer_detail_data['data']['transfer_target_record_list'][0]['transfer_capital_record_list'][0]['fail_reason']])){
@@ -80,7 +85,7 @@ class QueryTransferInfo
                 if (!$this->refund($transfer_records_data)){
                     throw new Exception("退款失败");
                 }
-                $msg = "千川转账失败，失败原因：" . $transfer_detail_data['data']['transfer_target_record_list'][0]['transfer_capital_record_list'][0]['fail_reason'];
+                $msg = "{$operate}失败！\n失败原因：" . $transfer_detail_data['data']['transfer_target_record_list'][0]['transfer_capital_record_list'][0]['fail_reason'];
                 break;
             case 'TRANSFER_SUCCESS':
                 Db::startTrans();
@@ -96,7 +101,8 @@ class QueryTransferInfo
                     if(!$this->increaseFees($money_log_data, $store_info)){
                         throw new Exception("增加dmc余额失败");
                     }
-                    if (!$transfer_records_model->where(["id" => $data["transfer_records_id"]])->update(['status' => 1])) {
+                    $img_url = $this->createTransferImg($transfer_records_data,$transfer_detail_data);
+                    if (!$transfer_records_model->where(["id" => $data["transfer_records_id"]])->update(['status' => 1, 'image' => $img_url])) {
                         throw new Exception('转账成功，状态更新失败');
                     }
                     //添加同步转账记录任务
@@ -109,7 +115,7 @@ class QueryTransferInfo
                         "transfer_records"
                     );
                     Db::commit();
-                    $msg = "千川转账成功！\n钱包余额：" . $money_log_data["balance_surplus"] . "\n授信余额：" . $money_log_data["credit_limit_surplus"];
+                    $msg = "{$operate}成功！\n钱包余额：" . $money_log_data["balance_surplus"] . "\n授信余额：" . $money_log_data["credit_limit_surplus"];
                     break;
                 }catch (Exception $e){
                     Db::rollback();
@@ -119,7 +125,7 @@ class QueryTransferInfo
                 return false;
         }
         // 发起回调，扔队列
-        $this->callBack($data["callback_data"], $msg);
+        $this->callBack($data["callback_data"], $msg, $img_url);
         return true;
     }
 
@@ -222,13 +228,79 @@ class QueryTransferInfo
         return true;
     }
 
+    private function createTransferImg($transfer_records_data,$transfer_detail_data){
+        if($transfer_detail_data['data']['transfer_status'] != 'TRANSFER_SUCCESS'){
+            return '';
+        }
+        $transfer_info = $transfer_detail_data['data']['transfer_target_record_list'][0];
+        $company_model = new Company();
+        $target_account_info = $company_model->where(['advertiser_id' => $transfer_info['target_account_id']])->find();
+        $account_info = $company_model->where(['advertiser_id' => $transfer_info['account_id']])->find();
+        if($transfer_info['account_id'] == "1739518270441480"){
+            $account_info['name'] = "广州斑马数字科技有限公司";
+            $account_info['advertiser_id'] = $transfer_info['account_id'];
+            $account_info['company_name'] = "广州斑马数字科技有限公司";
+        }
+        $money = number_format($transfer_records_data['money'], 2);
+        if ($transfer_records_data['transfer_direction'] == 1) {
+            $transfer_type = "加款";
+            $transfer_in = $target_account_info['name'] . "\n转入方ID：" . $target_account_info['advertiser_id'];
+            $transfer_out = $account_info['name'] . "\n转出方ID：" . $account_info['advertiser_id'];
+        } else if ($transfer_records_data['transfer_direction'] == 2) {
+            $transfer_type = "退款";
+            $money = '-'.$money;
+            $transfer_in = $account_info['name'] . "\n转入方ID：" . $account_info['advertiser_id'];
+            $transfer_out = $target_account_info['name'] . "\n转出方ID：" . $target_account_info['advertiser_id'];
+        }
+        if ($account_info['company_name'] == $target_account_info['company_name']) {
+            $transfer_type = "同级账户转账";
+        }
+        $img_data = [
+            $transfer_detail_data['data']['transfer_finish_time'],
+            $transfer_out,
+            $transfer_in,
+            $transfer_type,
+            '通用',
+            $money,
+            '账户余额',
+            'OPENAPI'];
+        $day = date('Ymd');
+        $path = ROOT_PATH . 'public/transfer_images/' . $day . '/';
+        $file_name = (int)round(microtime(true) * 1000) . '.png';
+        if (!file_exists($path)) {
+            $created = mkdir($path, 0755, true);
+            if (!$created) {
+                // 错误处理
+                throw new Exception("目录创建失败: {$path}");
+            }
+        }
+        $res = generateTransferImg($img_data, [], $path, $file_name);
+        if ($res) {
+            return 'transfer_images/' . $day . '/' . $file_name;
+        } else {
+            throw new Exception($res);
+        }
+    }
 
-    private function callback($data, $msg){
+
+
+    private function callback($data, $msg, $img_url = ''){
         $url = $data["url"];
+        $msg = "您于" . date("Y-m-d H:i:s", $data["time"])."发起的请求结果如下：\n" . $msg;
+        $msg_data = [
+            "msg" => $msg,
+        ];
+        if(!empty($img_url)){
+            $imagePath = ROOT_PATH . "public/" .$img_url;
+            $imageData = file_get_contents($imagePath);
+            // 可以使用 gzip 压缩图片二进制数据
+            $compressedData = gzencode($imageData, 9); // 9 是最高压缩等级
+            $msg_data['img_data'] = base64_encode($compressedData);
+        }
         $params = [
             "group_wxid" => $data["group_id"],
             "sender_name" => $data["sender_name"],
-            "message" => $msg,
+            "message" => $msg_data,
             "msg_wxid" => $data["msg_uuid"],
         ];
         $queue = new QueueRobot();

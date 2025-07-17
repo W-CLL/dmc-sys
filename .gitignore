@@ -20,3 +20,5 @@ composer.lock
 .vscode
 node_modules
 .user.ini
+/public/share_wallet_images/
+/public/transfer_images/
