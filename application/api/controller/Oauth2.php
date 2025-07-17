@@ -319,19 +319,22 @@ class Oauth2 extends Api
                 $error[]= $data['message'].$v['id'];
                 $update[] = [
                     'id'=>$v['id'],
-                    'image'=>$data['message']
+                    'explain'=>$data['message']
                 ];
             }
+        }
+        if($error){
+            echo json_encode($error);
         }
         if($update){
             $res =  $transfer_model->saveAll($update);
             if($res){
                 return "执行成功";
+            }else{
+                return "执行失败";
             }
         }
-        if($error){
-            return json_encode($error);
-        }
+
 
         return '执行成功2';
 
@@ -383,6 +386,10 @@ class Oauth2 extends Api
                 'AGENT');
             if($res['code'] != 0){
                 $error[] = $res['message'].$v['id'];
+                $update[] = [
+                    'id'=>$v['id'],
+                    'fail_reason'=>$res['message']
+                ];
                 continue;
             }
             $sub_wallet_info = [
@@ -429,14 +436,16 @@ class Oauth2 extends Api
                 dump($result);
             }
         }
+        if($error){
+            echo json_encode($error);
+        }
         if($update){
             $update_res =  $swtl_model->saveAll($update);
             if($update_res){
                 return "执行成功";
+            }else{
+                return "执行失败";
             }
-        }
-        if($error){
-            return json_encode($error);
         }
 
         return '执行成功2';

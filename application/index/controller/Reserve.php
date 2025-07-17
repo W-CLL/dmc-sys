@@ -76,7 +76,7 @@ class Reserve extends Frontend
     {
         $token = input('token','');
         if (empty($token) || !Cache::store('redis')->handler()->exists("token_to_group:" . $token)) {
-            $this->error("token失效", '');
+            $this->error("链接已失效，请重新获取", '');
         }
         if ($this->request->isAjax()) {
             $time = time();
