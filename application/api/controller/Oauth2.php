@@ -383,10 +383,6 @@ class Oauth2 extends Api
                 'AGENT');
             if($res['code'] != 0){
                 $error[] = $res['message'].$v['id'];
-                $update[] = [
-                    'id'=>$v['id'],
-                    'image'=>$res['message']
-                ];
                 continue;
             }
             $sub_wallet_info = [
