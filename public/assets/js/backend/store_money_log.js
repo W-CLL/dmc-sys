@@ -76,6 +76,13 @@ define(['jquery', 'bootstrap', 'company', 'table', 'form'], function ($, undefin
                                     return row.credit_limit_surplus
                                 }
                             }, operate: 'LIKE'},
+                        {field: 'from', title: "来源", formatter: function(value,row,index) {
+                                if (row.from === 2) {
+                                    return "群聊助手";
+                                } else {
+                                    return "抖秒冲";
+                                }
+                            }, operate: 'LIKE'},
                         {field: 'create_time', title:"时间" ,formatter: Table.api.formatter.datetime},
                         // {field: 'operate', title: __('Operate'), table: table, events: Table.api.events.operate, formatter: Table.api.formatter.operate},
                     ]

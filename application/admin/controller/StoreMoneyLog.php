@@ -81,8 +81,8 @@ Class StoreMoneyLog extends Backend{
                 $where["store_id"] = ["in",$store_ids];
             }
 
-            $list = Db::name("store_money_log")
-                ->field("id,store_id,advertiser_id,money,type,explain,balance_surplus,credit_limit_surplus,account_type,create_time,swtl_id")
+            $list = StoreMoneyLogModel::with(['transferRecords', 'swtl'])
+                ->field("id,store_id,advertiser_id,money,type,explain,balance_surplus,credit_limit_surplus,account_type,create_time,swtl_id,from")
                 ->where($where)
                 ->order($sort, $order)
                 ->limit($offset,$limit)

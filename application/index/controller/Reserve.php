@@ -169,7 +169,8 @@ class Reserve extends Frontend
                     "explain" => $explain,
                     "create_time" => time(),
                     "balance_surplus" => $before_money + $actual_money,
-                    "credit_limit_surplus" => $before_limit + $deduction_credit_limit
+                    "credit_limit_surplus" => $before_limit + $deduction_credit_limit,
+                    "from" => 2
                 ]);
                 $msg = $explain;
                 $msg .= "\n【钱包余额：".($before_money + $actual_money)."，授信余额：".($before_limit + $deduction_credit_limit)."】";

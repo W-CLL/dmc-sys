@@ -105,7 +105,8 @@ class QueryWalletTransferInfo
             'account_type'              => $transfer_data['account_type'],
             'rebate'                    => $transfer_data['rebate'],
             'discount_percentage'       => $transfer_data['discount_percentage'],
-            'create_time'               => time()
+            'create_time'               => time(),
+            "from"                      => 2,
         ];
 
         $prefix = $transfer_data['account_type'] == 1 ? "public_" : "private_";
