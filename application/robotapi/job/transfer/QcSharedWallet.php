@@ -58,6 +58,7 @@ class QcSharedWallet
                 "robot"
             );
             if($result['code'] != 0 && $result['message'] != 'OK'){
+                \think\Log::write($result,'share_wallet_error');
                 throw new Exception($result['message']);
             }
             Db::commit();

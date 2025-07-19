@@ -55,6 +55,7 @@ class QcAccountFunds
                 $transfer_direction,
                 "robot");
             if (!isset($result_data['code']) || !isset($result_data['message']) || $result_data['code'] != 0 || $result_data['message'] != "OK") {
+                \think\Log::write($result_data,'qc_account_error');
                 throw new Exception("发起转账失败");
             }
             Db::commit();
