@@ -25,7 +25,7 @@ class QueryTransferInfo
             $transfer_detail_data = FundManagement::transfer_detail(
                 Cache::get("qc_access_token"),
                 generate_random_string(16),
-                Env::get('dmc_ad_config.advertiser_id'),
+                $data["agent_id"],
                 $transfer_records_data["transfer_serial"]);
             if (!isset($transfer_detail_data['code']) || !isset($transfer_detail_data['message']) || $transfer_detail_data['code'] != 0 && $transfer_detail_data['message'] != "OK") {
                 throw new Exception("查询转账信息失败");
@@ -241,6 +241,10 @@ class QueryTransferInfo
             $account_info['name'] = "广州斑马数字科技有限公司";
             $account_info['advertiser_id'] = $transfer_info['account_id'];
             $account_info['company_name'] = "广州斑马数字科技有限公司";
+        }elseif($transfer_info['account_id'] == "1818673832986633"){
+            $account_info['name'] = "广州斑马数字科技有限公司-JDC";
+            $account_info['advertiser_id'] = $transfer_info['account_id'];
+            $account_info['company_name'] = "广州斑马数字科技有限公司-JDC";
         }
         $money = number_format($transfer_records_data['money'], 2);
         if ($transfer_records_data['transfer_direction'] == 1) {

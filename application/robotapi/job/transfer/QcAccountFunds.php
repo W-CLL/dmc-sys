@@ -37,7 +37,6 @@ class QcAccountFunds
             // 扣除费用
             $this->deductingFees($data['transfer_records_data']);
             // 发起转账
-            $advertiser_id = Env::get('dmc_ad_config.advertiser_id');
             $target_account_detail_list[] = [
                 'account_id' => (int)$data['transfer_records_data']['advertiser_id'],
                 'transfer_capital_detail_list' => [[
@@ -49,14 +48,14 @@ class QcAccountFunds
             list($result_data) = FundManagement::create_transfer(
                 Cache::get("qc_access_token"),
                 $transfer_records_id,
-                $advertiser_id,
-                $advertiser_id,
+                $data['agent_id'],
+                $data['agent_id'],
                 $target_account_detail_list,
                 $transfer_direction,
                 "robot");
             if (!isset($result_data['code']) || !isset($result_data['message']) || $result_data['code'] != 0 || $result_data['message'] != "OK") {
                 \think\Log::write($result_data,'qc_account_error');
-                throw new Exception("发起转账失败");
+                throw new Exception($result_data['message']);
             }
             Db::commit();
         }catch (Exception $e){
@@ -75,6 +74,7 @@ class QcAccountFunds
                 "transfer_records_id" => $transfer_records_id,
                 "handle" => "QcAccountTransfer",   // 此处传入的参数是需要执行逻辑的方法名
                 "callback_data" => $data['callback_data'],
+                "agent_id" => $data['agent_id'],
             ]);
         return true;
     }

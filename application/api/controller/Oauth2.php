@@ -470,13 +470,18 @@ class Oauth2 extends Api
         $i = 0;
         $access_token = Cache::get("qc_access_token");
         $advertiser_ids = Cache::get("ad_ids");
-        $advertiser_ids_info = Cache::get("ad_ids_info");
+        $advertiser_ids_kahuna_info = Cache::get("ad_ids_kahuna_info");
+        $advertiser_ids_agent_info = Cache::get("ad_ids_agent_info");
         if (!$advertiser_ids) {
             $advertiser_ids = Db::name("company")->column("advertiser_id");
         }
-        if (!$advertiser_ids_info) {
-            $advertiser_ids_info = Db::name("company")->column("kahuna", "advertiser_id");
-            Cache::set('ad_ids_info', $advertiser_ids_info);
+        if (!$advertiser_ids_kahuna_info) {
+            $advertiser_ids_kahuna_info = Db::name("company")->column("kahuna", "advertiser_id");
+            Cache::set('ad_ids_agent_info', $advertiser_ids_kahuna_info);
+        }
+        if (!$advertiser_ids_agent_info) {
+            $advertiser_ids_agent_info = Db::name("company")->column("agent_id", "advertiser_id");
+            Cache::set('ad_ids_agent_info', $advertiser_ids_agent_info);
         }
         $advertiser_ids = array_map(function ($item) {
             return (int)$item;
@@ -485,9 +490,15 @@ class Oauth2 extends Api
             if ($i == 50) {
                 break;
             }
+            $arr = [];
             $res1 = FundManagement::get_ad_info($access_token, json_encode([$split], JSON_UNESCAPED_UNICODE));
-            if ($res1['code'] == 0 && $res1['data']['account_detail_list'][0]['optimizer_name'] != $advertiser_ids_info[$split]) {
+            if ($res1['code'] == 0 && $res1['data']['account_detail_list'][0]['optimizer_name'] != $advertiser_ids_kahuna_info[$split]) {
                 $arr['kahuna'] = $res1['data']['account_detail_list'][0]['optimizer_name'];
+            }
+            if ($res1['code'] == 0 && $res1['data']['account_detail_list'][0]['first_agent_id'] != $advertiser_ids_agent_info[$split]){
+                $arr['agent_id'] = $res1['data']['account_detail_list'][0]['first_agent_id'];
+            }
+            if($arr){
                 $res = Db::name('company')->where(['advertiser_id' => $split])->update($arr);  // 有更新则返回1,无更新返回0，出错返回报错 故下面使用is_int判断
                 if (!is_int($res)) {
                     throw new \Exception('出错');
@@ -501,7 +512,8 @@ class Oauth2 extends Api
             $expiryDate->setTime(0, 0, 0);
             $expiryDate->modify('+1 day');
             Cache::rm('ad_ids');
-            Cache::rm('ad_ids_info');
+            Cache::rm('ad_ids_agent_info');
+            Cache::rm('ad_ids_kahuna_info');
             Cache::set('kahuna_run_status', 1, $expiryDate);
             echo "全部完成";
             return;
@@ -633,8 +645,9 @@ class Oauth2 extends Api
             $res1 = FundManagement::get_ad_info($access_token, json_encode([$split], JSON_UNESCAPED_UNICODE));
             if ($res1['code'] == 0) {
                 $arr['kahuna'] = $res1['data']['account_detail_list'][0]['optimizer_name'];
+                $arr['agent_id'] = $res1['data']['account_detail_list'][0]['first_agent_id'];
                 $arr['update_time'] = time();
-                $res =  Db::name('company')->where(['advertiser_id' => $split])->update($arr);
+                Db::name('company')->where(['advertiser_id' => $split])->update($arr);
             }
         }
         echo '完成';

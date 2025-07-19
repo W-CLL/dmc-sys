@@ -99,6 +99,7 @@ class QcAccountFunds extends Controller
                 return [
                     'money' => $money,
                     'transfer_records_data' => $transfer_records_data,
+                    'agent_id' => $company_info['company'][0]['agent_id'],
                 ];
             case 2:
                 $store_refund_model = new StoreRefund();
@@ -116,6 +117,7 @@ class QcAccountFunds extends Controller
                 return [
                     'money' => [],
                     'transfer_records_data' => $transfer_records_data,
+                    'agent_id' => $company_info['company'][0]['agent_id'],
                 ];
         }
     }
@@ -189,6 +191,9 @@ class QcAccountFunds extends Controller
         $company_info = $wechat_group_model->getCompanyByStoreId($data['group_id'], [$data['adv_id']]);
         if (empty($company_info) || empty($company_info['company'])){
             return '无权操作此千川账户';
+        }
+        if(empty($company_info['company'][0]['agent_id'])){
+            return '此千川账户未绑定代理';
         }
         switch ($data['transfer_type']){
             case 1:

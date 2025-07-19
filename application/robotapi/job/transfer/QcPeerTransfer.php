@@ -41,7 +41,7 @@ class QcPeerTransfer
                 "robotPeer");
             if (!isset($result_data['code']) || !isset($result_data['message']) || $result_data['code'] != 0 || $result_data['message'] != "OK") {
                 \think\Log::write($result_data,'peer_transfer_error');
-                throw new Exception("发起转账失败");
+                throw new Exception($result_data['message']);
             }
             Db::commit();
         } catch (Exception $e) {
