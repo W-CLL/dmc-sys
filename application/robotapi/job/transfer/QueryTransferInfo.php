@@ -115,7 +115,8 @@ class QueryTransferInfo
                         "transfer_records"
                     );
                     Db::commit();
-                    $msg = "{$operate}成功！\n钱包余额：" . $money_log_data["balance_surplus"] . "\n授信余额：" . $money_log_data["credit_limit_surplus"];
+                    $prefix = $transfer_records_data['account_type'] == 1 ? "public_" : "private_";
+                    $msg = "{$operate}成功！\n钱包余额：" . $money_log_data["balance_surplus"] . "\n授信余额：" . $money_log_data["credit_limit_surplus"] . "\n已使用授信额度：" . number_format((($store_info[$prefix."spending_credit_limit"] + $store_info[$prefix."credit_limit"]) - $money_log_data["credit_limit_surplus"]), 2);
                     break;
                 }catch (Exception $e){
                     Db::rollback();
