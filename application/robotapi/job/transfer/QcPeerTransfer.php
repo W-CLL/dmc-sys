@@ -60,6 +60,7 @@ class QcPeerTransfer
                 "transfer_records_id" => $transfer_records_id,
                 "handle" => "QcPeerTransfer",   // 此处传入的参数是需要执行逻辑的方法名
                 "callback_data" => $data['callback_data'],
+                "agent_id" => $data['agent_id'],
             ]);
         return true;
     }
