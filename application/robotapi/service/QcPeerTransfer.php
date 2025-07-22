@@ -42,7 +42,7 @@ class QcPeerTransfer extends Controller
             "create_time"                           => time(),
             "from"                                  => 2     // 2： 机器人接口调用转账
         ];
-        return ["transfer_records_data" => $transfer_records_data];
+        return ["transfer_records_data" => $transfer_records_data, "agent_id" => $receive_company_info['company'][0]['agent_id']];
     }
 
 
@@ -107,7 +107,10 @@ class QcPeerTransfer extends Controller
         if (empty($receive_company_info) || empty($receive_company_info['company'])){
             return '无权操作此adv_id: ' . $data['receive_adv_id'];
         }
-        if(!empty($receive_company_info['company'][0]['agent_id']) && !empty($initiate_company_info['company'][0]['agent_id']) && ($receive_company_info['company'][0]['agent_id'] !== $initiate_company_info['company'][0]['agent_id'])){
+        if (empty($receive_company_info['company'][0]['agent_id']) || empty($initiate_company_info['company'][0]['agent_id'])){
+            return '无权操作';
+        }
+        if(($receive_company_info['company'][0]['agent_id'] !== $initiate_company_info['company'][0]['agent_id'])){
             return '发起方和接收方不是同一代理，无法进行同级互转操作';
         }
         $result = $this->getQcMoney($initiate_company_info['company'][0]);

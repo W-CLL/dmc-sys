@@ -34,7 +34,7 @@ class QcPeerTransfer
             list($result_data) = FundManagement::create_transfer(
                 Cache::get("qc_access_token"),
                 $transfer_records_id,
-                Env::get('dmc_ad_config.advertiser_id'),
+                $data['agent_id'],
                 $data['original_data']['initiate_adv_id'],
                 $target_account_detail_list,
                 'TRANSFER_IN',
