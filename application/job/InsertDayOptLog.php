@@ -20,4 +20,21 @@ class InsertDayOptLog extends BaseInsertDayOptLogJob
     {
         return 'insertObjOptLog';
     }
+
+    protected function getThisJobName(): string
+    {
+        return '插入当天新增日志';
+    }
+
+
+    protected function getThisJobClass(): string
+    {
+        return 'app\job\InsertDayOptLog';
+    }
+
+    protected function getThisQueueName(): string
+    {
+        return 'insertDayOptLog';
+    }
+
 }

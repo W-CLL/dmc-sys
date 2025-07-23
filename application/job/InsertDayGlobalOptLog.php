@@ -20,4 +20,20 @@ class InsertDayGlobalOptLog extends BaseInsertDayOptLogJob
     {
         return 'insertGlobalObjOptLog';
     }
+
+    protected function getThisJobName(): string
+    {
+        return '插入当天新增日志【全域】';
+    }
+
+    protected function getThisJobClass(): string
+    {
+        return 'app\job\InsertDayGlobalOptLog';
+    }
+
+    protected function getThisQueueName(): string
+    {
+        return 'insertDayGlobalOptLog';
+    }
+
 }

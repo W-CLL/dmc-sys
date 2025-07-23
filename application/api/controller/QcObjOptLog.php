@@ -24,25 +24,28 @@ class QcObjOptLog extends Api
      * @param string $end_date 时间戳
      * @return void
      */
-    public function index($start_date ='',$end_date='')
+    public function index($start_date = '', $end_date = '')
     {
 //        Cache::rm('first_execution_done');
-        list($e,$s)=$this->checkAndGetExecutionTime();
-        if(!$s&&!$e && !$start_date){
-            echo "时间不对不执行".date('Y-m-d H:i:s');
+        list($e, $s) = $this->checkAndGetExecutionTime();
+        if (!$s && !$e && !$start_date) {
+            echo "时间不对不执行" . date('Y-m-d H:i:s');
             die;
         }
         $objModel = new \app\admin\model\QcObj();
+        $companyModel = new \app\admin\model\Company();
         $queue = new Queue();
         $advIds = $objModel->group('adv_id')->order('adv_id')->column('adv_id');
-        if ($start_date&&$end_date) {
-            $s = date("Y-m-d H:i:s",$start_date);
-            $e = date("Y-m-d H:i:s",$end_date);
+        $banAdvIds = $companyModel->where(['adv_status' => 0])->column('advertiser_id');
+        $advIds = array_diff($advIds, $banAdvIds);
+        if ($start_date && $end_date) {
+            $s = date("Y-m-d H:i:s", $start_date);
+            $e = date("Y-m-d H:i:s", $end_date);
         }
         foreach ($advIds as $id) {
             $twoDaysAgo = (new DateTime('today'))->modify('-2 days')->getTimestamp();
             //2025-5-22号标准商品全下线了，只有推直播间的了marketing_goal
-            $objIds = $objModel->where(['adv_id'=>$id,'marketing_goal'=>"LIVE_PROM_GOODS"])
+            $objIds = $objModel->where(['adv_id' => $id, 'marketing_goal' => "LIVE_PROM_GOODS"])
                 ->where(function ($query) use ($twoDaysAgo) {
                     $query->where(function ($q) use ($twoDaysAgo) {
                         $q->where('obj_create_time', '<=', $twoDaysAgo)
@@ -65,13 +68,16 @@ class QcObjOptLog extends Api
                 $params = [
                     "advertiser_id" => (int)$id,
                     'object_id' => $object_ids,
+                    'object_type' => 'AD',
                     'start_time' => $startTime,
                     'end_time' => $endTime,
                     "page" => 1,
                     "page_size" => 20,
                 ];
-                $queue->addQueue('插入当天新增日志', 'app\job\InsertDayOptLog', 'insertDayOptLog', $params);
+                \think\Queue::push('app\job\InsertDayOptLog', $params, 'insertDayOptLog');
             }
+
+
         }
         echo "已经全部处理完了";
     }
@@ -117,7 +123,7 @@ class QcObjOptLog extends Api
             $lastExecutionTime = clone $now;
             $lastExecutionTime->modify('-4 hours');
             // 每4点拉一次前半天的数据
-            if ($currentHour == 4 || $currentHour == 16){
+            if ($currentHour == 4 || $currentHour == 16) {
                 $lastExecutionTime->modify('-13 hours'); // 此处包含上面-的4小时，故需要再-13小时
             }
             // 返回当前时间和上一次执行时间
@@ -132,26 +138,26 @@ class QcObjOptLog extends Api
     }
 
 
-    public function getGlobalObjOptLog($start_date = '',$end_date = '')
+    public function getGlobalObjOptLog($start_date = '', $end_date = '')
     {
-        list($e,$s)=$this->checkAndGetExecutionTime();
-        if(!$s&&!$e && !$start_date){
-            echo "时间不对不执行".date('Y-m-d H:i:s');
+        list($e, $s) = $this->checkAndGetExecutionTime();
+        if (!$s && !$e && !$start_date) {
+            echo "时间不对不执行" . date('Y-m-d H:i:s');
             die;
         }
         $twoDaysAgo = (new DateTime('today'))->modify('-2 days')->getTimestamp();
         $objModel = new \app\admin\model\QcGlobalObj();
         $queue = new Queue();
         $advIds = $objModel->alias('obj')
-            ->join('company com','obj.adv_id=com.advertiser_id','left')
-            ->where(['com.adv_status'=>1])
+            ->join('company com', 'obj.adv_id=com.advertiser_id', 'left')
+            ->where(['com.adv_status' => 1])
             ->group('obj.adv_id')
             ->order('obj.adv_id')
             ->column('obj.adv_id');
 
-        if ($start_date&&$end_date) {
-            $s = date("Y-m-d H:i:s",$start_date);
-            $e = date("Y-m-d H:i:s",$end_date) ;
+        if ($start_date && $end_date) {
+            $s = date("Y-m-d H:i:s", $start_date);
+            $e = date("Y-m-d H:i:s", $end_date);
         }
 
         foreach ($advIds as $id) {
@@ -179,12 +185,13 @@ class QcObjOptLog extends Api
                 $params = [
                     "advertiser_id" => (int)$id,
                     'object_id' => $object_ids,
+                    'object_type' => 'AD',
                     'start_time' => $startTime,
                     'end_time' => $endTime,
                     "page" => 1,
                     "page_size" => 20,
                 ];
-                $queue->addQueue('插入当天新增全域日志', 'app\job\InsertDayGlobalOptLog', 'insertDayGlobalOptLog', $params);
+                \think\Queue::push('app\job\InsertDayGlobalOptLog', $params, 'insertDayGlobalOptLog');
             }
         }
         echo "已经全部处理完了";

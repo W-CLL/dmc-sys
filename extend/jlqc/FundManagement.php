@@ -62,8 +62,8 @@ class FundManagement
      */
     public static function get_opt_log($access_token, $params)
     {
-        $base_url = "https://ad.oceanengine.com/open_api/2/tools/log_search";
-//        $base_url = "https://api.oceanengine.com/open_api/v1.0/qianchuan/tools/log_search";
+//        $base_url = "https://ad.oceanengine.com/open_api/2/tools/log_search";   // 旧接口
+        $base_url = "https://api.oceanengine.com/open_api/v1.0/qianchuan/tools/log_search";    // 新接口
         $url = buildUrlWithParams($base_url, $params);
         $header = array(
             'Access-Token:' . $access_token,

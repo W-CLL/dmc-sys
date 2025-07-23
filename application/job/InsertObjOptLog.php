@@ -11,4 +11,22 @@ class InsertObjOptLog extends BaseGetOptLogJob
     {
         return '\app\admin\model\QcObjOptLog';
     }
+
+
+    protected function getThisJobName(): string
+    {
+        return '插入计划操作日志';
+    }
+
+
+    protected function getThisJobClass(): string
+    {
+        return 'app\job\InsertObjOptLog';
+    }
+
+    protected function getThisQueueName(): string
+    {
+        return 'insertObjOptLog';
+    }
+
 }
