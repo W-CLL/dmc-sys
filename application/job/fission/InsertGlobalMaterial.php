@@ -178,13 +178,13 @@ class InsertGlobalMaterial extends BaseJob
                         echo $resData['data']['pagination']['total_page'] . "页";
                         echo $adv_id . "  " . $request_info['page'];
                         $next = ['adv_list' => [$adv_id], 'start_time' => $request_info['start_time'], 'end_time' => $request_info['end_time'], 'page' => $request_info['page'] + 1];
-                        \think\Queue::later(10, 'app\job\fission\InsertGlobalMaterial', $next, "insertGlobalMaterial");
+                        \think\Queue::later(3, 'app\job\fission\InsertGlobalMaterial', $next, "insertGlobalMaterial");
                     }
                 } elseif ($resData['code'] != 0) {
 //                    echo $resData['message'];
                     if (!skipIfContainsError($resData['message'], ['当前广告主状态已禁用'])) {
                         $next = ['adv_list' => [$adv_id], 'start_time' => $request_info['start_time'], 'end_time' => $request_info['end_time'], 'page' => $request_info['page']];
-                        \think\Queue::later(10, 'app\job\fission\InsertGlobalMaterial', $next, "insertGlobalMaterial");
+                        \think\Queue::later(3, 'app\job\fission\InsertGlobalMaterial', $next, "insertGlobalMaterial");
                     }
                 }
             },
@@ -193,7 +193,7 @@ class InsertGlobalMaterial extends BaseJob
                 $request_info = $requests[$index]['params'];
                 $adv_id = $request_info['advertiser_id'];
                 $next = ['adv_list' => [$adv_id], 'start_time' => $request_info['start_time'], 'end_time' => $request_info['end_time'], 'page' => $request_info['page']];
-                \think\Queue::later(10, 'app\job\fission\InsertGlobalMaterial', $next, "insertGlobalMaterial");
+                \think\Queue::later(3, 'app\job\fission\InsertGlobalMaterial', $next, "insertGlobalMaterial");
                 echo "失败请求重启\n";
             },]);
 // 等待所有请求完成
