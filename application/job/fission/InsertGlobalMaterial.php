@@ -163,7 +163,7 @@ class InsertGlobalMaterial extends BaseJob
                         $material_name = $dimensions['roi2_material_video_name'] ?? '';
                         $stat_time_day = strtotime($dimensions['stat_time_day']);
                         $cost = str_replace(',', '', $metrics['stat_cost_for_roi2']);;
-                        $total_pay = $metrics['total_pay_order_count_for_roi2'];
+                        $total_pay =  str_replace(',', '',  $metrics['total_pay_order_count_for_roi2']);
                         $insertData[] = [
                             'adv_id' => $adv_id,
                             'material_id' => $material_id,
@@ -171,7 +171,7 @@ class InsertGlobalMaterial extends BaseJob
                             'stat_cost_for_roi2' => $cost,
                             'total_pay_order_count_for_roi2' => $total_pay,
                             'cost_date' => $stat_time_day,
-                            'total_prepay_and_pay_order_roi2' => $metrics['total_prepay_and_pay_order_roi2']
+                            'total_prepay_and_pay_order_roi2' =>  str_replace(',', '',  $metrics['total_prepay_and_pay_order_roi2'])
                         ];
                     }
                     if ($resData['data']['pagination']['total_page'] > $request_info['page']) {
