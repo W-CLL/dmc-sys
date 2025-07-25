@@ -1,8 +1,9 @@
 <?php
 
-namespace app\fission\job;
+namespace app\job\fission;
 
 use app\common\model\viral_fission\AdvGlobalMaterial;
+use app\job\fission\BaseJob;
 use GuzzleHttp\Client;
 use GuzzleHttp\Pool;
 use GuzzleHttp\Psr7\Request;
@@ -13,6 +14,10 @@ use think\Exception;
 class InsertGlobalMaterial extends BaseJob
 {
 
+    public function __construct()
+    {
+        $this->queueRecordModelName = '\app\common\model\viral_fission\FissionQueue';
+    }
 
     protected function getJobName(): string
     {
@@ -108,7 +113,7 @@ class InsertGlobalMaterial extends BaseJob
                     "total_pay_order_coupon_amount_for_roi2",
                     "total_unfinished_estimate_order_gmv_for_roi2",
                 ]),
-                'filters' => json_encode([]),
+                'filters' => json_encode([]),//筛选
                 'start_time' => $data['start_time'],
                 'end_time' => $data['end_time'],
                 'order_by' => json_encode([['type' => 1, 'field' => 'stat_time_day']]),
@@ -145,17 +150,19 @@ class InsertGlobalMaterial extends BaseJob
             'concurrency' => 5,  // 控制并发数
             'fulfilled' => function ($response, $index) use (&$insertData, $requests, &$adv_list, &$requestParams) {
                 $resData = json_decode($response->getBody()->getContents(), true);
-
+//                dump($resData);
                 $request_info = $requests[$index]['params'];
                 $adv_id = $request_info['advertiser_id'];
-                if ($resData['code'] ==0 && !empty($resData['data']['rows'])) {
+
+                if (!empty($resData['data']['rows'])) {
+//                    dump($resData);
                     foreach ($resData['data']['rows'] as $item) {
                         $dimensions = $item['dimensions'];
                         $metrics = $item['metrics'];
                         $material_id = $dimensions['material_id'];
-                        $material_name = $dimensions['roi2_material_video_name'];
+                        $material_name = $dimensions['roi2_material_video_name'] ?? '';
                         $stat_time_day = strtotime($dimensions['stat_time_day']);
-                        $cost = str_replace(',', '', $metrics['stat_cost_for_roi2']); ;
+                        $cost = str_replace(',', '', $metrics['stat_cost_for_roi2']);;
                         $total_pay = $metrics['total_pay_order_count_for_roi2'];
                         $insertData[] = [
                             'adv_id' => $adv_id,
@@ -164,27 +171,29 @@ class InsertGlobalMaterial extends BaseJob
                             'stat_cost_for_roi2' => $cost,
                             'total_pay_order_count_for_roi2' => $total_pay,
                             'cost_date' => $stat_time_day,
+                            'total_prepay_and_pay_order_roi2' => $metrics['total_prepay_and_pay_order_roi2']
                         ];
                     }
-                }
-                if ($resData['data']['pagination']['total_page'] > $request_info['page']) {
-                    echo $resData['data']['pagination']['total_page'] . "页";
-                    echo $adv_id . "  " . $request_info['page'];
-                    $next = ['adv_list' => [$adv_id], 'start_time' => $request_info['start_time'], 'end_time' => $request_info['end_time'], 'page' => $request_info['page'] + 1];
-                    \think\Queue::later(10, 'app\fission\job\InsertGlobalMaterial', $next, "insertGlobalMaterial");
+                    if ($resData['data']['pagination']['total_page'] > $request_info['page']) {
+                        echo $resData['data']['pagination']['total_page'] . "页";
+                        echo $adv_id . "  " . $request_info['page'];
+                        $next = ['adv_list' => [$adv_id], 'start_time' => $request_info['start_time'], 'end_time' => $request_info['end_time'], 'page' => $request_info['page'] + 1];
+                        \think\Queue::later(10, 'app\job\fission\InsertGlobalMaterial', $next, "insertGlobalMaterial");
+                    }
                 } elseif ($resData['code'] != 0) {
+//                    echo $resData['message'];
                     if (!skipIfContainsError($resData['message'], ['当前广告主状态已禁用'])) {
                         $next = ['adv_list' => [$adv_id], 'start_time' => $request_info['start_time'], 'end_time' => $request_info['end_time'], 'page' => $request_info['page']];
-                        \think\Queue::later(10, 'app\fission\job\InsertGlobalMaterial', $next, "insertGlobalMaterial");
+                        \think\Queue::later(10, 'app\job\fission\InsertGlobalMaterial', $next, "insertGlobalMaterial");
                     }
                 }
             },
             'rejected' => function ($reason, $index) use ($requests) {
-                echo "Request {$index} failed: ";
+                echo "Request {$index} failed: ".$reason;
                 $request_info = $requests[$index]['params'];
                 $adv_id = $request_info['advertiser_id'];
                 $next = ['adv_list' => [$adv_id], 'start_time' => $request_info['start_time'], 'end_time' => $request_info['end_time'], 'page' => $request_info['page']];
-                \think\Queue::later(10, 'app\fission\job\InsertGlobalMaterial', $next, "insertGlobalMaterial");
+                \think\Queue::later(10, 'app\job\fission\InsertGlobalMaterial', $next, "insertGlobalMaterial");
                 echo "失败请求重启\n";
             },]);
 // 等待所有请求完成
