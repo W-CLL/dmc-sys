@@ -1,5 +1,6 @@
 <?php
-namespace  app\fission;
+
+namespace app\api\controller\fission;
 class AuthTokenUtil {
     private $secret_key;
 

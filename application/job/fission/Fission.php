@@ -3,10 +3,8 @@
 namespace app\job\fission;
 
 use app\common\model\viral_fission\FissionMaterialTask;
-use think\Db;
-use think\Exception;
 use think\Queue;
-use think\queue\Job;
+use app\job\fission\BaseJob;
 
 /**
  * 裂变完成后的队列

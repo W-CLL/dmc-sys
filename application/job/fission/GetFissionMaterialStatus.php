@@ -42,7 +42,7 @@ class GetFissionMaterialStatus extends BaseJob
             'task_ids' => json_encode(array_map('intval', $data['task_id']))
         ];
         $res = FundManagement::get_material_derive_task_status($param);
-dump($res);
+
         $material_ids = [];
         $insert_data = [];
         if ($res['message'] == "OK" && !empty($res['data']['task_details'])) {

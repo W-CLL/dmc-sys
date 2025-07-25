@@ -5,7 +5,7 @@ namespace app\api\controller\fission;
 use app\common\model\Queue;
 use think\Env;
 use think\response\Json;
-use app\fission\AuthTokenUtil;
+use app\api\controller\fission\AuthTokenUtil;
 
 class CallBack
 {
@@ -48,7 +48,6 @@ class CallBack
                 "StatusMessage" => $statusMessage
             ]
         ];
-
         $responseData = array_merge($responseData, $data);
         return json($responseData);
     }
