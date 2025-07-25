@@ -7,19 +7,19 @@ CREATE TABLE `fa_fission_account_rules`
     `update_time`  int(11) DEFAULT NULL COMMENT '更新时间',
     PRIMARY KEY (`id`),
     UNIQUE KEY `adv_id` (`adv_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='账户裂变规则设置表';
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='账户裂变规则设置表';
 
 
 CREATE TABLE `fa_fission_company_rules`
 (
     `id`           int(11) NOT NULL AUTO_INCREMENT COMMENT 'ID',
-    `company_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '公司名称',
+    `company_name` varchar(100) CHARACTER SET utf8mb4  NOT NULL COMMENT '公司名称',
     `rules_config` json DEFAULT NULL COMMENT '规则配置（JSON格式）',
     `create_time`  int(11) DEFAULT NULL COMMENT '创建时间',
     `update_time`  int(11) DEFAULT NULL COMMENT '更新时间',
     PRIMARY KEY (`id`),
     UNIQUE KEY `company_name` (`company_name`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='公司裂变规则设置表';
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='公司裂变规则设置表';
 
 CREATE TABLE `fa_fission_derive_material`
 (
@@ -42,7 +42,7 @@ CREATE TABLE `fa_fission_derive_material`
     `create_time`          int(11) NOT NULL,
     `update_time`          int(11) NOT NULL,
     PRIMARY KEY (`id`)
-) ENGINE=InnoDB A DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='爆款裂变后的素材表';
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='爆款裂变后的素材表';
 
 
 CREATE TABLE `fa_fission_global_material`
