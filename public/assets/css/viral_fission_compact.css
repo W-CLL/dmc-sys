@@ -1,0 +1,394 @@
+/* 爆款裂变系统紧凑布局样式 */
+
+/* 全局紧凑化 */
+.panel-body {
+    padding: 10px 15px;
+}
+
+.toolbar {
+    padding: 8px 0;
+    margin-bottom: 10px;
+}
+
+/* 统计卡片紧凑化 */
+.stats-cards {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.stats-card {
+    flex: 1;
+    background: white;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid #e9ecef;
+    text-align: center;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.stats-number {
+    font-size: 18px;
+    font-weight: bold;
+    color: #495057;
+    margin-bottom: 2px;
+}
+
+.stats-label {
+    font-size: 11px;
+    color: #6c757d;
+}
+
+/* 统计面板折叠 */
+.stats-section {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    overflow: hidden;
+}
+
+.stats-header {
+    background: #f8f9fa;
+    padding: 8px 12px;
+    border-bottom: 1px solid #e9ecef;
+    cursor: pointer;
+}
+
+.stats-cards.collapsed {
+    display: none;
+}
+
+/* 批量操作面板紧凑化 */
+.batch-actions-panel {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 4px;
+    padding: 8px 12px;
+    margin-bottom: 10px;
+    display: none;
+    align-items: center;
+}
+
+.batch-actions-panel.show {
+    display: flex;
+}
+
+.progress-bar-mini {
+    width: 50px;
+    height: 3px;
+    background: #e9ecef;
+    border-radius: 2px;
+    overflow: hidden;
+    display: inline-block;
+    margin-left: 5px;
+    vertical-align: middle;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #007bff, #28a745);
+    transition: width 0.3s ease;
+}
+
+/* 表格优化 */
+.table > thead > tr > th,
+.table > tbody > tr > td {
+    padding: 8px 10px;
+    font-size: 13px;
+    vertical-align: middle;
+}
+
+.table > thead > tr > th {
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+/* 按钮组优化 */
+.btn-group-xs > .btn {
+    padding: 3px 8px;
+    font-size: 12px;
+    border-radius: 3px;
+}
+
+.btn-xs {
+    padding: 3px 8px;
+    font-size: 12px;
+}
+
+/* 操作按钮组样式 */
+.btn-group.btn-group-xs {
+    display: inline-flex;
+    gap: 2px;
+}
+
+.btn-group.btn-group-xs .btn {
+    margin-right: 0;
+    border-radius: 3px !important;
+}
+
+.btn-group.btn-group-xs .btn:first-child {
+    border-top-right-radius: 3px !important;
+    border-bottom-right-radius: 3px !important;
+}
+
+.btn-group.btn-group-xs .btn:last-child {
+    border-top-left-radius: 3px !important;
+    border-bottom-left-radius: 3px !important;
+}
+
+/* 按钮状态优化 */
+.btn-xs:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-xs .fa-spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* 按钮悬停效果 */
+.btn-xs:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: all 0.2s ease;
+}
+
+/* 状态标签优化 */
+.label {
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 10px;
+}
+
+/* 随机状态样式 */
+.status-random {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 500;
+}
+
+.status-processing { 
+    background: #e3f2fd; 
+    color: #1976d2; 
+}
+
+.status-waiting { 
+    background: #fff3e0; 
+    color: #f57c00; 
+}
+
+.status-analyzing { 
+    background: #f3e5f5; 
+    color: #7b1fa2; 
+}
+
+.status-optimizing { 
+    background: #e8f5e8; 
+    color: #388e3c; 
+}
+
+.status-reviewing { 
+    background: #fce4ec; 
+    color: #c2185b; 
+}
+
+/* 工具栏按钮紧凑化 */
+.toolbar .btn {
+    margin-right: 5px;
+    margin-bottom: 5px;
+}
+
+.toolbar .btn-group {
+    margin-right: 5px;
+}
+
+/* 下拉菜单优化 */
+.dropdown-menu {
+    min-width: 140px;
+    padding: 4px 0;
+}
+
+.dropdown-menu > li > a {
+    padding: 6px 15px;
+    font-size: 13px;
+}
+
+/* 模态框紧凑化 */
+.modal-body {
+    padding: 15px;
+}
+
+.modal-header {
+    padding: 10px 15px;
+}
+
+.modal-footer {
+    padding: 10px 15px;
+}
+
+/* 表单优化 */
+.form-group {
+    margin-bottom: 12px;
+}
+
+.form-control {
+    height: 32px;
+    padding: 6px 10px;
+    font-size: 13px;
+}
+
+.input-group-sm > .form-control {
+    height: 30px;
+    padding: 4px 8px;
+    font-size: 12px;
+}
+
+/* 复选框样式 */
+.checkbox {
+    margin-top: 6px;
+    margin-bottom: 6px;
+}
+
+.checkbox label {
+    font-size: 13px;
+    font-weight: normal;
+}
+
+/* 策略选择样式 */
+.strategy-selection .checkbox {
+    margin-bottom: 8px;
+}
+
+.strategy-premium {
+    color: #ff8c00;
+    font-weight: 500;
+}
+
+/* 响应式优化 */
+@media (max-width: 768px) {
+    .stats-cards {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .batch-actions-panel {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .toolbar .btn {
+        margin-bottom: 3px;
+    }
+    
+    .table-responsive {
+        font-size: 12px;
+    }
+}
+
+/* 隐藏不必要的元素 */
+.hidden-xs-down {
+    display: none;
+}
+
+@media (min-width: 768px) {
+    .hidden-xs-down {
+        display: inline-block;
+    }
+}
+
+/* 加载状态 */
+.loading-overlay {
+    position: relative;
+}
+
+.loading-overlay::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+/* 动画效果 */
+.fade-in {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.slide-down {
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from { 
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to { 
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 工具提示优化 */
+.tooltip {
+    font-size: 12px;
+}
+
+.tooltip-inner {
+    max-width: 220px;
+    padding: 6px 10px;
+}
+
+/* 分页优化 */
+.pagination > li > a,
+.pagination > li > span {
+    padding: 6px 12px;
+    font-size: 13px;
+}
+
+/* 面包屑优化 */
+.breadcrumb {
+    padding: 8px 15px;
+    margin-bottom: 12px;
+    font-size: 13px;
+}
+
+/* 警告框优化 */
+.alert {
+    padding: 10px 15px;
+    margin-bottom: 12px;
+    font-size: 13px;
+}
+
+/* 进度条优化 */
+.progress {
+    height: 18px;
+    margin-bottom: 12px;
+}
+
+.progress-bar {
+    font-size: 12px;
+    line-height: 18px;
+}

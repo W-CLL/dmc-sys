@@ -558,6 +558,44 @@ class FundManagement
         return sendApiRes($url, $params, 'GET', ['Access-Token' => $access_token])['data'];
     }
 
+    /**
+     * 生成爆款裂变任务
+     * @param array $params
+     * @return mixed
+     */
+    public static function gen_material_derive_task(array $params)
+    {
+        $access_token = Cache::get("qc_access_token");
+        $url = "https://api.oceanengine.com/open_api/v3.0/tools/hot_material_derive/submit/";
+        return sendApiRes($url, $params, 'POST', ['Access-Token' => $access_token])['data'];
+    }
+
+    /**
+     * 查询爆款裂变任务详情
+     * @param array $params
+     * @return mixed
+     */
+    public static function get_material_derive_task_status(array $params)
+    {
+        $access_token = Cache::get("qc_access_token");
+        $url = "https://api.oceanengine.com/open_api/v3.0/tools/hot_material_derive/get/";
+        return sendApiRes($url, $params, 'GET', ['Access-Token' => $access_token])['data'];
+    }
+
+    /**
+     * 采纳裂变后的素材
+     * @param array $params
+     * @return mixed
+     */
+    public static function adopt_material(array $params)
+    {
+        $access_token = Cache::get("qc_access_token");
+        $url = "https://api.oceanengine.com/open_api/v3.0/tools/hot_material_derive/adopt/";
+        return sendApiRes($url, $params, 'POST', ['Access-Token' => $access_token])['data'];
+    }
+
+
+
 
 
 
@@ -589,6 +627,31 @@ class FundManagement
         $url = "https://api.oceanengine.com/open_api/v3.0/shared_wallet/wallet_balance/get/";
         return sendApiRes($url, $params, 'GET', ['Access-Token' => $access_token])['data'];
     }
+
+    /**
+     * 获取代理商素材详情
+     * @param array $params
+     * @return mixed
+     */
+    public static function get_agent_material_info(array $params)
+    {
+        $access_token = Cache::get("qc_access_token");
+        $url = "https://api.oceanengine.com/open_api/2/file/video/agent/get/";
+        return sendApiRes($url, $params, 'GET', ['Access-Token' => $access_token])['data'];
+    }
+
+    /**
+     * 获取千川素材库视频
+     * @param array $params
+     * @return mixed
+     */
+    public static function get_adv_material_info(array $params)
+    {
+        $access_token = Cache::get("qc_access_token");
+        $url = "https://ad.oceanengine.com/open_api/v1.0/qianchuan/video/get/";
+        return sendApiRes($url, $params, 'GET', ['Access-Token' => $access_token])['data'];
+    }
+
 
 }
 

@@ -1,0 +1,487 @@
+<style>
+    /* 简洁现代样式 */
+    .form-container {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+
+    .form-header {
+        background: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
+        padding: 20px;
+    }
+
+    .form-header h4 {
+        margin: 0;
+        color: #495057;
+        font-weight: 500;
+    }
+
+    .form-body {
+        padding: 25px;
+    }
+
+    .form-section {
+        margin-bottom: 30px;
+    }
+
+    .form-section:last-child {
+        margin-bottom: 0;
+    }
+
+    .section-title {
+        color: #495057;
+        font-weight: 500;
+        font-size: 16px;
+        margin-bottom: 15px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #e9ecef;
+        display: flex;
+        align-items: center;
+    }
+
+    .section-title i {
+        margin-right: 8px;
+        font-size: 14px;
+    }
+
+    .form-group label {
+        color: #6c757d;
+        font-weight: 500;
+        font-size: 13px;
+        margin-bottom: 6px;
+    }
+
+    .form-control {
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 8px 12px;
+        font-size: 13px;
+        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    }
+
+    .form-control:focus {
+        border-color: #80bdff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25);
+    }
+
+    .btn-simple {
+        border-radius: 4px;
+        font-size: 13px;
+        font-weight: 500;
+        padding: 8px 16px;
+        border: none;
+        transition: all 0.2s ease;
+    }
+
+    .btn-simple:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    /* 策略选择样式 */
+    .strategy-item:hover {
+        background-color: #e3f2fd !important;
+        border-color: #2196f3 !important;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .strategy-item input[type="checkbox"]:checked + span {
+        color: #2196f3;
+        font-weight: 500;
+    }
+
+    .text-purple {
+        color: #9c27b0 !important;
+    }
+
+    .text-secondary {
+        color: #6c757d !important;
+    }
+
+    /* 策略选择样式 */
+    .strategy-item:hover {
+        background-color: #f0f8ff !important;
+        border-color: #007bff !important;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .strategy-item input[type="checkbox"]:checked + span {
+        color: #007bff;
+        font-weight: 500;
+    }
+
+    .strategy-special-item:hover {
+        background-color: #fff3cd !important;
+        border-color: #ffc107 !important;
+    }
+
+    .strategy-special-item input[type="checkbox"]:checked + span {
+        color: #856404;
+        font-weight: 500;
+    }
+
+    .strategy-checkbox-container::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .strategy-checkbox-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 3px;
+    }
+
+    .strategy-checkbox-container::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 3px;
+    }
+
+    .strategy-checkbox-container::-webkit-scrollbar-thumb:hover {
+        background: #a8a8a8;
+    }
+
+    /* 消耗规则样式 */
+    .cost-rule-item {
+        transition: all 0.3s ease;
+    }
+
+    .cost-rule-item:hover {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .priority-display {
+        font-size: 13px;
+        font-weight: 500;
+    }
+
+    .time-dimension-select {
+        border-left: 4px solid #f39c12;
+    }
+
+    .threshold-input {
+        border-left: 4px solid #27ae60;
+    }
+
+    #empty-cost-state {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 8px;
+        margin: 12px 0;
+    }
+</style>
+
+<div class="form-container">
+    <div class="form-header">
+        <h4><i class="fa fa-cogs text-primary"></i> 公司裂变规则设置</h4>
+    </div>
+
+    <form id="setting-form" role="form" data-toggle="validator" method="POST" action="">
+        <div class="form-body">
+            <!-- 公司信息 -->
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="fa fa-building text-info"></i>
+                    公司信息
+                </div>
+                <div class="form-group">
+                    <label>公司名称</label>
+                    <input type="text" class="form-control" value="{$row.company_name}" readonly>
+                </div>
+            </div>
+
+            <!-- 时间维度+消耗数据 -->
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="fa fa-clock-o text-warning"></i>
+                   素材筛选条件
+                </div>
+
+                <div id="cost-rules-container">
+                    <!-- 消耗规则将在这里动态生成 -->
+                </div>
+
+                <button type="button" class="btn btn-success btn-simple" onclick="addCostRule()">
+                    <i class="fa fa-plus"></i> 添加条件
+                </button>
+
+                <!-- 空状态提示 -->
+                <div id="empty-cost-state" class="text-center" style="padding: 20px 0; display: none;">
+                    <i class="fa fa-clock-o fa-2x text-muted"></i>
+                    <h6 class="text-muted">暂无配置</h6>
+                    <p class="text-muted">点击"添加筛选条件"开始配置</p>
+                </div>
+            </div>
+
+
+            <!-- 裂变策略 -->
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="fa fa-magic text-purple"></i>
+                    裂变策略（{$fission_strategies|count}种）
+                </div>
+                <div class="strategy-container"
+                     style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px; padding: 15px;">
+                    <div class="strategy-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                        {foreach $fission_strategies as $strategy_key => $strategy_name}
+                        <label class="strategy-item"
+                               style="display: flex; align-items: center; padding: 8px 12px; background: white; border: 1px solid #dee2e6; border-radius: 4px; cursor: pointer; transition: all 0.2s;">
+                            <input type="checkbox" name="row[fission_strategies][]" value="{$strategy_key}" {if
+                                   condition="$fission_rules.fission_strategies && in_array($strategy_key, $fission_rules.fission_strategies)"
+                                   }checked{/if} style="margin-right: 8px;">
+                            <span style="font-size: 13px;">{$strategy_name}</span>
+                        </label>
+                        {/foreach}
+                    </div>
+                    <div class="text-center" style="margin-top: 10px;">
+                        <small class="text-muted" style="font-size: 12px;">
+                            <i class="fa fa-info-circle"></i> 可多选，不选择默认全部策略
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 表单操作按钮 -->
+            <div class="form-section" style="border-top: 1px solid #dee2e6; padding-top: 20px; text-align: center;">
+                <button type="submit" class="btn btn-success btn-simple" style="margin-right: 10px;">
+                    <i class="fa fa-check"></i> 确定保存
+                </button>
+                <button type="reset" class="btn btn-secondary btn-simple">
+                    <i class="fa fa-refresh"></i> 重置
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+<script src="__CDN__/assets/libs/jquery/dist/jquery.min.js"></script>
+<script>
+    var costRuleIndex = 0;
+
+    // 添加消耗规则
+    function addCostRule() {
+        costRuleIndex++;
+        var ruleHtml = generateCostRuleHtml(costRuleIndex);
+        $('#cost-rules-container').append(ruleHtml);
+        updateCostEmptyState();
+    }
+
+    // 生成消耗规则HTML
+    function generateCostRuleHtml(index) {
+        return `
+        <div class="cost-rule-item" data-index="${index}" style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px; padding: 20px; margin-bottom: 15px;">
+            <div class="rule-header" style="display: flex; align-items: center; margin-bottom: 15px;">
+                <i class="fa fa-clock-o" style="color: #f39c12; margin-right: 8px;"></i>
+                <span style="font-weight: 500; color: #495057;">素材筛选条件</span>
+                <button type="button" class="btn btn-sm btn-danger" onclick="removeCostRule(${index})" style="margin-left: auto; border-radius: 4px;">
+                    <i class="fa fa-trash"></i>
+                </button>
+            </div>
+            <div style="display: flex; gap: 15px; align-items: end;">
+                <div style="flex: 1;">
+                    <label style="font-size: 13px; color: #6c757d; margin-bottom: 8px; display: block;">时间维度：</label>
+                    <select class="form-control" name="time_dimensions[${index}][dimension]" style="border-radius: 4px;">
+                      <option value="">请选择时间维度</option>
+                      {foreach $day_setting as $key=>$name}
+                        <option value="{$key}">{$name}</option>
+                      {/foreach}
+                    </select>
+                </div>
+                <div style="flex: 1;">
+                    <label style="font-size: 13px; color: #6c757d; margin-bottom: 8px; display: block;">消耗数据 (元)：</label>
+                    <input type="number" class="form-control" name="time_dimensions[${index}][cost_data]"
+                           placeholder="请输入消耗数据" min="0" step="0.01" style="border-radius: 4px;">
+                </div>
+                <div style="flex: 1;">
+                    <label style="font-size: 13px; color: #6c757d; margin-bottom: 8px; display: block;">Roi(素材)：</label>
+                    <input type="number" class="form-control" name="time_dimensions[${index}][roi]"
+                           placeholder="请输入素材Roi" min="0" step="0.01" style="border-radius: 4px;">
+                </div>
+                <div style="flex: 1;">
+                    <label style="font-size: 13px; color: #6c757d; margin-bottom: 8px; display: block;">消耗数据 (元)：</label>
+                    <input type="number" class="form-control" name="time_dimensions[${index}][order_count]"
+                           placeholder="请输入成交单量" min="0" step="0.01" style="border-radius: 4px;">
+                </div>
+            </div>
+        </div>
+    `;
+    }
+
+
+    // 删除消耗规则
+    function removeCostRule(index) {
+        $(`.cost-rule-item[data-index="${index}"]`).remove();
+        updateCostEmptyState();
+    }
+
+    // 更新消耗规则空状态
+    function updateCostEmptyState() {
+        if ($('.cost-rule-item').length === 0) {
+            $('#empty-cost-state').show();
+        } else {
+            $('#empty-cost-state').hide();
+        }
+    }
+
+    // 加载现有消耗规则
+    function loadExistingCostRules() {
+        // 直接从PHP传递的JSON字符串解析
+        var costRulesJson = '{$fission_rules.cost_rules_json|default="[]"}';
+        var costRules = [];
+        try {
+            if (costRulesJson && costRulesJson !== '' && costRulesJson !== '[]') {
+                costRules = JSON.parse(costRulesJson);
+            }
+        } catch (e) {
+            costRules = [];
+        }
+        costRules = Object.keys(costRules).map(key => costRules[key]);
+        if (costRules && costRules.length > 0) {
+            costRules.forEach(function (rule, index) {
+                costRuleIndex++;
+                var ruleHtml = generateCostRuleHtml(costRuleIndex);
+                var $ruleElement = $(ruleHtml);
+                $('#cost-rules-container').append($ruleElement);
+                // 填充数据
+                $ruleElement.find('select[name*="[dimension]"]').val(rule.time_dimension);
+                $ruleElement.find('input[name*="[cost_data]"]').val(rule.threshold);
+                $ruleElement.find('input[name*="[roi]"]').val(rule.roi);
+                $ruleElement.find('input[name*="[order_count]"]').val(rule.order_count);
+
+
+            });
+        }
+    }
+
+    $(function () {
+        // 加载现有消耗规则
+        loadExistingCostRules();
+
+        // 初始化消耗规则状态
+        updateCostEmptyState();
+
+        // 策略项悬停效果
+        $('.strategy-item').hover(
+            function () {
+                $(this).css({
+                    'background-color': '#f0f8ff',
+                    'border-color': '#007bff',
+                    'transform': 'translateY(-1px)',
+                    'box-shadow': '0 2px 4px rgba(0,0,0,0.1)'
+                });
+            },
+            function () {
+                if (!$(this).find('input[type="checkbox"]').is(':checked')) {
+                    $(this).css({
+                        'background-color': 'white',
+                        'border-color': '#e0e0e0',
+                        'transform': 'translateY(0)',
+                        'box-shadow': 'none'
+                    });
+                }
+            }
+        );
+
+        // 特殊策略项悬停效果
+        $('.strategy-special-item').hover(
+            function () {
+                $(this).css({
+                    'background-color': '#fff3cd',
+                    'border-color': '#ffc107'
+                });
+            },
+            function () {
+                if (!$(this).find('input[type="checkbox"]').is(':checked')) {
+                    $(this).css({
+                        'background-color': '#fff8e1',
+                        'border-color': '#ffc107'
+                    });
+                }
+            }
+        );
+
+        // 复选框状态变化
+        $('.strategy-item input[type="checkbox"]').change(function () {
+            var $label = $(this).closest('.strategy-item');
+            var $span = $(this).next('span');
+
+            if ($(this).is(':checked')) {
+                $span.css({
+                    'color': '#007bff',
+                    'font-weight': '500'
+                });
+                $label.css({
+                    'background-color': '#f0f8ff',
+                    'border-color': '#007bff'
+                });
+            } else {
+                $span.css({
+                    'color': '',
+                    'font-weight': ''
+                });
+                $label.css({
+                    'background-color': 'white',
+                    'border-color': '#e0e0e0'
+                });
+            }
+        });
+
+        // 特殊策略复选框状态变化
+        $('.strategy-special-item input[type="checkbox"]').change(function () {
+            var $span = $(this).next('span');
+
+            if ($(this).is(':checked')) {
+                $span.css({
+                    'color': '#856404',
+                    'font-weight': '500'
+                });
+            } else {
+                $span.css({
+                    'color': '',
+                    'font-weight': ''
+                });
+            }
+        });
+
+        // 初始化已选中的状态
+        $('.strategy-item input[type="checkbox"]:checked').trigger('change');
+        $('.strategy-special-item input[type="checkbox"]:checked').trigger('change');
+
+        // 表单提交处理
+        $('#setting-form').on('submit', function (e) {
+            e.preventDefault();
+
+            var formData = $(this).serialize();
+            var submitBtn = $(this).find('button[type="submit"]');
+            var originalText = submitBtn.html();
+
+            // 禁用提交按钮
+            submitBtn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> 保存中...');
+
+            $.ajax({
+                url: '',
+                type: 'POST',
+                data: formData,
+                dataType: 'json',
+                success: function (response) {
+                    if (response.code === 1) {
+                        Toastr.success(response.msg || '保存成功');
+                        setTimeout(function () {
+                            location.reload();
+                        }, 1000);
+                    } else {
+                        Toastr.error(response.msg || '保存失败');
+                    }
+                },
+                error: function () {
+                    Toastr.error('网络错误，请重试');
+                },
+                complete: function () {
+                    // 恢复提交按钮
+                    submitBtn.prop('disabled', false).html(originalText);
+                }
+            });
+        });
+    });
+</script>

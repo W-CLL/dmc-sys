@@ -15,6 +15,9 @@ class Company extends Model
     protected $updateTime = 'update_time';
 
 
-
+    public function store()
+    {
+        return $this->hasOne('Store', "id", "store_id")->field("id,username");
+    }
 
 }

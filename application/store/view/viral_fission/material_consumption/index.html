@@ -1,0 +1,470 @@
+<link rel="stylesheet" href="/assets/css/viral_fission_compact.css"></script>
+<style>
+.fission-status-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.status-pending { background: #f8f9fa; color: #6c757d; border: 1px solid #dee2e6; }
+.status-processing { background: #e3f2fd; color: #1976d2; border: 1px solid #bbdefb; }
+.status-success { background: #e8f5e8; color: #2e7d32; border: 1px solid #c8e6c8; }
+.status-failed { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
+
+.stats-cards {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.stats-card {
+    flex: 1;
+    background: white;
+    padding: 15px;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.stats-number {
+    font-size: 24px;
+    font-weight: bold;
+    color: #495057;
+}
+
+.stats-label {
+    font-size: 12px;
+    color: #6c757d;
+    margin-top: 5px;
+}
+
+.enhanced-toolbar {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    border: 1px solid #e9ecef;
+}
+
+.video-preview {
+    width: 60px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 1px solid #dee2e6;
+}
+
+.progress-indicator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.progress-bar-custom {
+    flex: 1;
+    height: 6px;
+    background: #e9ecef;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #007bff, #28a745);
+    transition: width 0.3s ease;
+}
+
+.batch-actions-panel {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 15px;
+    display: none;
+}
+
+.batch-actions-panel.show {
+    display: block;
+}
+
+.stats-section {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    overflow: hidden;
+}
+
+.stats-header {
+    background: #f8f9fa;
+    padding: 10px 15px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.stats-cards.collapsed {
+    display: none;
+}
+
+.progress-bar-mini {
+    width: 60px;
+    height: 4px;
+    background: #e9ecef;
+    border-radius: 2px;
+    overflow: hidden;
+    display: inline-block;
+    margin-left: 5px;
+    vertical-align: middle;
+}
+
+.enhanced-toolbar {
+    padding: 10px 15px;
+}
+
+/* 随机状态样式 */
+.status-random {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 500;
+}
+
+.status-processing { background: #e3f2fd; color: #1976d2; }
+.status-waiting { background: #fff3e0; color: #f57c00; }
+.status-analyzing { background: #f3e5f5; color: #7b1fa2; }
+.status-optimizing { background: #e8f5e8; color: #388e3c; }
+.status-reviewing { background: #fce4ec; color: #c2185b; }
+</style>
+
+<div class="panel panel-default panel-intro">
+    {:build_heading()}
+
+    <div class="panel-body">
+        <!-- 统计卡片 - 可折叠 -->
+        <div class="stats-section" id="stats-section">
+            <div class="stats-header">
+                <h5 style="margin: 0; display: inline-block;">
+                    <i class="fa fa-bar-chart"></i> 数据概览
+                </h5>
+                <button type="button" class="btn btn-xs btn-link pull-right" id="toggle-stats">
+                    <i class="fa fa-chevron-up"></i>
+                </button>
+            </div>
+            <div class="stats-cards" id="stats-cards">
+                <div class="stats-card">
+                    <div class="stats-number" id="total-materials">0</div>
+                    <div class="stats-label">总素材数</div>
+                </div>
+                <div class="stats-card">
+                    <div class="stats-number" id="generated-count">0</div>
+                    <div class="stats-label">已生成</div>
+                </div>
+                <div class="stats-card">
+                    <div class="stats-number" id="adopted-count">0</div>
+                    <div class="stats-label">已采纳</div>
+                </div>
+                <div class="stats-card">
+                    <div class="stats-number" id="success-rate">0%</div>
+                    <div class="stats-label">成功率</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 批量操作面板 - 紧凑版 -->
+        <div class="batch-actions-panel" id="batch-actions-panel">
+            <div class="btn-group btn-group-sm">
+                <button type="button" class="btn btn-success" id="btn-batch-generate">
+                    <i class="fa fa-magic"></i> 生成
+                </button>
+                <button type="button" class="btn btn-primary" id="btn-batch-adopt">
+                    <i class="fa fa-check"></i> 采纳
+                </button>
+                <button type="button" class="btn btn-warning" id="btn-batch-check">
+                    <i class="fa fa-shield"></i> 检测
+                </button>
+            </div>
+            <span class="text-muted" style="margin: 0 15px;">
+                已选 <span id="selected-count">0</span> 项
+            </span>
+            <button type="button" class="btn btn-default btn-xs" id="btn-cancel-batch">
+                <i class="fa fa-times"></i> 清除
+            </button>
+            <div class="pull-right">
+                <small class="text-muted">进度: <span id="progress-text">0%</span></small>
+                <div class="progress-bar-mini">
+                    <div class="progress-fill" id="batch-progress" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="myTabContent" class="tab-content">
+            <div class="tab-pane fade active in" id="one">
+                <div class="widget-body no-padding">
+                    <div id="toolbar" class="toolbar">
+                        {:build_toolbar('refresh')}
+                    </div>
+                    <table id="table" class="table table-striped table-bordered table-hover table-nowrap"
+                           width="100%">
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script id="customformtpl" type="text/html">
+    <form action="" class="form-commonsearch">
+        <div style="border-radius:2px;margin-bottom:10px;background:#f5f5f5;padding:15px 20px;">
+            <div class="row">
+                <div class="col-xs-12 col-sm-6 col-md-3">
+                    <div class="form-group">
+                        <label class="control-label">时间筛选</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control datetimerange" name="daterange" placeholder="选择时间范围" value="">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xs-12 col-sm-6 col-md-3">
+                    <div class="form-group">
+                        <label class="control-label">金额筛选</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" name="min_cost" placeholder="最小金额" step="0.01">
+                            <span class="input-group-addon">-</span>
+                            <input type="number" class="form-control" name="max_cost" placeholder="最大金额" step="0.01">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xs-12 col-sm-6 col-md-3">
+                    <div class="form-group">
+                        <label class="control-label">千川ID</label>
+                        <div>
+                            <input class="form-control" type="text" name="qc_id" placeholder="请输入千川ID" value=""/>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xs-8 col-sm-6 col-md-3">
+                    <div class="form-group">
+                        <label class="control-label"></label>
+                        <div>
+                            <button type="submit" class="btn btn-success btn-block">搜索</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</script>
+
+<!-- 生成裂变确认模态框 -->
+<div class="modal fade" id="fissionConfirmModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title">
+                    <i class="fa fa-magic"></i> 批量生成裂变
+                </h4>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>选中素材信息</h5>
+                        <div class="well well-sm">
+                            <p><strong>选中数量：</strong><span id="modal-selected-count">0</span> 个素材</p>
+                            <p><strong>预计生成：</strong><span id="modal-estimated-count">0</span> 个裂变视频</p>
+                            <p><strong>预计时间：</strong><span id="modal-estimated-time">0</span> 分钟</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>裂变策略选择</h5>
+                        <div class="strategy-selection">
+                            <div class="checkbox">
+                                <label><input type="checkbox" value="CLIP_REPLACE" checked> 分镜替换</label>
+                            </div>
+                            <div class="checkbox">
+                                <label><input type="checkbox" value="ROBOT_REPLACE"> 人物替换</label>
+                            </div>
+                            <div class="checkbox">
+                                <label><input type="checkbox" value="HOT_PRE_VIDEO"> 爆款开头</label>
+                            </div>
+                            <div class="checkbox">
+                                <label><input type="checkbox" value="MIX_CUT"> 重新混剪</label>
+                            </div>
+                            <div class="checkbox">
+                                <label><input type="checkbox" value="PRE_VIDEO_CLIP_REPLACE"> 前贴扩写</label>
+                            </div>
+                            <div class="checkbox">
+                                <label>
+                                    <input type="checkbox" value="DERIVE_FROM_CHOSEN_HOT_MID">
+                                    <span style="color: #ff8c00; font-weight: 500;">自有爆款套路</span>
+                                    <small class="text-muted">(千川专用)</small>
+                                </label>
+                            </div>
+                            <div class="checkbox">
+                                <label>
+                                    <input type="checkbox" value="DERIVE_FROM_INDUSTRY_HOT_PATTERN">
+                                    <span style="color: #ff8c00; font-weight: 500;">行业爆款套路</span>
+                                    <small class="text-muted">(千川专用)</small>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row" style="margin-top: 15px;">
+                    <div class="col-md-12">
+                        <h5>高级选项</h5>
+                        <div class="form-horizontal">
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">处理方式：</label>
+                                <div class="col-sm-9">
+                                    <label class="radio-inline">
+                                        <input type="radio" name="process_mode" value="queue" checked> 队列处理（推荐）
+                                    </label>
+                                    <label class="radio-inline">
+                                        <input type="radio" name="process_mode" value="sync"> 同步处理
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">优先级：</label>
+                                <div class="col-sm-9">
+                                    <select class="form-control" name="priority" style="width: 200px;">
+                                        <option value="normal">普通</option>
+                                        <option value="high">高</option>
+                                        <option value="urgent">紧急</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="confirmFission">
+                    <i class="fa fa-magic"></i> 开始生成
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 批量采纳模态框 -->
+<div class="modal fade" id="batchAdoptModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title">
+                    <i class="fa fa-check"></i> 批量采纳素材
+                </h4>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fa fa-info-circle"></i>
+                    即将采纳 <strong id="adopt-count">0</strong> 个已生成的裂变素材到对应账户。
+                </div>
+                <div class="form-group">
+                    <label>采纳选项：</label>
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox" id="auto-check-after-adopt" checked>
+                            采纳后自动进行投前检测
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="confirmAdopt">
+                    <i class="fa fa-check"></i> 确认采纳
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 批量投前检测模态框 -->
+<div class="modal fade" id="batchCheckModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title">
+                    <i class="fa fa-shield"></i> 批量投前检测
+                </h4>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fa fa-exclamation-triangle"></i>
+                    即将对 <strong id="check-count">0</strong> 个已采纳的素材进行投前检测。
+                </div>
+                <div class="form-group">
+                    <label>检测选项：</label>
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox" id="detailed-check" checked>
+                            详细检测（包含内容审核、质量评估等）
+                        </label>
+                    </div>
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox" id="auto-optimize">
+                            自动优化建议
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-warning" id="confirmCheck">
+                    <i class="fa fa-shield"></i> 开始检测
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 进度监控模态框 -->
+<div class="modal fade" id="progressModal" tabindex="-1" role="dialog" data-backdrop="static">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">
+                    <i class="fa fa-spinner fa-spin"></i> 任务执行中
+                </h4>
+            </div>
+            <div class="modal-body">
+                <div class="progress">
+                    <div class="progress-bar progress-bar-striped active" id="task-progress-bar" style="width: 0%">
+                        <span id="task-progress-text">0%</span>
+                    </div>
+                </div>
+                <div class="task-status" id="task-status">
+                    <p>正在初始化任务...</p>
+                </div>
+                <div class="task-details" id="task-details" style="max-height: 300px; overflow-y: auto;">
+                    <!-- 任务详情将在这里显示 -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" id="btn-hide-progress">后台运行</button>
+                <button type="button" class="btn btn-danger" id="btn-cancel-task" style="display: none;">取消任务</button>
+            </div>
+        </div>
+    </div>
+</div>
+

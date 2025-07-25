@@ -1,0 +1,192 @@
+<link rel="stylesheet" href="__CDN__/assets/css/backend/viral_fission.css">
+<script src="__CDN__/assets/libs/jquery/dist/jquery.min.js"></script>
+<style>
+    .strategy-item:hover {
+        background-color: #f0f8ff !important;
+        border-color: #007bff !important;
+    }
+
+    .strategy-item input[type="checkbox"]:checked + span {
+        color: #007bff;
+        font-weight: 500;
+    }
+
+    /* 表格优化 */
+    .bootstrap-table .fixed-table-container {
+        border: 1px solid #ddd;
+    }
+
+    .bootstrap-table .fixed-table-body {
+        border-top: none;
+    }
+
+    /* 列表行间距优化 */
+    .bootstrap-table .fixed-table-body tbody tr td {
+        padding: 12px 8px;
+        vertical-align: middle;
+    }
+
+    /* 操作按钮优化 */
+    .btn-xs {
+        padding: 2px 8px;
+        font-size: 11px;
+        border-radius: 3px;
+    }
+
+    /* 简化弹窗样式 */
+    .strategy-item:hover {
+        background-color: #e3f2fd !important;
+        border-color: #2196f3 !important;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .strategy-item input[type="checkbox"]:checked + span {
+        color: #2196f3;
+        font-weight: 500;
+    }
+
+    .text-purple {
+        color: #9c27b0 !important;
+    }
+</style>
+<form id="batchSettingForm" method="post" class="form-horizontal">
+    {:token()}
+    <div class="modal-body" style="padding: 20px;">
+        <!-- 动态新增时间维度+消耗数据 -->
+        <div class="form-group">
+            <label class="control-label" style="font-weight: 500; color: #495057;">
+                <i class="fa fa-clock-o text-warning"></i> 筛选条件:
+            </label>
+            <div class="dynamic-items-container" id="dynamicItemsContainer">
+                <!-- 动态添加的项目将在这里显示 -->
+            </div>
+            <button type="button" class="btn btn-sm btn-success" id="addDynamicItem" onclick="addDynamicItemManual()"
+                    style="border-radius: 4px; margin-top: 10px;">
+                <i class="fa fa-plus"></i> 添加素材条件
+            </button>
+        </div>
+
+        <!-- ROI数值和单量 -->
+<!--        <div class="form-section">-->
+<!--            <div class="section-title">-->
+<!--                <i class="fa fa-line-chart text-primary"></i>-->
+<!--                ROI数值和单量-->
+<!--            </div>-->
+<!--            <div style="display: flex; gap: 15px; align-items: end;">-->
+<!--                <div style="flex: 1;">-->
+<!--                    <label style="font-size: 13px; color: #6c757d; margin-bottom: 8px; display: block;">ROI数值：</label>-->
+<!--                    <input type="number" class="form-control" name="roi_threshold"-->
+<!--                           placeholder="请输入ROI数值" min="0" step="0.01" style="border-radius: 4px;">-->
+<!--                </div>-->
+<!--                <div style="flex: 1;">-->
+<!--                    <label style="font-size: 13px; color: #6c757d; margin-bottom: 8px; display: block;">单量：</label>-->
+<!--                    <input type="number" class="form-control" name="min_daily_orders"-->
+<!--                           placeholder="请输入单量" min="0" step="1" style="border-radius: 4px;">-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
+        <!-- 裂变策略 -->
+        <div class="form-group">
+            <label class="control-label" style="font-weight: 500; color: #495057;">
+                <i class="fa fa-magic text-purple"></i> 裂变策略（{$fission_strategies|count}种）:
+            </label>
+            <div class="strategy-container"
+                 style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px; padding: 15px;">
+                <div class="strategy-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                    {foreach $fission_strategies as $key=>$vo}
+                    <label class="strategy-item"
+                           style="display: flex; align-items: center; padding: 8px 12px; background: white; border: 1px solid #dee2e6; border-radius: 4px; cursor: pointer; transition: all 0.2s;">
+                        <input type="checkbox" name="fission_strategies[]" value="{$key}"
+                               style="margin-right: 8px;">
+                        <span style="font-size: 13px;">{$vo}</span>
+                    </label>
+                    {/foreach}
+                </div>
+                <div class="text-center" style="margin-top: 10px;">
+                    <small class="text-muted" style="font-size: 12px;">
+                        <i class="fa fa-info-circle"></i> 可多选，不选择默认全部策略
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+
+<script>
+    // 全局变量
+    let dynamicItemIndex = 0;
+
+    // 手动添加动态项目函数
+    function addDynamicItemManual() {
+        const itemHtml = `
+        <div class="dynamic-item" data-index="${dynamicItemIndex}" style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px; padding: 20px; margin-bottom: 15px;">
+            <div class="rule-header" style="display: flex; align-items: center; margin-bottom: 15px;">
+                <i class="fa fa-clock-o" style="color: #f39c12; margin-right: 8px;"></i>
+                <span style="font-weight: 500; color: #495057;">素材筛选条件</span>
+                <button type="button" class="btn btn-sm btn-danger" onclick="removeDynamicItem(this)" style="margin-left: auto; border-radius: 4px;">
+                    <i class="fa fa-trash"></i>
+                </button>
+            </div>
+            <div style="display: flex; gap: 15px; align-items: end;">
+                <div style="flex: 1;">
+                    <label style="font-size: 13px; color: #6c757d; margin-bottom: 8px; display: block;">时间维度：</label>
+                    <select class="form-control" name="time_dimensions[${dynamicItemIndex}][dimension]" style="border-radius: 4px;">
+                                 <option value="">请选择时间维度</option>
+                       {volist name="day_setting" id="setting_name" key="setting_key"}
+                        <option value="{$setting_key}">{$setting_name}</option>
+                      {/volist}
+                    </select>
+                </div>
+                <div style="flex: 1;">
+                    <label style="font-size: 13px; color: #6c757d; margin-bottom: 8px; display: block;">消耗数据（元）：</label>
+                    <input type="number" class="form-control" name="time_dimensions[${dynamicItemIndex}][cost_data]"
+                           placeholder="请输入消耗数据" min="0" step="0.01" style="border-radius: 4px;">
+                </div>
+                                <div style="flex: 1;">
+                    <label style="font-size: 13px; color: #6c757d; margin-bottom: 8px; display: block;">Roi(素材)：</label>
+                    <input type="number" class="form-control" name="time_dimensions[${dynamicItemIndex}][roi]"
+                           placeholder="请输入素材Roi" min="0" step="0.01" style="border-radius: 4px;">
+                </div>
+                                <div style="flex: 1;">
+                    <label style="font-size: 13px; color: #6c757d; margin-bottom: 8px; display: block;">成交单量：</label>
+                    <input type="number" class="form-control" name="time_dimensions[${dynamicItemIndex}][order_count]"
+                           placeholder="请输入成交单量" min="0" step="1" style="border-radius: 4px;">
+                </div>
+            </div>
+        </div>
+    `;
+
+        document.getElementById('dynamicItemsContainer').insertAdjacentHTML('beforeend', itemHtml);
+        dynamicItemIndex++;
+    }
+
+    // 手动删除动态项目函数
+    function removeDynamicItem(button) {
+        const item = button.closest('.dynamic-item');
+        if (item) {
+            item.remove();
+        }
+    }
+
+    // 动态新增功能
+    function initDynamicItems() {
+        let dynamicItemIndex = 0;
+
+        // 删除动态项目
+        $(document).off('click', '.remove-dynamic-item').on('click', '.remove-dynamic-item', function (e) {
+            e.preventDefault();
+            $(this).closest('.dynamic-item').remove();
+        });
+
+        // 弹窗显示时初始化
+        $('#batchSettingModal').on('shown.bs.modal', function () {
+            if ($('#dynamicItemsContainer .dynamic-item').length === 0) {
+                addDynamicItemManual();
+            }
+        });
+    }
+
+
+</script>

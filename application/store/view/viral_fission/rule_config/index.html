@@ -1,0 +1,235 @@
+{extend name="admin@layout/default" /}
+
+{block name="content"}
+<div class="content-wrapper">
+    <section class="content-header">
+        <h1>
+            智能规则配置
+            <small>基于消耗、ROI、单量的核心指标配置</small>
+        </h1>
+        <ol class="breadcrumb">
+            <li><a href="#"><i class="fa fa-dashboard"></i> 首页</a></li>
+            <li><a href="#">病毒式裂变</a></li>
+            <li class="active">规则配置</li>
+        </ol>
+    </section>
+
+    <section class="content">
+        <div class="row">
+            <div class="col-xs-12">
+                <div class="box box-primary">
+                    <div class="box-header with-border">
+                        <h3 class="box-title">
+                            <i class="fa fa-cogs"></i> 规则配置管理
+                        </h3>
+                        <div class="box-tools pull-right">
+                            <button type="button" class="btn btn-success btn-sm btn-add-rule">
+                                <i class="fa fa-plus"></i> 添加规则
+                            </button>
+                            <button type="button" class="btn btn-primary btn-sm btn-save-rules">
+                                <i class="fa fa-save"></i> 保存配置
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="box-body">
+                        <!-- 规则说明 -->
+                        <div class="alert alert-info">
+                            <h4><i class="fa fa-info-circle"></i> 配置说明</h4>
+                            <p>
+                                <strong>核心指标：</strong>系统重点关注消耗、ROI、单量三个关键指标<br>
+                                <strong>消耗指标：</strong>支持灵活的时间维度配置，优先级：当天 > 近24小时 > 近2天 > ... > 近7天<br>
+                                <strong>执行策略：</strong>根据指标条件自动执行相应的优化策略
+                            </p>
+                        </div>
+                        
+                        <!-- 规则容器 -->
+                        <div id="rules-container">
+                            <!-- 规则行将在这里动态生成 -->
+                        </div>
+                        
+                        <!-- 空状态提示 -->
+                        <div id="empty-state" class="text-center" style="padding: 60px 0;">
+                            <i class="fa fa-cogs fa-3x text-muted"></i>
+                            <h4 class="text-muted">暂无规则配置</h4>
+                            <p class="text-muted">点击"添加规则"开始配置您的第一条规则</p>
+                            <button type="button" class="btn btn-primary btn-add-rule">
+                                <i class="fa fa-plus"></i> 添加第一条规则
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 规则模板示例 -->
+        <div class="row">
+            <div class="col-xs-12">
+                <div class="box box-default collapsed-box">
+                    <div class="box-header with-border">
+                        <h3 class="box-title">
+                            <i class="fa fa-lightbulb-o"></i> 配置示例
+                        </h3>
+                        <div class="box-tools pull-right">
+                            <button type="button" class="btn btn-box-tool" data-widget="collapse">
+                                <i class="fa fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="box-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="info-box bg-yellow">
+                                    <span class="info-box-icon"><i class="fa fa-money"></i></span>
+                                    <div class="info-box-content">
+                                        <span class="info-box-text">消耗控制示例</span>
+                                        <span class="info-box-number">当天消耗 > 1000元</span>
+                                        <div class="progress">
+                                            <div class="progress-bar" style="width: 100%"></div>
+                                        </div>
+                                        <span class="progress-description">
+                                            执行策略：暂停投放
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="info-box bg-green">
+                                    <span class="info-box-icon"><i class="fa fa-line-chart"></i></span>
+                                    <div class="info-box-content">
+                                        <span class="info-box-text">ROI优化示例</span>
+                                        <span class="info-box-number">ROI < 1.5</span>
+                                        <div class="progress">
+                                            <div class="progress-bar" style="width: 100%"></div>
+                                        </div>
+                                        <span class="progress-description">
+                                            执行策略：降低预算20%
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="info-box bg-blue">
+                                    <span class="info-box-icon"><i class="fa fa-shopping-cart"></i></span>
+                                    <div class="info-box-content">
+                                        <span class="info-box-text">单量提升示例</span>
+                                        <span class="info-box-number">单量 > 50</span>
+                                        <div class="progress">
+                                            <div class="progress-bar" style="width: 100%"></div>
+                                        </div>
+                                        <span class="progress-description">
+                                            执行策略：提高预算30%
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- 自定义样式 -->
+<style>
+.rule-row {
+    margin-bottom: 20px;
+}
+
+.rule-row .panel-heading {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.rule-row .panel-heading .panel-title {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.metric-config-area {
+    border-left: 3px solid #f39c12;
+    padding-left: 15px;
+    background: #fef9e7;
+    border-radius: 4px;
+}
+
+.strategy-params-area {
+    border-top: 2px dashed #ddd;
+    padding-top: 15px;
+    margin-top: 15px;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.alert-info {
+    border-left: 4px solid #3498db;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.btn-add-rule {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.btn-save-rules {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+#empty-state {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    border-radius: 8px;
+    margin: 20px 0;
+}
+
+.info-box {
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.cost-time-dimension {
+    border-left: 4px solid #e74c3c;
+}
+
+.metric-type {
+    border-left: 4px solid #3498db;
+}
+
+.strategy-select {
+    border-left: 4px solid #27ae60;
+}
+</style>
+{/block}
+
+{block name="script"}
+<script src="{$cdnurl}assets/js/backend/viral_fission/rule_config.js"></script>
+<script>
+$(function() {
+    // 初始化页面
+    Controller.index();
+    
+    // 检查是否有规则，显示/隐藏空状态
+    function toggleEmptyState() {
+        if ($('.rule-row').length === 0) {
+            $('#empty-state').show();
+        } else {
+            $('#empty-state').hide();
+        }
+    }
+    
+    // 监听规则变化
+    $(document).on('DOMNodeInserted DOMNodeRemoved', '#rules-container', function() {
+        toggleEmptyState();
+    });
+    
+    // 初始检查
+    toggleEmptyState();
+});
+</script>
+{/block}

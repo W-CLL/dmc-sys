@@ -1,0 +1,40 @@
+/**
+ * 爆款裂变模块样式文件 - 简化版
+ * 专注于清晰的内容显示
+ */
+
+/* 表格行间距优化 */
+.bootstrap-table .fixed-table-body tbody tr td {
+    padding: 12px 8px;
+    vertical-align: middle;
+}
+
+/* 规则显示区域基础样式 */
+.fission-rules-display {
+    border: 1px solid #e9ecef;
+    transition: background-color 0.2s ease;
+}
+
+.fission-rules-display:hover {
+    background: #f1f3f4 !important;
+}
+
+/* 文本颜色 */
+.text-success {
+    color: #28a745 !important;
+}
+
+.text-danger {
+    color: #dc3545 !important;
+}
+
+.text-muted {
+    color: #6c757d !important;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .fission-rules-display {
+        font-size: 12px;
+    }
+}
