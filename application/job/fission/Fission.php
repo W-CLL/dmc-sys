@@ -14,7 +14,7 @@ class  Fission extends BaseJob
 
     public function __construct()
     {
-        $this->queueRecordModelName = '\app\common\model\viral_fission\FissionQueue';
+        $this->queueRecordModelName = '\app\common\model\Queue';
     }
 
     /**
