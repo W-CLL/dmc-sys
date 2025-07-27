@@ -51,19 +51,19 @@ class MaterialConsumption extends Backend
                 if (count($dates) == 2) {
                     $start_date = strtotime(trim($dates[0]));
                     $end_date = strtotime(trim($dates[1]));
-                    $param_where['cost_date'] = [ 'between', [$start_date, $end_date]];
+                    $param_where['g.cost_date'] = [ 'between', [$start_date, $end_date]];
                 }
             }
 
             // 添加金额筛选
             $min_cost = $this->request->get('min_cost');
             $max_cost = $this->request->get('max_cost');
-            $param_where['stat_cost_for_roi2'] = ['>',0];
+            $param_where['g.stat_cost_for_roi2'] = ['>',0];
             if ($min_cost !== null && $min_cost !== '') {
-                $param_where['stat_cost_for_roi2'] = ['>=', $min_cost];
+                $param_where['g.stat_cost_for_roi2'] = ['>=', $min_cost];
                 if ($max_cost !== null && $max_cost !== '') {
-                    if(isset($param_where['stat_cost_for_roi2'])){
-                        $param_where['stat_cost_for_roi2'] = ['between',[$min_cost,$max_cost]];
+                    if(isset($param_where['g.stat_cost_for_roi2'])){
+                        $param_where['g.stat_cost_for_roi2'] = ['between',[$min_cost,$max_cost]];
                     }
                 }
             }
@@ -72,15 +72,19 @@ class MaterialConsumption extends Backend
             // 添加千川ID筛选
             $qc_id = $this->request->get('qc_id');
             if ($qc_id !== null && $qc_id !== '') {
-                $param_where['adv_id'] =  $qc_id;
+                $param_where[g.'adv_id'] =  $qc_id;
             }
             $list = $this->model
+                ->alias('g')
+                ->join('fission_derive_material f','g.material_id=f.adopt_material_id' ,'left')
+                ->field('g.*,f.adopt_material_id')
                 ->where($where)
                 ->where($param_where)
-                ->order('stat_cost_for_roi2', 'desc')
+                ->order(['f.adopt_material_id'=>'desc','g.stat_cost_for_roi2'=> 'desc'])
                 ->paginate($limit);
 
-            foreach ($list as $row) {
+            foreach ($list as &$row) {
+                $row['is_fission'] = $row['adopt_material_id']?"是":"否";
                 // 获取裂变状态和链接
 //                $fission_info = $this->getFissionInfo($row['id']);
 //                $row['fission_status'] = $fission_info['status'];
