@@ -34,62 +34,77 @@ class MaterialConsumption extends Backend
      */
     public function index()
     {
-        //设置过滤方法
+        // 输入过滤
         $this->request->filter(['strip_tags', 'trim']);
         if ($this->request->isAjax()) {
-            //如果发送的来源是Selectpage，则转发到Selectpage
+
+            // Selectpage 转发
             if ($this->request->request('keyField')) {
                 return $this->selectpage();
             }
-            
+            // 获取基础查询参数
             list($where, $sort, $order, $offset, $limit) = $this->buildparams();
-            $param_where = [];
-            // 添加时间筛选
+
+            // 解析基础条件（$where是数组或字符串）
+            $query = $this->model
+                ->alias('gm')
+                ->field('gm.*, IF(dm.adopt_material_id IS NULL, 0, 1) AS is_fission')
+                ->join('fission_derive_material dm', 'gm.material_id = dm.adopt_material_id','left');
+
+            // 应用基础条件
+            if ($where) {
+                if (is_array($where)) {
+                    foreach ($where as $cond) {
+                        $query = $query->where($cond);
+                    }
+                } else {
+                    $query = $query->where($where);
+                }
+            }
+
+            // 固定条件，费用必须大于0
+            $query = $query->where('gm.stat_cost_for_roi2', '>', 0);
+
+            // 时间筛选
             $daterange = $this->request->get('daterange');
             if ($daterange) {
                 $dates = explode(' - ', $daterange);
                 if (count($dates) == 2) {
                     $start_date = strtotime(trim($dates[0]));
                     $end_date = strtotime(trim($dates[1]));
-                    $param_where['cost_date'] = [ 'between', [$start_date, $end_date]];
+                    $query = $query->whereBetween('gm.cost_date', [$start_date, $end_date]);
                 }
+            } else{
+                $query = $query->whereBetween('gm.cost_date',[strtotime('-5 days'),time()]);
             }
 
-            // 添加金额筛选
+            // 金额筛选
             $min_cost = $this->request->get('min_cost');
             $max_cost = $this->request->get('max_cost');
-            $param_where['stat_cost_for_roi2'] = ['>',0];
             if ($min_cost !== null && $min_cost !== '') {
-                $param_where['stat_cost_for_roi2'] = ['>=', $min_cost];
-                if ($max_cost !== null && $max_cost !== '') {
-                    if(isset($param_where['stat_cost_for_roi2'])){
-                        $param_where['stat_cost_for_roi2'] = ['between',[$min_cost,$max_cost]];
-                    }
-                }
+                $query = $query->where('gm.stat_cost_for_roi2', '>=', $min_cost);
+            }
+            if ($max_cost !== null && $max_cost !== '') {
+                $query = $query->where('gm.stat_cost_for_roi2', '<=', $max_cost);
             }
 
-
-            // 添加千川ID筛选
+            // 广告主ID筛选
             $qc_id = $this->request->get('qc_id');
             if ($qc_id !== null && $qc_id !== '') {
-                $param_where['adv_id'] =  $qc_id;
-            }
-            $list = $this->model
-                ->where($where)
-                ->where($param_where)
-                ->order('stat_cost_for_roi2', 'desc')
-                ->paginate($limit);
-
-            foreach ($list as $row) {
-                $row['is_fission'] = Db::name('fission_derive_material')->where(['adopt_material_id'=>'material_id'])->find()?"是":"否";
-                // 获取裂变状态和链接
-//                $fission_info = $this->getFissionInfo($row['id']);
-//                $row['fission_status'] = $fission_info['status'];
-//                $row['fission_url'] = $fission_info['url'];
-//                $row['fission_remark'] = $fission_info['remark'];
+                $query = $query->where('gm.adv_id', '=', $qc_id);
             }
 
-            $result = array("total" => $list->total(), "rows" => $list->items());
+            $list = $query->order("is_fission desc,stat_cost_for_roi2 desc")->paginate($limit);
+            foreach ($list as &$row) {
+
+                $row['is_fission'] = $row['is_fission'] ? '是' : '否';
+            }
+
+            $result = [
+                'total' => $list->total(),
+                'rows'  => $list->items(),
+            ];
+
             return json($result);
         }
         return $this->view->fetch();
