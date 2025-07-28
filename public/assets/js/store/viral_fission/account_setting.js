@@ -1,4 +1,4 @@
-define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefined, Backend, Table, Form) {
+define(['jquery', 'bootstrap', 'store', 'table', 'form'], function ($, undefined, Backend, Table, Form) {
 
     var Controller = {
         index: function () {
@@ -190,9 +190,9 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
             });
         },
         
-        // setting: function () {
-        //     Controller.api.bindevent();
-        // },
+        setting: function () {
+            Controller.api.bindevent();
+        },
         batch_setting: function () {
             Controller.api.bindevent();
         },

@@ -191,9 +191,9 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
             });
         },
         
-        // setting: function () {
-        //     Controller.api.bindevent();
-        // },
+        setting: function () {
+            Controller.api.bindevent();
+        },
         batch_setting: function () {
             Controller.api.bindevent();
         },

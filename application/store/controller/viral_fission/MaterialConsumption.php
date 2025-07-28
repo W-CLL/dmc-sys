@@ -28,71 +28,113 @@ class MaterialConsumption extends Store
         $this->model = new AdvGlobalMaterial();
     }
 
+    private function __filter(&$where)
+    {
+        $params = input();
+
+        // 固定条件，费用必须大于0
+        $where['gm.stat_cost_for_roi2'] = ['>', 0];
+        $where['gm.adv_id'] = ['in',Db::name('company')->where(['store_id'=>$this->auth->id])->column('advertiser_id')];
+
+        // 时间筛选
+        $daterange = $params['daterange']??'';
+
+        if ($daterange) {
+            $dates = explode(' - ', $daterange);
+            if (count($dates) == 2) {
+                $start_date = strtotime(trim($dates[0]));
+                $end_date = strtotime(trim($dates[1]));
+                $where['gm.cost_date'] = ['between', [$start_date, $end_date]];
+            }
+        } else {
+            $where['gm.cost_date']=['between', [strtotime('-5 days'), time()]];
+        }
+        // 金额筛选
+        $min_cost = $params['min_cost'] ?? '';
+        $max_cost = $params['max_cost']??'';
+        if ($min_cost !== null && $min_cost !== '') {
+            $where['gm.stat_cost_for_roi2']=[ '>=', $min_cost];
+        }
+        if ($max_cost !== null && $max_cost !== '') {
+            $where['gm.stat_cost_for_roi2']=[ '<=', $max_cost];
+        }
+        // 广告主ID筛选
+        $qc_id = $params['qc_id']??'';
+        if ($qc_id !== null && $qc_id !== '') {
+            $where['gm.adv_id']= $qc_id;
+        }
+        $company_name = $params['company_name']??'';
+        if ($company_name !== null && $company_name !== '') {
+            $where['com.company_name']=['like',"%".$company_name."%"];
+        }
+
+        $kahuna= $params['kahuna']??'';
+        if ($kahuna !== null && $kahuna !== '') {
+            $where['com.kahuna']= ['like',"%". $kahuna."%"];
+        }
+
+    }
+
+
     /**
      * 查看
      */
     public function index()
     {
-        //设置过滤方法
+        // 输入过滤
         $this->request->filter(['strip_tags', 'trim']);
         if ($this->request->isAjax()) {
-            //如果发送的来源是Selectpage，则转发到Selectpage
+
+            // Selectpage 转发
             if ($this->request->request('keyField')) {
                 return $this->selectpage();
             }
-            
+            // 获取基础查询参数
             list($where, $sort, $order, $offset, $limit) = $this->buildparams();
-            $param_where = [];
-            $param_where['adv_id'] = ['in',Db::name('company')->where(['store_id'=>$this->auth->id])->column('advertiser_id')];
+            $this->__filter($param_where);
 
-            // 添加时间筛选
-            $daterange = $this->request->get('daterange');
-            if ($daterange) {
-                $dates = explode(' - ', $daterange);
-                if (count($dates) == 2) {
-                    $start_date = strtotime(trim($dates[0]));
-                    $end_date = strtotime(trim($dates[1]));
-                    $param_where['cost_date'] = [ 'between', [$start_date, $end_date]];
-                }
+
+            // 解析基础条件（$where是数组或字符串）
+            $query = $this->model
+                ->alias('gm')
+                ->field('gm.*, IF(dm.adopt_material_id IS NULL, 0, 1) AS is_fission,com.company_name,com.kahuna,com.store_id')
+                ->join('fission_derive_material dm', 'gm.material_id = dm.adopt_material_id', 'left')
+                ->join('company com','gm.adv_id=com.advertiser_id','left');
+            // 应用基础条件
+            $list = $query->where($param_where)->order("is_fission desc,stat_cost_for_roi2 desc")->paginate($limit);
+            foreach ($list as &$row) {
+                $row['is_fission'] = $row['is_fission'] ? '是' : '否';
+                $row['fission_count'] = Db::name('fission_derive_material')->where(['old_material_id'=>$row['material_id']])->count();
+//                $row['store_name'] = Db::name('store')->where(['id'=>$row['store_id']])->column('username');
             }
 
-            // 添加金额筛选
-            $min_cost = $this->request->get('min_cost');
-            $max_cost = $this->request->get('max_cost');
-            $param_where['stat_cost_for_roi2'] = ['>',0];
-            if ($min_cost !== null && $min_cost !== '') {
-                $param_where['stat_cost_for_roi2'] = ['>=', $min_cost];
-                if ($max_cost !== null && $max_cost !== '') {
-                    if(isset($param_where['stat_cost_for_roi2'])){
-                        $param_where['stat_cost_for_roi2'] = ['between',[$min_cost,$max_cost]];
-                    }
-                }
-            }
+            $result = [
+                'total' => $list->total(),
+                'rows' => $list->items(),
+            ];
 
-
-            // 添加千川ID筛选
-            $qc_id = $this->request->get('qc_id');
-            if ($qc_id !== null && $qc_id !== '') {
-                $param_where['adv_id'] =  $qc_id;
-            }
-            $list = $this->model
-                ->where($where)
-                ->where($param_where)
-                ->order('stat_cost_for_roi2', 'desc')
-                ->paginate($limit);
-
-            foreach ($list as $row) {
-                // 获取裂变状态和链接
-//                $fission_info = $this->getFissionInfo($row['id']);
-//                $row['fission_status'] = $fission_info['status'];
-//                $row['fission_url'] = $fission_info['url'];
-//                $row['fission_remark'] = $fission_info['remark'];
-            }
-
-            $result = array("total" => $list->total(), "rows" => $list->items());
             return json($result);
         }
         return $this->view->fetch();
     }
+
+
+    public function getStats()
+    {
+        $where['adv_id'] = ['in',Db::name('company')->where(['store_id'=>$this->auth->id])->column('advertiser_id')];
+
+        $adopt = Db::name('fission_derive_material')->where(['adopt_status_message' => 'success'])->where($where)->count();
+        $generated = Db::name('fission_derive_material')->where($where)->count();
+        $data = ['data' => [
+            'total' => Db::name('fission_global_material')->group('material_id')->where($where)->count(),
+            'generated' => $generated,
+            'adopted' => $adopt,
+            'success_rate' => ($adopt / $generated) * 100,
+        ],
+            'code' => 1
+        ];
+        return json($data);
+    }
+
 
 }

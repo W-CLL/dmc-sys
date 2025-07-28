@@ -1,4 +1,4 @@
-define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefined, Backend, Table, Form) {
+define(['jquery', 'bootstrap', 'store', 'table', 'form'], function ($, undefined, Backend, Table, Form) {
 
     var Controller = {
         // 全局变量

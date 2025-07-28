@@ -9,7 +9,6 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', '../viral_fission/vid
 
         index: function () {
             Controller.api.bindevent();
-
             // 初始化表格参数配置
             Table.api.init({
                 extend: {
@@ -18,15 +17,11 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', '../viral_fission/vid
                     table: 'adv_global_material',
                 }
             });
-
             // 初始化页面
             Controller.initPage();
-
             var table = $("#table");
-
             // 保存table引用
             Controller.table = table;
-
             // 初始化表格
             table.bootstrapTable({
                 url: $.fn.bootstrapTable.defaults.extend.index_url,
@@ -49,6 +44,9 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', '../viral_fission/vid
                         {checkbox: true},
                         {field: 'id', title: "ID", visible: false},
                         {field: 'adv_id', title: "千川ID", operate: '='},
+                        {field: 'company_name', title: "公司名"},
+                        {field: 'kahuna', title: "负责人"},
+                        {field: 'store_name', title: "商户名称"},
                         {field: 'material_id', title: "素材ID", operate: '=',
                             formatter: function(value, row, index) {
                                 if (!value) return '-';
@@ -64,7 +62,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', '../viral_fission/vid
                         }},
                         {field: 'total_pay_order_count_for_roi2', title: "单量"},
                         {field: 'is_fission', title: "是否裂变素材"},
-                        {field: 'has_fission', title: "是否存在裂变素材"},
+                        {field: 'fission_count', title: "共裂变素材个数"},
                         {
                             field: 'operate', 
                             title: __('Operate'), 
@@ -94,20 +92,11 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', '../viral_fission/vid
 
         // 加载统计数据
         loadStats: function() {
-            // 如果API不存在，使用随机数据
-            if (!$.fn.bootstrapTable.defaults.extend.stats_url) {
-                var randomData = Controller.generateRandomData();
-                $('#total-materials').text(randomData.total);
-                $('#generated-count').text(randomData.generated);
-                $('#adopted-count').text(randomData.adopted);
-                $('#success-rate').text(randomData.success_rate + '%');
-                return;
-            }
-
             $.ajax({
                 url: $.fn.bootstrapTable.defaults.extend.stats_url,
                 type: 'GET',
                 success: function(data) {
+                    console.log(data);
                     if (data.code === 1) {
                         $('#total-materials').text(data.data.total || 0);
                         $('#generated-count').text(data.data.generated || 0);

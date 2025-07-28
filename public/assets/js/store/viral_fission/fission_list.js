@@ -1,4 +1,4 @@
-define(['jquery', 'bootstrap', 'backend', 'table', 'form', '../viral_fission/video_viewer'], function ($, undefined, Backend, Table, Form, VideoViewer) {
+define(['jquery', 'bootstrap', 'store', 'table', 'form', '../viral_fission/video_viewer'], function ($, undefined, Backend, Table, Form, VideoViewer) {
 
     var Controller = {
         index: function () {
