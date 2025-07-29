@@ -193,19 +193,20 @@ class GenMaterialFissionTask extends BaseJob
      * @param string $adv_id 广告主ID
      * @param array $materials 素材列表
      * @param array $fission_rules 裂变规则
+     * @throws \Exception
      */
     private function processMaterials($adv_id, $materials, $fission_rules)
     {
         $materialIds = array_column($materials, 'material_id');
-
-        // 批量检查已处理的素材
-        $processedMaterials = $this->isMaterialProcessedBatch($adv_id, $materialIds);
-        // 过滤未处理的素材
-        $unprocessedMaterialIds = array_map('intval', array_column(array_filter($materials, function ($material) use ($processedMaterials) {
-            $materialId = (int)$material['material_id'];
-            return !isset($processedMaterials[$materialId]);
-        }), 'material_id'));
-
+        $unprocessedMaterialIds = $this->isMaterialProcessedBatch($adv_id, $materialIds);
+        $refusedMaterialIds =$this->getRefusedMaterialId($adv_id,$unprocessedMaterialIds);
+        if($refusedMaterialIds){
+            echo "----------有限制的----------";
+            dump($refusedMaterialIds);
+        }
+        $finalMaterialIds = array_diff($unprocessedMaterialIds, $refusedMaterialIds);
+        // 最终能处理裂变的素材
+        $unprocessedMaterialIds = array_map('intval', $finalMaterialIds);
         // 分批提交，每批最多 50 个素材
         $batches = array_chunk($unprocessedMaterialIds, 50);
         foreach ($batches as $batch) {
@@ -238,7 +239,7 @@ class GenMaterialFissionTask extends BaseJob
     }
 
     /**
-     * 批量检查素材是否已处理过（一天内）
+     * 根据素材id去掉今天已经处理过的素材id
      * @param string $adv_id 广告主ID
      * @param array $materialIds 素材ID数组
      * @return array 已处理的素材ID数组
@@ -247,12 +248,29 @@ class GenMaterialFissionTask extends BaseJob
     {
         $todayStart = strtotime(date('Y-m-d'));
         $todayEnd = strtotime(date('Y-m-d') . ' 23:59:59');
-        $processedMaterials = Db::name('fission_material_task')
+        return Db::name('fission_material_task')
             ->where('adv_id', $adv_id)
             ->whereIn('material_id', $materialIds)
-            ->where('create_time', 'between', [$todayStart, $todayEnd])
+            ->whereNotBetween('create_time',[$todayStart, $todayEnd])
             ->column('material_id');
-        return array_flip($processedMaterials);
+    }
+
+    /**
+     * 获取不能裂变的素材id
+     * @param string $adv_id 广告主ID
+     * @param array $materialIds 素材ID数组
+     * @return array 符合条件的素材ID数组
+     */
+    private function getRefusedMaterialId(string $adv_id, array $materialIds): array
+    {
+        //完善一下
+        return Db::name('fission_material_task')
+            ->field('material_id')
+            ->where('material_id', 'in', $materialIds)
+            ->where('adv_id', $adv_id)
+            ->where('status_code','>',0)
+            ->group('material_id')
+            ->column('material_id');
     }
 
     /**

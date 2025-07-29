@@ -48,7 +48,7 @@ class QcGlobal extends Controller
         $adv_list = $material
             ->alias('m')
             ->join('company c', 'm.adv_id=c.advertiser_id', 'left')
-            ->where(['m.total_prepay_and_pay_order_roi2' => ['>', 0], 'c.adv_status' => 1])->group('m.adv_id')
+            ->where(['m.stat_cost_for_roi2' => ['>', 0], 'c.adv_status' => 1])->group('m.adv_id')
             ->column('c.company_name', 'm.adv_id');
         $chunks = array_chunk($adv_list, 20, true);
         foreach ($chunks as $chunk) {
