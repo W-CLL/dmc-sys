@@ -3,18 +3,18 @@
  * 用于在弹窗中显示视频内容
  */
 define(['jquery'], function ($) {
-    
-    var VideoViewer = {
-        
+
+    return {
+
         /**
          * 显示视频弹窗
          * @param {string} videoUrl 视频URL
          * @param {string} videoTitle 视频标题
          * @param {object} options 可选参数
          */
-        show: function(videoUrl, videoTitle, options) {
+        show: function (videoUrl, videoTitle, options) {
             options = options || {};
-            
+
             // 默认配置
             var config = {
                 modalSize: options.modalSize || 'modal-lg',
@@ -24,33 +24,33 @@ define(['jquery'], function ($) {
                 maxWidth: options.maxWidth || '800px',
                 showDownloadLink: options.showDownloadLink !== false
             };
-            
+
             // 创建视频弹窗HTML
             var modalHtml = this.createModalHtml(videoUrl, videoTitle, config);
-            
+
             // 移除已存在的视频弹窗
             $('#videoModal').remove();
-            
+
             // 添加新的视频弹窗到页面
             $('body').append(modalHtml);
-            
+
             // 显示弹窗
             $('#videoModal').modal('show');
-            
+
             // 绑定事件
             this.bindEvents();
         },
-        
+
         /**
          * 创建弹窗HTML
          */
-        createModalHtml: function(videoUrl, videoTitle, config) {
+        createModalHtml: function (videoUrl, videoTitle, config) {
             var autoplayAttr = config.autoplay ? 'autoplay' : '';
             var controlsAttr = config.controls ? 'controls' : '';
-            var downloadLinkHtml = config.showDownloadLink ? 
+            var downloadLinkHtml = config.showDownloadLink ?
                 `<a href="${videoUrl}" target="_blank" class="btn btn-info">在新窗口打开</a>
                  <a href="${videoUrl}" download class="btn btn-success">下载视频</a>` : '';
-            
+
             return `
                 <div class="modal fade" id="videoModal" tabindex="-1" role="dialog">
                     <div class="modal-dialog ${config.modalSize}" role="document">
@@ -87,13 +87,13 @@ define(['jquery'], function ($) {
                 </div>
             `;
         },
-        
+
         /**
          * 绑定事件
          */
-        bindEvents: function() {
+        bindEvents: function () {
             var self = this;
-            
+
             // 弹窗关闭时暂停视频并清理
             $('#videoModal').on('hidden.bs.modal', function () {
                 var video = $(this).find('video')[0];
@@ -103,12 +103,12 @@ define(['jquery'], function ($) {
                 }
                 $(this).remove();
             });
-            
+
             // 视频加载错误处理
-            $('#videoModal video').on('error', function() {
+            $('#videoModal video').on('error', function () {
                 var $container = $(this).parent();
                 var videoUrl = $(this).find('source').first().attr('src');
-                
+
                 $container.html(`
                     <div class="video-error" style="padding: 40px; background: #f5f5f5; border-radius: 4px; color: #666; text-align: center;">
                         <i class="fa fa-exclamation-triangle" style="font-size: 24px; margin-bottom: 10px; color: #f39c12;"></i>
@@ -118,17 +118,17 @@ define(['jquery'], function ($) {
                     </div>
                 `);
             });
-            
+
             // 视频加载成功处理
-            $('#videoModal video').on('loadeddata', function() {
+            $('#videoModal video').on('loadeddata', function () {
                 console.log('视频加载成功');
             });
         },
-        
+
         /**
          * HTML转义
          */
-        escapeHtml: function(text) {
+        escapeHtml: function (text) {
             var map = {
                 '&': '&amp;',
                 '<': '&lt;',
@@ -136,19 +136,19 @@ define(['jquery'], function ($) {
                 '"': '&quot;',
                 "'": '&#039;'
             };
-            return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+            return text.replace(/[&<>"']/g, function (m) {
+                return map[m];
+            });
         },
-        
+
         /**
          * 截断URL显示
          */
-        truncateUrl: function(url, maxLength) {
+        truncateUrl: function (url, maxLength) {
             if (url.length <= maxLength) {
                 return url;
             }
             return url.substring(0, maxLength - 3) + '...';
         }
     };
-    
-    return VideoViewer;
 });
