@@ -31,6 +31,7 @@ define(['jquery', 'bootstrap', 'store', 'table', 'form', '../viral_fission/video
                         {field: 'id', title: "ID", visible: false},
                         {field: 'adv_id', title: "千川ID", operate: '='},
                         {field: 'strategy_description', title: "描述", operate: '='},
+                        {field: 'title', title: "裂变素材名称", operate: 'like'},
                         {field: 'old_material_id', title: "原素材ID", operate: '=',
                                 formatter: function(value, row, index) {
                                 if (!value) return '-';
