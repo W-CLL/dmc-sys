@@ -119,7 +119,7 @@ class MaterialConsumption extends Store
     }
 
 
-    public function getStats()
+    public function get_stats()
     {
         $where['adv_id'] = ['in',Db::name('company')->where(['store_id'=>$this->auth->id])->column('advertiser_id')];
 

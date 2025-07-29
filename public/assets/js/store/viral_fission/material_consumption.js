@@ -13,7 +13,7 @@ define(['jquery', 'bootstrap', 'store', 'table', 'form', '../viral_fission/video
             Table.api.init({
                 extend: {
                     index_url: 'viral_fission/material_consumption/index',
-                    stats_url: 'viral_fission/material_consumption/getStats',
+                    stats_url: 'viral_fission/material_consumption/get_stats',
                     table: 'adv_global_material',
                 }
             });
