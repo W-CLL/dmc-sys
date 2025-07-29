@@ -32,11 +32,7 @@ define(['jquery', 'bootstrap', 'store', 'table', 'form', '../viral_fission/video
                         {field: 'adv_id', title: "千川ID", operate: '='},
                         {field: 'strategy_description', title: "描述", operate: '='},
                         {field: 'title', title: "裂变素材名称", operate: 'like'},
-                        {field: 'old_material_id', title: "原素材ID", operate: '=',
-                                formatter: function(value, row, index) {
-                                if (!value) return '-';
-                                return '<span class="material-id-hover" data-url="' + row.video_url + '">' + value + '</span>';
-                            }},
+                        {field: 'old_material_id', title: "原素材ID", operate: '='},
                         {field: 'strategy_name', title: "裂变策略", operate: false},
                         {field: 'create_time', title: "生成时间", operate: 'RANGE', addclass: 'datetimerange', formatter: Table.api.formatter.datetime},
                         {
