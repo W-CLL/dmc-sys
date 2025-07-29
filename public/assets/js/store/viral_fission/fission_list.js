@@ -62,17 +62,7 @@ define(['jquery', 'bootstrap', 'store', 'table', 'form', '../viral_fission/video
                                 return value === "success" ? '<span class="label label-success">已采纳</span>' : '<span class="label label-danger">未采纳</span>';
                             }
                         },
-                        {
-                            field: 'operate',
-                            title: __('Operate'),
-                            table: table,
-                            events: Table.api.events.operate,
-                            formatter: function(value, row, index) {
-                                var buttons = [];
-                                buttons.push('<a href="javascript:;" class="btn btn-xs btn-success btn-single-adopt" data-id="' + row.id + '" title="采纳到素材库"><i class="fa fa-check"></i> 采纳</a>');
-                                return '<div class="btn-group btn-group-xs">' + buttons.join('') + '</div>';
-                            }
-                        }
+
                     ]
                 ]
             });
