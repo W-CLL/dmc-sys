@@ -108,11 +108,12 @@ class MaterialConsumption extends Store
                 $row['fission_count'] = Db::name('fission_derive_material')->where(['old_material_id'=>$row['material_id']])->count();
                 if($row['stat_cost_for_roi2'] >=300){
                     $msg_info= Db::name('fission_material_task')
-                        ->where([
-                            'adv_id' => $row['adv_id'],
-                            'material_id' => $row['material_id'],
-                            'fission_msg' => ['<>', '裂变生成超时，请重试']
-                        ])
+                        ->where('adv_id', $row['adv_id'])
+                        ->where('material_id', $row['material_id'])
+                        ->where(function($query) {
+                            $query->where('fission_msg', '<>', '裂变生成超时，请重试')
+                                ->whereOrNull('fission_msg');
+                        })
                         ->where(function($query) {
                             $query->where('status_code', '>', 0)
                                 ->whereOr('fission_status', 'FAILED');
