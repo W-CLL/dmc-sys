@@ -112,10 +112,10 @@ class MaterialConsumption extends Store
                             'adv_id' => $row['adv_id'],
                             'material_id' => $row['material_id']
                         ])
-                        ->where(function($query) {
-                            $query->where('fission_msg', '<>', '裂变生成超时，请重试')
-                                ->whereOr('fission_msg', 'NULL');
-                        })
+//                        ->where(function($query) {
+//                            $query->where('fission_msg', '<>', '裂变生成超时，请重试')
+//                                ->whereOr('fission_msg', 'NULL');
+//                        })
 //                        ->where(function($query) {
 //                            $query->where('status_code', '>', 0)
 //                                ->whereOr('fission_status', 'FAILED');
