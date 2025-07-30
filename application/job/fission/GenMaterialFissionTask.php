@@ -195,10 +195,15 @@ class GenMaterialFissionTask extends BaseJob
      * @param array $fission_rules 裂变规则
      * @throws \Exception
      */
-    private function processMaterials($adv_id, $materials, $fission_rules)
+    private function processMaterials(string $adv_id, array $materials, array $fission_rules): void
     {
         $materialIds = array_column($materials, 'material_id');
-        $unprocessedMaterialIds = $this->isMaterialProcessedBatch($adv_id, $materialIds);
+        $processedMaterialIds = $this->isMaterialProcessedBatch($adv_id, $materialIds);
+        if(!$processedMaterialIds){
+            $unprocessedMaterialIds = $materialIds;
+        }else{
+            $unprocessedMaterialIds = array_diff($materialIds,$processedMaterialIds);
+        }
         $refusedMaterialIds =$this->getRefusedMaterialId($adv_id,$unprocessedMaterialIds);
         if($refusedMaterialIds){
             echo "----------有限制的----------";
@@ -207,6 +212,9 @@ class GenMaterialFissionTask extends BaseJob
         $finalMaterialIds = array_diff($unprocessedMaterialIds, $refusedMaterialIds);
         // 最终能处理裂变的素材
         $unprocessedMaterialIds = array_map('intval', $finalMaterialIds);
+        if(!$unprocessedMaterialIds){
+            return;
+        }
         // 分批提交，每批最多 50 个素材
         $batches = array_chunk($unprocessedMaterialIds, 50);
         foreach ($batches as $batch) {
@@ -251,7 +259,7 @@ class GenMaterialFissionTask extends BaseJob
         return Db::name('fission_material_task')
             ->where('adv_id', $adv_id)
             ->whereIn('material_id', $materialIds)
-            ->whereNotBetween('create_time',[$todayStart, $todayEnd])
+            ->whereBetween('create_time',[$todayStart, $todayEnd])
             ->column('material_id');
     }
 
