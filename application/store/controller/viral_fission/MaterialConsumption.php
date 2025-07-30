@@ -114,18 +114,18 @@ class MaterialConsumption extends Store
                         ])
                         ->where(function($query) {
                             $query->where('fission_msg', '<>', '裂变生成超时，请重试')
-                                ->whereOr('fission_msg', 'NULL'); // 加这一句，保证 NULL 也算不等于
+                                ->whereOr('fission_msg', 'NULL');
                         })
-                        ->where(function($query) {
-                            $query->where('status_code', '>', 0)
-                                ->whereOr('fission_status', 'FAILED');
-                        })
+//                        ->where(function($query) {
+//                            $query->where('status_code', '>', 0)
+//                                ->whereOr('fission_status', 'FAILED');
+//                        })
                         ->order('create_time desc')
                         ->find();
 
                     if(!empty($msg_info['fission_msg'])){
                         $row['unfission_reason'] = $msg_info['fission_msg'];
-                    }elseif(!empty($msg_info['status_message'])){
+                    }elseif(!empty($msg_info['status_code'])){
                         $row['unfission_reason'] = $msg_info['status_message'];
                     }
 
