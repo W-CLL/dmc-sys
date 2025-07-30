@@ -62,6 +62,7 @@ define(['jquery', 'bootstrap', 'store', 'table', 'form', '../viral_fission/video
                         {field: 'total_pay_order_count_for_roi2', title: "单量"},
                         {field: 'is_fission', title: "是否裂变素材"},
                         {field: 'fission_count', title: "共裂变素材个数"},
+                        {field: 'unfission_reason', title: "不可裂变原因"},
                         {
                             field: 'operate',
                             title: __('Operate'),

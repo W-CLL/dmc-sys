@@ -258,6 +258,7 @@ class GenMaterialFissionTask extends BaseJob
         $todayEnd = strtotime(date('Y-m-d') . ' 23:59:59');
         return Db::name('fission_material_task')
             ->where('adv_id', $adv_id)
+            ->where('fission_msg','<>',"裂变生成超时，请重试")
             ->whereIn('material_id', $materialIds)
             ->whereBetween('create_time',[$todayStart, $todayEnd])
             ->column('material_id');
