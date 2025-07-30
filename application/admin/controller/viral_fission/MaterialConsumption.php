@@ -103,6 +103,7 @@ class MaterialConsumption extends Backend
             // 应用基础条件
             $list = $query->where($param_where)->order("is_fission desc,stat_cost_for_roi2 desc")->paginate($limit);
             foreach ($list as &$row) {
+                $row['create_time_text'] = date('Y-m-d',$row['cost_date']);
                 $row['is_fission'] = $row['is_fission'] ? '是' : '否';
                 $row['fission_count'] = Db::name('fission_derive_material')->where(['old_material_id'=>$row['material_id']])->count();
                 $row['store_name'] = Db::name('store')->where(['id'=>$row['store_id']])->column('username');
@@ -111,16 +112,15 @@ class MaterialConsumption extends Backend
                         ->where([
                             'adv_id' => $row['adv_id'],
                             'material_id' => $row['material_id'],
-                            'fission_msg' => ['<>', '裂变生成超时，请重试']
                         ])
-                        ->where(function($query) {
-                            $query->where('status_code', '>', 0)
-                                ->whereOr('fission_status', 'FAILED');
-                        })
+//                        ->where(function($query) {
+//                            $query->where('status_code', '>', 0)
+//                                ->whereOr('fission_status', 'FAILED');
+//                        })
                         ->find();
                     if(!empty($msg_info['fission_msg'])){
                         $row['unfission_reason'] = $msg_info['fission_msg'];
-                    }elseif(!empty($msg_info['status_message'])){
+                    }elseif(!empty($msg_info['status_code'])){
                         $row['unfission_reason'] = $msg_info['status_message'];
                     }
 
