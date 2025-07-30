@@ -103,6 +103,7 @@ class MaterialConsumption extends Store
             // 应用基础条件
             $list = $query->where($param_where)->order("is_fission desc,stat_cost_for_roi2 desc")->paginate($limit);
             foreach ($list as &$row) {
+                $row['create_time_text'] = date('Y-m-d',$row['cost_date']);
                 $row['is_fission'] = $row['is_fission'] ? '是' : '否';
                 $row['fission_count'] = Db::name('fission_derive_material')->where(['old_material_id'=>$row['material_id']])->count();
                 if($row['stat_cost_for_roi2'] >=300){
