@@ -30,7 +30,7 @@ class QcGlobal extends Controller
         foreach ($chunks as $chunk) {
             Queue::push('app\job\fission\InsertGlobalMaterial', [
                 'adv_list' => $chunk,
-                'start_time' => date("Y-m-d H:i:s", time() - (60 * 60 * $hour)),
+                'start_time' => date("Y-m-d H:i:s", (time() - (60 * 60 * $hour))),
                 'end_time' => date('Y-m-d H:i:s')
             ], 'insertGlobalMaterial');
         }
