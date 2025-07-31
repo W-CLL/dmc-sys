@@ -101,7 +101,7 @@ class MaterialConsumption extends Backend
                 ->join('fission_derive_material dm', 'gm.material_id = dm.adopt_material_id', 'left')
                 ->join('company com','gm.adv_id=com.advertiser_id','left');
             // 应用基础条件
-            $list = $query->where($param_where)->order("is_fission desc,stat_cost_for_roi2 desc")->paginate($limit);
+            $list = $query->where($param_where)->order("is_fission desc,stat_cost_for_roi2 desc,material_id desc")->paginate($limit);
             foreach ($list as &$row) {
                 $row['create_time_text'] = date('Y-m-d',$row['cost_date']);
                 $row['is_fission'] = $row['is_fission'] ? '是' : '否';
