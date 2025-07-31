@@ -46,12 +46,12 @@ class GetFissionMaterialStatus extends BaseJob
         $material_ids = [];
         $insert_data = [];
         if ($res['message'] == "OK" && !empty($res['data']['task_details'])) {
-//            dump($res['message']);
             foreach ($res['data']['task_details'] as $detail) {
                 $update_data = ['fission_status' => $detail['status'],'fission_msg'=>$detail['status_message']];
                 if(in_array($detail['status'], ["PART_SUCCESS", "SUCCESS","FAILED"])){
                     $update_data['is_handle'] = 1;
                     $update_data['update_time'] = time();
+                    $update_data['request_id'] =$res['request_id'];
                 }
                 $material_task->where(['material_id' => $detail['origin_material_id'], 'task_id' => $detail['task_id']])->update($update_data);
                 if (in_array($detail['status'], ["PART_SUCCESS", "SUCCESS"])) {
@@ -97,7 +97,7 @@ class GetFissionMaterialStatus extends BaseJob
                             'adv_id' => $adv_id,
                             'task_id' => ['in', $data['task_id']],
                             'material_id' => ['in', $material_ids]
-                        ])->update(['is_handle' => 1,'update_time'=>time()]);
+                        ])->update(['is_handle' => 1,'update_time'=>time(),'request_id'=>$res['request_id']]);
                     }
                     Db::commit();
                     return true;
@@ -107,7 +107,7 @@ class GetFissionMaterialStatus extends BaseJob
                 }
             }
             return true;
-        } else {
+        } elseif($res['code']>0) {
             throw new Exception($res['message']."请求id:".$res['request_id']);
         }
     }
