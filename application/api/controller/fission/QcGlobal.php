@@ -113,7 +113,7 @@ class QcGlobal extends Controller
         foreach ($chunks as $adv_id => $chunk) {
             $count = count($chunk);
             if ($count > 50) {
-                $queue_datas = array_chunk($chunks, 50, true);
+                $queue_datas = array_chunk($chunk, 50, true);
                 foreach ($queue_datas as $data) {
                     Queue::push('app\job\fission\GetFissionMaterialStatus', [
                         'adv_id' => $adv_id,

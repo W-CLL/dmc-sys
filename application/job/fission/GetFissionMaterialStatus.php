@@ -51,6 +51,7 @@ class GetFissionMaterialStatus extends BaseJob
                 $update_data = ['fission_status' => $detail['status'],'fission_msg'=>$detail['status_message']];
                 if(in_array($detail['status'], ["PART_SUCCESS", "SUCCESS","FAILED"])){
                     $update_data['is_handle'] = 1;
+                    $update_data['update_time'] = time();
                 }
                 $material_task->where(['material_id' => $detail['origin_material_id'], 'task_id' => $detail['task_id']])->update($update_data);
                 if (in_array($detail['status'], ["PART_SUCCESS", "SUCCESS"])) {
@@ -96,7 +97,7 @@ class GetFissionMaterialStatus extends BaseJob
                             'adv_id' => $adv_id,
                             'task_id' => ['in', $data['task_id']],
                             'material_id' => ['in', $material_ids]
-                        ])->update(['is_handle' => 1]);
+                        ])->update(['is_handle' => 1,'update_time'=>time()]);
                     }
                     Db::commit();
                     return true;
