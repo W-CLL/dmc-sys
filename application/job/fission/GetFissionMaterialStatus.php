@@ -48,7 +48,7 @@ class GetFissionMaterialStatus extends BaseJob
         if ($res['message'] == "OK" && !empty($res['data']['task_details'])) {
             foreach ($res['data']['task_details'] as $detail) {
                 $update_data = ['fission_status' => $detail['status'],'fission_msg'=>$detail['status_message']];
-                if(in_array($detail['status'], ["PART_SUCCESS", "SUCCESS","FAILED"])){
+                if($detail['status'] == "FAILED"){
                     $update_data['is_handle'] = 1;
                     $update_data['update_time'] = time();
                     $update_data['request_id'] =$res['request_id'];
@@ -91,8 +91,8 @@ class GetFissionMaterialStatus extends BaseJob
             if ($insert_data) {
                 Db::startTrans();
                 try {
-                    $res = $derive_model->saveAll($insert_data);
-                    if ($res) {
+                    $res1 = $derive_model->saveAll($insert_data);
+                    if ($res1) {
                         $material_task->where([
                             'adv_id' => $adv_id,
                             'task_id' => ['in', $data['task_id']],
