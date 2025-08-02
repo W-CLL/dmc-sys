@@ -197,7 +197,6 @@ abstract class BaseGetOptLogJob
                 }
             }
         }
-var_dump($insertData);
         if($insertData){
             $res = $model->saveAll($insertData);
             if(!$res){

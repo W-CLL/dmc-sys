@@ -11,7 +11,7 @@ class WorkWechat extends Controller
     public function sandMessage($data)
     {
         $title = $data['title'];
-        Api::send_application_messages('MaYuTian|WuZhongTuan|PanHaoWei|WangChunLong', $title);
+        Api::send_application_messages('MaYuTian|WuZhongTuan|PanHaoWei|WangChunLong|WuZhongJie', $title);
     }
 
     public function validateParam($data, $type = 0){

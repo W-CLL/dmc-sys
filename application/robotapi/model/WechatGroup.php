@@ -39,6 +39,7 @@ class WechatGroup extends Model
     {
         return $this->with(['company' => function($query) use ($adv_id_list) {
             $query->whereIn('advertiser_id', $adv_id_list)
+                ->where('adv_status', 1)
                 ->field('id, advertiser_id, store_id, account_type, discount_percentage, agent_id');
         }])->where('group_id', $group_id)->find();
     }
