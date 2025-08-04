@@ -20,12 +20,12 @@ class AdoptFissionMaterial extends BaseJob
 
     protected function getJobName(): string
     {
-        return "获取裂变任务状态";
+        return "采纳裂变素材";
     }
 
     protected function getQueueName(): string
     {
-        return 'getFissionMaterialStatus';
+        return 'adoptFissionMaterial';
     }
 
     /**

@@ -595,10 +595,6 @@ class FundManagement
     }
 
 
-
-
-
-
     /**
      * $params = [
      * 'advertiser_id' => 1826807488376899,
@@ -652,6 +648,17 @@ class FundManagement
         return sendApiRes($url, $params, 'GET', ['Access-Token' => $access_token])['data'];
     }
 
+    /**
+     * 获取账户裂变任务列表
+     * @param array $params
+     * @return mixed
+     */
+    public static function get_hot_material_derive_task_list(array $params)
+    {
+        $access_token = Cache::get("qc_access_token");
+        $url = "https://ad.oceanengine.com/open_api/v3.0/tools/hot_material_derive/list/";
+        return sendApiRes($url, $params, 'GET', ['Access-Token' => $access_token])['data'];
+    }
 
 }
 

@@ -66,6 +66,7 @@ class AccountSetting extends Backend
             
             $list = $this->model
                 ->where($where)
+                ->where(['adv_status'=>1])
                 ->order($sort, $order)
                 ->paginate($limit);
 
