@@ -19,4 +19,12 @@ class FissionDeriveMaterial extends Model
     protected $createTime = 'create_time';
     protected $updateTime = 'update_time';
 
+    /**
+     * 关联全域素材表
+     */
+    public function globalMaterial()
+    {
+        return $this->belongsTo('AdvGlobalMaterial', 'adopt_material_id', 'material_id');
+    }
+
 }

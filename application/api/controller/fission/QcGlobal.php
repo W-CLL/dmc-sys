@@ -274,7 +274,8 @@ class QcGlobal extends Controller
                 'page_size' => 50
             ];
             $res = FundManagement::get_hot_material_derive_task_list($params);
-            if ($res['code'] == 0 && !empty($res['data']['data'])) {
+
+            if (!empty($res['data']['data'])) {
                 $save_data[$adv_id] = $res['data']['data'];
                 if($res['data']['pagination']['total_number'] >50){
                     echo  $adv_id;
