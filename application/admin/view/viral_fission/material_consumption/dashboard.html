@@ -1,0 +1,168 @@
+<link rel="stylesheet" href="/assets/css/viral_fission/material_dashboard.css">
+
+<div class="panel panel-default panel-intro">
+    {:build_heading()}
+
+    <div class="panel-body">
+        <!-- Tab导航 -->
+        <ul class="nav nav-tabs" role="tablist">
+            <li role="presentation">
+                <a href="{:url('viral_fission/material_consumption/index')}" class="tab-link">
+                    <i class="fa fa-list"></i> 素材列表
+                </a>
+            </li>
+            <li role="presentation" class="active">
+                <a href="#dashboard" aria-controls="dashboard" role="tab" data-toggle="tab">
+                    <i class="fa fa-dashboard"></i> 数据看板
+                </a>
+            </li>
+        </ul>
+
+        <!-- Tab内容 -->
+        <div class="tab-content">
+            <div role="tabpanel" class="tab-pane fade active in" id="dashboard">
+                <!-- 统计卡片 -->
+                <div class="stats-section" id="stats-section">
+                    <div class="stats-header">
+                        <h5 style="margin: 0;">
+                            <i class="fa fa-bar-chart"></i> 数据概览
+                        </h5>
+                        <button type="button" class="btn btn-xs btn-link" id="toggle-stats">
+                            <i class="fa fa-chevron-up"></i>
+                        </button>
+                    </div>
+                    <div class="stats-cards" id="stats-cards">
+                        <div class="stats-card">
+                            <div class="stats-number" id="total-materials">0</div>
+                            <div class="stats-label">总素材数</div>
+                        </div>
+                        <div class="stats-card">
+                            <div class="stats-number" id="generated-count">0</div>
+                            <div class="stats-label">已裂变</div>
+                        </div>
+                        <div class="stats-card">
+                            <div class="stats-number" id="adopted-count">0</div>
+                            <div class="stats-label">已采纳</div>
+                        </div>
+                        <div class="stats-card">
+                            <div class="stats-number" id="success-rate">0%</div>
+                            <div class="stats-label">成功率(采纳/裂变)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 图表区域 -->
+                <div class="chart-row">
+                    <!-- 折线图 -->
+                    <div class="chart-col-8">
+                        <div class="chart-container">
+                            <div class="chart-header">
+                                <h5 style="margin: 0;">
+                                    <i class="fa fa-line-chart"></i> 消耗趋势图
+                                </h5>
+                                <div class="chart-filters">
+                                    <select class="form-control " id="line-chart-days">
+                                        <option value="7">近7天</option>
+                                        <option value="15" selected>近15天</option>
+                                        <option value="current_month">本月</option>
+                                        <option value="last_month">上月</option>
+                                        <option value="last_3_months">前三个月</option>
+                                    </select>
+                                    <button type="button" class="btn btn-primary btn-sm" id="line-chart-refresh">
+                                        <i class="fa fa-refresh"></i> 刷新
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="chart-content">
+                                <div id="line-chart" style="width: 100%; height: 350px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 饼状图 -->
+                    <div class="chart-col-4">
+                        <div class="chart-container">
+                            <div class="chart-header">
+                                <h5 style="margin: 0;">
+                                    <i class="fa fa-pie-chart"></i> 公司消耗占比
+                                </h5>
+                                <div class="chart-filters">
+                                    <select class="form-control " id="pie-chart-days">
+                                        <option value="7">近7天</option>
+                                        <option value="15" selected>近15天</option>
+                                        <option value="current_month">本月</option>
+                                        <option value="last_month">上月</option>
+                                        <option value="last_3_months">前三个月</option>
+                                    </select>
+                                    <button type="button" class="btn btn-primary btn-sm" id="pie-chart-refresh">
+                                        <i class="fa fa-refresh"></i> 刷新
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="chart-content">
+                                <div id="pie-chart" style="width: 100%; height: 350px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 详细数据表格 -->
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h5 style="margin: 0;">
+                            <i class="fa fa-table"></i> 公司消耗详情
+                        </h5>
+                        <div class="chart-filters">
+                            <button type="button" class="btn btn-success btn-sm" id="export-data">
+                                <i class="fa fa-download"></i> 导出数据
+                            </button>
+                        </div>
+                    </div>
+                    <div class="chart-content">
+                        <table class="table table-striped table-bordered" id="company-stats-table">
+                            <thead>
+                                <tr>
+                                    <th>公司名称</th>
+                                    <th>总消耗</th>
+                                    <th>裂变素材消耗</th>
+                                    <th>非裂变素材消耗</th>
+                                    <th>占比</th>
+                                    <th>素材数量</th>
+                                    <th>平均消耗</th>
+                                </tr>
+                            </thead>
+                            <tbody id="company-stats-tbody">
+                                <!-- 数据将通过JavaScript填充 -->
+                            </tbody>
+                        </table>
+
+                        <!-- 分页控件 -->
+                        <div class="row" style="margin-top: 15px;">
+                            <div class="col-sm-6">
+                                <div class="dataTables_info" id="company-table-info">
+                                    显示第 1 到 10 条记录
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="dataTables_paginate paging_simple_numbers" id="company-table-pagination">
+                                    <ul class="pagination" style="margin: 0; float: right;">
+                                        <li class="paginate_button previous disabled">
+                                            <a href="#" data-page="prev">上一页</a>
+                                        </li>
+                                        <li class="paginate_button active">
+                                            <a href="#" data-page="1">1</a>
+                                        </li>
+                                        <li class="paginate_button next disabled">
+                                            <a href="#" data-page="next">下一页</a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
