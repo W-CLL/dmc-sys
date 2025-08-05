@@ -53,7 +53,7 @@ class FissionList extends Backend
             $list = $this->model
                 ->where($where)
                 ->where($param_where)
-                ->order('adopt_status_message', 'desc')
+                ->order('create_time', 'desc')
                 ->paginate($limit);
 
             foreach ($list as $row) {
