@@ -200,13 +200,13 @@ class GenMaterialFissionTask extends BaseJob
         // 提取素材ID
         $materialIds = array_column($materials, 'material_id');
 
-        // 过滤今天已处理过的
+        // 过滤今天已处理过的素材（排除包含"请重试"字眼的失败记录）
         $processedMaterialIds = $this->isMaterialProcessedBatch($adv_id, $materialIds);
         $unprocessedMaterialIds = $processedMaterialIds
             ? array_diff($materialIds, $processedMaterialIds)
             : $materialIds;
 
-        // 获取不能裂变的素材ID
+        // 获取不能裂变的素材ID（有错误原因、状态FAILED或status_code>0，但排除"请重试"类型）
         $refusedMaterialIds = $this->getRefusedMaterialId($adv_id, $unprocessedMaterialIds);
 
         if ($refusedMaterialIds) {
@@ -231,7 +231,10 @@ class GenMaterialFissionTask extends BaseJob
     }
 
     /**
-     * 根据素材id去掉今天已经处理过的素材id
+     * 根据素材 
+     * 过滤逻辑：
+     * 1. 今天已有记录且不包含"请重试"字眼的素材
+     * 2. 今天已提交但还未返回结果的素材（有task_id但无fission_msg）
      * @param string $adv_id 广告主ID
      * @param array $materialIds 素材ID数组
      * @return array 已处理的素材ID数组
@@ -240,19 +243,34 @@ class GenMaterialFissionTask extends BaseJob
     {
         $todayStart = strtotime(date('Y-m-d'));
         $todayEnd = strtotime(date('Y-m-d') . ' 23:59:59');
+
         return Db::name('fission_material_task')
             ->where('adv_id', $adv_id)
-            ->where('fission_msg', '<>', '裂变生成超时，请重试')
-            ->whereRaw('fission_msg IS NOT NULL')
             ->whereIn('material_id', $materialIds)
             ->whereBetween('create_time', [$todayStart, $todayEnd])
+            ->where(function ($query) {
+                // 今天已经有记录的素材，但排除包含"请重试"字眼的失败记录
+                $query->where(function ($subQuery) {
+                    // 有成功记录或非重试类型的失败记录
+                    $subQuery->whereRaw('fission_msg IS NOT NULL')
+                        ->where('fission_msg', 'not like', '%请重试%');
+                })->whereOr(function ($subQuery) {
+                    // 或者有task_id但还没有fission_msg的记录（刚提交的任务）
+                    $subQuery->where('task_id', '>', 0)
+                        ->whereRaw('fission_msg IS NULL');
+                });
+            })
             ->column('material_id');
     }
     /**
      * 获取不能裂变的素材id
+     * 过滤逻辑：排除以下素材
+     * 1. 有错误原因且不包含"请重试"字眼的素材
+     * 2. status_code > 0 且不包含"请重试"字眼的素材
+     * 3. fission_status = 'FAILED' 且不包含"请重试"字眼的素材
      * @param string $adv_id 广告主ID
      * @param array $materialIds 素材ID数组
-     * @return array 符合条件的素材ID数组
+     * @return array 需要过滤掉的素材ID数组
      */
     private function getRefusedMaterialId(string $adv_id, array $materialIds): array
     {
@@ -260,11 +278,31 @@ class GenMaterialFissionTask extends BaseJob
             ->field('material_id')
             ->where('material_id', 'in', $materialIds)
             ->where('adv_id', $adv_id)
-            ->where('fission_msg', '<>', '裂变生成超时，请重试')
-            ->whereRaw('fission_msg IS NOT NULL')
             ->where(function ($query) {
-                $query->where('status_code', '>', 0)
-                    ->whereOr('fission_status', 'FAILED');
+                // 过滤条件：有错误原因、状态是FAILED或status_code大于0的素材
+                $query->where(function ($subQuery) {
+                    // 有fission_msg且不包含"请重试"字眼的失败记录
+                    $subQuery->whereRaw('fission_msg IS NOT NULL')
+                        ->where('fission_msg', 'not like', '%请重试%')
+                        ->where(function ($innerQuery) {
+                            $innerQuery->where('status_code', '>', 0)
+                                ->whereOr('fission_status', 'FAILED');
+                        });
+                })->whereOr(function ($subQuery) {
+                    // 或者status_code大于0但没有"请重试"字眼的记录
+                    $subQuery->where('status_code', '>', 0)
+                        ->where(function ($innerQuery) {
+                            $innerQuery->whereRaw('status_message IS NULL')
+                                ->whereOr('status_message', 'not like', '%请重试%');
+                        });
+                })->whereOr(function ($subQuery) {
+                    // 或者fission_status为FAILED但没有"请重试"字眼的记录
+                    $subQuery->where('fission_status', 'FAILED')
+                        ->where(function ($innerQuery) {
+                            $innerQuery->whereRaw('fission_msg IS NULL')
+                                ->whereOr('fission_msg', 'not like', '%请重试%');
+                        });
+                });
             })
             ->group('material_id')
             ->column('material_id');

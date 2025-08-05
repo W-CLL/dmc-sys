@@ -11,6 +11,7 @@ use jlqc\FundManagement;
 use think\Cache;
 use think\Controller;
 use think\Db;
+use think\db\Query;
 use think\Exception;
 use think\Queue;
 
@@ -72,13 +73,13 @@ class QcGlobal extends Controller
         return "已处理所有数据，共" . count($adv_list) . "条记录，分" . $queueCount . "个批次处理";
     }
 
-    public function getObjMaterialDayCost($is_first=false, $day = 92): string
+    public function getObjMaterialDayCost($is_first=false, $day = 32): string
     {
         if ($day !== '' && (!is_numeric($day) || $day < 0)) {
             return "天数参数无效";
         }
         if($is_first){
-            $obj_start_time = strtotime("-92 days");
+            $obj_start_time = strtotime("-32 days");
             $obj_end_time =time();
         }
 
@@ -89,11 +90,14 @@ class QcGlobal extends Controller
             ->where([
                 'com.adv_status' => 1,
                 'g.obj_create_time'=>['between',[$obj_start_time,$obj_end_time]],
-                'g.obj_status'=>['not in', ['DELETE', 'FROZEN']],
-                'g.opt_status'=>['not in', ['DELETE', 'FROZEN']],
             ])
+            ->where(function ($query) {
+                $query->whereNotIn('g.obj_status',  ['DELETE', 'FROZEN'])
+                    ->whereOr(['g.opt_status'=>['not in',['DELETE', 'FROZEN']]]);
+            })
             ->field('g.obj_id,g.adv_id')
             ->select();
+
         $obj_arr = [];
         foreach ($obj_list as $item){
             $obj_arr[$item['adv_id']][]=$item['obj_id'];
@@ -141,6 +145,12 @@ class QcGlobal extends Controller
      */
     public function genMaterialFissionTask(): string
     {
+        // 最高级筛选：检查是否存在今日裂变额度不足的情况
+        $quotaCheckResult = $this->checkDailyFissionQuota();
+        if ($quotaCheckResult !== true) {
+            return $quotaCheckResult; // 直接返回额度不足信息，不构建队列
+        }
+
         // 获取符合条件的广告主列表（优化：添加缓存和更精确的查询）
         $cacheKey = 'qualified_advertisers_' . date('Y-m-d-H');
         $material = new AdvGlobalMaterial();
@@ -173,6 +183,45 @@ class QcGlobal extends Controller
 
         return "已处理所有数据，共" . count($adv_list) . "条记录，分" . $queueCount . "个批次处理";
     }
+
+    /**
+     * 检查今日裂变额度是否充足
+     * @return true|string true表示额度充足，字符串表示额度不足的具体信息
+     */
+    private function checkDailyFissionQuota()
+    {
+        // 获取今天的时间范围
+        $todayStart = strtotime(date('Y-m-d'));
+        $todayEnd = strtotime(date('Y-m-d') . ' 23:59:59');
+
+        // 检查今天是否有"今日裂变额度不足"的错误记录
+        $quotaErrorCount = \think\Db::name('fission_material_task')
+            ->where(function ($query) {
+                $query->where('status_message', 'like', '%今日裂变额度不足%')
+                    ->whereOr('fission_msg', 'like', '%今日裂变额度不足%');
+            })
+            ->whereBetween('create_time', [$todayStart, $todayEnd])
+            ->count();
+
+        if ($quotaErrorCount > 0) {
+            // 获取最新的额度不足错误信息
+            $latestQuotaError = \think\Db::name('fission_material_task')
+                ->where(function ($query) {
+                    $query->where('status_message', 'like', '%今日裂变额度不足%')
+                        ->whereOr('fission_msg', 'like', '%今日裂变额度不足%');
+                })
+                ->whereBetween('create_time', [$todayStart, $todayEnd])
+                ->order('create_time', 'desc')
+                ->find();
+
+            $errorMsg = $latestQuotaError['fission_msg'] ?: $latestQuotaError['status_message'];
+            return "检测到今日裂变额度不足，停止生成新任务。错误信息：{$errorMsg}";
+        }
+
+        return true; // 额度充足，可以继续
+    }
+
+
 
     public function adoptFissionMaterial()
     {
