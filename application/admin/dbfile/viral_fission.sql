@@ -128,3 +128,11 @@ ALTER TABLE fa_fission_global_material
 
 ALTER TABLE fa_fission_derive_material
     ADD INDEX idx_adopt_adv (adopt_material_id, adv_id);
+
+--再加索引
+ALTER TABLE fa_fission_global_material
+    ADD INDEX idx_cost_date_roi (cost_date, stat_cost_for_roi2);
+
+ALTER TABLE fa_fission_global_material
+    ADD INDEX idx_cover (cost_date, stat_cost_for_roi2, material_id, adv_id);
+

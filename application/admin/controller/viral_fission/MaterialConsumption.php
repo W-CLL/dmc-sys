@@ -104,7 +104,7 @@ class MaterialConsumption extends Backend
             // 解析基础条件（$where是数组或字符串）
             $query = $this->model
                 ->alias('gm')
-                ->field('gm.*, IF(dm.adopt_material_id IS NULL, 0, 1) AS is_fission,com.company_name,com.kahuna,com.store_id')
+                ->field('gm.adv_id,gm.material_id,gm.stat_cost_for_roi2,gm.cost_date, IF(dm.adopt_material_id IS NULL, 0, 1) AS is_fission,com.company_name,com.kahuna,com.store_id')
                 ->join('fission_derive_material dm', 'gm.material_id = dm.adopt_material_id', 'left')
                 ->join('company com', 'gm.adv_id=com.advertiser_id', 'left');
             // 应用基础条件
