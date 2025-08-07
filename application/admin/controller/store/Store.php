@@ -680,6 +680,28 @@ class Store extends Backend
 
 
 
+    public function open($ids=""){
+        if(!$ids){
+            $this->error("暂无商户");
+            return;
+        }
+        $store = Db::name('store')->where(['id'=>$ids])->find();
+        if(!$store){
+            $this->error("暂无商户");
+            return;
+        }
+
+        // 生成临时登录 token
+        $token = Random::uuid();
+        Db::name('store')->where(['id'=>$ids])->update(['token'=>$token]);
+
+        // 重定向到 store 页面，添加时间戳确保唯一性
+        $redirectUrl = '/store.php?token='.$token.'&_t='.time().rand(1000,9999);
+        $this->redirect($redirectUrl);
+    }
+
+
+
 
 
 }

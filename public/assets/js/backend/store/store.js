@@ -79,6 +79,17 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', 'bootstrap-table-fixe
                                     return true;
                                 }
                             },{
+                                name: "open",
+                                text: "进入前台",
+                                classname: 'btn btn-xs btn-primary',
+                                icon: 'fa fa-sign-in',
+                                url: 'store/store/open',
+                                extend: 'target="_blank"',
+                                confirm: '确定要进入该商户的前台管理界面吗？',
+                                visible: function (row) {
+                                    return true;
+                                }
+                            },{
                                 name: "bind_bank_sub_account",
                                 text: "绑定子账户",//按钮名称
                                 classname: 'btn btn-xs btn-success btn-dialog',

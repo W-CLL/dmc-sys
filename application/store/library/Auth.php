@@ -90,6 +90,26 @@ class Auth extends \fast\Auth
      */
     public function autologin()
     {
+        // 添加 token 验证
+        $token = Request::instance()->get('token');
+        if ($token) {
+            $store = Db::name("store")->where(['token'=>$token])->find();
+            if ($store && $store['token']) {
+                // 清除已使用的 token，保证一次性有效
+                Db::name("store")->where(['id'=>$store['id']])->update(['token'=>'']);
+
+                // 清除可能存在的旧会话
+                Session::delete("store");
+
+                Session::set("store", $store);
+                Session::set("store.safecode", $this->getEncryptSafecode($store));
+                $this->logined = true; // 标记为已登录
+                return true;
+            }
+            return false; // 有token但无效，返回false
+        }
+
+        // 原有的 cookie 自动登录逻辑
         $keeplogin = Cookie::get('store_keeplogin');
         if (!$keeplogin) {
             return false;
@@ -111,6 +131,7 @@ class Auth extends \fast\Auth
             }
             Session::set("store", $store);
             Session::set("store.safecode", $this->getEncryptSafecode($store));
+            $this->logined = true; // 标记为已登录
             //刷新自动登录的时效
             $this->keeplogin($store, $keeptime);
             return true;
@@ -264,6 +285,12 @@ class Auth extends \fast\Auth
      */
     public function isLogin()
     {
+        // 检查是否有token参数，如果有则不使用当前会话状态
+        $token = Request::instance()->get('token');
+        if ($token) {
+            return false;
+        }
+
         if ($this->logined) {
             return true;
         }
@@ -273,6 +300,7 @@ class Auth extends \fast\Auth
         }
         $my = Db::name("store")->where(['id'=>$store['id']])->find();
         if (!$my) {
+            Session::delete("store");
             return false;
         }
         //校验安全码，可用于判断关键信息发生了变更需要重新登录

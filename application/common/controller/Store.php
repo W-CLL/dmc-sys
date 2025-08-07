@@ -140,6 +140,11 @@ class Store extends Controller
         // 设置当前请求的URI
         $this->auth->setRequestUri($path);
 
+        // 尝试自动登录（在检查登录状态之前）
+        if (!$this->auth->isLogin()) {
+            $this->auth->autologin();
+        }
+
         // 检测是否需要验证登录
         if (!$this->auth->match($this->noNeedLogin)) {
 

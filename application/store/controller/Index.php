@@ -28,7 +28,22 @@ class Index extends Store
         parent::_initialize();
         //移除HTML标签
         $this->request->filter('trim,strip_tags,htmlspecialchars');
+
+        // 检查是否有token参数，如果有则优先处理token登录
+        $token = $this->request->get('token');
+        if ($token) {
+            // 强制重新登录，清除当前会话
+            Session::delete("store");
+            // 尝试token自动登录
+            $this->auth->autologin();
+        } else {
+            // 尝试自动登录（常规检查）
+            if (!$this->auth->isLogin()) {
+                $this->auth->autologin();
+            }
+        }
     }
+
 
     /**
      * 后台首页
