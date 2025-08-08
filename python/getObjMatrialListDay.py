@@ -1,5 +1,6 @@
 import asyncio
 import json
+import ssl
 import threading
 import time
 from collections import defaultdict, deque
@@ -57,6 +58,14 @@ write_queue_locks = {}
 
 
 # ========== 辅助函数 ==========
+def create_ssl_context():
+    """创建SSL上下文，处理证书验证问题"""
+    ssl_context = ssl.create_default_context()
+    # 允许自签名证书
+    ssl_context.check_hostname = False
+    ssl_context.verify_mode = ssl.CERT_NONE
+    return ssl_context
+
 def build_url(path, query=""):
     scheme, netloc = "http", "api.oceanengine.com"
     from urllib.parse import urlunparse
@@ -446,7 +455,10 @@ def thread_worker_parallel(thread_id, start_time_str, end_time_str, data_date):
 
             print(f"[Thread-{thread_id}] 连接池创建成功")
 
-            async with aiohttp.ClientSession() as session:
+            # Create SSL context that doesn't verify certificates
+            ssl_context = create_ssl_context()
+            connector = aiohttp.TCPConnector(ssl=ssl_context)
+            async with aiohttp.ClientSession(connector=connector) as session:
                 # 创建数据获取协程
                 fetcher_tasks = [
                     fetch_and_process_daily_parallel(session, sem, rate_limit_sem, f"{thread_id}-{i}", start_time_str,
