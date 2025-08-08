@@ -14,8 +14,6 @@ class AdoptFissionMaterial extends BaseJob
     public function __construct()
     {
         $this->queueRecordModelName = '\app\common\model\viral_fission\FissionQueue';
-        $this->task_model = new FissionMaterialTask();
-        $this->queue_model = new Queue();
     }
 
     protected function getJobName(): string

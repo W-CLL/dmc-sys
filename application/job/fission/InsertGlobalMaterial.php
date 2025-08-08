@@ -150,12 +150,10 @@ class InsertGlobalMaterial extends BaseJob
             'concurrency' => 5,  // 控制并发数
             'fulfilled' => function ($response, $index) use (&$insertData, $requests, &$adv_list, &$requestParams) {
                 $resData = json_decode($response->getBody()->getContents(), true);
-//                dump($resData);
                 $request_info = $requests[$index]['params'];
                 $adv_id = $request_info['advertiser_id'];
 
                 if (!empty($resData['data']['rows'])) {
-//                    dump($resData);
                     foreach ($resData['data']['rows'] as $item) {
                         $dimensions = $item['dimensions'];
                         $metrics = $item['metrics'];
@@ -196,7 +194,6 @@ class InsertGlobalMaterial extends BaseJob
                 \think\Queue::later(3, 'app\job\fission\InsertGlobalMaterial', $next, "insertGlobalMaterial");
                 echo "失败请求重启\n";
             },]);
-// 等待所有请求完成
         $promise = $pool->promise();
         $promise->wait();
         return $insertData;

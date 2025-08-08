@@ -136,8 +136,8 @@ class InsertGlobalObjMaterial extends BaseJob
         foreach ($data['obj_list'] as $obj_id) {
             $filters = [
                 'material_type' => 'VIDEO',
-                'start_time' => $data['start_time'],
-                'end_time' => $data['end_time'],
+                'start_date' => $data['start_time'],
+                'end_date' => $data['end_time'],
                 'material_select_type' => 'ALL',
                 'material_status' => 'ALL',
                 'analysis_type' => [
@@ -153,7 +153,7 @@ class InsertGlobalObjMaterial extends BaseJob
                 'advertiser_id' => (int)$data['adv_id'],
                 'ad_id' => $obj_id,
                 'filtering' => json_encode($filters),
-                "fields" => [
+                "fields" =>json_encode( [
                     "product_show_count_for_roi2",
                     "product_click_count_for_roi2",
                     "product_cvr_rate_for_roi2",
@@ -165,8 +165,7 @@ class InsertGlobalObjMaterial extends BaseJob
                     "total_cost_per_pay_order_for_roi2",
                     "total_pay_order_coupon_amount_for_roi2",
                     "total_unfinished_estimate_order_gmv_for_roi2",
-                ],
-                'order_by' => json_encode([['type' => "DESC", 'field' => 'stat_cost_for_roi2']]),
+                ]),
                 'page' => $data['page'] ?? 1,
                 'page_size' => 100,
             ];

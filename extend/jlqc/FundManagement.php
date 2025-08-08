@@ -594,6 +594,29 @@ class FundManagement
         return sendApiRes($url, $params, 'POST', ['Access-Token' => $access_token])['data'];
     }
 
+    /**
+     * 添加全域计划素材
+     * @param array $params
+     * @return mixed
+     */
+    public static function adopt_material_into_obj(array $params)
+    {
+        $access_token = Cache::get("qc_access_token");
+        $url = "https://api.oceanengine.com/open_api/v1.0/qianchuan/uni_promotion/ad/material/add/";
+        return sendApiRes($url, $params, 'POST', ['Access-Token' => $access_token])['data'];
+    }
+
+    /**
+     * 删除全域计划素材
+     * @param array $params
+     * @return mixed
+     */
+    public static function del_material_on_obj(array $params)
+    {
+        $access_token = Cache::get("qc_access_token");
+        $url = "https://api.oceanengine.com/open_api/v1.0/qianchuan/uni_promotion/ad/material/delete/";
+        return sendApiRes($url, $params, 'POST', ['Access-Token' => $access_token])['data'];
+    }
 
     /**
      * $params = [

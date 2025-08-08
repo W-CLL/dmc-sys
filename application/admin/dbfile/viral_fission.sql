@@ -97,6 +97,23 @@ CREATE TABLE `fa_fission_queue`
     KEY              `queue_name` (`queue_name`) USING BTREE
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COMMENT='爆款裂变队列任务记录表';
 
+
+CREATE TABLE `fa_fission_into_obj_record`
+(
+    `id`          bigint(14) NOT NULL AUTO_INCREMENT,
+    `adv_id`      varchar(50) COLLATE utf8mb4_general_ci NOT NULL COMMENT '广告主id',
+    `obj_id`      varchar(50) COLLATE utf8mb4_general_ci NOT NULL COMMENT '计划id',
+    `product_id`  varchar(50) COLLATE utf8mb4_general_ci                        DEFAULT NULL COMMENT '商品id',
+    `mid`         mediumtext COLLATE utf8mb4_general_ci COMMENT '已推送素材id 1,2,3,4',
+    `reason`      varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '失败原因',
+    `status`      varchar(255) COLLATE utf8mb4_general_ci                       DEFAULT NULL,
+    `request_id`  varchar(50) COLLATE utf8mb4_general_ci                        DEFAULT NULL,
+    `create_time` int(11) DEFAULT NULL,
+    PRIMARY KEY (`id`),
+    KEY           `idx_adv_obj_product` (`adv_id`,`obj_id`,`product_id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
 -- 给 fa_fission_derive_material 加索引
 ALTER TABLE `fa_fission_derive_material`
     ADD INDEX `idx_task` (`task_id`),
@@ -135,4 +152,14 @@ ALTER TABLE fa_fission_global_material
 
 ALTER TABLE fa_fission_global_material
     ADD INDEX idx_cover (cost_date, stat_cost_for_roi2, material_id, adv_id);
+
+
+CREATE INDEX `idx_adv_material_status_product`
+    ON `fa_fission_global_obj_material` (`adv_id`, `material_id`, `material_status`, `product_info`(10));
+
+CREATE INDEX `idx_adv_obj_opt_status`
+    ON `fa_qc_global_obj` (`adv_id`, `obj_status`, `opt_status`);
+
+CREATE INDEX `idx_obj_id_adv_material`
+    ON `fa_fission_global_obj_material` (`obj_id`, `adv_id`, `material_id`);
 
