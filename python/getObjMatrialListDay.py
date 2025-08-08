@@ -662,37 +662,37 @@ def run():
     print(f"   每线程写入协程数: {WRITERS_PER_THREAD}")
     print(f"   总写入协程数: {THREAD_COUNT * WRITERS_PER_THREAD}")
 
-    # # 按天处理
-    # success_days = 0
-    # failed_days = 0
-    # overall_start_time = time.time()
-    #
-    # for day_index, day_timestamp in enumerate(time_range, 1):
-    #     print(f"\n{'=' * 60}")
-    #     print(f"📅 处理进度: {day_index}/{total_days}")
-    #
-    #     try:
-    #         if run_single_day_parallel(day_timestamp):
-    #             success_days += 1
-    #         else:
-    #             failed_days += 1
-    #     except Exception as e:
-    #         print(f"❌ 日期 {timestamp_to_date_str(day_timestamp)} 处理异常: {e}")
-    #         failed_days += 1
-    #
-    #     # 短暂休息，避免过度占用资源
-    #     if day_index < total_days:
-    #         print("⏸️  休息 3 秒...")
-    #         time.sleep(3)
-    #
-    # # 总结
-    # overall_duration = time.time() - overall_start_time
-    # print(f"\n🎉 所有日期处理完成!")
-    # print(f"📊 总体统计:")
-    # print(f"   总耗时: {overall_duration:.2f}秒 ({overall_duration / 3600:.2f}小时)")
-    # print(f"   成功天数: {success_days}")
-    # print(f"   失败天数: {failed_days}")
-    # print(f"   总天数: {total_days}")
+    # 按天处理
+    success_days = 0
+    failed_days = 0
+    overall_start_time = time.time()
+
+    for day_index, day_timestamp in enumerate(time_range, 1):
+        print(f"\n{'=' * 60}")
+        print(f"📅 处理进度: {day_index}/{total_days}")
+
+        try:
+            if run_single_day_parallel(day_timestamp):
+                success_days += 1
+            else:
+                failed_days += 1
+        except Exception as e:
+            print(f"❌ 日期 {timestamp_to_date_str(day_timestamp)} 处理异常: {e}")
+            failed_days += 1
+
+        # 短暂休息，避免过度占用资源
+        if day_index < total_days:
+            print("⏸️  休息 3 秒...")
+            time.sleep(3)
+
+    # 总结
+    overall_duration = time.time() - overall_start_time
+    print(f"\n🎉 所有日期处理完成!")
+    print(f"📊 总体统计:")
+    print(f"   总耗时: {overall_duration:.2f}秒 ({overall_duration / 3600:.2f}小时)")
+    print(f"   成功天数: {success_days}")
+    print(f"   失败天数: {failed_days}")
+    print(f"   总天数: {total_days}")
 
 
 if __name__ == "__main__":
