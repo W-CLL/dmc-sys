@@ -543,9 +543,12 @@ class QcGlobal extends Controller
             if ($obj_list) {
                 $obj_product = [];
                 foreach ($obj_list as $obj_id => $product_info) {
-                    $productIds = array_column(json_decode($product_info, true), 'product_id');
-                    if (!empty($productIds)) {
-                        $obj_product[$obj_id] = $productIds;
+                    $decoded_product_info = json_decode($product_info, true);
+                    if (is_array($decoded_product_info)) {
+                        $productIds = array_column($decoded_product_info, 'product_id');
+                        if (!empty($productIds)) {
+                            $obj_product[$obj_id] = $productIds;
+                        }
                     }
                 }
 
