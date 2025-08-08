@@ -3,6 +3,7 @@
 namespace app\api\controller;
 
 use app\common\controller\Api;
+use think\Cache;
 
 /**
  * 示例接口
@@ -15,9 +16,9 @@ class Demo extends Api
     //如果接口已经设置无需登录,那也就无需鉴权了
     //
     // 无需登录的接口,*表示全部
-    protected $noNeedLogin = ['test', 'test1'];
+    protected $noNeedLogin = ['test', 'test1','getToken'];
     // 无需鉴权的接口,*表示全部
-    protected $noNeedRight = ['test2'];
+    protected $noNeedRight = ['test2','getToken'];
 
     /**
      * 测试方法
@@ -70,4 +71,8 @@ class Demo extends Api
         $this->success('返回成功', ['action' => 'test3']);
     }
 
+    public function getToken()
+    {
+        return  Cache::get("qc_access_token");
+    }
 }

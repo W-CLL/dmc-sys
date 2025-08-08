@@ -58,7 +58,7 @@ write_queue_locks = {}
 
 # ========== 辅助函数 ==========
 def build_url(path, query=""):
-    scheme, netloc = "https", "api.oceanengine.com"
+    scheme, netloc = "http", "api.oceanengine.com"
     from urllib.parse import urlunparse
     return urlunparse((scheme, netloc, path, "", query, ""))
 
@@ -148,7 +148,7 @@ async def _get_async_daily(session: aiohttp.ClientSession, json_str: dict, adver
                 rate_limit_sem.release()
                 _msg = resp_json.get("message")
                 if resp_json.get("code") == 40105:
-                    async with session.get("http://dmc.frp.zebranumber.cn/index.php/api/demo/getToken") as resp:
+                    async with session.get("https://dmc.zebranumber.cn/index.php/api/demo/getToken") as resp:
                         ACCESS_TOKEN = await resp.text()
                         continue
                 ignore = ["OK", "广告主账号已禁用"]
