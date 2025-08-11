@@ -56,6 +56,46 @@ class QcAdv extends Api
     }
 
 
+    public function restore($ids = [])
+    {
+        $page = Cache::get('qc_adv_restore_page', 1);
+        $companyModel = new Company();
+        if (!empty($ids)){
+            $all = $ids;
+            $all = array_map('intval', $all);
+        }else{
+            $all = $companyModel->where(['adv_status' => 0])->order('id desc')->page($page)->limit(100)->column('advertiser_id');
+        }
+        if (empty($all)) {
+            echo "全部处理完了";
+            Cache::rm('qc_adv_restore_page');
+            die;
+        }
+        $res = FundManagement::get_adv_info($all);
+        if ($res['code'] == 40002) {
+            //将一些没权限的账号剔除
+            preg_match_all('/\d+/', $res['message'], $matches);
+            $numbers = $matches[0];
+            $ids = array_values(array_diff($all, $numbers));
+            $this->restore($ids);
+        } else {
+            $restore_adv = [];
+            foreach ($res['data'] as $item) {
+                if ($item['status'] != "STATUS_DISABLE") {
+                    $restore_adv[] = $item['id'];
+                }
+            }
+            if ($restore_adv) {
+                $companyModel->where(['advertiser_id' => ['IN', $restore_adv]])->update(['adv_status' => 1]);
+            }
+        }
+        //防止一些户恢复了权限
+        $page++;
+        Cache::set('qc_adv_restore_page', $page);
+        $this->restore();
+    }
+
+
     /**
      * 获取千川账户下的抖音号，分割
      * @return void
