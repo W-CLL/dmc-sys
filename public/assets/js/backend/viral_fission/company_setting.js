@@ -28,7 +28,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         {checkbox: true},
                         {field: 'id', title: "ID", visible: false},
                         {field: 'company_name', title: "公司名称", operate: 'LIKE'},
-                        {field: 'store.username', title: "绑定商户", operate: 'LIKE'},
+                        {field: 'username', title: "绑定商户", operate: 'LIKE'},
                         {field: 'qc_account_count', title: "千川账户数量", operate: false},
                         {
                             field: 'fission_rules',

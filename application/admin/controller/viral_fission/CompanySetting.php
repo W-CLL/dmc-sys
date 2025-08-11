@@ -74,7 +74,7 @@ class CompanySetting extends Backend
             list($where, $sort, $order, $offset, $limit) = $this->buildparams();
 
             $list = $this->model
-                ->with(['store'])
+                ->join('store', 'store.id = company.store_id')
                 ->where($where)
                 ->group('company_name')
                 ->order($sort, $order)
