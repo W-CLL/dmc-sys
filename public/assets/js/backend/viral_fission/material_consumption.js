@@ -347,8 +347,8 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', '../viral_fission/vid
                         var data = response.data;
                         // 根据后端返回的字段名更新
                         $('#total-materials').text(data.total || 0);
-                        $('#deleted-materials').text(data.generated || 0);
-                        $('#available-materials').text(data.adopted || 0);
+                        $('#generated-count').text(data.generated || 0);
+                        $('#adopted-count').text(data.adopted || 0);
                         $('#success-rate').text((data.success_rate || 0) + '%');
                     }
                 },
@@ -356,8 +356,8 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', '../viral_fission/vid
                     console.error('Failed to load stats data:', error);
                     // 使用默认值
                     $('#total-materials').text('0');
-                    $('#deleted-materials').text('0');
-                    $('#available-materials').text('0');
+                    $('#generated-count').text('0');
+                    $('#adopted-count').text('0');
                     $('#success-rate').text('0%');
                 }
             });
