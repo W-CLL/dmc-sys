@@ -240,10 +240,17 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', '../viral_fission/vid
                 tooltip: {
                     trigger: 'item',
                     formatter: function(params) {
-                        var fullName = params.data.fullName || params.name;
+                        var data = params.data;
+                        var fullName = data.fullName || params.name;
+                        var fissionCost = parseFloat(data.fissionCost || 0);
+                        var totalCost = parseFloat(data.value || 0);
+                        var fissionPercentage = totalCost > 0 ? ((fissionCost / totalCost) * 100).toFixed(2) : '0.00';
+                        
                         return params.seriesName + '<br/>' +
-                               fullName + ': ¥' + params.value.toFixed(2) +
-                               ' (' + params.percent + '%)';
+                               fullName + '<br/>' +
+                               '总消耗: ¥' + totalCost.toFixed(2) + '<br/>' +
+                               '裂变消耗: ¥' + fissionCost.toFixed(2) + '<br/>' +
+                               '裂变占比: ' + fissionPercentage + '%';
                     }
                 },
                 legend: {
@@ -268,7 +275,12 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', '../viral_fission/vid
                             show: true,
                             position: 'outside',
                             formatter: function(params) {
-                                return params.percent + '%';
+                                // 获取数据项
+                                var data = params.data;
+                                var totalCost = parseFloat(data.value || 0);
+                                var fissionCost = parseFloat(data.fissionCost || 0);
+                                // 显示总消耗和裂变消耗
+                                return '总:¥' + totalCost.toFixed(0) + '\n裂变:¥' + fissionCost.toFixed(0);
                             },
                             fontSize: 11
                         },
@@ -462,6 +474,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', '../viral_fission/vid
                     // 尝试多种可能的字段名
                     var fullCompanyName = item.company_name || item.name || ('公司' + (index + 1));
                     var totalCost = parseFloat(item.total_cost || item.value || item.cost || 0);
+                    var fissionCost = parseFloat(item.fission_cost || 0);
 
                     // 处理公司名称显示，确保不会太长
                     var displayName = fullCompanyName;
@@ -476,7 +489,9 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', '../viral_fission/vid
                             name: displayName,
                             value: totalCost,
                             // 保存原始完整名称用于tooltip
-                            fullName: fullCompanyName
+                            fullName: fullCompanyName,
+                            // 传递裂变消耗用于tooltip显示
+                            fissionCost: fissionCost
                         });
                         legendData.push(displayName);
                     }
@@ -648,9 +663,9 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', '../viral_fission/vid
                 var cost = parseFloat(item.total_cost || item.value || item.cost || 0);
                 var fissionCost = parseFloat(item.fission_cost || 0);
                 var nonFissionCost = cost - fissionCost;
-                var percentage = fissionCost > 0 ? ((fissionCost / cost) * 100).toFixed(2) : 0;
+                var percentage = cost > 0 ? ((fissionCost / cost) * 100).toFixed(2) : '0.00';
                 var materialCount = parseInt(item.material_count || 0);
-                var avgCost = materialCount > 0 ? (cost / materialCount).toFixed(2) : 0;
+                var avgCost = materialCount > 0 ? (cost / materialCount).toFixed(2) : '0.00';
 
                 var row = '<tr>' +
                     '<td>' + companyName + '</td>' +

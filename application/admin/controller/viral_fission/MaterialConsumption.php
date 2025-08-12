@@ -263,14 +263,23 @@ class MaterialConsumption extends Backend
 
         }
 
+        // 计算总裂变消耗
+        $total_fission_cost = array_sum(array_column((array)$result, 'fission_cost'));
+
         // 缓存结果5分钟
         $cache_data = [
             'data' => $result,
-            'total_cost' => round($total_cost, 2)
+            'total_cost' => round($total_cost, 2),
+            'total_fission_cost' => round($total_fission_cost, 2)
         ];
         cache($cache_key, $cache_data, 300);
 
-        return json(['code' => 1, 'data' => $result, 'total_cost' => round($total_cost, 2)]);
+        return json([
+            'code' => 1,
+            'data' => $result,
+            'total_cost' => round($total_cost, 2),
+            'total_fission_cost' => round($total_fission_cost, 2)
+        ]);
     }
 
     /**
@@ -414,8 +423,8 @@ class MaterialConsumption extends Backend
     private function getRealTimeLineData($start_timestamp, $end_timestamp)
     {
         // 使用原有的实时查询逻辑
-        $consumption_data = $this->model->getConsumptionData($start_timestamp, $end_timestamp);
-        $fission_data = $this->model->getFissionConsumptionData($start_timestamp, $end_timestamp);
+        $consumption_data = AdvGlobalMaterial::getConsumptionData($start_timestamp, $end_timestamp);
+        $fission_data = AdvGlobalMaterial::getFissionConsumptionData($start_timestamp, $end_timestamp);
 
         // 按日期分组统计基础数据
         $daily_stats = [];
