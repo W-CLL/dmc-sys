@@ -648,7 +648,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', '../viral_fission/vid
                 var cost = parseFloat(item.total_cost || item.value || item.cost || 0);
                 var fissionCost = parseFloat(item.fission_cost || 0);
                 var nonFissionCost = cost - fissionCost;
-                var percentage = totalCost > 0 ? ((cost / totalCost) * 100).toFixed(2) : 0;
+                var percentage = fissionCost > 0 ? ((fissionCost / cost) * 100).toFixed(2) : 0;
                 var materialCount = parseInt(item.material_count || 0);
                 var avgCost = materialCount > 0 ? (cost / materialCount).toFixed(2) : 0;
 

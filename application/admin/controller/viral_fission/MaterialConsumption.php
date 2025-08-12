@@ -414,8 +414,8 @@ class MaterialConsumption extends Backend
     private function getRealTimeLineData($start_timestamp, $end_timestamp)
     {
         // 使用原有的实时查询逻辑
-        $consumption_data = AdvGlobalMaterial::getConsumptionData($start_timestamp, $end_timestamp);
-        $fission_data = AdvGlobalMaterial::getFissionConsumptionData($start_timestamp, $end_timestamp);
+        $consumption_data = $this->model->getConsumptionData($start_timestamp, $end_timestamp);
+        $fission_data = $this->model->getFissionConsumptionData($start_timestamp, $end_timestamp);
 
         // 按日期分组统计基础数据
         $daily_stats = [];
@@ -467,8 +467,8 @@ class MaterialConsumption extends Backend
                 'date' => $date,
                 'total_cost' => round($stat['total_cost'], 2),
                 'material_count' => $stat['material_count'],
-                'fission_cost' => isset($fission_stats[$date]) ? round($fission_stats[$date]['fission_cost'], 2) : 0,
-                'fission_material_count' => isset($fission_stats[$date]) ? $fission_stats[$date]['fission_material_count'] : 0
+                'fission_cost' => isset($fission_stats[$date]) ? round($fission_stats[$date]['fission_cost'] ?? 0, 2) : 0,
+                'fission_material_count' => isset($fission_stats[$date]) ? $fission_stats[$date]['fission_material_count'] ?? 0 : 0
             ];
         }
 
