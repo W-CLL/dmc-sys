@@ -439,13 +439,25 @@ class QcGlobal extends Controller
         echo "=== 处理统计 ===\n";
         echo "总记录数: {$stats['total']}\n";
         echo "预计总页数: {$stats['estimated_pages']}\n";
-        echo "当前进度: {$stats['progress_info']}\n\n";
+        echo "当前进度: {$stats['progress_info']}\n";
+        echo "状态: {$stats['status']}\n";
+
+        // 如果有新数据且之前已完成，提示重新开始
+        if ($stats['has_new_data'] && Cache::get('adoptMaterial_completed', false)) {
+            echo "🔄 检测到 {$stats['new_data_count']} 条新数据，将自动重新开始处理\n";
+        }
+        echo "\n";
 
         // 分页处理大数据量
         $result = $this->adoptMaterialIntoObjWithPagination();
 
         if ($result['completed']) {
-            echo "✅ 所有数据处理完成！总共处理了 {$result['total_processed']} 条记录，{$result['pages_processed']} 页";
+            echo "\n✅ 所有数据处理完成！\n";
+            echo "📊 本次处理统计:\n";
+            echo "- 处理记录数: {$result['total_processed']} 条\n";
+            echo "- 处理页数: {$result['pages_processed']} 页\n";
+            echo "- 消息: {$result['message']}\n";
+            echo "\n💡 如果后续有新数据，系统会自动检测并重新处理\n";
         } else {
             echo "📄 已处理了当前分页，共 {$result['current_batch_size']} 条记录";
         }
@@ -464,6 +476,14 @@ class QcGlobal extends Controller
         $pageSize = $this->getOptimalPageSize();
         $lastProcessedId = Cache::get('adoptMaterial_last_id', 0);
 
+        // 检查是否有新数据需要重新开始
+        $stats = $this->getAdoptMaterialStats();
+        if ($stats['has_new_data'] && Cache::get('adoptMaterial_completed', false)) {
+            echo "🔄 检测到新数据，重新开始处理...\n";
+            $this->resetAdoptMaterialProgress();
+            $lastProcessedId = 0;
+        }
+
         // 统计变量
         $totalProcessed = 0;
         $pagesProcessed = 0;
@@ -478,7 +498,7 @@ class QcGlobal extends Controller
             $list = $fission_material
                 ->where([
                     'adopt_status_message' => "success",
-                    'create_time' => ['between', [strtotime('-10 days'), time()]],
+                    'create_time' => ['between', [strtotime('-7 days'), time()]],
                     'id' => ['>', $lastProcessedId]
                 ])
                 ->field('id,adv_id,old_material_id,video_id')
@@ -487,19 +507,27 @@ class QcGlobal extends Controller
                 ->select();
 
             if (empty($list)) {
+                // 标记为完成状态
+                Cache::set('adoptMaterial_completed', true, 3600 * 24);
                 Cache::rm('adoptMaterial_last_id');
+
+                echo "✅ 当前批次处理完成，无更多数据\n";
+
                 // 返回完成状态
                 return [
                     'completed' => true,
                     'total_processed' => $totalProcessed,
                     'pages_processed' => $pagesProcessed,
-                    'current_batch_size' => $currentBatchSize
+                    'current_batch_size' => $currentBatchSize,
+                    'message' => '所有数据处理完成'
                 ];
             }
 
             $currentBatchSize = count($list);
             $totalProcessed += $currentBatchSize;
             $pagesProcessed++;
+
+            echo "📄 正在处理第 {$pagesProcessed} 页，{$currentBatchSize} 条记录\n";
 
             // 处理当前批次数据
             $this->processBatchMaterials($list, $obj_material, $blackAdvList);
@@ -512,6 +540,9 @@ class QcGlobal extends Controller
             // 更新处理统计到缓存
             Cache::set('adoptMaterial_total_processed', $totalProcessed, 3600 * 24);
             Cache::set('adoptMaterial_pages_processed', $pagesProcessed, 3600 * 24);
+
+            // 清除完成标记（因为还在处理中）
+            Cache::rm('adoptMaterial_completed');
 
             // 避免内存泄漏
             unset($list);
@@ -526,7 +557,8 @@ class QcGlobal extends Controller
             'completed' => false,
             'total_processed' => $totalProcessed,
             'pages_processed' => $pagesProcessed,
-            'current_batch_size' => $currentBatchSize
+            'current_batch_size' => $currentBatchSize,
+            'message' => '处理中断'
         ];
     }
 
@@ -620,11 +652,11 @@ class QcGlobal extends Controller
     {
         $fission_material = new FissionDeriveMaterial();
 
-        // 获取总记录数
+        // 获取总记录数（使用与分页查询相同的时间范围）
         $total = $fission_material
             ->where([
                 'adopt_status_message' => "success",
-                'create_time' => ['between', [strtotime('-30 days'), time()]]
+                'create_time' => ['between', [strtotime('-7 days'), time()]]
             ])
             ->count();
 
@@ -636,8 +668,20 @@ class QcGlobal extends Controller
             $processed = $fission_material
                 ->where([
                     'adopt_status_message' => "success",
-                    'create_time' => ['between', [strtotime('-30 days'), time()]],
+                    'create_time' => ['between', [strtotime('-7 days'), time()]],
                     'id' => ['<=', $lastProcessedId]
+                ])
+                ->count();
+        }
+
+        // 检查是否有新数据（ID大于最后处理的ID）
+        $newDataCount = 0;
+        if ($lastProcessedId > 0) {
+            $newDataCount = $fission_material
+                ->where([
+                    'adopt_status_message' => "success",
+                    'create_time' => ['between', [strtotime('-10 days'), time()]],
+                    'id' => ['>', $lastProcessedId]
                 ])
                 ->count();
         }
@@ -648,14 +692,35 @@ class QcGlobal extends Controller
 
         $progressPercent = $total > 0 ? round(($processed / $total) * 100, 2) : 0;
 
+        // 如果之前已完成但现在有新数据，重置状态
+        $hasNewData = $newDataCount > 0;
+        $wasCompleted = Cache::get('adoptMaterial_completed', false);
+
+        if ($wasCompleted && $hasNewData) {
+            // 发现新数据，准备重新开始
+            $status = "发现新数据，准备重新处理";
+        } elseif ($newDataCount == 0 && $processed >= $total && $total > 0) {
+            // 真正完成
+            Cache::set('adoptMaterial_completed', true, 3600 * 24);
+            $status = "全部处理完成";
+        } elseif ($processed == 0) {
+            $status = "尚未开始处理";
+        } else {
+            $status = "处理中";
+        }
+
         return [
             'total' => $total,
             'processed' => $processed,
             'remaining' => $total - $processed,
+            'new_data_count' => $newDataCount,
+            'has_new_data' => $hasNewData,
             'estimated_pages' => $estimatedPages,
             'current_page' => $currentPage,
             'progress_percent' => $progressPercent,
-            'progress_info' => "已处理 {$processed}/{$total} 条记录 ({$progressPercent}%)"
+            'status' => $status,
+            'progress_info' => "已处理 {$processed}/{$total} 条记录 ({$progressPercent}%)" .
+                              ($hasNewData ? "，发现 {$newDataCount} 条新数据" : "")
         ];
     }
 
@@ -668,7 +733,33 @@ class QcGlobal extends Controller
         Cache::rm('adoptMaterialIntoObj_last_call');
         Cache::rm('adoptMaterial_total_processed');
         Cache::rm('adoptMaterial_pages_processed');
-        echo "处理进度已重置";
+        Cache::rm('adoptMaterial_completed');
+        echo "处理进度已重置，将从头开始处理";
+    }
+
+    /**
+     * 检查是否有新数据需要处理
+     */
+    public function checkForNewData()
+    {
+        $stats = $this->getAdoptMaterialStats();
+
+        echo "=== 新数据检查 ===\n";
+        echo "总记录数: {$stats['total']}\n";
+        echo "已处理: {$stats['processed']}\n";
+        echo "新数据: {$stats['new_data_count']} 条\n";
+        echo "状态: {$stats['status']}\n";
+
+        if ($stats['has_new_data']) {
+            echo "\n🆕 发现新数据！建议重新执行处理\n";
+            if (Cache::get('adoptMaterial_completed', false)) {
+                echo "💡 上次处理已完成，可以直接开始处理新数据\n";
+            }
+        } else {
+            echo "\n✅ 暂无新数据\n";
+        }
+
+        return $stats;
     }
 
     /**
@@ -682,15 +773,22 @@ class QcGlobal extends Controller
         echo "总记录数: {$stats['total']}\n";
         echo "已处理: {$stats['processed']}\n";
         echo "剩余: {$stats['remaining']}\n";
+        echo "新数据: {$stats['new_data_count']} 条\n";
         echo "预计总页数: {$stats['estimated_pages']}\n";
         echo "当前页: {$stats['current_page']}\n";
         echo "进度: {$stats['progress_percent']}%\n";
+        echo "状态: {$stats['status']}\n";
 
         $lastProcessedId = Cache::get('adoptMaterial_last_id', 0);
         echo "最后处理ID: {$lastProcessedId}\n";
 
-        // 检查是否还有未处理的数据
-        if ($stats['remaining'] > 0) {
+        // 根据状态显示不同信息
+        if ($stats['has_new_data']) {
+            echo "\n🆕 发现新数据: {$stats['new_data_count']} 条\n";
+            if (Cache::get('adoptMaterial_completed', false)) {
+                echo "💡 建议重新执行处理以处理新数据\n";
+            }
+        } elseif ($stats['remaining'] > 0) {
             echo "\n📋 状态: 处理中...\n";
             echo "预计剩余页数: " . ceil($stats['remaining'] / $this->getOptimalPageSize()) . "\n";
         } else {
