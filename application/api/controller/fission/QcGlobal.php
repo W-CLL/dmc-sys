@@ -165,7 +165,8 @@ class QcGlobal extends Controller
         $material = new AdvGlobalMaterial();
 
         // 获取黑名单公司列表
-        $blackCompanyList = $this->getBlackCompanyList();
+//        $blackCompanyList = $this->getBlackCompanyList();
+        $blackCompanyList = [];
 
         $adv_list = \think\Cache::remember($cacheKey, function () use ($material, $blackCompanyList) {
             $query = $material
