@@ -263,14 +263,23 @@ class MaterialConsumption extends Backend
 
         }
 
+        // 计算总裂变消耗
+        $total_fission_cost = array_sum(array_column((array)$result, 'fission_cost'));
+
         // 缓存结果5分钟
         $cache_data = [
             'data' => $result,
-            'total_cost' => round($total_cost, 2)
+            'total_cost' => round($total_cost, 2),
+            'total_fission_cost' => round($total_fission_cost, 2)
         ];
         cache($cache_key, $cache_data, 300);
 
-        return json(['code' => 1, 'data' => $result, 'total_cost' => round($total_cost, 2)]);
+        return json([
+            'code' => 1,
+            'data' => $result,
+            'total_cost' => round($total_cost, 2),
+            'total_fission_cost' => round($total_fission_cost, 2)
+        ]);
     }
 
     /**
@@ -467,8 +476,8 @@ class MaterialConsumption extends Backend
                 'date' => $date,
                 'total_cost' => round($stat['total_cost'], 2),
                 'material_count' => $stat['material_count'],
-                'fission_cost' => isset($fission_stats[$date]) ? round($fission_stats[$date]['fission_cost'], 2) : 0,
-                'fission_material_count' => isset($fission_stats[$date]) ? $fission_stats[$date]['fission_material_count'] : 0
+                'fission_cost' => isset($fission_stats[$date]) ? round($fission_stats[$date]['fission_cost'] ?? 0, 2) : 0,
+                'fission_material_count' => isset($fission_stats[$date]) ? $fission_stats[$date]['fission_material_count'] ?? 0 : 0
             ];
         }
 

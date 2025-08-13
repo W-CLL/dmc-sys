@@ -3,6 +3,7 @@
 namespace app\common\model\viral_fission;
 
 use think\Model;
+use think\Db;
 
 /**
  * 全域账户的素材数据
@@ -36,16 +37,17 @@ class AdvGlobalMaterial extends Model
     }
 
     /**
-     * 获取指定时间范围的消耗数据
+     * 获取指定时间范围的消耗数据（优化内存版）
      */
     public static function getConsumptionData($startTimestamp, $endTimestamp)
     {
-        return self::alias('g')
+        // 使用更精确的条件组合减少内存占用
+        return Db::name('fission_global_material') // 使用实际表名，不含前缀
+            ->alias('g')
             ->join('fa_company c', 'g.adv_id = c.advertiser_id')
-            ->where('c.company_name', 'neq', '')
-            ->where('c.company_name', 'not null')
-            ->where('g.cost_date', '>=', $startTimestamp)
-            ->where('g.cost_date', '<=', $endTimestamp)
+            ->where('c.company_name', '<>', '')
+            ->where('c.company_name', 'not null') // 修复表达式错误
+            ->where('g.cost_date', 'between', [$startTimestamp, $endTimestamp])
             ->where('g.cost_date', '>', 0)
             ->where('g.stat_cost_for_roi2', '>', 0)
             ->field([
@@ -58,20 +60,24 @@ class AdvGlobalMaterial extends Model
     }
 
     /**
-     * 获取裂变素材消耗数据
+     * 获取裂变素材消耗数据（优化内存版）
      */
     public static function getFissionConsumptionData($startTimestamp, $endTimestamp)
     {
-        return self::alias('g')
+        // 优化JOIN条件和查询逻辑
+        return Db::name('fission_global_material') // 使用实际表名，不含前缀
+            ->alias('g')
             ->join('fa_company c', 'g.adv_id = c.advertiser_id')
-            ->join('fa_fission_derive_material d', 'g.material_id = d.adopt_material_id')
-            ->where('c.company_name', 'neq', '')
-            ->where('c.company_name', 'not null')
-            ->where('g.cost_date', '>=', $startTimestamp)
-            ->where('g.cost_date', '<=', $endTimestamp)
+            ->join(
+                'fa_fission_derive_material d',
+                'g.material_id = d.adopt_material_id AND d.adopt_status_message = "success"',
+                'INNER'
+            )
+            ->where('c.company_name', '<>', '')
+            ->where('c.company_name', 'not null') // 修复表达式错误
+            ->where('g.cost_date', 'between', [$startTimestamp, $endTimestamp])
             ->where('g.cost_date', '>', 0)
             ->where('g.stat_cost_for_roi2', '>', 0)
-            ->where('d.adopt_status_message', 'success')
             ->field([
                 'g.cost_date',
                 'g.stat_cost_for_roi2',
