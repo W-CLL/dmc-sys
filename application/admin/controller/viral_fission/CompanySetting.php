@@ -76,6 +76,7 @@ class CompanySetting extends Backend
             $list = $this->model
                 ->join('store', 'store.id = company.store_id')
                 ->where($where)
+                ->field('company.id,company.company_name,store.username')
                 ->group('company_name')
                 ->order($sort, $order)
                 ->paginate($limit);
