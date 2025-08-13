@@ -434,9 +434,21 @@ class QcGlobal extends Controller
         // 记录本次调用时间
         Cache::set('adoptMaterialIntoObj_last_call', $currentTime, 600);
 
+        // 获取总数统计
+        $stats = $this->getAdoptMaterialStats();
+        echo "=== 处理统计 ===\n";
+        echo "总记录数: {$stats['total']}\n";
+        echo "预计总页数: {$stats['estimated_pages']}\n";
+        echo "当前进度: {$stats['progress_info']}\n\n";
+
         // 分页处理大数据量
-        $this->adoptMaterialIntoObjWithPagination();
-        echo  '已处理了当前分页';
+        $result = $this->adoptMaterialIntoObjWithPagination();
+
+        if ($result['completed']) {
+            echo "✅ 所有数据处理完成！总共处理了 {$result['total_processed']} 条记录，{$result['pages_processed']} 页";
+        } else {
+            echo "📄 已处理了当前分页，共 {$result['current_batch_size']} 条记录";
+        }
     }
 
     /**
@@ -452,6 +464,11 @@ class QcGlobal extends Controller
         $pageSize = $this->getOptimalPageSize();
         $lastProcessedId = Cache::get('adoptMaterial_last_id', 0);
 
+        // 统计变量
+        $totalProcessed = 0;
+        $pagesProcessed = 0;
+        $currentBatchSize = 0;
+
         // 黑名单公司列表
         $blackCompanyList = $this->getBlackCompanyList();
         $blackAdvList = $company->where(['company_name' => ['in', $blackCompanyList]])->column('advertiser_id');
@@ -461,7 +478,7 @@ class QcGlobal extends Controller
             $list = $fission_material
                 ->where([
                     'adopt_status_message' => "success",
-                    'create_time' => ['between', [strtotime('-30 days'), time()]],
+                    'create_time' => ['between', [strtotime('-10 days'), time()]],
                     'id' => ['>', $lastProcessedId]
                 ])
                 ->field('id,adv_id,old_material_id,video_id')
@@ -471,8 +488,18 @@ class QcGlobal extends Controller
 
             if (empty($list)) {
                 Cache::rm('adoptMaterial_last_id');
-                break;
+                // 返回完成状态
+                return [
+                    'completed' => true,
+                    'total_processed' => $totalProcessed,
+                    'pages_processed' => $pagesProcessed,
+                    'current_batch_size' => $currentBatchSize
+                ];
             }
+
+            $currentBatchSize = count($list);
+            $totalProcessed += $currentBatchSize;
+            $pagesProcessed++;
 
             // 处理当前批次数据
             $this->processBatchMaterials($list, $obj_material, $blackAdvList);
@@ -482,6 +509,10 @@ class QcGlobal extends Controller
             $lastProcessedId = $lastId;
             Cache::set('adoptMaterial_last_id', $lastProcessedId, 3600 * 24);
 
+            // 更新处理统计到缓存
+            Cache::set('adoptMaterial_total_processed', $totalProcessed, 3600 * 24);
+            Cache::set('adoptMaterial_pages_processed', $pagesProcessed, 3600 * 24);
+
             // 避免内存泄漏
             unset($list);
 
@@ -489,6 +520,14 @@ class QcGlobal extends Controller
             usleep(100000);
 
         } while (true);
+
+        // 返回未完成状态（理论上不会到达这里）
+        return [
+            'completed' => false,
+            'total_processed' => $totalProcessed,
+            'pages_processed' => $pagesProcessed,
+            'current_batch_size' => $currentBatchSize
+        ];
     }
 
     /**
@@ -575,12 +614,90 @@ class QcGlobal extends Controller
     }
 
     /**
+     * 获取采纳素材的统计信息
+     */
+    private function getAdoptMaterialStats()
+    {
+        $fission_material = new FissionDeriveMaterial();
+
+        // 获取总记录数
+        $total = $fission_material
+            ->where([
+                'adopt_status_message' => "success",
+                'create_time' => ['between', [strtotime('-30 days'), time()]]
+            ])
+            ->count();
+
+        // 获取当前进度
+        $lastProcessedId = Cache::get('adoptMaterial_last_id', 0);
+        $processed = 0;
+
+        if ($lastProcessedId > 0) {
+            $processed = $fission_material
+                ->where([
+                    'adopt_status_message' => "success",
+                    'create_time' => ['between', [strtotime('-30 days'), time()]],
+                    'id' => ['<=', $lastProcessedId]
+                ])
+                ->count();
+        }
+
+        $pageSize = $this->getOptimalPageSize();
+        $estimatedPages = ceil($total / $pageSize);
+        $currentPage = ceil($processed / $pageSize);
+
+        $progressPercent = $total > 0 ? round(($processed / $total) * 100, 2) : 0;
+
+        return [
+            'total' => $total,
+            'processed' => $processed,
+            'remaining' => $total - $processed,
+            'estimated_pages' => $estimatedPages,
+            'current_page' => $currentPage,
+            'progress_percent' => $progressPercent,
+            'progress_info' => "已处理 {$processed}/{$total} 条记录 ({$progressPercent}%)"
+        ];
+    }
+
+    /**
      * 重置处理进度（用于重新开始处理）
      */
     public function resetAdoptMaterialProgress()
     {
         Cache::rm('adoptMaterial_last_id');
         Cache::rm('adoptMaterialIntoObj_last_call');
+        Cache::rm('adoptMaterial_total_processed');
+        Cache::rm('adoptMaterial_pages_processed');
+        echo "处理进度已重置";
+    }
+
+    /**
+     * 查看当前处理进度
+     */
+    public function getAdoptMaterialProgress()
+    {
+        $stats = $this->getAdoptMaterialStats();
+
+        echo "=== 采纳素材处理进度 ===\n";
+        echo "总记录数: {$stats['total']}\n";
+        echo "已处理: {$stats['processed']}\n";
+        echo "剩余: {$stats['remaining']}\n";
+        echo "预计总页数: {$stats['estimated_pages']}\n";
+        echo "当前页: {$stats['current_page']}\n";
+        echo "进度: {$stats['progress_percent']}%\n";
+
+        $lastProcessedId = Cache::get('adoptMaterial_last_id', 0);
+        echo "最后处理ID: {$lastProcessedId}\n";
+
+        // 检查是否还有未处理的数据
+        if ($stats['remaining'] > 0) {
+            echo "\n📋 状态: 处理中...\n";
+            echo "预计剩余页数: " . ceil($stats['remaining'] / $this->getOptimalPageSize()) . "\n";
+        } else {
+            echo "\n✅ 状态: 全部处理完成！\n";
+        }
+
+        return $stats;
     }
 
     /**
