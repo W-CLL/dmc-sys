@@ -168,24 +168,23 @@ class QcGlobal extends Controller
 //        $blackCompanyList = $this->getBlackCompanyList();
         $blackCompanyList = [];
 
-        $adv_list = \think\Cache::remember($cacheKey, function () use ($material, $blackCompanyList) {
-            $query = $material
-                ->alias('m')
-                ->join('company c', 'm.adv_id = c.advertiser_id', 'left')
-                ->where([
-                    'm.stat_cost_for_roi2' => ['>', 0],
-                    'c.adv_status' => 1
-                ]);
+        $query = $material
+            ->alias('m')
+            ->join('company c', 'm.adv_id = c.advertiser_id', 'left')
+            ->where([
+                'm.stat_cost_for_roi2' => ['>', 0],
+                'c.adv_status' => 1
+            ]);
 
-            // 过滤黑名单公司
-            if (!empty($blackCompanyList)) {
-                $query->where('c.company_name', 'not in', $blackCompanyList);
-            }
+        // 过滤黑名单公司
+        if (!empty($blackCompanyList)) {
+            $query->where('c.company_name', 'not in', $blackCompanyList);
+        }
 
-            return $query
-                ->group('m.adv_id')
-                ->column('c.company_name', 'm.adv_id');
-        }, 1800); // 缓存30分钟
+        $adv_list = $query
+            ->group('m.adv_id')
+            ->column('c.company_name', 'm.adv_id');
+
 
         if (empty($adv_list)) {
             return "无符合条件的广告主数据";
@@ -417,8 +416,8 @@ class QcGlobal extends Controller
             }
         }
 
-        echo "处理完了第" . $page. "页，准备处理下一页";
-        Cache::set('test_task_page', $page+1);
+        echo "处理完了第" . $page . "页，准备处理下一页";
+        Cache::set('test_task_page', $page + 1);
     }
 
 
@@ -721,7 +720,7 @@ class QcGlobal extends Controller
             'progress_percent' => $progressPercent,
             'status' => $status,
             'progress_info' => "已处理 {$processed}/{$total} 条记录 ({$progressPercent}%)" .
-                              ($hasNewData ? "，发现 {$newDataCount} 条新数据" : "")
+                ($hasNewData ? "，发现 {$newDataCount} 条新数据" : "")
         ];
     }
 
