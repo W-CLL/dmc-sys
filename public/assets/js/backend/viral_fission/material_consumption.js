@@ -61,6 +61,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', '../viral_fission/vid
                             return value ? '¥' + parseFloat(value).toFixed(2) : '¥0.00';
                         }},
                         {field: 'total_pay_order_count_for_roi2', title: "单量"},
+                        {field: 'total_prepay_and_pay_order_roi2', title: "整体支付ROI"},
                         {field: 'create_time_text', title: "消耗日期"},
                         {field: 'is_fission', title: "是否裂变素材"},
                         {field: 'fission_count', title: "共裂变素材个数"},
