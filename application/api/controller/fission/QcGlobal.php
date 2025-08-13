@@ -738,110 +738,11 @@ class QcGlobal extends Controller
     }
 
     /**
-     * 检查是否有新数据需要处理
-     */
-    public function checkForNewData()
-    {
-        $stats = $this->getAdoptMaterialStats();
-
-        echo "=== 新数据检查 ===\n";
-        echo "总记录数: {$stats['total']}\n";
-        echo "已处理: {$stats['processed']}\n";
-        echo "新数据: {$stats['new_data_count']} 条\n";
-        echo "状态: {$stats['status']}\n";
-
-        if ($stats['has_new_data']) {
-            echo "\n🆕 发现新数据！建议重新执行处理\n";
-            if (Cache::get('adoptMaterial_completed', false)) {
-                echo "💡 上次处理已完成，可以直接开始处理新数据\n";
-            }
-        } else {
-            echo "\n✅ 暂无新数据\n";
-        }
-
-        return $stats;
-    }
-
-    /**
-     * 查看当前处理进度
-     */
-    public function getAdoptMaterialProgress()
-    {
-        $stats = $this->getAdoptMaterialStats();
-
-        echo "=== 采纳素材处理进度 ===\n";
-        echo "总记录数: {$stats['total']}\n";
-        echo "已处理: {$stats['processed']}\n";
-        echo "剩余: {$stats['remaining']}\n";
-        echo "新数据: {$stats['new_data_count']} 条\n";
-        echo "预计总页数: {$stats['estimated_pages']}\n";
-        echo "当前页: {$stats['current_page']}\n";
-        echo "进度: {$stats['progress_percent']}%\n";
-        echo "状态: {$stats['status']}\n";
-
-        $lastProcessedId = Cache::get('adoptMaterial_last_id', 0);
-        echo "最后处理ID: {$lastProcessedId}\n";
-
-        // 根据状态显示不同信息
-        if ($stats['has_new_data']) {
-            echo "\n🆕 发现新数据: {$stats['new_data_count']} 条\n";
-            if (Cache::get('adoptMaterial_completed', false)) {
-                echo "💡 建议重新执行处理以处理新数据\n";
-            }
-        } elseif ($stats['remaining'] > 0) {
-            echo "\n📋 状态: 处理中...\n";
-            echo "预计剩余页数: " . ceil($stats['remaining'] / $this->getOptimalPageSize()) . "\n";
-        } else {
-            echo "\n✅ 状态: 全部处理完成！\n";
-        }
-
-        return $stats;
-    }
-
-    /**
      * 获取页面大小
      */
     private function getOptimalPageSize()
     {
         return 1000; // 固定1000条，简单有效
-    }
-
-    /**
-     * 检查采纳素材任务的队列状态
-     */
-    public function checkAdoptMaterialQueue()
-    {
-        $queueStats = \think\Db::name('fission_queue')
-            ->where('class_name', 'app\\job\\fission\\AdoptMaterialIntoObj')
-            ->where('create_time', '>', time() - 86400) // 24小时内
-            ->field('status, COUNT(*) as count')
-            ->group('status')
-            ->select();
-
-        echo "=== 采纳素材队列状态（24小时内）===\n";
-        foreach ($queueStats as $stat) {
-            $statusName = ['0' => '待执行', '1' => '已完成', '2' => '失败'][$stat['status']] ?? '未知';
-            echo "状态 {$stat['status']} ({$statusName}): {$stat['count']} 个任务\n";
-        }
-
-        // 检查最近的失败任务
-        $failedTasks = \think\Db::name('fission_queue')
-            ->where('class_name', 'app\\job\\fission\\AdoptMaterialIntoObj')
-            ->where('status', 2)
-            ->where('create_time', '>', time() - 3600) // 1小时内
-            ->field('id, job_data, msg, create_time')
-            ->order('create_time desc')
-            ->limit(5)
-            ->select();
-
-        if (!empty($failedTasks)) {
-            echo "\n=== 最近失败的任务（1小时内）===\n";
-            foreach ($failedTasks as $task) {
-                $jobData = json_decode($task['job_data'], true);
-                $advId = $jobData['adv_id'] ?? '未知';
-                echo "任务ID: {$task['id']}, 账户: {$advId}, 失败原因: {$task['msg']}\n";
-            }
-        }
     }
 
     /**
@@ -920,28 +821,6 @@ class QcGlobal extends Controller
         return $filteredObjProduct;
     }
 
-    /**
-     * 测试过滤已存在记录的功能
-     */
-    public function testFilterExistingRecords()
-    {
-        // 示例数据
-        $adv_id = '1773111916738573'; // 使用一个实际的adv_id
-        $obj_product = [
-            '1836170738573' => ['1754634974', '1754634975']
-        ];
-        $material_list = ['3765012918891491', '3765012918891492'];
-
-        echo "=== 测试过滤已存在记录功能 ===\n";
-        echo "测试账户ID: {$adv_id}\n";
-        echo "测试计划产品: " . json_encode($obj_product) . "\n";
-        echo "测试素材列表: " . json_encode($material_list) . "\n";
-
-        $filteredResult = $this->filterExistingRecords($adv_id, $obj_product, $material_list);
-
-        echo "过滤结果: " . json_encode($filteredResult) . "\n";
-        echo "=== 测试完成 ===\n";
-    }
 
     /**
      * 获取黑名单公司列表
@@ -1002,7 +881,4 @@ class QcGlobal extends Controller
         ];
     }
 
-    /**
-     * 测试黑名单配置文件读取功能
-     */
 }
