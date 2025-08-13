@@ -1,0 +1,134 @@
+<style>
+    .detail-panel {
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,.1);
+        margin-bottom: 20px;
+    }
+    
+    .detail-title {
+        font-size: 18px;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .detail-row {
+        display: flex;
+        flex-wrap: wrap;
+        margin-bottom: 15px;
+    }
+    
+    .detail-label {
+        flex: 0 0 20%;
+        max-width: 20%;
+        font-weight: bold;
+        color: #555;
+        padding-right: 15px;
+    }
+    
+    .detail-value {
+        flex: 0 0 80%;
+        max-width: 80%;
+        color: #333;
+    }
+    
+    .detail-value.pre {
+        white-space: pre-wrap;
+        font-family: monospace;
+        background: #fff;
+        padding: 10px;
+        border-radius: 4px;
+        border: 1px solid #eee;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+    
+    .status-success {
+        background-color: #5cb85c;
+        color: white;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+    }
+    
+    .status-failed {
+        background-color: #d9534f;
+        color: white;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+    }
+    
+    .status-default {
+        background-color: #777;
+        color: white;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+    }
+</style>
+
+<div class="detail-panel">
+    <div class="detail-title">投放记录详情</div>
+    
+    <div class="detail-row">
+        <div class="detail-label">ID:</div>
+        <div class="detail-value">{$row.id}</div>
+    </div>
+    
+    <div class="detail-row">
+        <div class="detail-label">广告主ID:</div>
+        <div class="detail-value">{$row.adv_id}</div>
+    </div>
+    
+    <div class="detail-row">
+        <div class="detail-label">计划ID:</div>
+        <div class="detail-value">{$row.obj_id}</div>
+    </div>
+    
+    <div class="detail-row">
+        <div class="detail-label">商品ID:</div>
+        <div class="detail-value">{$row.product_id ?: '无'}</div>
+    </div>
+    
+    <div class="detail-row">
+        <div class="detail-label">素材ID列表:</div>
+        <div class="detail-value">
+            <div class="detail-value pre">
+                {$row.mid ?: '无'}
+            </div>
+        </div>
+    </div>
+    
+    <div class="detail-row">
+        <div class="detail-label">失败原因:</div>
+        <div class="detail-value">{$row.reason ?: '无'}</div>
+    </div>
+    
+    <div class="detail-row">
+        <div class="detail-label">状态:</div>
+        <div class="detail-value">
+            {if $row.status eq 'success'}
+                <span class="status-success">成功</span>
+            {elseif $row.status eq 'failed'}
+                <span class="status-failed">失败</span>
+            {else}
+                <span class="status-default">{$row.status ?: '未知'}</span>
+            {/if}
+        </div>
+    </div>
+    
+    <div class="detail-row">
+        <div class="detail-label">请求ID:</div>
+        <div class="detail-value">{$row.request_id ?: '无'}</div>
+    </div>
+    
+    <div class="detail-row">
+        <div class="detail-label">创建时间:</div>
+        <div class="detail-value">{$row.create_time_text}</div>
+    </div>
+</div>
