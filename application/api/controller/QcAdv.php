@@ -78,7 +78,7 @@ class QcAdv extends Api
             $numbers = $matches[0];
             $ids = array_values(array_diff($all, $numbers));
             $this->restore($ids);
-        } else {
+        } else if ($res['code'] == 0){
             $restore_adv = [];
             foreach ($res['data'] as $item) {
                 if ($item['status'] != "STATUS_DISABLE") {
@@ -88,11 +88,14 @@ class QcAdv extends Api
             if ($restore_adv) {
                 $companyModel->where(['advertiser_id' => ['IN', $restore_adv]])->update(['adv_status' => 1]);
             }
+            //防止一些户恢复了权限
+            $page++;
+            Cache::set('qc_adv_restore_page', $page);
+            $this->restore();
+        }else{
+            // 未知状态，重试此页
+            $this->restore($ids);
         }
-        //防止一些户恢复了权限
-        $page++;
-        Cache::set('qc_adv_restore_page', $page);
-        $this->restore();
     }
 
 
