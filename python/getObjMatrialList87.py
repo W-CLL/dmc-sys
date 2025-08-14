@@ -363,7 +363,7 @@ async def write_batch_to_db_parallel(pool, batch_data, writer_name):
             async with conn.cursor() as cur:
                 # 使用批量插入优化
                 insert_sql = """
-                             INSERT INTO fa_fission_global_obj_material (adv_id,
+                             INSERT INTO fa_fission_global_obj_material_202508 (adv_id,
                                                                                obj_id,
                                                                                material_id,
                                                                                product_show_count_for_roi2,
