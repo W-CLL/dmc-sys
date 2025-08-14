@@ -170,6 +170,7 @@ class MaterialConsumption extends Backend
      */
     public function getLineChartData()
     {
+        ini_set('memory_limit', '512M');
         // 获取时间段参数
         $period = input('period', '15');
 
