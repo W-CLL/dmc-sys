@@ -34,6 +34,7 @@ class QueryWalletTransferInfo
                 throw new Exception("查询转账信息失败");
             }
             $operate = $transfer_data["transfer_direction"] == 1 ? "共享钱包充值" : "共享钱包退款";
+            $type = $transfer_data["account_type"] == 1 ? "对公账户" : "对私账户";
             $img_url = '';
             Db::startTrans();
             try {
@@ -63,7 +64,7 @@ class QueryWalletTransferInfo
                         }
                         Db::commit();
                         $prefix = $transfer_data['account_type'] == 1 ? "public_" : "private_";
-                        $msg = "{$operate}成功！\n钱包余额：" . $store_money_log_data["balance_surplus"] . "\n授信余额：" . $store_money_log_data["credit_limit_surplus"] . "\n已使用授信额度：" . number_format((($store_info[$prefix."spending_credit_limit"] + $store_info[$prefix."credit_limit"]) - $store_money_log_data["credit_limit_surplus"]), 2);
+                        $msg = "【{$type}】{$operate}成功！\n钱包余额：" . $store_money_log_data["balance_surplus"] . "\n授信余额：" . $store_money_log_data["credit_limit_surplus"] . "\n已使用授信额度：" . number_format((($store_info[$prefix."spending_credit_limit"] + $store_info[$prefix."credit_limit"]) - $store_money_log_data["credit_limit_surplus"]), 2);
                         break;
                     case "TRANSFER_FAILURE":
                         if(!$transfer_log_model->where(["id" => $data["swtl_id"]])->update([

@@ -460,13 +460,7 @@ class MaterialConsumption extends Backend
                 ];
             }
             $fission_stats[$date]['fission_cost'] += $item['stat_cost_for_roi2'];
-            $fission_stats[$date]['materials'][] = $item['material_id'];
-        }
-
-        // 计算去重后的裂变素材数量
-        foreach ($fission_stats as &$stat) {
-            $stat['fission_material_count'] = count(array_unique($stat['materials']));
-            unset($stat['materials']);
+            $fission_stats[$date]['fission_material_count'] = Db::name('fission_derive_material')->where(['create_time'=>['between', [strtotime($date.' 00:00:00'), strtotime($date.' 23:59:59')]]])->count();
         }
 
         // 合并数据

@@ -81,7 +81,7 @@ class AdvGlobalMaterial extends Model
             ->field([
                 'g.cost_date',
                 'g.stat_cost_for_roi2',
-                'g.material_id',
+//                'g.material_id',
                 'c.company_name'
             ])
             ->select();
