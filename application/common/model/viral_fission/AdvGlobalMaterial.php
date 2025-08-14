@@ -45,8 +45,8 @@ class AdvGlobalMaterial extends Model
         return Db::name('fission_global_material') // 使用实际表名，不含前缀
             ->alias('g')
             ->join('fa_company c', 'g.adv_id = c.advertiser_id')
-            ->where('c.company_name', '<>', '')
-            ->where('c.company_name', 'not null') // 修复表达式错误
+//            ->where('c.company_name', '<>', '')
+//            ->where('c.company_name', 'not null') // 修复表达式错误
             ->where('g.cost_date', 'between', [$startTimestamp, $endTimestamp])
             ->where('g.cost_date', '>', 0)
             ->where('g.stat_cost_for_roi2', '>', 0)

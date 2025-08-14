@@ -32,7 +32,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                     [
                         {field: 'state', checkbox: true},
                         {field: 'id', title: 'ID', sortable: true},
-                        {field: 'adv_id', title: '广告主ID', sortable: true},
+                        {field: 'adv_id', title: '千川ID', sortable: true},
                         {field: 'obj_id', title: '计划ID', sortable: true},
                         {field: 'product_id', title: '商品ID', sortable: true},
                         {field: 'mid', title: '素材ID列表', formatter: Controller.api.formatter.mid},

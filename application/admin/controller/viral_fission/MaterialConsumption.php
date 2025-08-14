@@ -466,11 +466,11 @@ class MaterialConsumption extends Backend
 
         // 合并数据
         $result = [];
-        foreach ($daily_stats as $date => $stat) {
+        foreach ($daily_stats as $date => $key) {
             $result[] = [
                 'date' => $date,
-                'total_cost' => round($stat['total_cost'], 2),
-                'material_count' => $stat['material_count'],
+                'total_cost' => round($key['total_cost'], 2),
+                'material_count' => $key['material_count'],
                 'fission_cost' => isset($fission_stats[$date]) ? round($fission_stats[$date]['fission_cost'] ?? 0, 2) : 0,
                 'fission_material_count' => isset($fission_stats[$date]) ? $fission_stats[$date]['fission_material_count'] ?? 0 : 0
             ];
