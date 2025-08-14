@@ -70,6 +70,86 @@
         border-radius: 4px;
         font-size: 12px;
     }
+    
+    /* 素材ID列表优化样式 */
+    .material-id-list {
+        background: #fff;
+        border: 1px solid #eee;
+        border-radius: 4px;
+        padding: 10px;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+    
+    .material-id-item {
+        display: inline-block;
+        background: #f0f8ff;
+        border: 1px solid #bee5eb;
+        border-radius: 3px;
+        padding: 3px 8px;
+        margin: 3px;
+        font-family: monospace;
+        font-size: 13px;
+        color: #0062cc;
+    }
+    
+    .material-id-item:hover {
+        background: #e6f7ff;
+        border-color: #9fd9ee;
+    }
+    
+    .material-id-count {
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 5px;
+        font-size: 14px;
+    }
+    
+    /* 失败原因优化样式 */
+    .failure-reason {
+        background: #fff;
+        border: 1px solid #eee;
+        border-radius: 4px;
+        padding: 10px 15px;
+        color: #d9534f;
+        font-weight: 500;
+        white-space: pre-wrap;
+        word-break: break-word;
+        position: relative;
+        padding-left: 30px;
+        display: inline-block;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    
+    .failure-reason:before {
+        content: "!";
+        position: absolute;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 16px;
+        height: 16px;
+        background: #d9534f;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: bold;
+    }
+    
+    .failure-reason.empty {
+        color: #999;
+        font-weight: normal;
+        font-style: italic;
+        padding-left: 15px;
+    }
+    
+    .failure-reason.empty:before {
+        display: none;
+    }
 </style>
 
 <div class="detail-panel">
@@ -98,15 +178,23 @@
     <div class="detail-row">
         <div class="detail-label">素材ID列表:</div>
         <div class="detail-value">
-            <div class="detail-value pre">
-                {$row.mid ?: '无'}
+            <div class="material-id-list">
+                <?php if($row['mid']): ?>
+                    <?php $material_ids = explode(",", $row['mid']); ?>
+                    <div class="material-id-count">共 <?php echo count($material_ids); ?> 个素材ID</div>
+                    <?php foreach($material_ids as $material_id): ?>
+                        <span class="material-id-item"><?php echo htmlspecialchars($material_id); ?></span>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <div class="material-id-count">无素材ID</div>
+                <?php endif; ?>
             </div>
         </div>
     </div>
     
     <div class="detail-row">
         <div class="detail-label">失败原因:</div>
-        <div class="detail-value">{$row.reason ?: '无'}</div>
+        <div class="detail-value"><div class="failure-reason<?php echo empty($row['reason']) ? ' empty' : ''; ?>"><?php echo !empty($row['reason']) ? htmlspecialchars($row['reason']) : '无'; ?></div></div>
     </div>
     
     <div class="detail-row">

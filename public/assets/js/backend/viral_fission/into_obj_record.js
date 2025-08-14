@@ -25,6 +25,9 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                 commonSearch: true,
                 searchFormVisible: true,
                 searchFormTemplate: 'customformtpl',
+                // 固定最后一列
+                fixedColumns: true,
+                fixedRightNumber: 1,
                 columns: [
                     [
                         {field: 'state', checkbox: true},
