@@ -289,8 +289,8 @@ async def fetch_and_process_daily_parallel(session, sem, rate_limit_sem, worker_
                     "end_date": data_date,
                     "material_status": "ALL",
                     "material_select_type": "ALL",
-                    "analysis_type": ["FIRST_PUBLISH_MATERIAL", "HIGH_QUALITY_MATERIAL", "LOW_QUALITY_MATERIAL",
-                                      "INEFFICIENT_MATERIAL", "CARRY_MATERIAL", "SIMILAR_MATERIAL"]
+#                     "analysis_type": ["FIRST_PUBLISH_MATERIAL", "HIGH_QUALITY_MATERIAL", "LOW_QUALITY_MATERIAL",
+#                                       "INEFFICIENT_MATERIAL", "CARRY_MATERIAL", "SIMILAR_MATERIAL"]
                 }
                 json_params = {
                     "advertiser_id": advertiser_id[0],
@@ -558,26 +558,31 @@ def run_single_day_parallel(day_timestamp):
     with conn.cursor() as cur:
         # 添加按天的时间过滤条件
         sql = """
-              SELECT adv_id, obj_id
-              FROM fa_qc_global_obj as o
-                       LEFT JOIN fa_company as com ON o.adv_id = com.advertiser_id
-              WHERE com.adv_status = 1
-                AND (o.obj_status NOT IN ('DELETE') OR o.opt_status NOT IN ('DELETE'))
-                AND o.marketing_goal = 'VIDEO_PROM_GOODS' \
-                AND o.obj_create_time BETWEEN %s AND %s \
+           SELECT DISTINCT
+               o.adv_id,
+               o.obj_id
+           FROM fa_qc_global_obj o
+           left JOIN fa_company c ON o.adv_id = c.advertiser_id
+           left JOIN fa_qc_adv_day_cost cost ON o.adv_id = cost.adv_id
+           WHERE
+               c.adv_status = 1
+               AND (o.obj_status IN ('DELIVERY_OK', 'DISABLE') OR o.opt_status IN ('ENABLE', 'DISABLE'))
+               AND o.marketing_goal = 'VIDEO_PROM_GOODS'
+               AND cost.cost > 0
+               AND cost.cost_date >= UNIX_TIMESTAMP(DATE_SUB(CURDATE(), INTERVAL 3 MONTH))
               """
 
         # 计算当天的时间戳范围（+1秒就是一天）
-        now_timestamp = int(time.time())
-        day_start = now_timestamp - (93 * 60 * 60 * 24)
-        day_end = now_timestamp
+#         now_timestamp = int(time.time())
+#         day_start = now_timestamp - (93 * 60 * 60 * 24)
+#         day_end = now_timestamp
 
-        print(
-            f"📊 查询时间戳范围: {day_start} ~ {day_end} ({timestamp_to_datetime_str(day_start)} ~ {timestamp_to_datetime_str(day_end)})")
-        print(
-            f"📊 请求的总时间范围: {START_TIMESTAMP} ~ {END_TIMESTAMP} ({timestamp_to_datetime_str(START_TIMESTAMP)} ~ {timestamp_to_datetime_str(END_TIMESTAMP)})")
+#         print(
+#             f"📊 查询时间戳范围: {day_start} ~ {day_end} ({timestamp_to_datetime_str(day_start)} ~ {timestamp_to_datetime_str(day_end)})")
+#         print(
+#             f"📊 请求的总时间范围: {START_TIMESTAMP} ~ {END_TIMESTAMP} ({timestamp_to_datetime_str(START_TIMESTAMP)} ~ {timestamp_to_datetime_str(END_TIMESTAMP)})")
 
-        cur.execute(sql, (day_start, day_end))
+        cur.execute(sql)
         advertiser_ids = [[row[0], row[1]] for row in cur.fetchall()]
     conn.close()
 

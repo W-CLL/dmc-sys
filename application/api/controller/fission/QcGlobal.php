@@ -420,6 +420,9 @@ class QcGlobal extends Controller
         Cache::set('test_task_page', $page + 1);
     }
 
+    /**
+     * 将素材添加到计划里
+     */
 
     public function adoptMaterialIntoObj()
     {
@@ -591,6 +594,8 @@ class QcGlobal extends Controller
                 continue;
             }
 
+            // 修复：使用 old_material_id 找到使用了原素材的计划
+            // 业务逻辑：如果计划投放过原素材id，那么裂变出来的素材也应该采纳进去对应计划
             $obj_list_data = $obj_material
                 ->alias('om')
                 ->join('qc_global_obj qo', 'om.adv_id=qo.adv_id', 'left')
