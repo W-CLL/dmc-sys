@@ -76,7 +76,7 @@ class QueryTransferInfo
         $transfer_records_model = new TransferRecords();
         $img_url = '';
         $operate = $transfer_records_data["transfer_direction"] == 1 ? "千川充值" : "千川退款";
-        $type = $transfer_records_data["account_type"] == 1 ? "对公账户" : "对私账户";
+        $type = $transfer_records_data["account_type"] == 1 ? "（公）" : "（私）";
         switch ($transfer_detail_data['data']['transfer_status']){
             case 'TRANSFER_FAILED':
                 if(!$transfer_records_model->where(["id" => $data["transfer_records_id"]])->update(['status' => 2, 'explain' => $transfer_detail_data['data']['transfer_target_record_list'][0]['transfer_capital_record_list'][0]['fail_reason']])){
@@ -117,7 +117,7 @@ class QueryTransferInfo
                     );
                     Db::commit();
                     $prefix = $transfer_records_data['account_type'] == 1 ? "public_" : "private_";
-                    $msg = "【{$type}】{$operate}成功！\n钱包余额：" . $money_log_data["balance_surplus"] . "\n授信余额：" . $money_log_data["credit_limit_surplus"] . "\n已使用授信额度：" . number_format((($store_info[$prefix."spending_credit_limit"] + $store_info[$prefix."credit_limit"]) - $money_log_data["credit_limit_surplus"]), 2);
+                    $msg = "{$operate}成功！\n钱包余额{$type}：" . $money_log_data["balance_surplus"] . "\n授信余额{$type}：" . $money_log_data["credit_limit_surplus"] . "\n已使用授信额度{$type}：" . number_format((($store_info[$prefix."spending_credit_limit"] + $store_info[$prefix."credit_limit"]) - $money_log_data["credit_limit_surplus"]), 2);
                     break;
                 }catch (Exception $e){
                     Db::rollback();
