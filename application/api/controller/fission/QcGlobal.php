@@ -619,7 +619,17 @@ class QcGlobal extends Controller
             if ($obj_list) {
                 $obj_product = [];
                 foreach ($obj_list as $obj_id => $product_info) {
+                    // 处理两种格式的 product_info 字符串
+                    // 格式1: 转义的JSON字符串 "[{\"product_id\": 123, ...}]"
+                    // 格式2: 未转义的JSON字符串 "[{"product_id": 123, ...}]"
                     $decoded_product_info = json_decode($product_info, true);
+
+                    // 如果第一次解码失败，尝试处理可能的双重编码问题
+                    if (is_null($decoded_product_info) && is_string($product_info)) {
+                        // 尝试再次解码，处理双重转义的情况
+                        $decoded_product_info = json_decode(json_decode($product_info, true), true);
+                    }
+
                     if (is_array($decoded_product_info)) {
                         $productIds = array_column($decoded_product_info, 'product_id');
                         if (!empty($productIds)) {

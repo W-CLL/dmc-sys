@@ -13,7 +13,7 @@ class AdvGlobalObjMaterial extends Model
      * @var mixed|string[]
      */
 
-    protected $name = 'fission_global_obj_material';
+    protected $name = 'fission_global_obj_material_202508';
     protected $autoWriteTimestamp = 'int';
     // 定义时间戳字段名
     protected $createTime = 'create_time';
