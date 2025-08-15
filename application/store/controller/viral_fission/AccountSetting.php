@@ -207,12 +207,12 @@ class AccountSetting extends Store
         $timeDimensions = $params['time_dimensions'];
         if (!empty($timeDimensions) && is_array($timeDimensions)) {
             foreach ($timeDimensions as $rule) {
-                if(!$rule['dimension'] || !$rule['cost_data']){
-                    $this->error('请填写正确的时间和消耗');
-                }
-                if($rule['cost_data']<300){
-                    $this->error('消耗不能低于300');
-                }
+//                if(!$rule['dimension'] || !$rule['cost_data']){
+//                    $this->error('请填写正确的时间和消耗');
+//                }
+//                if($rule['cost_data']<300){
+//                    $this->error('消耗不能低于300');
+//                }
                 if (!empty($rule['dimension']) && isset($rule['cost_data']) && $rule['cost_data'] >= 0) {
                     $costRules[] = [
                         'time_dimension' => $rule['dimension'],
