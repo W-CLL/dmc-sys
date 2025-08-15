@@ -599,28 +599,6 @@ class Oauth2 extends Api
     }
 
 
-    // 消费缓存数据更新队列状态
-    public function consumptionCache()
-    {
-        $queueModel = new Queue();
-        $redis = Cache::store('redis_db2')->handler();
-        for ($i = 0; $i <= 500; $i++) {
-            $data = $redis->lpop('queue_status_update');
-            if (empty($data)) {
-                break;
-            }
-            if ($data == "Array") {
-                continue;
-            }
-            $data = unserialize($data);
-            $job_id = array_keys($data)[0];
-            if (!$queueModel->where('job_id', $job_id)->update($data[$job_id])) {
-                $redis->rpush('queue_status_update', serialize($data));
-            }
-        }
-        echo 'success';
-    }
-
 
     // 获取广告主负责人名称
     public function getKahuna()
