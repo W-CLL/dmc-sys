@@ -165,8 +165,8 @@ class QcGlobal extends Controller
         $material = new AdvGlobalMaterial();
 
         // 获取黑名单公司列表
-//        $blackCompanyList = $this->getBlackCompanyList();
-        $blackCompanyList = [];
+        $blackCompanyList = $this->getBlackCompanyList('black_company_config_fission.php');
+//        $blackCompanyList = [];
 
         $query = $material
             ->alias('m')
@@ -830,11 +830,12 @@ class QcGlobal extends Controller
     /**
      * 获取黑名单公司列表
      * 优先从black_company_config.php文件读取，如果文件不存在则使用默认列表
+     * @param string $file_name
      * @return array
      */
-    private function getBlackCompanyList()
+    private function getBlackCompanyList(string $file_name="black_company_config.php"): array
     {
-        $configFilePath = __DIR__ . '/black_company_config.php';
+        $configFilePath = __DIR__ . '/'.$file_name;
 
         // 尝试从PHP配置文件读取
         if (file_exists($configFilePath)) {
