@@ -114,7 +114,7 @@ class MaterialConsumption extends Backend
                 $row['is_fission'] = $row['is_fission'] ? '是' : '否';
                 $row['fission_count'] = Db::name('fission_derive_material')->where(['old_material_id' => $row['material_id']])->count();
                 $row['store_name'] = Db::name('store')->where(['id' => $row['store_id']])->column('username');
-                if ($row['stat_cost_for_roi2'] >= 300) {
+//                if ($row['stat_cost_for_roi2'] >= 300) {
                     $msg_info = Db::name('fission_material_task')
                         ->where([
                             'adv_id' => $row['adv_id'],
@@ -131,7 +131,7 @@ class MaterialConsumption extends Backend
                         $row['unfission_reason'] = $msg_info['status_message'];
                     }
 
-                }
+//                }
             }
 
             $result = [
@@ -144,6 +144,11 @@ class MaterialConsumption extends Backend
         return $this->view->fetch();
     }
 
+
+    public function obj_list($id)
+    {
+       return  $this->fetch();
+    }
 
     public function getStats()
     {
@@ -189,7 +194,6 @@ class MaterialConsumption extends Backend
 
         // 统计表没有数据，回退到实时查询（用于兼容性）
         $result = $this->getRealTimeLineData($start_timestamp, $end_timestamp);
-
 
         // 缓存结果5分钟
         cache($cache_key, $result, 300);

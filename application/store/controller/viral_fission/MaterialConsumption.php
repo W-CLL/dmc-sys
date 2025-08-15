@@ -110,7 +110,7 @@ class MaterialConsumption extends Store
                 $row['create_time_text'] = date('Y-m-d',$row['cost_date']);
                 $row['is_fission'] = $row['is_fission'] ? '是' : '否';
                 $row['fission_count'] = Db::name('fission_derive_material')->where(['old_material_id'=>$row['material_id']])->count();
-                if($row['stat_cost_for_roi2'] >=300){
+//                if($row['stat_cost_for_roi2'] >=300){
                     $msg_info=Db::name('fission_material_task')
                         ->where([
                             'adv_id' => $row['adv_id'],
@@ -133,7 +133,7 @@ class MaterialConsumption extends Store
                         $row['unfission_reason'] = $msg_info['status_message'];
                     }
 
-                }
+//                }
 //                $row['store_name'] = Db::name('store')->where(['id'=>$row['store_id']])->column('username');
             }
 
