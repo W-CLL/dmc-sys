@@ -508,7 +508,7 @@ class QcGlobal extends Controller
     }
 
     /**
-     * 处理单个批次的素材数据 - 高性能版本
+     * 处理单个批次的素材数据 - 回归原始逐个查询方案
      */
     private function processBatchMaterials($list, $obj_material, $black_adv_list)
     {
@@ -516,20 +516,137 @@ class QcGlobal extends Controller
             return;
         }
 
-        // 1. 数据预处理和分组
-        $processed_data = $this->preprocessBatchData($list, $black_adv_list);
-        if (empty($processed_data)) {
-            return;
+        // 组织数据：按 adv_id + old_material_id 分组
+        $old_material_list = [];
+        foreach ($list as $item) {
+            $key = $item['adv_id'] . "_" . $item['old_material_id'];
+            if (!isset($old_material_list[$key])) {
+                $old_material_list[$key] = [];
+            }
+            // 避免重复的video_id
+            if (!in_array($item['video_id'], $old_material_list[$key])) {
+                $old_material_list[$key][] = $item['video_id'];
+            }
         }
 
-        // 2. 批量查询所有需要的数据（一次性查询）
-        $batch_data = $this->batchQueryAllData($processed_data, $obj_material);
+        foreach ($old_material_list as $key => $material_list) {
+            list($adv_id, $old_material_id) = explode('_', $key);
+            // 检查是否在黑名单中
+            if (in_array($adv_id, $black_adv_list)) {
+                continue;
+            }
 
-        // 3. 批量处理和推送队列
-        $this->batchProcessAndQueue($batch_data);
+            // 逐个查询计划数据，避免大批量查询
+            $obj_list_data = $obj_material
+                ->alias('om')
+                ->join('qc_global_obj qo', 'om.obj_id = qo.obj_id AND om.adv_id = qo.adv_id', 'INNER')
+                ->field('om.obj_id, om.product_info')
+                ->where([
+                    'om.adv_id' => $adv_id,
+                    'om.material_id' => $old_material_id,
+                    'om.material_status' => 'DELIVERY_OK',
+                    'om.cost_date' => strtotime(date('Y-m-d'))
+                ])
+                ->whereNotNull('om.product_info')
+                ->where(function ($query) {
+                    $query->whereIn('qo.obj_status', ['DELIVERY_OK', 'DISABLE', 'SYSTEM_DISABLE'])
+                        ->whereOr(['qo.opt_status' => ['in', ['ENABLE', 'DISABLE']]]);
+                })
+                ->group('om.obj_id')
+                ->select();
 
-        // 4. 内存清理
-        $this->cleanupMemory();
+            // 转换为原来的数据格式
+            $obj_list = [];
+            foreach ($obj_list_data as $item) {
+                $obj_list[$item['obj_id']] = $item['product_info'];
+            }
+
+            if ($obj_list) {
+                $obj_product = [];
+                foreach ($obj_list as $obj_id => $product_info) {
+                    // 处理两种格式的 product_info 字符串
+                    $decoded_product_info = json_decode($product_info, true);
+
+                    // 如果第一次解码失败，尝试处理可能的双重编码问题
+                    if ($decoded_product_info === null && is_string($product_info)) {
+                        $decoded_product_info = json_decode(json_decode($product_info, true), true);
+                    }
+
+                    if (is_array($decoded_product_info)) {
+                        $product_ids = array_column($decoded_product_info, 'product_id');
+                        if (!empty($product_ids)) {
+                            $obj_product[$obj_id] = $product_ids;
+                        }
+                    }
+                }
+
+                if (!empty($obj_product)) {
+                    // 检查素材数量上限并过滤 - 使用精确查询
+                    $filtered_obj_product = $this->checkMaterialLimitWithPreciseQuery($adv_id, $obj_product);
+
+                    if (!empty($filtered_obj_product)) {
+                        // 过滤已存在的记录
+                        $final_obj_product = $this->filterExistingRecords($adv_id, $filtered_obj_product, $material_list);
+
+                        if (!empty($final_obj_product)) {
+                            // 分批处理video_ids，每批最多200个
+                            $video_ids = array_values($material_list);
+                            $video_batches = array_chunk($video_ids, 200);
+
+                            foreach ($video_batches as $video_batch) {
+                                $task_data = [
+                                    'adv_id' => $adv_id,
+                                    'obj_ids' => $final_obj_product,
+                                    'video_ids' => $video_batch,
+                                ];
+                                Queue::push('app\job\fission\AdoptMaterialIntoObj', $task_data, 'adoptMaterialIntoObj');
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * 检查素材数量上限 - 精确查询版本（避免大批量查询）
+     */
+    private function checkMaterialLimitWithPreciseQuery($adv_id, $obj_product)
+    {
+        $filtered_obj_product = [];
+        $material_limit = 500;
+
+        foreach ($obj_product as $obj_id => $product_ids) {
+            $filtered_product_ids = [];
+
+            foreach ($product_ids as $product_id) {
+                // 精确查询当前计划+产品的素材数量，避免大批量查询
+                $current_count = Db::name('fission_global_obj_material_202508')
+                    ->where([
+                        'adv_id' => $adv_id,
+                        'obj_id' => $obj_id,
+                        'material_status' => 'DELIVERY_OK',
+                        'cost_date' => strtotime(date('Y-m-d'))
+                    ])
+                    ->whereRaw("JSON_SEARCH(product_info, 'one', '{$product_id}', NULL, '$[*].product_id') IS NOT NULL")
+                    ->count();
+
+                $remaining_slots = $material_limit - $current_count;
+
+                if ($remaining_slots > 0) {
+                    $filtered_product_ids[] = $product_id;
+                    echo "✅ 计划 {$obj_id} 产品 {$product_id}: 已有 {$current_count} 个素材，还可添加 {$remaining_slots} 个\n";
+                } else {
+                    echo "⚠️ 计划 {$obj_id} 产品 {$product_id}: 已达到上限 ({$current_count}/{$material_limit})，跳过\n";
+                }
+            }
+
+            if (!empty($filtered_product_ids)) {
+                $filtered_obj_product[$obj_id] = $filtered_product_ids;
+            }
+        }
+
+        return $filtered_obj_product;
     }
 
     /**
@@ -567,245 +684,15 @@ class QcGlobal extends Controller
         return round($bytes, 2) . ' ' . $units[$pow];
     }
 
-    /**
-     * 数据预处理和分组 - 高性能版本
-     */
-    private function preprocessBatchData($list, $black_adv_list)
-    {
-        $processed_data = [];
-        $black_adv_set = array_flip($black_adv_list); // 转为哈希表，O(1)查找
 
-        foreach ($list as $item) {
-            $adv_id = $item['adv_id'];
-            $old_material_id = $item['old_material_id'];
-            $video_id = $item['video_id'];
 
-            // 快速跳过黑名单 - O(1)查找
-            if (isset($black_adv_set[$adv_id])) {
-                continue;
-            }
 
-            // 使用哈希表去重video_id，避免in_array的O(n)查找
-            $processed_data[$adv_id][$old_material_id][$video_id] = true;
-        }
 
-        // 转换为数组格式
-        $result = [];
-        foreach ($processed_data as $adv_id => $material_data) {
-            foreach ($material_data as $old_material_id => $video_set) {
-                $result[$adv_id][$old_material_id] = array_keys($video_set);
-            }
-        }
 
-        return $result;
-    }
 
-    /**
-     * 批量查询所有需要的数据
-     */
-    private function batchQueryAllData($processed_data, $obj_material)
-    {
-        $all_adv_ids = array_keys($processed_data);
-        $all_material_ids = [];
 
-        // 收集所有material_id
-        foreach ($processed_data as $adv_data) {
-            $all_material_ids = array_merge($all_material_ids, array_keys($adv_data));
-        }
-        $all_material_ids = array_unique($all_material_ids);
 
-        // 批量查询计划数据 - 利用 idx_adv_material_hash 索引
-        $plan_data = $this->batchQueryPlanData($all_adv_ids, $all_material_ids, $obj_material);
 
-        // 批量查询素材数量统计 - 利用 idx_adv_obj_cost_stat 索引
-        $material_counts = $this->batchQueryMaterialCountsOptimized($all_adv_ids);
-
-        // 批量查询已存在记录
-        $existing_records = $this->batchQueryExistingRecords($all_adv_ids);
-
-        return [
-            'processed_data' => $processed_data,
-            'plan_data' => $plan_data,
-            'material_counts' => $material_counts,
-            'existing_records' => $existing_records
-        ];
-    }
-
-    /**
-     * 批量处理和推送队列
-     */
-    private function batchProcessAndQueue($batch_data)
-    {
-        $processed_data = $batch_data['processed_data'];
-        $plan_data = $batch_data['plan_data'];
-        $material_counts = $batch_data['material_counts'];
-        $existing_records = $batch_data['existing_records'];
-
-        foreach ($processed_data as $adv_id => $material_data) {
-            foreach ($material_data as $old_material_id => $video_ids) {
-                // 获取该素材对应的计划数据
-                $key = "{$adv_id}_{$old_material_id}";
-                if (!isset($plan_data[$key])) {
-                    continue;
-                }
-
-                $obj_product = $plan_data[$key];
-
-                // 应用素材数量限制过滤
-                $filtered_obj_product = $this->applyMaterialLimitFilter($adv_id, $obj_product, $material_counts);
-
-                // 应用已存在记录过滤
-                $final_obj_product = $this->applyExistingRecordsFilter($adv_id, $filtered_obj_product, $video_ids, $existing_records);
-
-                if (!empty($final_obj_product)) {
-                    // 分批推送到队列
-                    $this->pushToQueue($adv_id, $final_obj_product, $video_ids);
-                }
-            }
-        }
-    }
-
-    /**
-     * 批量查询计划数据 - 内存优化版本
-     */
-    private function batchQueryPlanData($all_adv_ids, $all_material_ids, $obj_material)
-    {
-        $plan_data = [];
-        $cost_date = strtotime(date('Y-m-d'));
-
-        // 分批查询，避免内存溢出
-        $adv_batch_size = 5; // 每次处理5个广告主
-        $adv_batches = array_chunk($all_adv_ids, $adv_batch_size);
-
-        foreach ($adv_batches as $adv_batch) {
-            // 使用 idx_adv_material_hash 索引进行高效查询
-            $results = $obj_material
-                ->alias('om')
-                ->join('qc_global_obj qo', 'om.obj_id = qo.obj_id AND om.adv_id = qo.adv_id', 'INNER')
-                ->field('om.adv_id, om.material_id, om.obj_id, om.product_info')
-                ->whereIn('om.adv_id', $adv_batch)
-                ->whereIn('om.material_id', $all_material_ids)
-                ->where([
-                    'om.material_status' => 'DELIVERY_OK',
-                    'om.cost_date' => $cost_date
-                ])
-                ->whereNotNull('om.product_info')
-                ->where(function ($query) {
-                    $query->whereIn('qo.obj_status', ['DELIVERY_OK', 'DISABLE', 'SYSTEM_DISABLE'])
-                        ->whereOr(['qo.opt_status' => ['in', ['ENABLE', 'DISABLE']]]);
-                })
-                ->limit(5000) // 限制单次查询结果数量
-                ->select();
-
-            // 组织数据结构
-            foreach ($results as $row) {
-                $key = "{$row['adv_id']}_{$row['material_id']}";
-                $obj_id = $row['obj_id'];
-                $product_info = $row['product_info'];
-
-                // 解析产品信息
-                $decoded_product_info = json_decode($product_info, true);
-                if ($decoded_product_info === null && is_string($product_info)) {
-                    $decoded_product_info = json_decode(json_decode($product_info, true), true);
-                }
-
-                if (is_array($decoded_product_info)) {
-                    $product_ids = array_column($decoded_product_info, 'product_id');
-                    if (!empty($product_ids)) {
-                        $plan_data[$key][$obj_id] = $product_ids;
-                    }
-                }
-            }
-
-            // 释放内存
-            unset($results);
-
-            // 内存检查和垃圾回收
-            if (memory_get_usage() > 150 * 1024 * 1024) { // 150MB
-                gc_collect_cycles();
-            }
-        }
-
-        return $plan_data;
-    }
-
-    /**
-     * 批量查询素材数量统计 - 内存优化版本
-     */
-    private function batchQueryMaterialCountsOptimized($all_adv_ids)
-    {
-        $material_counts = [];
-
-        // 分批查询，避免内存溢出
-        $batch_size = 10; // 每次处理10个广告主
-        $adv_batches = array_chunk($all_adv_ids, $batch_size);
-
-        foreach ($adv_batches as $adv_batch) {
-            // 使用 idx_adv_obj_cost_stat 索引进行高效查询，只查询当天数据
-            $results = Db::name('fission_global_obj_material_202508')
-                ->field('adv_id, obj_id, product_info')
-                ->whereIn('adv_id', $adv_batch)
-                ->where([
-                    'material_status' => 'DELIVERY_OK',
-                    'cost_date' => strtotime(date('Y-m-d')) // 只查询当天的数据
-                ])
-                ->whereNotNull('product_info')
-                ->limit(10000) // 限制单次查询结果数量
-                ->select();
-
-            // 在内存中统计，避免重复查询
-            foreach ($results as $row) {
-                $adv_id = $row['adv_id'];
-                $obj_id = $row['obj_id'];
-                $product_info = $row['product_info'];
-
-                // 解析产品信息
-                $decoded_product_info = json_decode($product_info, true);
-                if ($decoded_product_info === null && is_string($product_info)) {
-                    $decoded_product_info = json_decode(json_decode($product_info, true), true);
-                }
-
-                if (is_array($decoded_product_info)) {
-                    $product_ids = array_column($decoded_product_info, 'product_id');
-                    foreach ($product_ids as $product_id) {
-                        $key = "{$adv_id}_{$obj_id}_{$product_id}";
-                        $material_counts[$key] = ($material_counts[$key] ?? 0) + 1;
-                    }
-                }
-            }
-
-            // 释放内存
-            unset($results);
-
-            // 如果内存使用过高，强制垃圾回收
-            if (memory_get_usage() > 200 * 1024 * 1024) { // 200MB
-                gc_collect_cycles();
-            }
-        }
-
-        return $material_counts;
-    }
-
-    /**
-     * 批量查询已存在记录
-     */
-    private function batchQueryExistingRecords($all_adv_ids)
-    {
-        $existing_records = [];
-
-        $results = Db::name('fission_into_obj_record')
-            ->field('adv_id, obj_id, product_id, mid')
-            ->whereIn('adv_id', $all_adv_ids)
-            ->select();
-
-        foreach ($results as $row) {
-            $key = "{$row['adv_id']}_{$row['obj_id']}_{$row['product_id']}";
-            $existing_video_ids = explode(',', $row['mid']);
-            $existing_records[$key] = $existing_video_ids;
-        }
-
-        return $existing_records;
-    }
 
     /**
      * 获取采纳素材的统计信息
@@ -886,87 +773,7 @@ class QcGlobal extends Controller
         ];
     }
 
-    /**
-     * 应用素材数量限制过滤
-     */
-    private function applyMaterialLimitFilter($adv_id, $obj_product, $material_counts)
-    {
-        $filtered_obj_product = [];
-        $material_limit = 500;
 
-        foreach ($obj_product as $obj_id => $product_ids) {
-            $filtered_product_ids = [];
-
-            foreach ($product_ids as $product_id) {
-                $key = "{$adv_id}_{$obj_id}_{$product_id}";
-                $current_count = $material_counts[$key] ?? 0;
-                $remaining_slots = $material_limit - $current_count;
-
-                if ($remaining_slots > 0) {
-                    $filtered_product_ids[] = $product_id;
-                    echo "✅ 计划 {$obj_id} 产品 {$product_id}: 已有 {$current_count} 个素材，还可添加 {$remaining_slots} 个\n";
-                } else {
-                    echo "⚠️ 计划 {$obj_id} 产品 {$product_id}: 已达到上限 ({$current_count}/{$material_limit})，跳过\n";
-                }
-            }
-
-            if (!empty($filtered_product_ids)) {
-                $filtered_obj_product[$obj_id] = $filtered_product_ids;
-            }
-        }
-
-        return $filtered_obj_product;
-    }
-
-    /**
-     * 应用已存在记录过滤
-     */
-    private function applyExistingRecordsFilter($adv_id, $obj_product, $video_ids, $existing_records)
-    {
-        $filtered_obj_product = [];
-
-        foreach ($obj_product as $obj_id => $product_ids) {
-            $filtered_product_ids = [];
-
-            foreach ($product_ids as $product_id) {
-                $key = "{$adv_id}_{$obj_id}_{$product_id}";
-                $existing_video_ids = $existing_records[$key] ?? [];
-
-                // 检查是否有重叠的video_id
-                $has_overlap = !empty(array_intersect($video_ids, $existing_video_ids));
-
-                if (!$has_overlap) {
-                    $filtered_product_ids[] = $product_id;
-                } else {
-                    echo "🔄 计划 {$obj_id} 产品 {$product_id}: 已存在相同素材，跳过\n";
-                }
-            }
-
-            if (!empty($filtered_product_ids)) {
-                $filtered_obj_product[$obj_id] = $filtered_product_ids;
-            }
-        }
-
-        return $filtered_obj_product;
-    }
-
-    /**
-     * 推送到队列
-     */
-    private function pushToQueue($adv_id, $obj_product, $video_ids)
-    {
-        // 分批处理video_ids，每批最多200个
-        $video_batches = array_chunk($video_ids, 200);
-
-        foreach ($video_batches as $video_batch) {
-            $task_data = [
-                'adv_id' => $adv_id,
-                'obj_ids' => $obj_product,
-                'video_ids' => $video_batch,
-            ];
-            Queue::push('app\job\fission\AdoptMaterialIntoObj', $task_data, 'adoptMaterialIntoObj');
-        }
-    }
 
     /**
      * 重置处理进度（用于重新开始处理）
