@@ -476,25 +476,25 @@ class QcGlobal extends Controller
         $company = new Company();
 
         // 分页参数
-        $pageSize = $this->getOptimalPageSize();
-        $lastProcessedId = Cache::get('adoptMaterial_last_id', 0);
+        $page_size = $this->getOptimalPageSize();
+        $last_processed_id = Cache::get('adoptMaterial_last_id', 0);
 
         // 检查是否有新数据需要重新开始
         $stats = $this->getAdoptMaterialStats();
         if ($stats['has_new_data'] && Cache::get('adoptMaterial_completed', false)) {
             echo "🔄 检测到新数据，重新开始处理...\n";
             $this->resetAdoptMaterialProgress();
-            $lastProcessedId = 0;
+            $last_processed_id = 0;
         }
 
         // 统计变量
-        $totalProcessed = 0;
-        $pagesProcessed = 0;
-        $currentBatchSize = 0;
+        $total_processed = 0;
+        $pages_processed = 0;
+        $current_batch_size = 0;
 
         // 黑名单公司列表
-        $blackCompanyList = $this->getBlackCompanyList();
-        $blackAdvList = $company->where(['company_name' => ['in', $blackCompanyList]])->column('advertiser_id');
+        $black_company_list = $this->getBlackCompanyList();
+        $black_adv_list = $company->where(['company_name' => ['in', $black_company_list]])->column('advertiser_id');
 
         do {
             // 基于ID分页查询
@@ -502,11 +502,11 @@ class QcGlobal extends Controller
                 ->where([
                     'adopt_status_message' => "success",
                     'create_time' => ['between', [strtotime('-7 days'), time()]],
-                    'id' => ['>', $lastProcessedId]
+                    'id' => ['>', $last_processed_id]
                 ])
                 ->field('id,adv_id,old_material_id,video_id')
                 ->order('id asc')
-                ->limit($pageSize)
+                ->limit($page_size)
                 ->select();
 
             if (empty($list)) {
@@ -519,30 +519,30 @@ class QcGlobal extends Controller
                 // 返回完成状态
                 return [
                     'completed' => true,
-                    'total_processed' => $totalProcessed,
-                    'pages_processed' => $pagesProcessed,
-                    'current_batch_size' => $currentBatchSize,
+                    'total_processed' => $total_processed,
+                    'pages_processed' => $pages_processed,
+                    'current_batch_size' => $current_batch_size,
                     'message' => '所有数据处理完成'
                 ];
             }
 
-            $currentBatchSize = count($list);
-            $totalProcessed += $currentBatchSize;
-            $pagesProcessed++;
+            $current_batch_size = count($list);
+            $total_processed += $current_batch_size;
+            $pages_processed++;
 
-            echo "📄 正在处理第 {$pagesProcessed} 页，{$currentBatchSize} 条记录\n";
+            echo "📄 正在处理第 {$pages_processed} 页，{$current_batch_size} 条记录\n";
 
             // 处理当前批次数据
-            $this->processBatchMaterials($list, $obj_material, $blackAdvList);
+            $this->processBatchMaterials($list, $obj_material, $black_adv_list);
 
             // 更新最后处理的ID
-            $lastId = end($list)['id'];
-            $lastProcessedId = $lastId;
-            Cache::set('adoptMaterial_last_id', $lastProcessedId, 3600 * 24);
+            $last_id = end($list)['id'];
+            $last_processed_id = $last_id;
+            Cache::set('adoptMaterial_last_id', $last_processed_id, 3600 * 24);
 
             // 更新处理统计到缓存
-            Cache::set('adoptMaterial_total_processed', $totalProcessed, 3600 * 24);
-            Cache::set('adoptMaterial_pages_processed', $pagesProcessed, 3600 * 24);
+            Cache::set('adoptMaterial_total_processed', $total_processed, 3600 * 24);
+            Cache::set('adoptMaterial_pages_processed', $pages_processed, 3600 * 24);
 
             // 清除完成标记（因为还在处理中）
             Cache::rm('adoptMaterial_completed');
@@ -558,106 +558,240 @@ class QcGlobal extends Controller
         // 返回未完成状态（理论上不会到达这里）
         return [
             'completed' => false,
-            'total_processed' => $totalProcessed,
-            'pages_processed' => $pagesProcessed,
-            'current_batch_size' => $currentBatchSize,
+            'total_processed' => $total_processed,
+            'pages_processed' => $pages_processed,
+            'current_batch_size' => $current_batch_size,
             'message' => '处理中断'
         ];
     }
 
     /**
-     * 处理单个批次的素材数据
+     * 处理单个批次的素材数据 - 高性能版本
      */
-    private function processBatchMaterials($list, $obj_material, $blackAdvList)
+    private function processBatchMaterials($list, $obj_material, $black_adv_list)
     {
         if (empty($list)) {
             return;
         }
 
-        // 组织数据：按 adv_id + old_material_id 分组
-        $old_material_list = [];
-        foreach ($list as $item) {
-            $key = $item['adv_id'] . "_" . $item['old_material_id'];
-            if (!isset($old_material_list[$key])) {
-                $old_material_list[$key] = [];
-            }
-            // 避免重复的video_id
-            if (!in_array($item['video_id'], $old_material_list[$key])) {
-                $old_material_list[$key][] = $item['video_id'];
-            }
+        // 1. 数据预处理和分组
+        $processed_data = $this->preprocessBatchData($list, $black_adv_list);
+        if (empty($processed_data)) {
+            return;
         }
 
-        foreach ($old_material_list as $key => $material_list) {
-            list($adv_id, $old_material_id) = explode('_', $key);
-            // 检查是否在黑名单中
-            if (in_array($adv_id, $blackAdvList)) {
+        // 2. 批量查询所有需要的数据（一次性查询）
+        $batch_data = $this->batchQueryAllData($processed_data, $obj_material);
+
+        // 3. 批量处理和推送队列
+        $this->batchProcessAndQueue($batch_data);
+    }
+
+    /**
+     * 数据预处理和分组 - 高性能版本
+     */
+    private function preprocessBatchData($list, $black_adv_list)
+    {
+        $processed_data = [];
+        $black_adv_set = array_flip($black_adv_list); // 转为哈希表，O(1)查找
+
+        foreach ($list as $item) {
+            $adv_id = $item['adv_id'];
+            $old_material_id = $item['old_material_id'];
+            $video_id = $item['video_id'];
+
+            // 快速跳过黑名单 - O(1)查找
+            if (isset($black_adv_set[$adv_id])) {
                 continue;
             }
 
-            // 修复：使用 old_material_id 找到使用了原素材的计划
-            // 业务逻辑：如果计划投放过原素材id，那么裂变出来的素材也应该采纳进去对应计划
-            $obj_list_data = $obj_material
-                ->alias('om')
-                ->join('qc_global_obj qo', 'om.adv_id=qo.adv_id', 'left')
-                ->field('om.obj_id,ANY_VALUE(om.product_info) as product_info')
-                ->where(['om.adv_id' => $adv_id, 'om.material_id' => $old_material_id])
-                ->where(['om.material_status' => 'DELIVERY_OK','om.cost_date'=>strtotime(date('Y-m-d'))])
-                ->whereNotNull('om.product_info')
-                ->where(function ($query) {
-                    $query->whereIn('qo.obj_status', ['DELIVERY_OK', 'DISABLE', 'SYSTEM_DISABLE'])
-                        ->whereOr(['qo.opt_status' => ['in', ['ENABLE', 'DISABLE']]]);
-                })
-                ->group('om.obj_id')
-                ->select();
+            // 使用哈希表去重video_id，避免in_array的O(n)查找
+            $processed_data[$adv_id][$old_material_id][$video_id] = true;
+        }
 
-            // 转换为原来的数据格式
-            $obj_list = [];
-            foreach ($obj_list_data as $item) {
-                $obj_list[$item['obj_id']] = $item['product_info'];
+        // 转换为数组格式
+        $result = [];
+        foreach ($processed_data as $adv_id => $material_data) {
+            foreach ($material_data as $old_material_id => $video_set) {
+                $result[$adv_id][$old_material_id] = array_keys($video_set);
             }
+        }
 
-            if ($obj_list) {
-                $obj_product = [];
-                foreach ($obj_list as $obj_id => $product_info) {
-                    // 处理两种格式的 product_info 字符串
-                    // 格式1: 转义的JSON字符串 "[{\"product_id\": 123, ...}]"
-                    // 格式2: 未转义的JSON字符串 "[{"product_id": 123, ...}]"
-                    $decoded_product_info = json_decode($product_info, true);
+        return $result;
+    }
 
-                    // 如果第一次解码失败，尝试处理可能的双重编码问题
-                    if (is_null($decoded_product_info) && is_string($product_info)) {
-                        // 尝试再次解码，处理双重转义的情况
-                        $decoded_product_info = json_decode(json_decode($product_info, true), true);
-                    }
+    /**
+     * 批量查询所有需要的数据
+     */
+    private function batchQueryAllData($processed_data, $obj_material)
+    {
+        $all_adv_ids = array_keys($processed_data);
+        $all_material_ids = [];
 
-                    if (is_array($decoded_product_info)) {
-                        $productIds = array_column($decoded_product_info, 'product_id');
-                        if (!empty($productIds)) {
-                            $obj_product[$obj_id] = $productIds;
-                        }
-                    }
+        // 收集所有material_id
+        foreach ($processed_data as $adv_data) {
+            $all_material_ids = array_merge($all_material_ids, array_keys($adv_data));
+        }
+        $all_material_ids = array_unique($all_material_ids);
+
+        // 批量查询计划数据 - 利用 idx_adv_material_hash 索引
+        $plan_data = $this->batchQueryPlanData($all_adv_ids, $all_material_ids, $obj_material);
+
+        // 批量查询素材数量统计 - 利用 idx_adv_obj_cost_stat 索引
+        $material_counts = $this->batchQueryMaterialCountsOptimized($all_adv_ids);
+
+        // 批量查询已存在记录
+        $existing_records = $this->batchQueryExistingRecords($all_adv_ids);
+
+        return [
+            'processed_data' => $processed_data,
+            'plan_data' => $plan_data,
+            'material_counts' => $material_counts,
+            'existing_records' => $existing_records
+        ];
+    }
+
+    /**
+     * 批量处理和推送队列
+     */
+    private function batchProcessAndQueue($batch_data)
+    {
+        $processed_data = $batch_data['processed_data'];
+        $plan_data = $batch_data['plan_data'];
+        $material_counts = $batch_data['material_counts'];
+        $existing_records = $batch_data['existing_records'];
+
+        foreach ($processed_data as $adv_id => $material_data) {
+            foreach ($material_data as $old_material_id => $video_ids) {
+                // 获取该素材对应的计划数据
+                $key = "{$adv_id}_{$old_material_id}";
+                if (!isset($plan_data[$key])) {
+                    continue;
                 }
 
-                if (!empty($obj_product)) {
-                    // 过滤已存在的记录
-                    $filteredObjProduct = $this->filterExistingRecords($adv_id, $obj_product, $material_list);
-                    if (!empty($filteredObjProduct)) {
-                        // 分批处理video_ids，每批最多200个
-                        $videoIds = array_values($material_list);
-                        $videoBatches = array_chunk($videoIds, 200);
+                $obj_product = $plan_data[$key];
 
-                        foreach ($videoBatches as $videoBatch) {
-                            $taskData = [
-                                'adv_id' => $adv_id,
-                                'obj_ids' => $filteredObjProduct,
-                                'video_ids' => $videoBatch,
-                            ];
-                            Queue::push('app\job\fission\AdoptMaterialIntoObj', $taskData, 'adoptMaterialIntoObj');
-                        }
-                    }
+                // 应用素材数量限制过滤
+                $filtered_obj_product = $this->applyMaterialLimitFilter($adv_id, $obj_product, $material_counts);
+
+                // 应用已存在记录过滤
+                $final_obj_product = $this->applyExistingRecordsFilter($adv_id, $filtered_obj_product, $video_ids, $existing_records);
+
+                if (!empty($final_obj_product)) {
+                    // 分批推送到队列
+                    $this->pushToQueue($adv_id, $final_obj_product, $video_ids);
                 }
             }
         }
+    }
+
+    /**
+     * 批量查询计划数据 - 利用索引优化
+     */
+    private function batchQueryPlanData($all_adv_ids, $all_material_ids, $obj_material)
+    {
+        $plan_data = [];
+        $cost_date = strtotime(date('Y-m-d'));
+
+        // 使用 idx_adv_material_hash 索引进行高效查询
+        $results = $obj_material
+            ->alias('om')
+            ->join('qc_global_obj qo', 'om.obj_id = qo.obj_id AND om.adv_id = qo.adv_id', 'INNER')
+            ->field('om.adv_id, om.material_id, om.obj_id, om.product_info')
+            ->whereIn('om.adv_id', $all_adv_ids)
+            ->whereIn('om.material_id', $all_material_ids)
+            ->where([
+                'om.material_status' => 'DELIVERY_OK',
+                'om.cost_date' => $cost_date
+            ])
+            ->whereNotNull('om.product_info')
+            ->where(function ($query) {
+                $query->whereIn('qo.obj_status', ['DELIVERY_OK', 'DISABLE', 'SYSTEM_DISABLE'])
+                    ->whereOr(['qo.opt_status' => ['in', ['ENABLE', 'DISABLE']]]);
+            })
+            ->select();
+
+        // 组织数据结构
+        foreach ($results as $row) {
+            $key = "{$row['adv_id']}_{$row['material_id']}";
+            $obj_id = $row['obj_id'];
+            $product_info = $row['product_info'];
+
+            // 解析产品信息
+            $decoded_product_info = json_decode($product_info, true);
+            if ($decoded_product_info === null && is_string($product_info)) {
+                $decoded_product_info = json_decode(json_decode($product_info, true), true);
+            }
+
+            if (is_array($decoded_product_info)) {
+                $product_ids = array_column($decoded_product_info, 'product_id');
+                if (!empty($product_ids)) {
+                    $plan_data[$key][$obj_id] = $product_ids;
+                }
+            }
+        }
+
+        return $plan_data;
+    }
+
+    /**
+     * 批量查询素材数量统计 - 优化版本
+     */
+    private function batchQueryMaterialCountsOptimized($all_adv_ids)
+    {
+        $material_counts = [];
+
+        // 使用 idx_adv_obj_cost_stat 索引进行高效查询
+        $results = Db::name('fission_global_obj_material_202508')
+            ->field('adv_id, obj_id, product_info')
+            ->whereIn('adv_id', $all_adv_ids)
+            ->where('material_status', 'DELIVERY_OK')
+            ->whereNotNull('product_info')
+            ->select();
+
+        // 在内存中统计，避免重复查询
+        foreach ($results as $row) {
+            $adv_id = $row['adv_id'];
+            $obj_id = $row['obj_id'];
+            $product_info = $row['product_info'];
+
+            // 解析产品信息
+            $decoded_product_info = json_decode($product_info, true);
+            if ($decoded_product_info === null && is_string($product_info)) {
+                $decoded_product_info = json_decode(json_decode($product_info, true), true);
+            }
+
+            if (is_array($decoded_product_info)) {
+                $product_ids = array_column($decoded_product_info, 'product_id');
+                foreach ($product_ids as $product_id) {
+                    $key = "{$adv_id}_{$obj_id}_{$product_id}";
+                    $material_counts[$key] = ($material_counts[$key] ?? 0) + 1;
+                }
+            }
+        }
+
+        return $material_counts;
+    }
+
+    /**
+     * 批量查询已存在记录
+     */
+    private function batchQueryExistingRecords($all_adv_ids)
+    {
+        $existing_records = [];
+
+        $results = Db::name('fission_into_obj_record')
+            ->field('adv_id, obj_id, product_id, mid')
+            ->whereIn('adv_id', $all_adv_ids)
+            ->select();
+
+        foreach ($results as $row) {
+            $key = "{$row['adv_id']}_{$row['obj_id']}_{$row['product_id']}";
+            $existing_video_ids = explode(',', $row['mid']);
+            $existing_records[$key] = $existing_video_ids;
+        }
+
+        return $existing_records;
     }
 
     /**
@@ -676,45 +810,45 @@ class QcGlobal extends Controller
             ->count();
 
         // 获取当前进度
-        $lastProcessedId = Cache::get('adoptMaterial_last_id', 0);
+        $last_processed_id = Cache::get('adoptMaterial_last_id', 0);
         $processed = 0;
 
-        if ($lastProcessedId > 0) {
+        if ($last_processed_id > 0) {
             $processed = $fission_material
                 ->where([
                     'adopt_status_message' => "success",
                     'create_time' => ['between', [strtotime('-7 days'), time()]],
-                    'id' => ['<=', $lastProcessedId]
+                    'id' => ['<=', $last_processed_id]
                 ])
                 ->count();
         }
 
         // 检查是否有新数据（ID大于最后处理的ID）
-        $newDataCount = 0;
-        if ($lastProcessedId > 0) {
-            $newDataCount = $fission_material
+        $new_data_count = 0;
+        if ($last_processed_id > 0) {
+            $new_data_count = $fission_material
                 ->where([
                     'adopt_status_message' => "success",
                     'create_time' => ['between', [strtotime('-10 days'), time()]],
-                    'id' => ['>', $lastProcessedId]
+                    'id' => ['>', $last_processed_id]
                 ])
                 ->count();
         }
 
-        $pageSize = $this->getOptimalPageSize();
-        $estimatedPages = ceil($total / $pageSize);
-        $currentPage = ceil($processed / $pageSize);
+        $page_size = $this->getOptimalPageSize();
+        $estimated_pages = ceil($total / $page_size);
+        $current_page = ceil($processed / $page_size);
 
-        $progressPercent = $total > 0 ? round(($processed / $total) * 100, 2) : 0;
+        $progress_percent = $total > 0 ? round(($processed / $total) * 100, 2) : 0;
 
         // 如果之前已完成但现在有新数据，重置状态
-        $hasNewData = $newDataCount > 0;
-        $wasCompleted = Cache::get('adoptMaterial_completed', false);
+        $has_new_data = $new_data_count > 0;
+        $was_completed = Cache::get('adoptMaterial_completed', false);
 
-        if ($wasCompleted && $hasNewData) {
+        if ($was_completed && $has_new_data) {
             // 发现新数据，准备重新开始
             $status = "发现新数据，准备重新处理";
-        } elseif ($newDataCount == 0 && $processed >= $total && $total > 0) {
+        } elseif ($new_data_count == 0 && $processed >= $total && $total > 0) {
             // 真正完成
             Cache::set('adoptMaterial_completed', true, 3600 * 24);
             $status = "全部处理完成";
@@ -728,15 +862,97 @@ class QcGlobal extends Controller
             'total' => $total,
             'processed' => $processed,
             'remaining' => $total - $processed,
-            'new_data_count' => $newDataCount,
-            'has_new_data' => $hasNewData,
-            'estimated_pages' => $estimatedPages,
-            'current_page' => $currentPage,
-            'progress_percent' => $progressPercent,
+            'new_data_count' => $new_data_count,
+            'has_new_data' => $has_new_data,
+            'estimated_pages' => $estimated_pages,
+            'current_page' => $current_page,
+            'progress_percent' => $progress_percent,
             'status' => $status,
-            'progress_info' => "已处理 {$processed}/{$total} 条记录 ({$progressPercent}%)" .
-                ($hasNewData ? "，发现 {$newDataCount} 条新数据" : "")
+            'progress_info' => "已处理 {$processed}/{$total} 条记录 ({$progress_percent}%)" .
+                ($has_new_data ? "，发现 {$new_data_count} 条新数据" : "")
         ];
+    }
+
+    /**
+     * 应用素材数量限制过滤
+     */
+    private function applyMaterialLimitFilter($adv_id, $obj_product, $material_counts)
+    {
+        $filtered_obj_product = [];
+        $material_limit = 500;
+
+        foreach ($obj_product as $obj_id => $product_ids) {
+            $filtered_product_ids = [];
+
+            foreach ($product_ids as $product_id) {
+                $key = "{$adv_id}_{$obj_id}_{$product_id}";
+                $current_count = $material_counts[$key] ?? 0;
+                $remaining_slots = $material_limit - $current_count;
+
+                if ($remaining_slots > 0) {
+                    $filtered_product_ids[] = $product_id;
+                    echo "✅ 计划 {$obj_id} 产品 {$product_id}: 已有 {$current_count} 个素材，还可添加 {$remaining_slots} 个\n";
+                } else {
+                    echo "⚠️ 计划 {$obj_id} 产品 {$product_id}: 已达到上限 ({$current_count}/{$material_limit})，跳过\n";
+                }
+            }
+
+            if (!empty($filtered_product_ids)) {
+                $filtered_obj_product[$obj_id] = $filtered_product_ids;
+            }
+        }
+
+        return $filtered_obj_product;
+    }
+
+    /**
+     * 应用已存在记录过滤
+     */
+    private function applyExistingRecordsFilter($adv_id, $obj_product, $video_ids, $existing_records)
+    {
+        $filtered_obj_product = [];
+
+        foreach ($obj_product as $obj_id => $product_ids) {
+            $filtered_product_ids = [];
+
+            foreach ($product_ids as $product_id) {
+                $key = "{$adv_id}_{$obj_id}_{$product_id}";
+                $existing_video_ids = $existing_records[$key] ?? [];
+
+                // 检查是否有重叠的video_id
+                $has_overlap = !empty(array_intersect($video_ids, $existing_video_ids));
+
+                if (!$has_overlap) {
+                    $filtered_product_ids[] = $product_id;
+                } else {
+                    echo "🔄 计划 {$obj_id} 产品 {$product_id}: 已存在相同素材，跳过\n";
+                }
+            }
+
+            if (!empty($filtered_product_ids)) {
+                $filtered_obj_product[$obj_id] = $filtered_product_ids;
+            }
+        }
+
+        return $filtered_obj_product;
+    }
+
+    /**
+     * 推送到队列
+     */
+    private function pushToQueue($adv_id, $obj_product, $video_ids)
+    {
+        // 分批处理video_ids，每批最多200个
+        $video_batches = array_chunk($video_ids, 200);
+
+        foreach ($video_batches as $video_batch) {
+            $task_data = [
+                'adv_id' => $adv_id,
+                'obj_ids' => $obj_product,
+                'video_ids' => $video_batch,
+            ];
+            Queue::push('app\job\fission\AdoptMaterialIntoObj', $task_data, 'adoptMaterialIntoObj');
+        }
     }
 
     /**
@@ -769,72 +985,73 @@ class QcGlobal extends Controller
      */
     private function filterExistingRecords($adv_id, $obj_product, $material_list)
     {
-        $filteredObjProduct = [];
+        $filtered_obj_product = [];
 
         // 构建所有需要检查的组合
-        $checkCombinations = [];
+        $check_combinations = [];
         foreach ($obj_product as $obj_id => $product_ids) {
             foreach ($product_ids as $product_id) {
-                $checkCombinations[] = [
+                $check_combinations[] = [
                     'obj_id' => $obj_id,
                     'product_id' => $product_id,
-                    'key' => $obj_id . '_' . $product_id
+                    'key' => "{$obj_id}_{$product_id}"
                 ];
             }
         }
 
-        if (empty($checkCombinations)) {
-            return $filteredObjProduct;
+        if (empty($check_combinations)) {
+            return $filtered_obj_product;
         }
 
         // 批量查询已存在的记录
-        $existingRecords = \think\Db::name('fission_into_obj_record')
+        $existing_records = Db::name('fission_into_obj_record')
             ->where('adv_id', $adv_id)
             ->whereIn('obj_id', array_keys($obj_product))
             ->field('obj_id, product_id, mid')
             ->select();
 
         // 构建已存在记录的索引（检查是否有任何video_id重叠）
-        $existingKeys = [];
-        foreach ($existingRecords as $record) {
+        $existing_keys = [];
+        foreach ($existing_records as $record) {
             // 检查当前批次的video_id是否与已存在记录的mid有重叠
-            $existingVideoIds = explode(',', $record['mid']);
-            $hasOverlap = !empty(array_intersect($material_list, $existingVideoIds));
+            $existing_video_ids = explode(',', $record['mid']);
+            $has_overlap = !empty(array_intersect($material_list, $existing_video_ids));
 
-            if ($hasOverlap) {
+            if ($has_overlap) {
                 $key = $record['obj_id'] . '_' . $record['product_id'];
-                $existingKeys[$key] = true;
+                $existing_keys[$key] = true;
             }
         }
 
-        $skippedCount = 0;
+        $skipped_count = 0;
 
         // 过滤掉已存在的记录
         foreach ($obj_product as $obj_id => $product_ids) {
-            $filteredProductIds = [];
+            $filtered_product_ids = [];
 
             foreach ($product_ids as $product_id) {
-                $key = $obj_id . '_' . $product_id;
+                $key = "{$obj_id}_{$product_id}";
 
-                if (!isset($existingKeys[$key])) {
-                    $filteredProductIds[] = $product_id;
+                if (!isset($existing_keys[$key])) {
+                    $filtered_product_ids[] = $product_id;
                 } else {
-                    $skippedCount++;
+                    $skipped_count++;
                 }
             }
 
             // 如果该计划还有未处理的产品，则保留
-            if (!empty($filteredProductIds)) {
-                $filteredObjProduct[$obj_id] = $filteredProductIds;
+            if (!empty($filtered_product_ids)) {
+                $filtered_obj_product[$obj_id] = $filtered_product_ids;
             }
         }
 
-        // if ($skippedCount > 0) {
-        //     echo "账户 {$adv_id} 跳过已存在记录: {$skippedCount} 条\n";
+        // if ($skipped_count > 0) {
+        //     echo "账户 {$adv_id} 跳过已存在记录: {$skipped_count} 条\n";
         // }
 
-        return $filteredObjProduct;
+        return $filtered_obj_product;
     }
+
 
 
     /**
@@ -845,15 +1062,15 @@ class QcGlobal extends Controller
      */
     private function getBlackCompanyList(string $file_name="black_company_config.php"): array
     {
-        $configFilePath = __DIR__ . '/'.$file_name;
+        $config_file_path = __DIR__ . '/'.$file_name;
 
         // 尝试从PHP配置文件读取
-        if (file_exists($configFilePath)) {
+        if (file_exists($config_file_path)) {
             try {
-                $blackCompanyList = include $configFilePath;
-                if (is_array($blackCompanyList) && !empty($blackCompanyList)) {
-//                    echo "从 black_company_config.php 文件读取到 " . count($blackCompanyList) . " 个黑名单公司\n";
-                    return $blackCompanyList;
+                $black_company_list = include $config_file_path;
+                if (is_array($black_company_list) && !empty($black_company_list)) {
+//                    echo "从 black_company_config.php 文件读取到 " . count($black_company_list) . " 个黑名单公司\n";
+                    return $black_company_list;
                 }
             } catch (Exception $e) {
                 echo "读取配置文件失败: " . $e->getMessage() . "\n";
