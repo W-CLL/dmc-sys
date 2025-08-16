@@ -22,3 +22,5 @@ node_modules
 .user.ini
 /public/share_wallet_images/
 /public/transfer_images/
+/application/api/controller/fission/black_company_config_fission.php
+/application/api/controller/fission/black_company_config.php

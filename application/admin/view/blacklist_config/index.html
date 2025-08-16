@@ -1,0 +1,1118 @@
+<div class="panel panel-default panel-intro">
+    <div class="panel-heading">
+        <h3 class="panel-title">
+            <i class="fa fa-shield"></i> 黑名单配置管理
+            <small class="text-muted">管理推广黑名单公司配置</small>
+        </h3>
+    </div>
+
+    <div class="panel-body">
+
+
+        <!-- 标签页导航 -->
+        <div class="nav-tabs-custom">
+            <ul class="nav nav-tabs">
+                <li class="active">
+                    <a href="#tab-standard" data-toggle="tab">
+                        <i class="fa fa-cog"></i> 不愿意推送到计划公司名单
+                        <span class="badge bg-blue" id="standard-badge">{$configs.standard.count|default=0}</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#tab-fission" data-toggle="tab">
+                        <i class="fa fa-sitemap"></i> 不愿意推送素材公司名单
+                        <span class="badge bg-green" id="fission-badge">{$configs.fission.count|default=0}</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="tab-content">
+                <!-- 标准推广黑名单标签页 -->
+                <div class="tab-pane active" id="tab-standard">
+                    <div class="row">
+                        <!-- 左侧显示区域 -->
+                        <div class="col-md-8">
+                            <div class="box box-primary">
+                                <div class="box-header with-border">
+                                    <h3 class="box-title">
+                                        <i class="fa fa-list"></i> 不愿意推送到计划公司名单
+                                    </h3>
+                                    <div class="box-tools pull-right">
+                                        <div class="input-group input-group-sm" style="width: 220px;">
+                                            <input type="text" id="search-standard" class="form-control search-input" placeholder="🔍 搜索公司名称...">
+                                            <div class="input-group-btn">
+                                                <button type="button" class="btn btn-primary search-btn">
+                                                    <i class="fa fa-search"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="box-body">
+                                    <div class="form-group">
+                                        <label><i class="fa fa-building text-primary"></i> 公司名称列表</label>
+                                        <div class="company-list-display" style="max-height: 500px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; background-color: #f9f9f9;">
+                                            <div id="standard-company-list">
+                                                {if $configs.standard.count > 0}
+                                                    {foreach $configs.standard.data as $key => $company}
+                                                        <div class="company-item" data-company="{$company}">
+                                                            <span class="company-index">{$key + 1}.</span>
+                                                            <span class="company-name">{$company}</span>
+                                                            <button type="button" class="btn btn-xs btn-danger pull-right remove-company" data-type="standard" data-company="{$company}">
+                                                                <i class="fa fa-times"></i>
+                                                            </button>
+                                                        </div>
+                                                    {/foreach}
+                                                {else}
+                                                    <div class="text-muted text-center">暂无公司名单</div>
+                                                {/if}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="box-footer">
+                                    <button type="button" class="btn btn-warning" id="clear-all-standard">
+                                        <i class="fa fa-trash"></i> 清空所有
+                                    </button>
+                                    <button type="button" class="btn btn-info" id="export-standard">
+                                        <i class="fa fa-download"></i> 导出列表
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 右侧操作区域 -->
+                        <div class="col-md-4">
+                            <div class="box box-success">
+                                <div class="box-header with-border">
+                                    <h3 class="box-title">
+                                        <i class="fa fa-plus"></i> 新增公司
+                                    </h3>
+                                </div>
+                                <div class="box-body">
+                                    <form id="add-standard-form">
+                                        <div class="form-group">
+                                            <label><i class="fa fa-plus-circle text-success"></i> 单个新增</label>
+                                            <div class="input-group">
+                                                <input type="text" id="new-standard-company" class="form-control" placeholder="输入公司名称">
+                                                <span class="input-group-btn">
+                                                    <button type="button" class="btn btn-primary" id="add-standard-company">
+                                                        <i class="fa fa-plus"></i> 添加
+                                                    </button>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+
+                            <div class="box box-info">
+                                <div class="box-header with-border">
+                                    <h3 class="box-title">
+                                        <i class="fa fa-upload"></i> 批量导入
+                                    </h3>
+                                </div>
+                                <div class="box-body">
+                                    <div class="form-group">
+                                        <label><i class="fa fa-upload text-info"></i> 批量导入公司名称</label>
+                                        <textarea
+                                            id="import-standard-text"
+                                            class="form-control"
+                                            rows="8"
+                                            placeholder="📝 粘贴公司名称列表，支持逗号、分号、换行分隔..."
+                                        ></textarea>
+                                    </div>
+                                    <button type="button" class="btn btn-info btn-block" id="import-standard-btn">
+                                        <i class="fa fa-upload"></i> 批量导入
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="box box-success">
+                                <div class="box-body">
+                                    <button type="button" class="btn btn-success btn-block btn-lg" id="save-standard-config">
+                                        <i class="fa fa-save"></i> 保存配置
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 裂变推广黑名单标签页 -->
+                <div class="tab-pane" id="tab-fission">
+                    <div class="row">
+                        <!-- 左侧显示区域 -->
+                        <div class="col-md-8">
+                            <div class="box box-success">
+                                <div class="box-header with-border">
+                                    <h3 class="box-title">
+                                        <i class="fa fa-list"></i> 不愿意推送素材公司名单
+                                    </h3>
+                                    <div class="box-tools pull-right">
+                                        <div class="input-group input-group-sm" style="width: 220px;">
+                                            <input type="text" id="search-fission" class="form-control search-input" placeholder="🔍 搜索公司名称...">
+                                            <div class="input-group-btn">
+                                                <button type="button" class="btn btn-primary search-btn">
+                                                    <i class="fa fa-search"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="box-body">
+                                    <div class="form-group">
+                                        <label><i class="fa fa-sitemap text-success"></i> 公司名称列表</label>
+                                        <div class="company-list-display" style="max-height: 500px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; background-color: #f9f9f9;">
+                                            <div id="fission-company-list">
+                                                {if $configs.fission.count > 0}
+                                                    {foreach $configs.fission.data as $key => $company}
+                                                        <div class="company-item" data-company="{$company}">
+                                                            <span class="company-index">{$key + 1}.</span>
+                                                            <span class="company-name">{$company}</span>
+                                                            <button type="button" class="btn btn-xs btn-danger pull-right remove-company" data-type="fission" data-company="{$company}">
+                                                                <i class="fa fa-times"></i>
+                                                            </button>
+                                                        </div>
+                                                    {/foreach}
+                                                {else}
+                                                    <div class="text-muted text-center">暂无公司名单</div>
+                                                {/if}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="box-footer">
+                                    <button type="button" class="btn btn-warning" id="clear-all-fission">
+                                        <i class="fa fa-trash"></i> 清空所有
+                                    </button>
+                                    <button type="button" class="btn btn-info" id="export-fission">
+                                        <i class="fa fa-download"></i> 导出列表
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 右侧操作区域 -->
+                        <div class="col-md-4">
+                            <div class="box box-primary">
+                                <div class="box-header with-border">
+                                    <h3 class="box-title">
+                                        <i class="fa fa-plus"></i> 新增公司
+                                    </h3>
+                                </div>
+                                <div class="box-body">
+                                    <form id="add-fission-form">
+                                        <div class="form-group">
+                                            <label>单个新增</label>
+                                            <div class="input-group">
+                                                <input type="text" id="new-fission-company" class="form-control" placeholder="输入公司名称">
+                                                <span class="input-group-btn">
+                                                    <button type="button" class="btn btn-success" id="add-fission-company">
+                                                        <i class="fa fa-plus"></i> 添加
+                                                    </button>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+
+                            <div class="box box-info">
+                                <div class="box-header with-border">
+                                    <h3 class="box-title">
+                                        <i class="fa fa-upload"></i> 批量导入
+                                    </h3>
+                                </div>
+                                <div class="box-body">
+                                    <div class="form-group">
+                                        <label><i class="fa fa-upload text-info"></i> 批量导入公司名称</label>
+                                        <textarea
+                                            id="import-fission-text"
+                                            class="form-control"
+                                            rows="8"
+                                            placeholder="📝 粘贴公司名称列表，支持逗号、分号、换行分隔..."
+                                        ></textarea>
+                                    </div>
+                                    <button type="button" class="btn btn-info btn-block" id="import-fission-btn">
+                                        <i class="fa fa-upload"></i> 批量导入
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="box box-success">
+                                <div class="box-body">
+                                    <button type="button" class="btn btn-success btn-block btn-lg" id="save-fission-config">
+                                        <i class="fa fa-save"></i> 保存配置
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- 自定义样式 -->
+        <style>
+        /* 公司列表项样式 */
+        .company-item {
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+            border: 1px solid #e3e6f0;
+            border-radius: 8px;
+            position: relative;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .company-item:hover {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-color: #5a6c7d;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateY(-1px);
+        }
+
+        .company-item:nth-child(even) {
+            background: linear-gradient(135deg, #f8f9fa 0%, #fff 100%);
+        }
+
+        .company-item:nth-child(even):hover {
+            background: linear-gradient(135deg, #e9ecef 0%, #f8f9fa 100%);
+        }
+
+        .company-index {
+            color: #6c757d;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 12px;
+            min-width: 30px;
+            text-align: right;
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 12px;
+            display: inline-block;
+        }
+
+        .company-name {
+            font-size: 14px;
+            color: #495057;
+            font-weight: 500;
+            flex: 1;
+            line-height: 1.4;
+        }
+
+        .remove-company {
+            margin-left: 12px;
+            opacity: 0.6;
+            transition: all 0.2s ease;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .remove-company:hover {
+            opacity: 1;
+            background-color: #dc3545;
+            border-color: #dc3545;
+            transform: scale(1.1);
+        }
+
+        /* 列表容器样式 */
+        .company-list-display {
+            font-family: 'Microsoft YaHei', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(145deg, #f8f9fa 0%, #fff 100%);
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.06);
+        }
+
+        .company-list-display:empty::after {
+            content: "暂无公司名单";
+            color: #6c757d;
+            text-align: center;
+            display: block;
+            padding: 40px 20px;
+            font-size: 16px;
+            font-weight: 500;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%236c757d"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>') no-repeat center top;
+            background-size: 48px 48px;
+            padding-top: 80px;
+        }
+
+        /* 搜索高亮 */
+        .search-highlight {
+            background: linear-gradient(120deg, #fff3cd 0%, #ffeaa7 100%);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+            box-shadow: 0 1px 3px rgba(255,193,7,0.3);
+        }
+
+        /* 标签页样式优化 */
+        .nav-tabs-custom {
+            margin-top: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            overflow: hidden;
+            background: #fff;
+        }
+
+        .nav-tabs-custom > .nav-tabs {
+            border-bottom: none;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        }
+
+        .nav-tabs-custom > .nav-tabs > li > a {
+            border: none;
+            border-radius: 0;
+            padding: 15px 25px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .nav-tabs-custom > .nav-tabs > li.active > a {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+            border: none;
+        }
+
+        .nav-tabs-custom > .nav-tabs > li > a:hover {
+            background: rgba(0,123,255,0.1);
+            border: none;
+        }
+
+        /* 徽章样式 */
+        .badge {
+            font-size: 11px;
+            margin-left: 8px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .bg-blue {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important;
+        }
+
+        .bg-green {
+            background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%) !important;
+        }
+
+        /* 盒子样式优化 */
+        .box {
+            border-radius: 16px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+            border: 1px solid rgba(0,0,0,0.05);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            background: #fff;
+            margin-bottom: 25px;
+        }
+
+        .box:hover {
+            box-shadow: 0 12px 35px rgba(0,0,0,0.12);
+            transform: translateY(-2px);
+        }
+
+        .box-header {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            padding: 20px;
+        }
+
+        .box-primary {
+            border-top: 4px solid #007bff;
+        }
+
+        .box-primary .box-header {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+        }
+
+        .box-success {
+            border-top: 4px solid #28a745;
+        }
+
+        .box-success .box-header {
+            background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+            color: white;
+        }
+
+        .box-info {
+            border-top: 4px solid #17a2b8;
+        }
+
+        .box-info .box-header {
+            background: linear-gradient(135deg, #17a2b8 0%, #117a8b 100%);
+            color: white;
+        }
+
+        .box-warning {
+            border-top: 4px solid #ffc107;
+        }
+
+        .box-warning .box-header {
+            background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+            color: #212529;
+        }
+
+        .box-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        .box-body {
+            padding: 20px;
+            background: #fff;
+        }
+
+        .box-footer {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-top: 1px solid rgba(0,0,0,0.05);
+            padding: 20px;
+        }
+
+        /* 按钮样式优化 */
+        .btn {
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            border: none;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+            border: none;
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, #17a2b8 0%, #117a8b 100%);
+            border: none;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+            border: none;
+            color: #212529;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            border: none;
+        }
+
+        /* 表单控件样式 */
+        .form-control {
+            border-radius: 8px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+            padding: 10px 15px;
+            font-size: 14px;
+        }
+
+        .form-control:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+            transform: translateY(-1px);
+        }
+
+        /* 搜索框样式优化 */
+        .input-group {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-radius: 25px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .input-group:hover {
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+            transform: translateY(-1px);
+        }
+
+        .search-input {
+            border: none !important;
+            background: rgba(255,255,255,0.9) !important;
+            border-radius: 25px 0 0 25px !important;
+            padding: 10px 16px !important;
+            font-size: 13px;
+            backdrop-filter: blur(10px);
+        }
+
+        .search-input:focus {
+            background: #fff !important;
+            box-shadow: none !important;
+            outline: none;
+        }
+
+        .search-input::placeholder {
+            color: #6c757d;
+            font-weight: 400;
+        }
+
+        .search-btn {
+            border: none !important;
+            border-radius: 0 25px 25px 0 !important;
+            padding: 10px 16px !important;
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important;
+        }
+
+        .search-btn:hover {
+            background: linear-gradient(135deg, #0056b3 0%, #004085 100%) !important;
+        }
+
+        /* 文本域样式 */
+        textarea.form-control {
+            resize: vertical;
+            min-height: 120px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            line-height: 1.5;
+        }
+
+        /* 信息卡片样式优化 */
+        .info-box {
+            display: block;
+            min-height: 120px;
+            background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+            width: 100%;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            border-radius: 16px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .info-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        }
+
+        .info-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #007bff, #28a745, #ffc107);
+        }
+
+        .info-box-icon {
+            border-radius: 16px 0 0 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            float: left;
+            height: 120px;
+            width: 100px;
+            font-size: 48px;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            position: relative;
+        }
+
+        .info-box-icon::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            right: 0;
+            width: 1px;
+            height: 60px;
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-50%);
+        }
+
+        .info-box-content {
+            padding: 15px 20px;
+            margin-left: 100px;
+            height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .info-box-number {
+            display: block;
+            font-weight: 700;
+            font-size: 32px;
+            line-height: 1;
+            margin: 8px 0;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .info-box-text {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+
+        .progress {
+            background: rgba(255,255,255,0.2);
+            margin: 8px 0;
+            height: 4px;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            background: rgba(255,255,255,0.8);
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.6s ease;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .progress-description {
+            display: block;
+            font-size: 12px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            opacity: 0.8;
+            font-weight: 400;
+        }
+
+        /* 标签样式 */
+        .label {
+            border-radius: 12px;
+            padding: 4px 12px;
+            font-weight: 600;
+        }
+
+        /* 提示框样式 */
+        .callout {
+            border-radius: 8px;
+            border-left: 4px solid;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* 滚动条样式 */
+        .company-list-display::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .company-list-display::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .company-list-display::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            border-radius: 4px;
+        }
+
+        .company-list-display::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+        }
+
+        /* 动画效果 */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(0,123,255,0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(0,123,255,0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(0,123,255,0);
+            }
+        }
+
+        @keyframes shake {
+            0%, 100% {
+                transform: translateX(0);
+            }
+            10%, 30%, 50%, 70%, 90% {
+                transform: translateX(-2px);
+            }
+            20%, 40%, 60%, 80% {
+                transform: translateX(2px);
+            }
+        }
+
+        .company-item {
+            animation: fadeInUp 0.3s ease-out;
+        }
+
+        .company-item.removing {
+            animation: shake 0.5s ease-in-out;
+        }
+
+        .btn:active {
+            animation: pulse 0.6s ease-out;
+        }
+
+        /* 加载动画 */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .fa-spinner {
+            animation: spin 1s linear infinite;
+        }
+
+        /* 成功提示动画 */
+        @keyframes bounceIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.3);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.05);
+            }
+            70% {
+                transform: scale(0.9);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .success-animation {
+            animation: bounceIn 0.6s ease-out;
+        }
+
+        /* 响应式优化 */
+        @media (max-width: 768px) {
+            .company-item {
+                padding: 10px 12px;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .company-name {
+                margin: 8px 0;
+            }
+
+            .remove-company {
+                align-self: flex-end;
+                margin: 0;
+            }
+        }
+        </style>
+    </div>
+</div>
+
+<!-- 预览模态框 -->
+<div class="modal fade" id="preview-modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title">
+                    <i class="fa fa-eye"></i> 去重预览结果
+                </h4>
+            </div>
+            <div class="modal-body">
+                <div class="nav-tabs-custom">
+                    <ul class="nav nav-tabs">
+                        <li class="active">
+                            <a href="#preview-standard-tab" data-toggle="tab">
+                                推送到计划 <span class="badge bg-blue" id="preview-standard-count">0</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#preview-fission-tab" data-toggle="tab">
+                                推送素材 <span class="badge bg-green" id="preview-fission-count">0</span>
+                            </a>
+                        </li>
+                    </ul>
+                    <div class="tab-content">
+                        <div class="tab-pane active" id="preview-standard-tab">
+                            <div class="box box-primary">
+                                <div class="box-body" style="max-height: 400px; overflow-y: auto;">
+                                    <pre id="preview-standard-content" style="border: none; background: none; padding: 0;"></pre>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tab-pane" id="preview-fission-tab">
+                            <div class="box box-success">
+                                <div class="box-body" style="max-height: 400px; overflow-y: auto;">
+                                    <pre id="preview-fission-content" style="border: none; background: none; padding: 0;"></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">
+                    <i class="fa fa-times"></i> 关闭
+                </button>
+                <button type="button" class="btn btn-primary" id="apply-preview">
+                    <i class="fa fa-check"></i> 应用预览结果
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 备份下载模态框 -->
+<div class="modal fade" id="backup-modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title">
+                    <i class="fa fa-download"></i> 备份配置文件
+                </h4>
+            </div>
+            <div class="modal-body">
+                <p>选择要备份的配置文件：</p>
+                <div class="checkbox">
+                    <label>
+                        <input type="checkbox" id="backup-standard" checked> 不愿意推送到计划公司名单配置
+                    </label>
+                </div>
+                <div class="checkbox">
+                    <label>
+                        <input type="checkbox" id="backup-fission" checked> 不愿意推送素材公司名单配置
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="download-backup">
+                    <i class="fa fa-download"></i> 下载备份
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.config-textarea {
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    border: 2px solid #ddd;
+    border-radius: 4px;
+    transition: border-color 0.3s;
+}
+
+.config-textarea:focus {
+    border-color: #3c8dbc;
+    box-shadow: 0 0 5px rgba(60, 141, 188, 0.3);
+}
+
+.info-box {
+    display: block;
+    min-height: 90px;
+    background: #fff;
+    width: 100%;
+    box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+    border-radius: 2px;
+    margin-bottom: 15px;
+}
+
+.info-box-icon {
+    border-top-left-radius: 2px;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 2px;
+    display: block;
+    float: left;
+    height: 90px;
+    width: 90px;
+    text-align: center;
+    font-size: 45px;
+    line-height: 90px;
+    background: rgba(0,0,0,0.2);
+}
+
+.info-box-content {
+    padding: 5px 10px;
+    margin-left: 90px;
+}
+
+.info-box-number {
+    display: block;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.info-box-text {
+    display: block;
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.bg-blue {
+    background-color: #3c8dbc !important;
+    color: #fff;
+}
+
+.bg-green {
+    background-color: #00a65a !important;
+    color: #fff;
+}
+
+.bg-yellow {
+    background-color: #f39c12 !important;
+    color: #fff;
+}
+
+.progress {
+    background: rgba(0,0,0,0.2);
+    margin: 5px 0;
+    height: 2px;
+}
+
+.progress-description {
+    display: block;
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.nav-tabs-custom {
+    margin-bottom: 20px;
+    background: #fff;
+    box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+    border-radius: 3px;
+}
+
+.nav-tabs-custom > .nav-tabs {
+    margin: 0;
+    border-bottom-color: #f4f4f4;
+    border-top-right-radius: 3px;
+    border-top-left-radius: 3px;
+}
+
+.callout {
+    border-radius: 3px;
+    margin: 10px 0;
+    padding: 15px 30px 15px 15px;
+    border-left: 5px solid #eee;
+}
+
+.callout-info {
+    border-left-color: #3c8dbc;
+    background-color: #d9edf7;
+}
+
+.callout-success {
+    border-left-color: #00a65a;
+    background-color: #dff0d8;
+}
+
+.box {
+    position: relative;
+    border-radius: 3px;
+    background: #ffffff;
+    border-top: 3px solid #d2d6de;
+    margin-bottom: 20px;
+    width: 100%;
+    box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+}
+
+.box-primary {
+    border-top-color: #3c8dbc;
+}
+
+.box-success {
+    border-top-color: #00a65a;
+}
+
+.box-info {
+    border-top-color: #3c8dbc;
+}
+
+.box-warning {
+    border-top-color: #f39c12;
+}
+
+.box-header {
+    color: #444;
+    display: block;
+    padding: 10px;
+    position: relative;
+}
+
+.box-header.with-border {
+    border-bottom: 1px solid #f4f4f4;
+}
+
+.box-title {
+    font-size: 18px;
+    margin: 0;
+    line-height: 1;
+}
+
+.box-body {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 3px;
+    border-bottom-left-radius: 3px;
+    padding: 10px;
+}
+
+.box-footer {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 3px;
+    border-bottom-left-radius: 3px;
+    border-top: 1px solid #f4f4f4;
+    padding: 10px;
+    background-color: #fff;
+}
+
+.btn-group-vertical > .btn {
+    margin-bottom: 10px;
+}
+
+.btn-group-vertical > .btn:last-child {
+    margin-bottom: 0;
+}
+</style>
