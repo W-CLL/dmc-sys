@@ -185,6 +185,8 @@ class BlacklistConfig extends Backend
         foreach ($lines as $line) {
             $line = trim($line);
             if (!empty($line)) {
+                // 将英文括号转换为中文括号
+                $line = $this->normalizeCompanyName($line);
                 $companies[] = $line;
             }
         }
@@ -214,6 +216,20 @@ class BlacklistConfig extends Backend
         }
 
         return true;
+    }
+
+    /**
+     * 规范化公司名称 - 将英文括号转换为中文括号
+     */
+    private function normalizeCompanyName($companyName)
+    {
+        // 将英文括号转换为中文括号
+        $companyName = str_replace(['(', ')'], ['（', '）'], $companyName);
+
+        // 去除首尾空格
+        $companyName = trim($companyName);
+
+        return $companyName;
     }
 
     /**
@@ -278,6 +294,23 @@ class BlacklistConfig extends Backend
 
         echo "<p>去重排序后：</p>";
         echo "<pre>" . htmlspecialchars(implode("\n", $companies)) . "</pre>";
+
+        echo "<h2>测试括号转换功能</h2>";
+        $testBrackets = "北京科技(集团)有限公司\n上海网络(技术)公司\n深圳电子(商务)有限公司";
+        echo "<p>原始数据（英文括号）：</p>";
+        echo "<pre>" . htmlspecialchars($testBrackets) . "</pre>";
+
+        $bracketLines = explode("\n", $testBrackets);
+        $normalizedCompanies = [];
+        foreach ($bracketLines as $line) {
+            $line = trim($line);
+            if (!empty($line)) {
+                $normalizedCompanies[] = $this->normalizeCompanyName($line);
+            }
+        }
+
+        echo "<p>转换后（中文括号）：</p>";
+        echo "<pre>" . htmlspecialchars(implode("\n", $normalizedCompanies)) . "</pre>";
 
         echo "<p><a href='" . url('blacklist_config/index') . "'>返回管理页面</a></p>";
     }
