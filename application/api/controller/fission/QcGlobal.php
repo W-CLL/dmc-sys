@@ -74,78 +74,6 @@ class QcGlobal extends Controller
         return "已处理所有数据，共" . count($adv_list) . "条记录，分" . $queueCount . "个批次处理";
     }
 
-    public function getObjMaterialDayCost($is_first = false, $day = 32): string
-    {
-
-//        Queue::push('app\job\fission\InsertGlobalObjMaterial', [
-//            'adv_id'=>1815668830616585,
-//            'obj_list' => [1823682547618939],
-//            'start_time' =>"2025-05-01",
-//            'end_time' => "2025-08-07"
-//        ], 'insertGlobalObjMaterial');
-//        die;
-        if ($day !== '' && (!is_numeric($day) || $day < 0)) {
-            return "天数参数无效";
-        }
-        if ($is_first) {
-            $obj_start_time = strtotime("-32 days");
-            $obj_end_time = time();
-        }
-
-        $global = new QcGlobalObj();
-        $obj_list = $global
-            ->alias('g')
-            ->join('company com', 'g.adv_id=com.advertiser_id', 'left')
-            ->where([
-                'com.adv_status' => 1,
-                'g.obj_create_time' => ['between', [$obj_start_time, $obj_end_time]],
-            ])
-            ->where(function ($query) {
-                $query->whereNotIn('g.obj_status', ['DELETE', 'FROZEN'])
-                    ->whereOr(['g.opt_status' => ['not in', ['DELETE', 'FROZEN']]]);
-            })
-            ->field('g.obj_id,g.adv_id')
-            ->select();
-
-        $obj_arr = [];
-        foreach ($obj_list as $item) {
-            $obj_arr[$item['adv_id']][] = $item['obj_id'];
-        }
-        if (!$obj_list) {
-            return "无数据可处理";
-        }
-        $currentTime = time();
-
-        if ($day) {
-            $dayCount = intval($day);
-            $startTime = strtotime(date('Y-m-d ', strtotime("-{$dayCount} days")));
-            $endTime = $currentTime;
-        } else {
-            $startTime = $currentTime;
-            $endTime = $currentTime;
-        }
-
-        $timeData = [
-            'start_time' => date("Y-m-d ", $startTime),
-            'end_time' => date('Y-m-d ', $endTime)
-        ];
-        $batchSize = 30;
-        foreach ($obj_arr as $adv_id => $item) {
-            $chunks = array_chunk($item, $batchSize, true);
-            $queueCount = 0;
-            foreach ($chunks as $chunk) {
-                Queue::push('app\job\fission\InsertGlobalObjMaterial', [
-                    'adv_id' => 1816865699897355,
-                    'obj_list' => [1824132287367443],
-                    'start_time' => "2025-05-01",
-                    'end_time' => "2025-08-07"
-                ], 'insertGlobalObjMaterial');
-                $queueCount++;
-            }
-        }
-
-        return "已处理所有数据，共" . count($obj_arr) . "条记录，分" . $queueCount . "个批次处理";
-    }
 
 
     /**
@@ -532,6 +460,10 @@ class QcGlobal extends Controller
 
             echo "📄 正在处理第 {$pages_processed} 页，{$current_batch_size} 条记录\n";
 
+            // 内存检查
+            $memory_before = memory_get_usage(true);
+            echo "💾 处理前内存: " . $this->formatBytes($memory_before) . "\n";
+
             // 处理当前批次数据
             $this->processBatchMaterials($list, $obj_material, $black_adv_list);
 
@@ -543,6 +475,16 @@ class QcGlobal extends Controller
             // 更新处理统计到缓存
             Cache::set('adoptMaterial_total_processed', $total_processed, 3600 * 24);
             Cache::set('adoptMaterial_pages_processed', $pages_processed, 3600 * 24);
+
+            // 内存检查和清理
+            $memory_after = memory_get_usage(true);
+            echo "💾 处理后内存: " . $this->formatBytes($memory_after) . "\n";
+
+            // 如果内存使用过高，提前退出
+            if ($memory_after > 200 * 1024 * 1024) { // 200MB
+                echo "⚠️ 内存使用过高，提前结束本次处理\n";
+                break;
+            }
 
             // 清除完成标记（因为还在处理中）
             Cache::rm('adoptMaterial_completed');
@@ -585,6 +527,44 @@ class QcGlobal extends Controller
 
         // 3. 批量处理和推送队列
         $this->batchProcessAndQueue($batch_data);
+
+        // 4. 内存清理
+        $this->cleanupMemory();
+    }
+
+    /**
+     * 内存清理和监控
+     */
+    private function cleanupMemory()
+    {
+        $memory_usage = memory_get_usage(true);
+        $memory_peak = memory_get_peak_usage(true);
+
+        echo "💾 内存使用: " . $this->formatBytes($memory_usage) .
+             " / 峰值: " . $this->formatBytes($memory_peak) . "\n";
+
+        // 强制垃圾回收
+        gc_collect_cycles();
+
+        $memory_after = memory_get_usage(true);
+        if ($memory_after < $memory_usage) {
+            echo "🧹 内存清理: 释放了 " . $this->formatBytes($memory_usage - $memory_after) . "\n";
+        }
+    }
+
+    /**
+     * 格式化字节数
+     */
+    private function formatBytes($bytes)
+    {
+        $units = ['B', 'KB', 'MB', 'GB'];
+        $bytes = max($bytes, 0);
+        $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
+        $pow = min($pow, count($units) - 1);
+
+        $bytes /= (1 << (10 * $pow));
+
+        return round($bytes, 2) . ' ' . $units[$pow];
     }
 
     /**
@@ -686,48 +666,63 @@ class QcGlobal extends Controller
     }
 
     /**
-     * 批量查询计划数据 - 利用索引优化
+     * 批量查询计划数据 - 内存优化版本
      */
     private function batchQueryPlanData($all_adv_ids, $all_material_ids, $obj_material)
     {
         $plan_data = [];
         $cost_date = strtotime(date('Y-m-d'));
 
-        // 使用 idx_adv_material_hash 索引进行高效查询
-        $results = $obj_material
-            ->alias('om')
-            ->join('qc_global_obj qo', 'om.obj_id = qo.obj_id AND om.adv_id = qo.adv_id', 'INNER')
-            ->field('om.adv_id, om.material_id, om.obj_id, om.product_info')
-            ->whereIn('om.adv_id', $all_adv_ids)
-            ->whereIn('om.material_id', $all_material_ids)
-            ->where([
-                'om.material_status' => 'DELIVERY_OK',
-                'om.cost_date' => $cost_date
-            ])
-            ->whereNotNull('om.product_info')
-            ->where(function ($query) {
-                $query->whereIn('qo.obj_status', ['DELIVERY_OK', 'DISABLE', 'SYSTEM_DISABLE'])
-                    ->whereOr(['qo.opt_status' => ['in', ['ENABLE', 'DISABLE']]]);
-            })
-            ->select();
+        // 分批查询，避免内存溢出
+        $adv_batch_size = 5; // 每次处理5个广告主
+        $adv_batches = array_chunk($all_adv_ids, $adv_batch_size);
 
-        // 组织数据结构
-        foreach ($results as $row) {
-            $key = "{$row['adv_id']}_{$row['material_id']}";
-            $obj_id = $row['obj_id'];
-            $product_info = $row['product_info'];
+        foreach ($adv_batches as $adv_batch) {
+            // 使用 idx_adv_material_hash 索引进行高效查询
+            $results = $obj_material
+                ->alias('om')
+                ->join('qc_global_obj qo', 'om.obj_id = qo.obj_id AND om.adv_id = qo.adv_id', 'INNER')
+                ->field('om.adv_id, om.material_id, om.obj_id, om.product_info')
+                ->whereIn('om.adv_id', $adv_batch)
+                ->whereIn('om.material_id', $all_material_ids)
+                ->where([
+                    'om.material_status' => 'DELIVERY_OK',
+                    'om.cost_date' => $cost_date
+                ])
+                ->whereNotNull('om.product_info')
+                ->where(function ($query) {
+                    $query->whereIn('qo.obj_status', ['DELIVERY_OK', 'DISABLE', 'SYSTEM_DISABLE'])
+                        ->whereOr(['qo.opt_status' => ['in', ['ENABLE', 'DISABLE']]]);
+                })
+                ->limit(5000) // 限制单次查询结果数量
+                ->select();
 
-            // 解析产品信息
-            $decoded_product_info = json_decode($product_info, true);
-            if ($decoded_product_info === null && is_string($product_info)) {
-                $decoded_product_info = json_decode(json_decode($product_info, true), true);
+            // 组织数据结构
+            foreach ($results as $row) {
+                $key = "{$row['adv_id']}_{$row['material_id']}";
+                $obj_id = $row['obj_id'];
+                $product_info = $row['product_info'];
+
+                // 解析产品信息
+                $decoded_product_info = json_decode($product_info, true);
+                if ($decoded_product_info === null && is_string($product_info)) {
+                    $decoded_product_info = json_decode(json_decode($product_info, true), true);
+                }
+
+                if (is_array($decoded_product_info)) {
+                    $product_ids = array_column($decoded_product_info, 'product_id');
+                    if (!empty($product_ids)) {
+                        $plan_data[$key][$obj_id] = $product_ids;
+                    }
+                }
             }
 
-            if (is_array($decoded_product_info)) {
-                $product_ids = array_column($decoded_product_info, 'product_id');
-                if (!empty($product_ids)) {
-                    $plan_data[$key][$obj_id] = $product_ids;
-                }
+            // 释放内存
+            unset($results);
+
+            // 内存检查和垃圾回收
+            if (memory_get_usage() > 150 * 1024 * 1024) { // 150MB
+                gc_collect_cycles();
             }
         }
 
@@ -735,38 +730,56 @@ class QcGlobal extends Controller
     }
 
     /**
-     * 批量查询素材数量统计 - 优化版本
+     * 批量查询素材数量统计 - 内存优化版本
      */
     private function batchQueryMaterialCountsOptimized($all_adv_ids)
     {
         $material_counts = [];
 
-        // 使用 idx_adv_obj_cost_stat 索引进行高效查询
-        $results = Db::name('fission_global_obj_material_202508')
-            ->field('adv_id, obj_id, product_info')
-            ->whereIn('adv_id', $all_adv_ids)
-            ->where('material_status', 'DELIVERY_OK')
-            ->whereNotNull('product_info')
-            ->select();
+        // 分批查询，避免内存溢出
+        $batch_size = 10; // 每次处理10个广告主
+        $adv_batches = array_chunk($all_adv_ids, $batch_size);
 
-        // 在内存中统计，避免重复查询
-        foreach ($results as $row) {
-            $adv_id = $row['adv_id'];
-            $obj_id = $row['obj_id'];
-            $product_info = $row['product_info'];
+        foreach ($adv_batches as $adv_batch) {
+            // 使用 idx_adv_obj_cost_stat 索引进行高效查询，只查询当天数据
+            $results = Db::name('fission_global_obj_material_202508')
+                ->field('adv_id, obj_id, product_info')
+                ->whereIn('adv_id', $adv_batch)
+                ->where([
+                    'material_status' => 'DELIVERY_OK',
+                    'cost_date' => strtotime(date('Y-m-d')) // 只查询当天的数据
+                ])
+                ->whereNotNull('product_info')
+                ->limit(10000) // 限制单次查询结果数量
+                ->select();
 
-            // 解析产品信息
-            $decoded_product_info = json_decode($product_info, true);
-            if ($decoded_product_info === null && is_string($product_info)) {
-                $decoded_product_info = json_decode(json_decode($product_info, true), true);
+            // 在内存中统计，避免重复查询
+            foreach ($results as $row) {
+                $adv_id = $row['adv_id'];
+                $obj_id = $row['obj_id'];
+                $product_info = $row['product_info'];
+
+                // 解析产品信息
+                $decoded_product_info = json_decode($product_info, true);
+                if ($decoded_product_info === null && is_string($product_info)) {
+                    $decoded_product_info = json_decode(json_decode($product_info, true), true);
+                }
+
+                if (is_array($decoded_product_info)) {
+                    $product_ids = array_column($decoded_product_info, 'product_id');
+                    foreach ($product_ids as $product_id) {
+                        $key = "{$adv_id}_{$obj_id}_{$product_id}";
+                        $material_counts[$key] = ($material_counts[$key] ?? 0) + 1;
+                    }
+                }
             }
 
-            if (is_array($decoded_product_info)) {
-                $product_ids = array_column($decoded_product_info, 'product_id');
-                foreach ($product_ids as $product_id) {
-                    $key = "{$adv_id}_{$obj_id}_{$product_id}";
-                    $material_counts[$key] = ($material_counts[$key] ?? 0) + 1;
-                }
+            // 释放内存
+            unset($results);
+
+            // 如果内存使用过高，强制垃圾回收
+            if (memory_get_usage() > 200 * 1024 * 1024) { // 200MB
+                gc_collect_cycles();
             }
         }
 
@@ -969,11 +982,45 @@ class QcGlobal extends Controller
     }
 
     /**
-     * 获取页面大小
+     * 获取页面大小 - 内存优化版本
      */
     private function getOptimalPageSize()
     {
-        return 1000; // 固定1000条，简单有效
+        // 根据可用内存动态调整页面大小
+        $memory_limit = ini_get('memory_limit');
+        $memory_limit_bytes = $this->parseMemoryLimit($memory_limit);
+
+        if ($memory_limit_bytes < 512 * 1024 * 1024) { // 小于512MB
+            return 200;
+        } elseif ($memory_limit_bytes < 1024 * 1024 * 1024) { // 小于1GB
+            return 500;
+        } else {
+            return 1000; // 大于1GB
+        }
+    }
+
+    /**
+     * 解析内存限制字符串
+     */
+    private function parseMemoryLimit($memory_limit)
+    {
+        if ($memory_limit == -1) {
+            return PHP_INT_MAX; // 无限制
+        }
+
+        $unit = strtolower(substr($memory_limit, -1));
+        $value = (int) $memory_limit;
+
+        switch ($unit) {
+            case 'g':
+                return $value * 1024 * 1024 * 1024;
+            case 'm':
+                return $value * 1024 * 1024;
+            case 'k':
+                return $value * 1024;
+            default:
+                return $value;
+        }
     }
 
     /**
