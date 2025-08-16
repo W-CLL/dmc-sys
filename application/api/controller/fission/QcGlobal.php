@@ -601,7 +601,7 @@ class QcGlobal extends Controller
                 ->join('qc_global_obj qo', 'om.adv_id=qo.adv_id', 'left')
                 ->field('om.obj_id,ANY_VALUE(om.product_info) as product_info')
                 ->where(['om.adv_id' => $adv_id, 'om.material_id' => $old_material_id])
-                ->where(['om.material_status' => 'DELIVERY_OK'])
+                ->where(['om.material_status' => 'DELIVERY_OK','om.cost_date'=>strtotime(date('Y-m-d'))])
                 ->whereNotNull('om.product_info')
                 ->where(function ($query) {
                     $query->whereIn('qo.obj_status', ['DELIVERY_OK', 'DISABLE', 'SYSTEM_DISABLE'])
