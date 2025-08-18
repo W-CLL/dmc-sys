@@ -124,6 +124,7 @@ class MaterialConsumption extends Backend
 //                            $query->where('status_code', '>', 0)
 //                                ->whereOr('fission_status', 'FAILED');
 //                        })
+                            ->order('update_time desc')
                         ->find();
                     if (!empty($msg_info['fission_msg'])) {
                         $row['unfission_reason'] = $msg_info['fission_msg'];

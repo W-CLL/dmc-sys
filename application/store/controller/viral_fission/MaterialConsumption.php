@@ -124,7 +124,7 @@ class MaterialConsumption extends Store
 //                            $query->where('status_code', '>', 0)
 //                                ->whereOr('fission_status', 'FAILED');
 //                        })
-                        ->order('create_time desc')
+                        ->order('update_time desc')
                         ->find();
 
                     if(!empty($msg_info['fission_msg'])){
