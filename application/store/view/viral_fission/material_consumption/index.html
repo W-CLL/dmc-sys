@@ -214,6 +214,74 @@
     padding-left: 8px;
     padding-right: 8px;
 }
+
+/* 图表区域样式 */
+.chart-row {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 -10px 20px -10px;
+}
+
+.chart-col-12 {
+    flex: 0 0 100%;
+    max-width: 100%;
+    padding: 0 10px;
+}
+
+.chart-col-8 {
+    flex: 0 0 66.666667%;
+    max-width: 66.666667%;
+    padding: 0 10px;
+}
+
+.chart-col-4 {
+    flex: 0 0 33.333333%;
+    max-width: 33.333333%;
+    padding: 0 10px;
+}
+
+.chart-container {
+    background: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.chart-filters {
+    display: flex;
+    gap: 10px;
+}
+
+.chart-content {
+    padding: 15px;
+}
+
+@media (max-width: 768px) {
+    .chart-col-8, .chart-col-4 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+    
+    .chart-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .chart-filters {
+        width: 100%;
+        justify-content: space-between;
+    }
+}
 </style>
 
 <div class="panel panel-default panel-intro">
@@ -246,6 +314,34 @@
                 <div class="stats-card">
                     <div class="stats-number" id="success-rate">0%</div>
                     <div class="stats-label">成功率(采纳/已生成)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 图表区域 -->
+        <div class="chart-row">
+            <!-- 折线图 -->
+            <div class="chart-col-12">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h5 style="margin: 0;">
+                            <i class="fa fa-line-chart"></i> 消耗趋势图
+                        </h5>
+                        <div class="chart-filters">
+                            <select class="form-control" id="line-chart-days">
+                                <option value="7">近7天</option>
+                                <option value="15" selected>近15天</option>
+                                <option value="current_month">本月</option>
+                                <option value="last_month">上月</option>
+                            </select>
+                            <button type="button" class="btn btn-primary btn-sm" id="line-chart-refresh">
+                                <i class="fa fa-refresh"></i> 刷新
+                            </button>
+                        </div>
+                    </div>
+                    <div class="chart-content">
+                        <div id="line-chart" style="width: 100%; height: 350px;"></div>
+                    </div>
                 </div>
             </div>
         </div>
