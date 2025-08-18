@@ -45,6 +45,8 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', '../viral_fission/vid
                         {field: 'id', title: "ID", visible: false},
                         {field: 'adv_id', title: "千川ID", operate: '='},
                         {field: 'company_name', title: "公司名"},
+                        {field: 'first_industry_name', title: "行业类型"},
+                        {field: 'second_industry_name', title: "行业"},
                         {field: 'kahuna', title: "负责人"},
                         {field: 'store_name', title: "商户名称"},
                         {field: 'material_id', title: "素材ID", operate: '=',
