@@ -101,7 +101,7 @@ class MaterialConsumption extends Store
             // 解析基础条件（$where是数组或字符串）
             $query = $this->model
                 ->alias('gm')
-                ->field('gm.adv_id,gm.material_id,MIN(gm.cost_date) as min_cost_date,MAX(gm.cost_date) as max_cost_date,SUM(gm.stat_cost_for_roi2) as stat_cost_for_roi2,SUM(gm.total_pay_order_count_for_roi2) as total_pay_order_count_for_roi2,SUM(gm.total_prepay_and_pay_order_roi2) as total_prepay_and_pay_order_roi2,COUNT(DISTINCT gm.cost_date) as date_count, IF(dm.adopt_material_id IS NULL, 0, 1) AS is_fission,com.company_name,com.kahuna,com.store_id,com.first_industry_name,com.second_industry_name')
+                ->field('gm.adv_id,gm.material_id,MIN(gm.cost_date) as min_cost_date,MAX(gm.cost_date) as max_cost_date,SUM(gm.stat_cost_for_roi2) as stat_cost_for_roi2,SUM(gm.total_pay_order_count_for_roi2) as total_pay_order_count_for_roi2,SUM(gm.total_prepay_and_pay_order_roi2) as total_prepay_and_pay_order_roi2,COUNT(DISTINCT gm.cost_date) as date_count, IF(dm.adopt_material_id IS NULL, 0, 1) AS is_fission,com.company_name,com.kahuna,com.store_id')
                 ->join('fission_derive_material dm', 'gm.material_id = dm.adopt_material_id', 'left')
                 ->join('company com','gm.adv_id=com.advertiser_id','left');
             // 应用基础条件
@@ -111,16 +111,36 @@ class MaterialConsumption extends Store
                 ->order("is_fission desc,stat_cost_for_roi2 desc")
                 ->paginate($limit);
 
-            foreach ($list as &$row) {
-                // 显示日期范围格式
-                if ($row['min_cost_date'] == $row['max_cost_date']) {
-                    $row['create_time_text'] = date('Y-m-d', $row['min_cost_date']);
-                } else {
-                    $row['create_time_text'] = date('Y-m-d', $row['min_cost_date']) . ' —— ' . date('Y-m-d', $row['max_cost_date']);
+            // 获取用户选择的日期范围
+            $params = input();
+            $daterange = $params['daterange'] ?? '';
+            $display_date = '';
+            $is_single_day = false; // 标记是否为单日查询
+            if ($daterange) {
+                $dates = explode(' - ', $daterange);
+                if (count($dates) == 2) {
+                    // 确保只显示日期部分，不显示时分秒
+                    $start_date = date('Y-m-d', strtotime(trim($dates[0])));
+                    $end_date = date('Y-m-d', strtotime(trim($dates[1])));
+                    // 如果起始和结束日期相同，只显示一个日期
+                    if ($start_date == $end_date) {
+                        $display_date = $start_date;
+                        $is_single_day = true; // 标记为单日查询
+                    } else {
+                        $display_date = $start_date . ' ~ ' . $end_date;
+                    }
                 }
+            } else {
+                // 显示默认的日期范围（最近5天）
+                $display_date = date('Y-m-d', strtotime('-5 days')) . ' ~ ' . date('Y-m-d');
+            }
+
+            foreach ($list as &$row) {
+                // 显示用户选择的日期范围或默认日期范围
+                $row['create_time_text'] = $display_date;
                 
-                // 根据日期范围决定是否显示ROI值
-                if ($row['date_count'] == 1) {
+                // 根据用户选择的日期范围决定是否显示ROI值
+                if ($is_single_day) {
                     // 只有一天数据时显示ROI值
                     $row['roi_display'] = $row['total_prepay_and_pay_order_roi2'];
                 } else {
@@ -144,7 +164,7 @@ class MaterialConsumption extends Store
 //                            $query->where('status_code', '>', 0)
 //                                ->whereOr('fission_status', 'FAILED');
 //                        })
-                        ->order('update_time desc')
+                        ->order('create_time desc')
                         ->find();
 
                     if(!empty($msg_info['fission_msg'])){
@@ -332,7 +352,7 @@ class MaterialConsumption extends Store
         // 查询裂变素材创建数据（基于fission_derive_material表的创建时间）
         $fission_creation_data = Db::name('fission_derive_material')
             ->alias('d')
-            ->join('fission_global_material g', 'd.old_material_id = g.material_id', 'INNER')
+            ->join('fission_global_material g', 'd.adopt_material_id = g.material_id', 'INNER')
             ->where('g.adv_id', 'in', $adv_ids)
             ->where('d.create_time', 'between', [$start_timestamp, $end_timestamp])
             ->field([
