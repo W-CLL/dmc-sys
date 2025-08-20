@@ -545,7 +545,8 @@ class QcGlobal extends Controller
                     'om.adv_id' => $adv_id,
                     'om.material_id' => $old_material_id,
                     'om.material_status' => 'DELIVERY_OK',
-                    'om.cost_date' => strtotime(date('Y-m-d'))
+                    'om.cost_date' => strtotime(date('Y-m-d')),
+                    'qo.obj_modify_time'=>['gt',1746028800]
                 ])
                 ->whereNotNull('om.product_info')
                 ->where(function ($query) {
