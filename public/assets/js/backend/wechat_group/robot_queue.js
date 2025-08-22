@@ -1,0 +1,178 @@
+define(['jquery', 'bootstrap', 'backend', 'table', 'form', 'bootstrap-table-fixed-columns'], function ($, undefined, Backend, Table, Form) {
+
+    var Controller = {
+        index: function () {
+            Controller.api.bindevent();
+            // 初始化表格参数配置
+            Table.api.init({
+                extend: {
+                    index_url: 'wechat_group/robot_queue/index',
+                    table: 'queue_record_robot',
+                },
+            });
+
+            var table = $("#table");
+            var tableOptions = {
+                url: $.fn.bootstrapTable.defaults.extend.index_url,
+                pk: 'id',
+                pagination: true,
+                // commonSearch: false,
+                // search: false,
+                searchFormVisible: true,
+                searchFormTemplate: 'customformtpl',
+                columns: [
+                    [
+                        {checkbox: true},
+                        {field: 'id', title: __('Id'), visible: false},
+                        {
+                            field: 'job_id',
+                            title: "任务id",
+                            operate: false,
+                            searchList: Config.searchList,
+                            formatter: Table.api.formatter.label
+                        },
+                        {
+                            field: 'class_name',
+                            title: "任务类名",
+                            align: 'left',
+                            formatter: function (value, row, index) {
+                                return value.toString().replace(/(&|&amp;)nbsp;/g, '&nbsp;');
+                            }
+                        },
+                        {field: 'job_name', title: "任务名称"},
+                        {
+                            field: 'job_data', title: "请求参数", width: 130, align: 'left',
+                            formatter: function (value, row, index, field) {
+                                return "<span style='display: block;overflow: hidden;text-overflow: ellipsis;white-space: nowrap;' title='" + row.job_data + "'>" + value + "</span>";
+                            },
+                            cellStyle: function (value, row, index, field) {
+                                return {
+                                    css: {
+                                        "white-space": "nowrap",
+                                        "text-overflow": "ellipsis",
+                                        "overflow": "hidden",
+                                        "max-width": "150px"
+                                    }
+                                };
+                            }
+                        },
+                        {
+                            field: 'msg', title: "执行信息", width: 130, align: 'left',
+                            formatter: function (value, row, index, field) {
+                                return "<span style='display: block;overflow: hidden;text-overflow: ellipsis;white-space: nowrap;' title='" + row.msg + "'>" + value + "</span>";
+                            },
+                            cellStyle: function (value, row, index, field) {
+                                return {
+                                    css: {
+                                        "white-space": "nowrap",
+                                        "text-overflow": "ellipsis",
+                                        "overflow": "hidden",
+                                        "max-width": "150px"
+                                    }
+                                };
+                            }
+                        },
+                        {field: 'remark', title: "备注"},
+                        {field: 'status_text', title: __('Status')},
+                        {field: 'create_time', title: "创建时间", formatter: Table.api.formatter.datetime},
+                        {field: 'update_time', title: "更新时间", formatter: Table.api.formatter.datetime},
+                        {
+                            field: 'operate', title: __('Operate'),
+                            buttons: [{
+                                name: "queue_records",
+                                text: "重启",//按钮名称
+                                classname: 'btn btn-xs btn-success  btn-ajax',
+                                // classname: 'btn btn-xs btn-success btn-magic btn-dialog',
+                                icon: '',
+                                // options: {refresh: true},
+                                url: 'wechat_group/robot_queue/rebuildOne',//指向控制器对应方法
+                                // confirm: '重启',
+                                refresh: true,
+                                visible: function (row) {
+                                    //返回true时按钮显示,返回false隐藏
+                                    if (row.status == 2) {
+                                        return true;
+                                    } else {
+                                        return false;
+                                    }
+                                },
+                                // success:function (){
+                                //     table.bootstrapTable('refresh');
+                                // }
+                            }],
+                            table: table, events: Table.api.events.operate, formatter: Table.api.formatter.buttons
+                        }
+                    ]
+                ]
+            };
+            // 初始化表格
+            table.bootstrapTable(tableOptions);
+            // 为表格绑定事件
+            Table.api.bindevent(table);
+            table.on('check-all.bs.table', function (e, rows) {
+                // 点击全选触发事件
+                var select_total = 0;
+                for (i = 0; i < rows.length; i++) {
+                    select_total = select_total + 1;
+                }
+                $("#select_total").text(select_total);
+            })
+
+            table.on('uncheck-all.bs.table', function (e, rows) {
+                // 点击反选触发事件
+                $("#select_total").text("0");
+            })
+
+            table.on('check.bs.table', function (e, row) {
+                // 勾选某一行触发事件
+                var select_total = parseInt($("#select_total").text()) + 1;
+                $("#select_total").text(select_total);
+            })
+
+            table.on('uncheck.bs.table', function (e, row) {
+                // 反选某一行触发事件
+                var select_total = parseInt($("#select_total").text()) - 1;
+                $("#select_total").text(select_total);
+            })
+
+            table.on('post-body.bs.table', function (e, row) {
+                $("#select_total").text("0");
+            })
+
+
+            /* 获取选中的id */
+            function getIdSelections() {
+                return $.map($("#table").bootstrapTable('getSelections'), function (row) {
+                    return row.job_id
+                });
+            }
+
+            $(".btn-edits").on('click', function () {
+                var checkids = [];
+                checkids = getIdSelections();
+                // 使用JavaScript通过类名选择器找到隐藏的输入字段
+                layer.confirm('是否确认一键重启?(只能重启等待中/失败的任务)', {
+                        btn: ['确认', '取消']
+                    },
+                    function (index) {
+                        Fast.api.ajax({
+                            url: 'wechat_group/robot_queue/rebuildAll',
+                            data: {
+                                ids: checkids.join(','),
+                            }
+                        }, function (data, ret) {
+                            layer.msg(ret.msg);
+                            table.bootstrapTable('refresh', {});
+                            Layer.close(index);
+                        });
+                    })
+            })
+        },
+        api: {
+            bindevent: function () {
+                Form.api.bindevent($("form[role=form]"));
+            }
+        }
+    };
+    return Controller;
+});
