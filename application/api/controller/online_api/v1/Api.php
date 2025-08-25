@@ -526,6 +526,13 @@ class Api
                 ->limit($needComNum + 2) // 多查询2个，用于排除消耗最高的2个
                 ->select();
 
+            // 确保返回的是数组格式
+            if ($materials && is_object($materials)) {
+                $materials = $materials->toArray();
+            } elseif (!is_array($materials)) {
+                $materials = [];
+            }
+
             // 排除消耗最高的2个素材
             if (count($materials) > 2) {
                 $materials = array_slice($materials, 2);
@@ -600,9 +607,16 @@ class Api
                     ->limit($needComNum + 2) // 多查询2个，用于排除消耗最高的2个
                     ->select();
 
+                // 确保返回的是数组格式
+                if ($materials && is_object($materials)) {
+                    $materials = $materials->toArray();
+                } elseif (!is_array($materials)) {
+                    $materials = [];
+                }
+
                 // 排除消耗最高的2个素材
                 if (count($materials) > 2) {
-                    $materials = array_slice((array)$materials, 2);
+                    $materials = array_slice($materials, 2);
                 } else {
                     $materials = [];
                 }
@@ -613,7 +627,9 @@ class Api
                 }
 
                 // 添加到总结果中
-                $allMaterials = array_merge($allMaterials, $materials);
+                if (!empty($materials)) {
+                    $allMaterials = array_merge($allMaterials, $materials);
+                }
             }
 
             return json(['status' => 0, 'data' => $allMaterials, 'msg' => 'success']);
