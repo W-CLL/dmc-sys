@@ -32,7 +32,7 @@ class RobotBaseJob
             $currentAttempts = $job->attempts();
             if ($currentAttempts < $maxAttempts) {
                 // 延迟重试
-                $delay = $currentAttempts * 10;
+                $delay = $currentAttempts * 10 * $currentAttempts;
                 $job->release($delay);
                 exit();
             } else {
