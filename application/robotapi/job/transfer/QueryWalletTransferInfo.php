@@ -38,7 +38,7 @@ class QueryWalletTransferInfo
             $img_url = '';
             Db::startTrans();
             try {
-                switch ($transfer_detail['data']['transfer_status']){
+                switch ('dasdas'){
                     case "TRANSFER_SUCCESS":
                         $store_model = new StoreModel();
                         $store_info = $store_model->where("id", $transfer_data["store_id"])->lock(true)->find();
@@ -81,6 +81,10 @@ class QueryWalletTransferInfo
                         $msg = "{$operate}失败\n失败原因：".$transfer_detail['data']['transfer_wallet_record_list'][0]['transfer_capital_record_list'][0]['fail_reason'];
                         break;
                     default:
+                        if(Cache::get("swtl_id".$data["swtl_id"])){
+                            $this->callback($data, "尊敬的用户您好，由于千川接口请求网络异常导致于该笔充值延缓，请您自行去千川账户查询是否到账，带来不便敬请谅解！");
+                            Db::commit();
+                        }
                         return false;
                 }
             } catch (Exception $e) {

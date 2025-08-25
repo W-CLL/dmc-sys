@@ -5,6 +5,7 @@ namespace app\robotapi\job;
 use think\Exception;
 use think\queue\Job;
 use app\robotapi\model\QueueRobot;
+use think\Cache;
 
 class RobotBaseJob
 {
@@ -30,7 +31,12 @@ class RobotBaseJob
             // 获取当前尝试次数
             $maxAttempts = 5; // 最大重试次数
             $currentAttempts = $job->attempts();
-            if ($currentAttempts < $maxAttempts) {
+            if($currentAttempts == $maxAttempts && ($queueData['job_name'] == '共享钱包【查询转账信息】' || $queueData['job_name'] == '千川账户【查询转账信息】')){
+                $field = $queueData['job_name'] == '千川账户【查询转账信息】' ? 'transfer_records_id' : 'swtl_id';
+                $id = json_decode($queueData['job_data'], true)[$field];
+                cache::set($field.$id, 1, 1800);
+            }
+            if ($currentAttempts <= $maxAttempts) {
                 // 延迟重试
                 $delay = $currentAttempts * 10 * $currentAttempts;
                 $job->release($delay);

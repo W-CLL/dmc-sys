@@ -77,7 +77,7 @@ class QueryTransferInfo
         $img_url = '';
         $operate = $transfer_records_data["transfer_direction"] == 1 ? "千川充值" : "千川退款";
         $type = $transfer_records_data["account_type"] == 1 ? "（公）" : "（私）";
-        switch ($transfer_detail_data['data']['transfer_status']){
+        switch ('dsaasdas'){
             case 'TRANSFER_FAILED':
                 if(!$transfer_records_model->where(["id" => $data["transfer_records_id"]])->update(['status' => 2, 'explain' => $transfer_detail_data['data']['transfer_target_record_list'][0]['transfer_capital_record_list'][0]['fail_reason']])){
                     throw new Exception("更新转账状态失败");
@@ -124,6 +124,9 @@ class QueryTransferInfo
                     throw new Exception($e->getMessage()); // 重新抛出异常
                 }
             default :
+                if(Cache::get("transfer_records_id".$data["transfer_records_id"])){
+                    $this->callback($data["callback_data"], "尊敬的用户您好，由于千川接口请求网络异常导致于该笔充值延缓，请您自行去千川账户查询是否到账，带来不便敬请谅解！");
+                }
                 return false;
         }
         // 发起回调，扔队列
