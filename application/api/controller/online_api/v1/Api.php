@@ -206,7 +206,10 @@ class Api
         return json($comCostModel
             ->alias('cc')
             ->join('company com', 'cc.adv_id=com.advertiser_id', 'left')
-            ->where(['com.company_name' => ['in', $companyNames], 'cc.cost_date' => ['between', [strtotime(date('Y-m-01')), time()]], 'cc.type' => $type])
+            ->where(['com.company_name' => ['in', $companyNames],
+                'com.adv_status'=>1,
+                'cc.cost_date' => ['between', [strtotime(date('Y-m-01')), time()]],
+                'cc.type' => $type])
             ->where(function ($query) use ($charge_name) {
                 if ($charge_name) {
                     $query->where(['com.kahuna' => ['like', "%" . $charge_name . "%"]]);
@@ -477,5 +480,146 @@ class Api
         return json(
             $result
         );
+    }
+
+    /**
+     * 获取单个计划的可操作素材
+     * @param string $adv_id 广告主ID
+     * @param string $obj_id 计划ID
+     * @param int $needComNum 需要的素材数量
+     * @param string $yearMonth 年月格式，如202508
+     * @return Json
+     */
+    public function getGlobalObjMaterialListApi($adv_id, $obj_id, $needComNum = 100, $yearMonth = ''): Json
+    {
+        try {
+            // 参数验证
+            if (empty($adv_id) || empty($obj_id)) {
+                return json(['status' => -1, 'msg' => '广告主ID和计划ID不能为空']);
+            }
+
+            // 默认使用当前年月
+            if (empty($yearMonth)) {
+                $yearMonth = date('Ym');
+            }
+
+            // 构建表名
+            $tableName = 'fa_fission_global_obj_material_' . $yearMonth;
+
+            // 检查表是否存在
+            $tableExists = Db::query("SHOW TABLES LIKE '{$tableName}'");
+            if (empty($tableExists)) {
+                return json(['status' => -1, 'msg' => "表 {$tableName} 不存在"]);
+            }
+
+            // 查询可操作的素材
+            $materials = Db::table($tableName)
+                ->where([
+                    'adv_id' => $adv_id,
+                    'obj_id' => $obj_id,
+                    'material_status' => 'DELIVERY_OK',
+                    'is_delete' => 0
+                ])
+                ->where('audit_status', 'in', ['PASS', ''])
+                ->field('adv_id, obj_id, material_id, stat_cost_for_roi2 as stat_cost, material_type, audit_status, material_status')
+                ->order('stat_cost_for_roi2 desc')
+                ->limit($needComNum + 2) // 多查询2个，用于排除消耗最高的2个
+                ->select();
+
+            // 排除消耗最高的2个素材
+            if (count($materials) > 2) {
+                $materials = array_slice($materials, 2);
+            } else {
+                $materials = [];
+            }
+
+            // 限制返回数量
+            if (count($materials) > $needComNum) {
+                $materials = array_slice($materials, 0, $needComNum);
+            }
+
+            return json(['status' => 0, 'data' => $materials, 'msg' => 'success']);
+
+        } catch (\Exception $e) {
+            return json(['status' => -1, 'msg' => '获取素材失败: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * 批量获取多个计划的可操作素材
+     * @return Json
+     */
+    public function getBatchGlobalObjMaterialListApi(): Json
+    {
+        try {
+            // 获取POST数据
+            $request = \think\Request::instance();
+            $jsonData = $request->getContent();
+            $data = json_decode($jsonData, true);
+
+            // 参数验证
+            $rule_message = [
+                'adv_id' => ["require" => 'adv_id 必填'],
+                'obj_ids' => ["require" => 'obj_ids 必填', "array" => 'obj_ids 必须是数组'],
+                'needComNum' => ["require" => 'needComNum 必填', "number" => 'needComNum 必须是数字'],
+            ];
+            $error = apiFieldValidate($rule_message, $data);
+            if ($error) {
+                return json(['status' => -1, 'msg' => $error]);
+            }
+
+            $adv_id = $data['adv_id'];
+            $obj_ids = $data['obj_ids'];
+            $needComNum = (int)$data['needComNum'];
+            $yearMonth = $data['yearMonth'] ?? date('Ym');
+
+            // 构建表名
+            $tableName = 'fa_fission_global_obj_material_' . $yearMonth;
+
+            // 检查表是否存在
+            $tableExists = Db::query("SHOW TABLES LIKE '{$tableName}'");
+            if (empty($tableExists)) {
+                return json(['status' => -1, 'msg' => "表 {$tableName} 不存在"]);
+            }
+
+            $allMaterials = [];
+
+            // 为每个计划获取素材
+            foreach ($obj_ids as $obj_id) {
+                // 查询该计划下的可操作素材
+                $materials = Db::table($tableName)
+                    ->where([
+                        'adv_id' => $adv_id,
+                        'obj_id' => $obj_id,
+                        'material_status' => 'DELIVERY_OK',
+                        'is_delete' => 0
+                    ])
+                    ->where('audit_status', 'in', ['PASS', ''])
+                    ->field('adv_id, obj_id, material_id, stat_cost_for_roi2 as stat_cost, material_type, audit_status, material_status')
+                    ->order('stat_cost_for_roi2 desc')
+                    ->limit($needComNum + 2) // 多查询2个，用于排除消耗最高的2个
+                    ->select();
+
+                // 排除消耗最高的2个素材
+                if (count($materials) > 2) {
+                    $materials = array_slice((array)$materials, 2);
+                } else {
+                    $materials = [];
+                }
+
+                // 限制每个计划的素材数量
+                if (count($materials) > $needComNum) {
+                    $materials = array_slice($materials, 0, $needComNum);
+                }
+
+                // 添加到总结果中
+                $allMaterials = array_merge($allMaterials, $materials);
+            }
+
+            return json(['status' => 0, 'data' => $allMaterials, 'msg' => 'success']);
+
+        } catch (\Exception $e) {
+            return json(['status' => -1, 'msg' => '批量获取素材失败: ' . $e->getMessage()]);
+        }
     }
 }
