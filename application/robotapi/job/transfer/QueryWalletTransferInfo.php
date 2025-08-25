@@ -107,7 +107,7 @@ class QueryWalletTransferInfo
             'account_type'              => $transfer_data['account_type'],
             'rebate'                    => $transfer_data['rebate'],
             'discount_percentage'       => $transfer_data['discount_percentage'],
-            'create_time'               => time(),
+            'create_time'               => $transfer_data['create_time'],
             "from"                      => 2,
         ];
 

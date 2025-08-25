@@ -142,7 +142,7 @@ class QueryTransferInfo
             "money" => $transfer_records_data['money'],
             "rebate" => $transfer_records_data["rebate"],
             "discount_percentage" => $transfer_records_data['discount_percentage'],
-            "create_time" => time(),
+            "create_time" => $transfer_records_data['create_time'],
             "from" => 2
         ];
         $prefix = $transfer_records_data['account_type'] == 1 ? "public_" : "private_";
