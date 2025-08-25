@@ -38,7 +38,7 @@ class QueryWalletTransferInfo
             $img_url = '';
             Db::startTrans();
             try {
-                switch ('dasdas'){
+                switch ($transfer_detail['data']['transfer_status']){
                     case "TRANSFER_SUCCESS":
                         $store_model = new StoreModel();
                         $store_info = $store_model->where("id", $transfer_data["store_id"])->lock(true)->find();

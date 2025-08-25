@@ -77,7 +77,7 @@ class QueryTransferInfo
         $img_url = '';
         $operate = $transfer_records_data["transfer_direction"] == 1 ? "千川充值" : "千川退款";
         $type = $transfer_records_data["account_type"] == 1 ? "（公）" : "（私）";
-        switch ('dsaasdas'){
+        switch ($transfer_detail_data['data']['transfer_status']){
             case 'TRANSFER_FAILED':
                 if(!$transfer_records_model->where(["id" => $data["transfer_records_id"]])->update(['status' => 2, 'explain' => $transfer_detail_data['data']['transfer_target_record_list'][0]['transfer_capital_record_list'][0]['fail_reason']])){
                     throw new Exception("更新转账状态失败");
