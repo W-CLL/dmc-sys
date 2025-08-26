@@ -10,6 +10,8 @@ use app\common\controller\Frontend;
 use app\common\model\QcAdvDayCost;
 use app\common\model\Queue;
 use app\admin\model\Tag;
+use app\common\model\viral_fission\FissionDeriveMaterial;
+use app\common\model\viral_fission\FissionMaterialTask;
 use app\qcdatahandle\controller\ComFun;
 use fast\Random;
 use GuzzleHttp\Client;
@@ -86,7 +88,8 @@ class Test extends Frontend
         die;
     }
 
-  public function arrayDiffRecursive($array1, $array2) {
+    public function arrayDiffRecursive($array1, $array2)
+    {
         $diff = [];
         foreach ($array1 as $key => $value) {
             if (array_key_exists($key, $array2)) {
@@ -115,7 +118,7 @@ class Test extends Frontend
 
         $c = $model->scopeHello($model)->fetchSql(true)->select();
 //        $a = $model->fetchSql(true)->select();
-        $data = $model->where(['type'=>3])->fetchSql(true)->select();
+        $data = $model->where(['type' => 3])->fetchSql(true)->select();
         dump($b);
         dump($data);
         die;
@@ -231,9 +234,9 @@ class Test extends Frontend
 
     protected function removeEmptyValues(&$array)
     {
-        if(isset($array['marketing_scene']) && $array['marketing_scene'] == "SEARCH"){
+        if (isset($array['marketing_scene']) && $array['marketing_scene'] == "SEARCH") {
             unset($array['audience']['new_customer']);
-            if(isset($array['multi_product_creative_list'])){
+            if (isset($array['multi_product_creative_list'])) {
                 unset($array['programmatic_creative_card']);
                 unset($array['programmatic_creative_media_list']);
                 unset($array['programmatic_creative_title_list']);
@@ -542,7 +545,7 @@ class Test extends Frontend
                 ],
                 'query' => $params]);
             $contents = $rep->getBody()->getContents();
-            dump(json_decode($contents,true));
+            dump(json_decode($contents, true));
 //            dump($rep->getStatusCode());
         } catch (GuzzleException $e) {
 //            dump($e->getMessage());
@@ -655,16 +658,17 @@ GROUP BY
      */
     public function testGetAdvScore()
     {
-        $adv_list = Db::name('company')->where(['adv_status'=>1])->page(1,5)->select();
-        foreach ($adv_list as $list){
-         $res =    FundManagement::get_adv_score(['advertiser_id'=>$list['advertiser_id'],'filtering'=>json_encode(['year'=>"2025"])]);
+        $adv_list = Db::name('company')->where(['adv_status' => 1])->page(1, 5)->select();
+        foreach ($adv_list as $list) {
+            $res = FundManagement::get_adv_score(['advertiser_id' => $list['advertiser_id'], 'filtering' => json_encode(['year' => "2025"])]);
             dump($res);
         }
         die;
     }
 
-    public function dsadas(){
-        $dimensions =  ['ad_id'];
+    public function dsadas()
+    {
+        $dimensions = ['ad_id'];
         $metrics = ['stat_cost'];
         $filters = [
 
@@ -694,7 +698,6 @@ GROUP BY
     }
 
 
-
     public function testWatch()
     {
         $watch = new MultiProcessWatch();
@@ -713,8 +716,107 @@ GROUP BY
 //      dump($list);
 //      dump($member_list);
 //      dump($res);
-      dump($res1);
-      die;
+        dump($res1);
+        die;
+    }
+
+    public function test_task_history()
+    {
+        $adv_model = new Company();
+        $page = Cache::get('test_task_page', 1);
+        $adv_list = $adv_model->where(['adv_status' => 1])->page($page)->limit(40)->order('advertiser_id desc')->column('advertiser_id');
+        if (!$adv_list) {
+//            Cache::rm('test_task_page');
+            echo "全部处理完成了";
+            die;
+        }
+        $save_data = [];
+        foreach ($adv_list as $adv_id) {
+            $params = [
+                'advertiser_id' => (int)$adv_id,
+                'filtering' => json_encode(['start_time' => '2025-07-01 00:00:00', 'end_time' => '2025-07-27 00:00:00']),
+                'page' => 1,
+                'page_size' => 50
+            ];
+            $res = FundManagement::get_hot_material_derive_task_list($params);
+            if ($res['code'] == 0 && !empty($res['data']['data'])) {
+                $save_data[$adv_id] = $res['data']['data'];
+                if($res['data']['pagination']['total_number'] >50){
+                    echo  $adv_id;
+                }
+            }
+        }
+        $task_model = new FissionMaterialTask();
+        $fission_model = new FissionDeriveMaterial();
+        $task_save_data = [];
+        $fission_data = [];
+        if ($save_data) {
+            foreach ($save_data as $adv_id => $item) {
+                foreach ($item as $value) {
+                    $task_where = [
+                        'adv_id' => $adv_id,
+                        'task_id' => $value['task_id'] ?? 0,
+                        'material_id' => $value['origin_material_id'],
+                    ];
+                    $task_info = $task_model->where($task_where)->find();
+                    $task_where['status_code'] = $value['status_code']??0;
+                    $task_where['fission_status'] = $value['status'] ?? 0;
+                    $task_where['status_message'] = $value['status_message'] ?? "success";
+                    $task_where['is_handle'] = 1;
+                    $task_where['create_time'] = strtotime($value['create_time']);
+                    if ($task_info) {
+                        $task_where['id'] = $task_info['id'];
+                    }
+                    $task_save_data[] = $task_where;
+                    if ($value['derive_materials']) {
+                        foreach ($value['derive_materials'] as $derive) {
+                            $strategy_detail = $derive['strategy_detail'];
+                            $where = [
+                                'adv_id' => $adv_id,
+                                'task_id' => $value['task_id'],
+                                'old_material_id' => $value['origin_material_id'],
+                                'strategy' => $strategy_detail['strategy'],
+                                'strategy_name' => $strategy_detail['strategy_name'],
+                                'video_id' => $derive['video_id'],
+                            ];
+                            $has = $fission_model->where($where)->find();
+                            if ($has) {
+                                continue;
+                            }
+                            $fission_data[] = [
+                                'adv_id' => $adv_id,
+                                'task_id' => $value['task_id'],
+                                'old_material_id' => $value['origin_material_id'],
+                                'strategy' => $strategy_detail['strategy'],
+                                'apply_times' => json_encode($strategy_detail['apply_times']),
+                                'strategy_description' => $strategy_detail['strategy_description'],
+                                'strategy_name' => $strategy_detail['strategy_name'],
+                                'title' => $derive['title'],
+                                'video_id' => $derive['video_id'],
+                                'video_url' => $derive['video_url'],
+                                'adopt_status_code' => 0,
+                                'adopt_status_message' => 'success',
+                                'create_time' => strtotime($value['create_time']),
+                                'update_time' => strtotime($value['modify_time']),
+                            ];
+                        }
+                    }
+                }
+            }
+            Db::startTrans();
+            try {
+                $task_model->saveAll($task_save_data);
+                $fission_model->saveAll($fission_data);
+                Db::commit();
+            }catch (Exception $e){
+                Db::rollback();
+                dump($e->getMessage());
+               die;
+            }
+        }
+
+        echo "处理完了第" . $page. "页，准备处理下一页";
+        Cache::set('test_task_page', $page+1);
     }
 
 }
