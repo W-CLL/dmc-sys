@@ -28,7 +28,7 @@ class RobotQueue extends Backend
             list($where, $sort, $order, $offset, $limit) = $this->buildparams();
             $list = $this->model
                 ->where($where)
-                ->order('update_time desc')
+                ->order('create_time desc')
                 ->paginate($limit);
             foreach ($list as $item) {
                 switch ($item['status']) {
