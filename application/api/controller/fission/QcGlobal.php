@@ -550,8 +550,8 @@ class QcGlobal extends Controller
                 ])
                 ->whereNotNull('om.product_info')
                 ->where(function ($query) {
-                    $query->whereIn('qo.obj_status', ['DELIVERY_OK', 'DISABLE', 'SYSTEM_DISABLE'])
-                        ->whereOr(['qo.opt_status' => ['in', ['ENABLE', 'DISABLE']]]);
+                    $query->whereIn('qo.obj_status', ['DELIVERY_OK'])
+                        ->whereOr(['qo.opt_status' => ['in', ['ENABLE']]]);
                 })
                 ->group('om.obj_id')
                 ->select();
@@ -616,13 +616,13 @@ class QcGlobal extends Controller
     {
         $filtered_obj_product = [];
         $material_limit = 500;
-
+        $obj_material = new AdvGlobalObjMaterial();
         foreach ($obj_product as $obj_id => $product_ids) {
             $filtered_product_ids = [];
 
             foreach ($product_ids as $product_id) {
                 // 精确查询当前计划+产品的素材数量，避免大批量查询
-                $current_count = Db::name('fission_global_obj_material_202508')
+                $current_count = $obj_material
                     ->where([
                         'adv_id' => $adv_id,
                         'obj_id' => $obj_id,

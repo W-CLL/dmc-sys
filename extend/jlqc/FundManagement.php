@@ -683,6 +683,33 @@ class FundManagement
         return sendApiRes($url, $params, 'GET', ['Access-Token' => $access_token])['data'];
     }
 
+
+    /**
+     * 创建全域商品计划调控任务
+     * 文档地址：https://open.oceanengine.com/labels/12/docs/1825827435645963?origin=left_nav
+     * @param $params
+     * @return mixed
+     */
+    public static function create_global_control_task($params)
+    {
+        $access_token = Cache::get("qc_access_token");
+        $url = "https://api.oceanengine.com/open_api/v1.0/qianchuan/uni_promotion/ad/control_task/create/";
+        return sendApiRes($url, $params, 'POST', ['Access-Token' => $access_token])['data'];
+    }
+
+    /**
+     * 更新全域商品计划调控任务状态
+     * 文档地址：https://open.oceanengine.com/labels/12/docs/1825827367287017?origin=left_nav
+     * @param $params
+     * @return mixed
+     */
+    public static function update_global_control_task($params)
+    {
+        $access_token = Cache::get("qc_access_token");
+        $url = "https://api.oceanengine.com/open_api/v1.0/qianchuan/uni_promotion/ad/control_task/status/update/";
+        return sendApiRes($url, $params, 'POST', ['Access-Token' => $access_token])['data'];
+    }
+
 }
 
 
