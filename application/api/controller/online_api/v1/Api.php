@@ -7,6 +7,7 @@ use app\admin\model\CompanySetting;
 use app\admin\model\QcObj as ObjModel;
 use app\admin\model\QcGlobalObj as GlobalObjModel;
 use app\common\model\QcAdvDayCost;
+use app\common\model\MaterialWhitelist;
 use think\Cache;
 use think\db\exception\DataNotFoundException;
 use think\db\exception\ModelNotFoundException;
@@ -17,6 +18,33 @@ use think\Db;
 
 class Api
 {
+    /**
+     * 获取素材追投白名单公司列表
+     * @return Json
+     */
+    public function getMaterialWhitelistApi(): Json
+    {
+        try {
+            // 直接查询数据库获取启用状态的白名单公司
+            $companies = MaterialWhitelist::getActiveCompanies();
+
+            return json([
+                'code' => 0,
+                'msg' => 'success',
+                'data' => $companies,
+                'count' => count($companies),
+                'timestamp' => time()
+            ]);
+        } catch (\Exception $e) {
+            return json([
+                'code' => 1,
+                'msg' => '获取白名单失败：' . $e->getMessage(),
+                'data' => [],
+                'timestamp' => time()
+            ]);
+        }
+    }
+
     // 标准、全域共用
     public function ownerCompanyNamesApi($charge_name): Json
     {

@@ -4,6 +4,7 @@ namespace app\api\controller;
 use app\common\controller\Api;
 use app\common\controller\TaskDistributor;
 use app\common\model\QcAdvDayCost;
+use app\common\model\MaterialWhitelist;
 use think\Cache;
 use think\Db;
 
@@ -270,9 +271,21 @@ class AutoUpdateGlobalObjMaterialTask extends Api
     {
         $batchMaterialData = [];
 
+        // 获取素材追投白名单公司列表（通过API接口）
+        $whitelistCompanies = $this->getMaterialWhitelistCompanies();
+
         // 处理每个广告主的数据
         foreach ($optCountData as $item) {
             $advId = $item['advertiser_id'];
+            $companyName = $item['company_name'] ?? '';
+
+            // 检查公司是否在素材追投白名单中
+            if (!empty($companyName) && in_array($companyName, $whitelistCompanies)) {
+                // 记录跳过的白名单公司
+                \think\Log::info("AutoUpdateGlobalObjMaterialTask: 跳过素材追投白名单公司 - {$companyName} (广告主ID: {$advId})");
+                continue;
+            }
+
             $needComNum = $this->calculateNeedComNum($item, $notWhiteCom);
 
             if ($needComNum <= 0) {
@@ -715,8 +728,6 @@ class AutoUpdateGlobalObjMaterialTask extends Api
         return $adjusted;
     }
 
-
-
     /**
      * 完成处理，清理缓存
      */
@@ -849,7 +860,6 @@ class AutoUpdateGlobalObjMaterialTask extends Api
         return [$pageAdvList, $cachedCompanyData['notWhiteCom']];
     }
 
-
     // 某些客户指定了特定计划用于素材操作
     private function specialAdvObj($adv_id,$user_name){
         $special = [
@@ -864,6 +874,29 @@ class AutoUpdateGlobalObjMaterialTask extends Api
             return $special[$user_name][$adv_id];
         }
         return false;
+    }
+    /**
+     * 获取素材追投白名单公司列表（通过API接口）
+     * @return array
+     */
+    private function getMaterialWhitelistCompanies()
+    {
+        try {
+            // 调用白名单API接口
+            $response = sendApiRes(API_BASE_URL . "/getMaterialWhitelistApi/", [], 'GET')['data'];
+
+            if (isset($response['code']) && $response['code'] == 0 && isset($response['data'])) {
+                return $response['data'];
+            } else {
+                // API调用失败时记录日志并返回空数组
+                \think\Log::error("AutoUpdateGlobalObjMaterialTask: 获取素材追投白名单失败 - " . json_encode($response));
+                return [];
+            }
+        } catch (\Exception $e) {
+            // 异常时记录日志并返回空数组，确保任务能继续执行
+            \think\Log::error("AutoUpdateGlobalObjMaterialTask: 获取素材追投白名单异常 - " . $e->getMessage());
+            return [];
+        }
     }
 
 }

@@ -741,8 +741,8 @@ GROUP BY
             $res = FundManagement::get_hot_material_derive_task_list($params);
             if ($res['code'] == 0 && !empty($res['data']['data'])) {
                 $save_data[$adv_id] = $res['data']['data'];
-                if($res['data']['pagination']['total_number'] >50){
-                    echo  $adv_id;
+                if ($res['data']['pagination']['total_number'] > 50) {
+                    echo $adv_id;
                 }
             }
         }
@@ -759,7 +759,7 @@ GROUP BY
                         'material_id' => $value['origin_material_id'],
                     ];
                     $task_info = $task_model->where($task_where)->find();
-                    $task_where['status_code'] = $value['status_code']??0;
+                    $task_where['status_code'] = $value['status_code'] ?? 0;
                     $task_where['fission_status'] = $value['status'] ?? 0;
                     $task_where['status_message'] = $value['status_message'] ?? "success";
                     $task_where['is_handle'] = 1;
@@ -808,15 +808,85 @@ GROUP BY
                 $task_model->saveAll($task_save_data);
                 $fission_model->saveAll($fission_data);
                 Db::commit();
-            }catch (Exception $e){
+            } catch (Exception $e) {
                 Db::rollback();
                 dump($e->getMessage());
-               die;
+                die;
             }
         }
 
-        echo "处理完了第" . $page. "页，准备处理下一页";
-        Cache::set('test_task_page', $page+1);
+        echo "处理完了第" . $page . "页，准备处理下一页";
+        Cache::set('test_task_page', $page + 1);
+    }
+
+    public function handleMaterialTask($user_name)
+    {
+        $page_key = Cache::get($user_name . '_handle_material_page', 0);
+        $queue_records_cache = Cache::get($user_name.'job_data_list');
+        if ($queue_records_cache) {
+            $queue_records = unserialize($queue_records_cache);
+        } else {
+            $queue_records = Db::name('queue_record')->where(['queue_name' => 'autoUpdateGlobalObjMaterial'])
+                ->column('job_data');
+            Cache::set($user_name.'job_data_list', serialize($queue_records));
+        }
+        $finally_data = [];
+        foreach ($queue_records as $item) {
+            $data = json_decode($item, true);
+            list($obj_id, $mid) = explode('|', $data['obj_id']);
+            $finally_data[$obj_id] = $data['adv_id'];
+        }
+        echo "共".count($finally_data)."条需要处理";
+        $i = 0;
+        $chunks = array_chunk($finally_data, 100, true);
+
+        if (empty($chunks[$page_key])) {
+            Cache::rm($user_name . '_handle_material_page');
+            Cache::rm($user_name.'job_data_list');
+            echo "全部处理完了";
+            die;
+        }
+        foreach ($chunks[$page_key] as $obj_id => $adv_id) {
+            $params = [
+                'advertiser_id' => (int)$adv_id,
+                'marketing_goal' => "VIDEO_PROM_GOODS",
+                'ad_id' => (int)$obj_id,
+                'start_time' => date('Y-m-d 00:00:00'),
+                'end_time' => date('Y-m-d 23:59:59'),
+                'scene' => "MATERIAL_ADD_BUDGET",
+                'filtering' => json_encode([
+                    'search_keyword' => "起量_",
+                    'task_status' => 'PROCESSING',
+//                    'create_start_time' => date('Y-m-d'),
+//                    'create_end_time' => date('Y-m-d')
+                ]),
+                'page_size' => 100
+            ];
+            $res = FundManagement::get_global_control_task_list($params);
+            if ($res['data']['code'] == 0) {
+                $task_list = $res['data']['data']['task_list'];
+                if ($task_list) {
+                    foreach ($task_list as $task) {
+                        if ((strpos($task['name'], '起量_202508') === 0)) {
+                            dump($task);
+                            $i++;
+                            $update_params = [
+                                'advertiser_id' => (int)$adv_id,
+                                'task_ids' => [$task['id']],
+                                'opt_type' => 'DISABLE'
+                            ];
+                            $res1 = FundManagement::update_global_control_task($update_params);
+                            dump($res1);
+                        }
+                    }
+
+                }
+            }
+        }
+        echo "第" . $page_key . "页，处理了" . $i . "条记录";
+        $page_key++;
+        Cache::set($user_name . '_handle_material_page', $page_key);
+
     }
 
 }

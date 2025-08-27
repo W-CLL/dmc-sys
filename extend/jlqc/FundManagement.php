@@ -710,6 +710,23 @@ class FundManagement
         return sendApiRes($url, $params, 'POST', ['Access-Token' => $access_token])['data'];
     }
 
+    /**
+     * 获取全域商品计划调控任务列表
+     * 文档地址：https://open.oceanengine.com/labels/12/docs/1824940765838411?origin=left_nav
+     * @param $params
+     * @return mixed
+     */
+    public static function get_global_control_task_list($params)
+    {
+        $access_token = Cache::get("qc_access_token");
+        $url = "https://api.oceanengine.com/open_api/v1.0/qianchuan/uni_promotion/ad/control_task/list/";
+//        $header = array(
+//            'Access-Token:' . $access_token,
+//        );
+//      return  Requests::post($url,$params, $header);
+        return sendApiRes($url, $params, 'GET', ['Access-Token' => $access_token]);
+    }
+
 }
 
 
