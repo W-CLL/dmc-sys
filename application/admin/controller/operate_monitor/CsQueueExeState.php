@@ -53,6 +53,9 @@ class CsQueueExeState extends Backend
             case '5':
                 $where['queue_name'] = 'autoUpdateObjNameGlobalWeb';
                 break;
+            case '6':
+                $where['queue_name'] = 'autoUpdateGlobalObjMaterial';
+                break;
             default:
                 $where['queue_name'] = ['like', '%autoUpdateObjName%'];
                 break;

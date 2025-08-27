@@ -27,7 +27,7 @@ class AdvGlobalObjMaterial extends Model
     {
         // 在模型初始化时自动设置当前月份的表名
         static::event('before_write', function ($model) {
-            $model->autoSetMonthlyTable();
+            $this->autoSetMonthlyTable();
         });
     }
 

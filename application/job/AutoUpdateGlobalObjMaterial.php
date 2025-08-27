@@ -31,23 +31,26 @@ class AutoUpdateGlobalObjMaterial
         try {
             list($isJobDone, $msg) = $this->doJob($data, $jobId);
             if ($isJobDone) {
+                // 任务成功，更新状态为1
                 $queueData->save(['id' => $queueData['id'], 'status' => 1, 'msg' => $msg]);
-                $job->delete();
-                return '';
             } else {
-                if ($job->attempts() > 3) {
-                    $job->delete();
-                }
+                // 🔧 任务失败，直接更新状态为2，不进行重试
+                $queueData->save(['id' => $queueData['id'], 'status' => 2, 'msg' => $msg]);
             }
+            // 无论成功还是失败，都删除队列任务
+            $job->delete();
+            return '';
         } catch (Exception $e) {
-            if ($e->getMessage()) {
-                if ($e->getMessage() == "access_token已过期") {
-                    $update_token = new Oauth2();
-                    $update_token->access_token_save();
-                }
+            // 🔧 修复异常处理逻辑
+            if ($e->getMessage() == "access_token已过期") {
+                // access_token过期，尝试更新token并重启任务
+                $update_token = new Oauth2();
+                $update_token->access_token_save();
                 $queueModel->rebootOne($queueData['id']);
             } else {
-                $queueData->save(['id' => $queueData['id'], 'status' => 2, 'msg' => $e->getMessage()]);
+                // 其他异常，标记任务失败
+                $errorMsg = $e->getMessage() ?: '未知异常';
+                $queueData->save(['id' => $queueData['id'], 'status' => 2, 'msg' => "异常失败: " . $errorMsg]);
             }
             $job->delete();
             return '';
