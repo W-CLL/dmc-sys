@@ -101,12 +101,13 @@ class QcGlobal extends Controller
             ->join('company c', 'm.adv_id = c.advertiser_id', 'left')
             ->where([
                 'm.stat_cost_for_roi2' => ['>', 0],
-                'c.adv_status' => 1
+                'c.adv_status' => 1,
+                'm.cost_date'=>['>',strtotime('-16 days')]
             ]);
 
         // 过滤黑名单公司
         if (!empty($blackCompanyList)) {
-            $query->where('c.company_name', 'not in', $blackCompanyList);
+            $query->where(['c.company_name'=>['not in', $blackCompanyList]]);
         }
 
         $adv_list = $query
