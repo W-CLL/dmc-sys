@@ -83,6 +83,14 @@ class AutoUpdateGlobalObjMaterial
             $objId = $parts[0];
             $materialId = $parts[1];
 
+            // 🔧 新增：检查广告主是否在白名单中
+            if ($this->isAdvInWhitelist($advId)) {
+                // 创建任务记录并标记为失败
+                $taskRecord = MaterialControlTaskRecord::createRecord($advId, $objId, $materialId, $queueJobId);
+                $taskRecord->updateCreateResult(false, null, null, null, "广告主已加入白名单，跳过素材调控任务");
+                return [false, "广告主已加入白名单，跳过素材调控任务"];
+            }
+
             // 检查是否已有正在进行的任务
             if (MaterialControlTaskRecord::hasRunningTask($advId, $objId, $materialId)) {
                 return [true, "该素材已有正在进行的调控任务，跳过执行"];
