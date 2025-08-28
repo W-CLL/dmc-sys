@@ -1,27 +1,54 @@
 <form id="add-form" class="form-horizontal" role="form" data-toggle="validator" method="POST" action="">
 
     <div class="form-group">
-        <label class="control-label col-xs-12 col-sm-2">{:__('Company_name')}:</label>
+        <label class="control-label col-xs-12 col-sm-2">过滤类型:</label>
         <div class="col-xs-12 col-sm-8">
-            <input id="c-company_name" class="form-control" name="row[company_name]" type="text" data-rule="required">
+            <div class="radio">
+            {volist name="filterTypeList" id="vo"}
+                <label for="row[filter_type]-{$key}">
+                    <input id="row[filter_type]-{$key}" name="row[filter_type]" type="radio" value="{$key}" {in name="key" value="1"}checked{/in} onchange="toggleFilterFields()" /> {$vo}
+                </label>
+            {/volist}
+            </div>
+            <span class="help-block">公司级别：过滤该公司下所有广告主；广告主级别：只过滤指定广告主</span>
         </div>
     </div>
+
+    <div class="form-group" id="company-field">
+        <label class="control-label col-xs-12 col-sm-2">公司名称:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-company_name" class="form-control" name="row[company_name]" type="text" placeholder="请输入公司名称">
+            <span class="help-block">选择公司级别时必填</span>
+        </div>
+    </div>
+
+    <div class="form-group" id="adv-field" style="display: none;">
+        <label class="control-label col-xs-12 col-sm-2">广告主ID:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-adv_id" class="form-control" name="row[adv_id]" type="text" placeholder="请输入广告主ID">
+            <span class="help-block">选择广告主级别时必填</span>
+            <button type="button" class="btn btn-info btn-sm" onclick="checkAdvCanAdd()" style="margin-top: 5px;">
+                <i class="fa fa-search"></i> 检查是否可添加
+            </button>
+            <div id="check-result" style="margin-top: 10px;"></div>
+        </div>
+    </div>
+
     <div class="form-group">
         <label class="control-label col-xs-12 col-sm-2">{:__('Status')}:</label>
         <div class="col-xs-12 col-sm-8">
-            
             <div class="radio">
             {volist name="statusList" id="vo"}
-                <label for="row[status]-{$key}"><input id="row[status]-{$key}" name="row[status]" type="radio" value="{$key}" {in name="key" value="1"}checked{/in} /> {$vo}</label> 
+                <label for="row[status]-{$key}"><input id="row[status]-{$key}" name="row[status]" type="radio" value="{$key}" {in name="key" value="1"}checked{/in} /> {$vo}</label>
             {/volist}
             </div>
-
         </div>
     </div>
+
     <div class="form-group">
         <label class="control-label col-xs-12 col-sm-2">{:__('Remark')}:</label>
         <div class="col-xs-12 col-sm-8">
-            <input id="c-remark" class="form-control" name="row[remark]" type="text">
+            <input id="c-remark" class="form-control" name="row[remark]" type="text" placeholder="备注说明（可选）">
         </div>
     </div>
     <div class="form-group layer-footer">
@@ -32,3 +59,73 @@
         </div>
     </div>
 </form>
+
+<script>
+// 切换过滤类型时显示/隐藏相应字段
+function toggleFilterFields() {
+    var filterType = $('input[name="row[filter_type]"]:checked').val();
+    var companyField = $('#company-field');
+    var advField = $('#adv-field');
+    var companyInput = $('#c-company_name');
+    var advInput = $('#c-adv_id');
+
+    if (filterType == '1') {
+        // 公司级别
+        companyField.show();
+        advField.hide();
+        companyInput.attr('data-rule', 'required');
+        advInput.removeAttr('data-rule');
+        advInput.val('');
+        $('#check-result').html('');
+    } else {
+        // 广告主级别
+        companyField.hide();
+        advField.show();
+        advInput.attr('data-rule', 'required');
+        companyInput.removeAttr('data-rule');
+        companyInput.val('');
+    }
+}
+
+// 检查广告主是否可以添加
+function checkAdvCanAdd() {
+    var advId = $('#c-adv_id').val();
+    var resultDiv = $('#check-result');
+
+    if (!advId) {
+        resultDiv.html('<div class="alert alert-warning">请先输入广告主ID</div>');
+        return;
+    }
+
+    resultDiv.html('<div class="alert alert-info"><i class="fa fa-spinner fa-spin"></i> 正在检查...</div>');
+
+    $.ajax({
+        url: 'material_whitelist/checkAdvCanAdd',
+        type: 'POST',
+        data: {
+            adv_id: advId
+        },
+        success: function(response) {
+            if (response.code === 1) {
+                resultDiv.html('<div class="alert alert-success"><i class="fa fa-check"></i> ' + response.msg +
+                    (response.data.company_name ? '<br><strong>公司名称:</strong> ' + response.data.company_name : '') +
+                    (response.data.adv_name ? '<br><strong>广告主名称:</strong> ' + response.data.adv_name : '') + '</div>');
+            } else if (response.code === 2) {
+                resultDiv.html('<div class="alert alert-warning"><i class="fa fa-exclamation-triangle"></i> ' + response.msg +
+                    (response.data.company_name ? '<br><strong>公司名称:</strong> ' + response.data.company_name : '') +
+                    (response.data.adv_name ? '<br><strong>广告主名称:</strong> ' + response.data.adv_name : '') + '</div>');
+            } else {
+                resultDiv.html('<div class="alert alert-danger"><i class="fa fa-times"></i> ' + response.msg + '</div>');
+            }
+        },
+        error: function() {
+            resultDiv.html('<div class="alert alert-danger"><i class="fa fa-times"></i> 检查失败，请稍后重试</div>');
+        }
+    });
+}
+
+// 页面加载时初始化
+$(document).ready(function() {
+    toggleFilterFields();
+});
+</script>

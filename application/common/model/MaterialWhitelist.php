@@ -21,8 +21,13 @@ class MaterialWhitelist extends Model
 
     // 追加属性
     protected $append = [
-        'status_text'
+        'status_text',
+        'filter_type_text'
     ];
+
+    // 过滤类型常量
+    const FILTER_TYPE_COMPANY = 1; // 公司级别
+    const FILTER_TYPE_ADV = 2;     // 广告主级别
 
     /**
      * 获取状态文本
@@ -32,6 +37,30 @@ class MaterialWhitelist extends Model
         $status = $data['status'] ?? 0;
         $statusList = [0 => '禁用', 1 => '启用'];
         return $statusList[$status] ?? '未知';
+    }
+
+    /**
+     * 获取过滤类型文本
+     */
+    public function getFilterTypeTextAttr($value, $data)
+    {
+        $filterType = $data['filter_type'] ?? 1;
+        $typeList = [
+            self::FILTER_TYPE_COMPANY => '公司级别',
+            self::FILTER_TYPE_ADV => '广告主级别'
+        ];
+        return $typeList[$filterType] ?? '未知';
+    }
+
+    /**
+     * 获取过滤类型列表
+     */
+    public static function getFilterTypeList()
+    {
+        return [
+            self::FILTER_TYPE_COMPANY => '公司级别',
+            self::FILTER_TYPE_ADV => '广告主级别'
+        ];
     }
 
     /**

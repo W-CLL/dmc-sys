@@ -1,16 +1,44 @@
 <form id="batch-add-form" class="form-horizontal" role="form" data-toggle="validator" method="POST" action="">
 
     <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">批量添加类型:</label>
+        <div class="col-xs-12 col-sm-8">
+            <div class="radio">
+                <label for="batch-type-company">
+                    <input id="batch-type-company" name="row[batch_type]" type="radio" value="1" checked onchange="toggleBatchFields()" /> 公司级别批量添加
+                </label>
+                <label for="batch-type-adv">
+                    <input id="batch-type-adv" name="row[batch_type]" type="radio" value="2" onchange="toggleBatchFields()" /> 广告主级别批量添加
+                </label>
+            </div>
+            <span class="help-block">选择要批量添加的白名单类型</span>
+        </div>
+    </div>
+
+    <div class="form-group" id="company-batch-field">
         <label class="control-label col-xs-12 col-sm-2">公司名称列表:</label>
         <div class="col-xs-12 col-sm-8">
-            <textarea id="c-companies" class="form-control" name="row[companies]" rows="10" placeholder="请输入公司名称，每行一个，或用逗号分隔&#10;例如：&#10;公司A&#10;公司B,公司C&#10;公司D" data-rule="required"></textarea>
+            <textarea id="c-companies" class="form-control" name="row[companies]" rows="10" placeholder="请输入公司名称，每行一个，或用逗号分隔&#10;例如：&#10;公司A&#10;公司B,公司C&#10;公司D"></textarea>
             <span class="help-block">支持每行一个公司名称，或在同一行用逗号分隔多个公司名称</span>
         </div>
     </div>
+
+    <div class="form-group" id="adv-batch-field" style="display: none;">
+        <label class="control-label col-xs-12 col-sm-2">广告主ID列表:</label>
+        <div class="col-xs-12 col-sm-8">
+            <textarea id="c-adv-ids" class="form-control" name="row[adv_ids]" rows="10" placeholder="请输入广告主ID，每行一个，或用逗号分隔&#10;例如：&#10;1234567890&#10;1234567891,1234567892&#10;1234567893"></textarea>
+            <span class="help-block">支持每行一个广告主ID，或在同一行用逗号分隔多个广告主ID</span>
+            <button type="button" class="btn btn-info btn-sm" onclick="batchCheckAdvCanAdd()" style="margin-top: 5px;">
+                <i class="fa fa-search"></i> 批量检查是否可添加
+            </button>
+            <div id="batch-check-result" style="margin-top: 10px;"></div>
+        </div>
+    </div>
+
     <div class="form-group">
         <label class="control-label col-xs-12 col-sm-2">备注说明:</label>
         <div class="col-xs-12 col-sm-8">
-            <input id="c-remark" class="form-control" name="row[remark]" type="text" placeholder="可选，为所有添加的公司设置统一备注">
+            <input id="c-remark" class="form-control" name="row[remark]" type="text" placeholder="可选，为所有添加的记录设置统一备注">
         </div>
     </div>
     <div class="form-group layer-footer">
@@ -21,3 +49,156 @@
         </div>
     </div>
 </form>
+
+<script>
+// 切换批量添加类型时显示/隐藏相应字段
+function toggleBatchFields() {
+    var batchType = $('input[name="row[batch_type]"]:checked').val();
+    var companyField = $('#company-batch-field');
+    var advField = $('#adv-batch-field');
+    var companiesInput = $('#c-companies');
+    var advIdsInput = $('#c-adv-ids');
+
+    if (batchType == '1') {
+        // 公司级别批量添加
+        companyField.show();
+        advField.hide();
+        companiesInput.attr('data-rule', 'required');
+        advIdsInput.removeAttr('data-rule');
+        advIdsInput.val('');
+        $('#batch-check-result').html('');
+    } else {
+        // 广告主级别批量添加
+        companyField.hide();
+        advField.show();
+        advIdsInput.attr('data-rule', 'required');
+        companiesInput.removeAttr('data-rule');
+        companiesInput.val('');
+    }
+}
+
+// 批量检查广告主是否可以添加
+function batchCheckAdvCanAdd() {
+    var advIdsText = $('#c-adv-ids').val();
+    var resultDiv = $('#batch-check-result');
+
+    if (!advIdsText.trim()) {
+        resultDiv.html('<div class="alert alert-warning">请先输入广告主ID列表</div>');
+        return;
+    }
+
+    // 解析广告主ID列表
+    var advIds = [];
+    var lines = advIdsText.split('\n');
+    for (var i = 0; i < lines.length; i++) {
+        var line = lines[i].trim();
+        if (line) {
+            // 支持逗号分隔
+            var items = line.split(',');
+            for (var j = 0; j < items.length; j++) {
+                var item = items[j].trim();
+                if (item) {
+                    advIds.push(item);
+                }
+            }
+        }
+    }
+
+    if (advIds.length === 0) {
+        resultDiv.html('<div class="alert alert-warning">没有找到有效的广告主ID</div>');
+        return;
+    }
+
+    resultDiv.html('<div class="alert alert-info"><i class="fa fa-spinner fa-spin"></i> 正在检查 ' + advIds.length + ' 个广告主...</div>');
+
+    // 批量检查
+    var checkPromises = [];
+    var results = [];
+
+    for (var k = 0; k < advIds.length; k++) {
+        (function(advId, index) {
+            var promise = $.ajax({
+                url: 'material_whitelist/checkAdvCanAdd',
+                type: 'POST',
+                data: {
+                    adv_id: advId
+                }
+            }).then(function(response) {
+                results[index] = {
+                    adv_id: advId,
+                    response: response
+                };
+            }).catch(function() {
+                results[index] = {
+                    adv_id: advId,
+                    response: {code: 0, msg: '检查失败'}
+                };
+            });
+            checkPromises.push(promise);
+        })(advIds[k], k);
+    }
+
+    // 等待所有检查完成
+    Promise.all(checkPromises).then(function() {
+        displayBatchCheckResults(results);
+    });
+}
+
+// 显示批量检查结果
+function displayBatchCheckResults(results) {
+    var resultDiv = $('#batch-check-result');
+    var canAddCount = 0;
+    var cannotAddCount = 0;
+    var errorCount = 0;
+
+    var html = '<div class="panel panel-default">';
+    html += '<div class="panel-heading"><strong>批量检查结果</strong></div>';
+    html += '<div class="panel-body" style="max-height: 300px; overflow-y: auto;">';
+    html += '<table class="table table-condensed table-striped">';
+    html += '<thead><tr><th>广告主ID</th><th>状态</th><th>说明</th></tr></thead>';
+    html += '<tbody>';
+
+    for (var i = 0; i < results.length; i++) {
+        var result = results[i];
+        var response = result.response;
+        var statusClass = '';
+        var statusText = '';
+
+        if (response.code === 1) {
+            statusClass = 'success';
+            statusText = '可添加';
+            canAddCount++;
+        } else if (response.code === 2) {
+            statusClass = 'warning';
+            statusText = '不建议添加';
+            cannotAddCount++;
+        } else {
+            statusClass = 'danger';
+            statusText = '检查失败';
+            errorCount++;
+        }
+
+        html += '<tr class="' + statusClass + '">';
+        html += '<td>' + result.adv_id + '</td>';
+        html += '<td><span class="label label-' + statusClass + '">' + statusText + '</span></td>';
+        html += '<td>' + response.msg + '</td>';
+        html += '</tr>';
+    }
+
+    html += '</tbody></table>';
+    html += '</div>';
+    html += '<div class="panel-footer">';
+    html += '<span class="label label-success">可添加: ' + canAddCount + '</span> ';
+    html += '<span class="label label-warning">不建议: ' + cannotAddCount + '</span> ';
+    html += '<span class="label label-danger">检查失败: ' + errorCount + '</span>';
+    html += '</div>';
+    html += '</div>';
+
+    resultDiv.html(html);
+}
+
+// 页面加载时初始化
+$(document).ready(function() {
+    toggleBatchFields();
+});
+</script>

@@ -271,18 +271,18 @@ class AutoUpdateGlobalObjMaterialTask extends Api
     {
         $batchMaterialData = [];
 
-        // 获取素材追投白名单公司列表（通过API接口）
-        $whitelistCompanies = $this->getMaterialWhitelistCompanies();
+        // 获取素材追投白名单数据（通过API接口）
+        $whitelistData = $this->getMaterialWhitelistData();
 
         // 处理每个广告主的数据
         foreach ($optCountData as $item) {
             $advId = $item['advertiser_id'];
             $companyName = $item['company_name'] ?? '';
 
-            // 检查公司是否在素材追投白名单中
-            if (!empty($companyName) && in_array($companyName, $whitelistCompanies)) {
-                // 记录跳过的白名单公司
-                \think\Log::info("AutoUpdateGlobalObjMaterialTask: 跳过素材追投白名单公司 - {$companyName} (广告主ID: {$advId})");
+            // 检查是否在素材追投白名单中（优先级：公司级别 > 广告主级别）
+            if ($this->isInWhitelist($advId, $companyName, $whitelistData)) {
+                // 记录跳过的白名单
+                \think\Log::info("AutoUpdateGlobalObjMaterialTask: 跳过素材追投白名单 - 公司: {$companyName}, 广告主ID: {$advId}");
                 continue;
             }
 
@@ -876,27 +876,94 @@ class AutoUpdateGlobalObjMaterialTask extends Api
         return false;
     }
     /**
-     * 获取素材追投白名单公司列表（通过API接口）
+     * 获取素材追投白名单数据（通过API接口）
      * @return array
      */
-    private function getMaterialWhitelistCompanies()
+    private function getMaterialWhitelistData()
     {
         try {
             // 调用白名单API接口
-            $response = sendApiRes(API_BASE_URL . "/getMaterialWhitelistApi/", [], 'GET')['data'];
+            $response = sendApiRes(API_BASE_URL . "/getMaterialWhitelistApi/", [], 'GET');
 
             if (isset($response['code']) && $response['code'] == 0 && isset($response['data'])) {
                 return $response['data'];
             } else {
                 // API调用失败时记录日志并返回空数组
                 \think\Log::error("AutoUpdateGlobalObjMaterialTask: 获取素材追投白名单失败 - " . json_encode($response));
-                return [];
+                return ['companies' => [], 'adv_ids' => []];
             }
         } catch (\Exception $e) {
             // 异常时记录日志并返回空数组，确保任务能继续执行
             \think\Log::error("AutoUpdateGlobalObjMaterialTask: 获取素材追投白名单异常 - " . $e->getMessage());
-            return [];
+            return ['companies' => [], 'adv_ids' => []];
         }
+    }
+
+    /**
+     * 检查广告主是否在白名单中
+     * @param string $advId 广告主ID
+     * @param string $companyName 公司名称（从任务数据中获取）
+     * @param array $whitelistData 白名单数据
+     * @return bool
+     */
+    private function isInWhitelist($advId, $companyName, $whitelistData)
+    {
+        // 1. 优先检查公司级别白名单（优先级更高）
+        if (!empty($companyName) && in_array($companyName, $whitelistData['companies'] ?? [])) {
+            return true;
+        }
+
+        // 2. 检查广告主级别白名单
+        if (!empty($advId) && in_array($advId, $whitelistData['adv_ids'] ?? [])) {
+            return true;
+        }
+
+        // 3. 如果任务数据中的公司名称为空或不准确，通过fa_company表再次确认
+        if (empty($companyName) || !$this->isCompanyNameAccurate($advId, $companyName)) {
+            $realCompanyName = $this->getCompanyNameByAdvId($advId);
+            if (!empty($realCompanyName) && in_array($realCompanyName, $whitelistData['companies'] ?? [])) {
+                \think\Log::info("AutoUpdateGlobalObjMaterialTask: 通过fa_company表发现公司白名单 - 广告主ID: {$advId}, 实际公司: {$realCompanyName}");
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * 通过广告主ID从fa_company表获取公司名称
+     * @param string $advId
+     * @return string
+     */
+    private function getCompanyNameByAdvId($advId)
+    {
+        try {
+            $companyInfo = \think\Db::name('company')
+                ->where('advertiser_id', $advId)
+                ->field('company_name')
+                ->find();
+
+            return $companyInfo['company_name'] ?? '';
+        } catch (\Exception $e) {
+            \think\Log::error("AutoUpdateGlobalObjMaterialTask: 获取公司名称失败 - 广告主ID: {$advId}, 错误: " . $e->getMessage());
+            return '';
+        }
+    }
+
+    /**
+     * 检查任务数据中的公司名称是否准确
+     * @param string $advId
+     * @param string $taskCompanyName
+     * @return bool
+     */
+    private function isCompanyNameAccurate($advId, $taskCompanyName)
+    {
+        if (empty($taskCompanyName)) {
+            return false;
+        }
+
+        $realCompanyName = $this->getCompanyNameByAdvId($advId);
+        return !empty($realCompanyName) && $realCompanyName === $taskCompanyName;
     }
 
 }

@@ -19,28 +19,158 @@ use think\Db;
 class Api
 {
     /**
-     * 获取素材追投白名单公司列表
+     * 获取素材追投白名单数据
      * @return Json
      */
     public function getMaterialWhitelistApi(): Json
     {
         try {
-            // 直接查询数据库获取启用状态的白名单公司
-            $companies = MaterialWhitelist::getActiveCompanies();
+            // 获取启用状态的白名单数据，包含公司级别和广告主级别
+            $whitelistData = Db::name('material_whitelist')
+                ->where('status', 1)
+                ->field('filter_type,company_name,adv_id')
+                ->order('create_time desc')
+                ->select();
+
+            $result = [
+                'companies' => [], // 公司级别白名单
+                'adv_ids' => []    // 广告主级别白名单
+            ];
+
+            foreach ($whitelistData as $item) {
+                if ($item['filter_type'] == 1 && !empty($item['company_name'])) {
+                    // 公司级别
+                    $result['companies'][] = $item['company_name'];
+                } elseif ($item['filter_type'] == 2 && !empty($item['adv_id'])) {
+                    // 广告主级别
+                    $result['adv_ids'][] = $item['adv_id'];
+                }
+            }
 
             return json([
                 'code' => 0,
                 'msg' => 'success',
-                'data' => $companies,
-                'count' => count($companies),
+                'data' => $result,
+                'count' => [
+                    'companies' => count($result['companies']),
+                    'adv_ids' => count($result['adv_ids'])
+                ],
                 'timestamp' => time()
             ]);
         } catch (\Exception $e) {
             return json([
                 'code' => 1,
                 'msg' => '获取白名单失败：' . $e->getMessage(),
-                'data' => [],
+                'data' => ['companies' => [], 'adv_ids' => []],
                 'timestamp' => time()
+            ]);
+        }
+    }
+
+    /**
+     * 检查广告主是否可以添加到白名单
+     * 通过fa_company表查询广告主所属公司，再检查公司是否已在白名单中
+     * @return Json
+     */
+    public function checkAdvCanAddToWhitelistApi(): Json
+    {
+        try {
+            $request = \think\Request::instance();
+            $jsonData = $request->getContent();
+            $data = json_decode($jsonData, true);
+
+            $advId = $data['adv_id'] ?? '';
+            if (empty($advId)) {
+                return json([
+                    'code' => 1,
+                    'msg' => '广告主ID不能为空',
+                    'data' => null
+                ]);
+            }
+
+            // 1. 通过fa_company表查询广告主信息
+            $companyInfo = Db::name('company')
+                ->where('advertiser_id', $advId)
+                ->field('advertiser_id, company_name, name')
+                ->find();
+
+            if (!$companyInfo) {
+                return json([
+                    'code' => 1,
+                    'msg' => "找不到广告主ID「{$advId}」的信息，请确认广告主ID是否正确",
+                    'data' => [
+                        'can_add' => false,
+                        'reason' => 'adv_not_found',
+                        'adv_id' => $advId
+                    ]
+                ]);
+            }
+
+            $companyName = $companyInfo['company_name'];
+            $advName = $companyInfo['name'] ?? '';
+
+            // 2. 检查该公司是否已经在公司级别白名单中
+            $companyInWhitelist = Db::name('material_whitelist')
+                ->where([
+                    'filter_type' => 1,
+                    'company_name' => $companyName,
+                    'status' => 1
+                ])
+                ->count() > 0;
+
+            if ($companyInWhitelist) {
+                return json([
+                    'code' => 2,
+                    'msg' => "该广告主所属公司「{$companyName}」已在公司级别白名单中，无需重复添加",
+                    'data' => [
+                        'can_add' => false,
+                        'reason' => 'company_already_whitelisted',
+                        'company_name' => $companyName,
+                        'adv_name' => $advName,
+                        'adv_id' => $advId
+                    ]
+                ]);
+            }
+
+            // 3. 检查该广告主是否已经在广告主级别白名单中
+            $advInWhitelist = Db::name('material_whitelist')
+                ->where([
+                    'filter_type' => 2,
+                    'adv_id' => $advId,
+                    'status' => 1
+                ])
+                ->count() > 0;
+
+            if ($advInWhitelist) {
+                return json([
+                    'code' => 2,
+                    'msg' => "该广告主已在广告主级别白名单中",
+                    'data' => [
+                        'can_add' => false,
+                        'reason' => 'adv_already_whitelisted',
+                        'company_name' => $companyName,
+                        'adv_name' => $advName,
+                        'adv_id' => $advId
+                    ]
+                ]);
+            }
+
+            return json([
+                'code' => 0,
+                'msg' => '可以添加到白名单',
+                'data' => [
+                    'can_add' => true,
+                    'company_name' => $companyName,
+                    'adv_name' => $advName,
+                    'adv_id' => $advId
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return json([
+                'code' => 1,
+                'msg' => '检查失败：' . $e->getMessage(),
+                'data' => null
             ]);
         }
     }

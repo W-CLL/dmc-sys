@@ -291,5 +291,105 @@ class AutoUpdateGlobalObjMaterial
         ];
     }
 
+    /**
+     * 检查广告主是否在素材追投白名单中
+     * @param string $advId 广告主ID
+     * @return bool
+     */
+    private function isAdvInWhitelist($advId): bool
+    {
+        try {
+            // 1. 获取白名单数据
+            $whitelistData = $this->getMaterialWhitelistData();
+
+            // 2. 获取广告主信息
+            $advInfo = $this->getAdvInfo($advId);
+            $companyName = $advInfo['company_name'] ?? '';
+
+            // 3. 检查是否在白名单中（优先级：公司级别 > 广告主级别）
+            if ($this->isInWhitelistJob($advId, $companyName, $whitelistData)) {
+                return true;
+            }
+
+            return false;
+
+        } catch (\Exception $e) {
+            // 异常时记录日志但不阻止任务执行，确保系统稳定性
+            \think\Log::error("AutoUpdateGlobalObjMaterial: 检查白名单异常 - 广告主ID: {$advId}, 错误: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * 检查广告主是否在白名单中（任务执行时使用）
+     * @param string $advId 广告主ID
+     * @param string $companyName 公司名称
+     * @param array $whitelistData 白名单数据
+     * @return bool
+     */
+    private function isInWhitelistJob($advId, $companyName, $whitelistData): bool
+    {
+        // 1. 优先检查公司级别白名单
+        if (!empty($companyName) && in_array($companyName, $whitelistData['companies'] ?? [])) {
+            \think\Log::info("AutoUpdateGlobalObjMaterial: 跳过公司级别白名单任务 - 公司: {$companyName}, 广告主ID: {$advId}");
+            return true;
+        }
+
+        // 2. 检查广告主级别白名单
+        if (!empty($advId) && in_array($advId, $whitelistData['adv_ids'] ?? [])) {
+            \think\Log::info("AutoUpdateGlobalObjMaterial: 跳过广告主级别白名单任务 - 广告主ID: {$advId}");
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * 获取广告主信息
+     * 优先通过fa_company表查询，确保数据准确性
+     * @param string $advId
+     * @return array|null
+     */
+    private function getAdvInfo($advId): ?array
+    {
+        try {
+            // 优先通过fa_company表查询广告主信息
+            $companyInfo = \think\Db::name('company')
+                ->where('advertiser_id', $advId)
+                ->field('advertiser_id, company_name, name')
+                ->find();
+
+            if ($companyInfo) {
+                return [
+                    'advertiser_id' => $companyInfo['advertiser_id'],
+                    'company_name' => $companyInfo['company_name'],
+                    'name' => $companyInfo['name'] ?? ''
+                ];
+            }
+
+            // 如果fa_company表中没有找到，尝试通过API获取
+            $response = sendApiRes(API_BASE_URL . "/getAdvInfo/", [$advId]);
+            return $response['data'] ?? null;
+
+        } catch (\Exception $e) {
+            \think\Log::error("AutoUpdateGlobalObjMaterial: 获取广告主信息失败 - 广告主ID: {$advId}, 错误: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * 获取素材追投白名单数据
+     * @return array
+     */
+    private function getMaterialWhitelistData(): array
+    {
+        try {
+            $response = sendApiRes(API_BASE_URL . "/getMaterialWhitelistApi/", [], 'GET');
+            return $response['data'] ?? ['companies' => [], 'adv_ids' => []];
+        } catch (\Exception $e) {
+            \think\Log::error("AutoUpdateGlobalObjMaterial: 获取白名单失败 - 错误: " . $e->getMessage());
+            return ['companies' => [], 'adv_ids' => []];
+        }
+    }
 
 }
