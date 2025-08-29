@@ -889,4 +889,68 @@ GROUP BY
 
     }
 
+
+    public function getDayIntoObjMaterialList()
+    {
+//        $list = Db::name('fission_into_obj_record')->where([
+////            'create_time'=>['>',strtotime(date('Y-m-d'))],
+//            'status'=>'success',])->select();
+        //
+        $obj_count =count( Db::name('qc_global_obj')->alias('qo')
+            ->join('company com','qo.adv_id=com.advertiser_id','left')
+            ->where(['com.adv_status'=>1,'qo.obj_status'=>"DELIVERY_OK"])
+            ->field('qo.obj_id')
+            ->select());
+        echo "正常所有的在投放的计划数:".$obj_count."</br>";
+
+        $company_count = Db::name('company')->where(['adv_status'=>1])->group('company_name')->count('id');
+        echo "正常的所有公司数:".$company_count."</br>";
+        $black_company_name = $this->getBlackCompanyList();
+
+        $back_company_count = count($black_company_name);
+        echo "加入黑名单的公司数:".$back_company_count."</br>";
+        //不愿意推送的计划的公司
+        $black_obj =  count(Db::name('company')->alias('com')
+            ->join('qc_global_obj qo','com.advertiser_id=qo.adv_id','left')
+            ->where(['com.adv_status'=>1,'qo.obj_status'=>"DELIVERY_OK",'com.company_name'=>['in',$black_company_name]])
+            ->field('qo.obj_id')
+            ->select());
+        echo "不愿意推送的计划的公司:".$black_obj."</br>";
+
+        echo "可推送的计划数:".($obj_count - $black_obj)."</br>";
+        die;
+
+//        foreach ($list as $item){
+//            $mids = explode(',',$item['mid']);
+//            foreach ($mids as $mid){
+//                $data[$mid] = $item['obj_id'];
+//            }
+//        }
+
+
+
+
+        dump($data);
+        die;
+
+
+    }
+
+    private function getBlackCompanyList($file_name="black_company_config.php"): array
+    {
+        $config_file_path = APP_PATH . 'api/controller/fission/'.$file_name;
+
+        if (file_exists($config_file_path)) {
+            try {
+                $black_company_list = include $config_file_path;
+                if (is_array($black_company_list) && !empty($black_company_list)) {
+                    return $black_company_list;
+                }
+            } catch (\Exception $e) {
+                echo "读取黑名单配置文件失败: " . $e->getMessage() . "\n";
+            }
+        }
+
+        return [];
+    }
 }
