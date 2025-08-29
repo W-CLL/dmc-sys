@@ -172,14 +172,28 @@ class QcGlobal extends Controller
 
     public function adoptFissionMaterial()
     {
+        // 获取黑名单公司列表
+        $blackCompanyList = $this->getBlackCompanyList('black_company_config_fission.php');
+        $company = new \app\admin\model\Company();
+        $blackAdvList = [];
+        if (!empty($blackCompanyList)) {
+            $blackAdvList = $company->where(['company_name' => ['in', $blackCompanyList]])->column('advertiser_id');
+            echo "已获取 " . count($blackAdvList) . " 个黑名单广告主\n";
+        }
+
         $fission_material = new FissionDeriveMaterial();
-        $list = $fission_material
+        $query = $fission_material
             ->where([
                 'adopt_status_message' => null,
                 'create_time' => ['between', [strtotime('-6 days'), time()]]
-            ])
-            ->field('adv_id, video_id') // 只查询需要的字段
-            ->select();
+            ]);
+
+        // 过滤黑名单广告主
+        if (!empty($blackAdvList)) {
+            $query->where(['adv_id' => ['not in', $blackAdvList]]);
+        }
+
+        $list = $query->field('adv_id, video_id')->select();
 
         if (empty($list)) {
             echo "无待采纳的裂变素材";
@@ -427,12 +441,20 @@ class QcGlobal extends Controller
 
         do {
             // 基于ID分页查询
-            $list = $fission_material
+            $query = $fission_material
                 ->where([
                     'adopt_status_message' => "success",
                     'create_time' => ['between', [strtotime('-7 days'), time()]],
                     'id' => ['>', $last_processed_id]
-                ])
+                ]);
+
+            // 过滤黑名单广告主
+            if (!empty($black_adv_list)) {
+                $query->where(['adv_id' => ['not in', $black_adv_list]]);
+                echo "已过滤 " . count($black_adv_list) . " 个黑名单广告主\n";
+            }
+
+            $list = $query
                 ->field('id,adv_id,old_material_id,video_id')
                 ->order('id asc')
                 ->limit($page_size)

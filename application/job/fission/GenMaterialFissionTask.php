@@ -47,8 +47,17 @@ class GenMaterialFissionTask extends BaseJob
      */
     protected function doJob($data)
     {
+        // 获取最新的黑名单列表，确保实时过滤
+        $blackCompanyList = $this->getBlackCompanyList();
+
         foreach ($data['adv_list'] as $adv_id => $company_name) {
             try {
+                // 检查公司是否在黑名单中
+                if (in_array($company_name, $blackCompanyList)) {
+                    echo "跳过黑名单公司: {$company_name} (广告主ID: {$adv_id})\n";
+                    continue;
+                }
+
                 // 获取裂变规则
                 $fission_rules = $this->getFissionRules($adv_id, $company_name);
 
@@ -356,6 +365,31 @@ class GenMaterialFissionTask extends BaseJob
         }
 
         return [$startDate, $endDate];
+    }
+
+    /**
+     * 获取黑名单公司列表
+     * @return array
+     */
+    private function getBlackCompanyList(): array
+    {
+        $config_file_path = APP_PATH . 'api/controller/fission/black_company_config_fission.php';
+
+        // 尝试从PHP配置文件读取
+        if (file_exists($config_file_path)) {
+            try {
+                $black_company_list = include $config_file_path;
+                if (is_array($black_company_list) && !empty($black_company_list)) {
+                    echo "从黑名单配置文件读取到 " . count($black_company_list) . " 个黑名单公司\n";
+                    return $black_company_list;
+                }
+            } catch (\Exception $e) {
+                echo "读取黑名单配置文件失败: " . $e->getMessage() . "\n";
+            }
+        }
+
+        echo "未找到黑名单配置文件或配置为空\n";
+        return [];
     }
 
 

@@ -31,8 +31,15 @@ class AdoptFissionMaterial extends BaseJob
      */
     protected function doJob($data)
     {
-        $derive_model = new FissionDeriveMaterial();
         $adv_id = $data['adv_id'];
+
+        // 检查广告主是否在黑名单中
+        if ($this->isAdvInBlacklist($adv_id)) {
+            echo "跳过黑名单广告主: {$adv_id}\n";
+            return true;
+        }
+
+        $derive_model = new FissionDeriveMaterial();
         $param = [
             'advertiser_id' => (int)$adv_id,
             'video_ids' =>array_values( $data['video_id'])
@@ -63,6 +70,73 @@ class AdoptFissionMaterial extends BaseJob
             }else{
                 throw new Exception($res['message']." 请求id:".$res['request_id']);
             }
+        }
+    }
+
+    /**
+     * 检查广告主是否在黑名单中
+     * @param string $advId 广告主ID
+     * @return bool
+     */
+    private function isAdvInBlacklist($advId): bool
+    {
+        if (empty($advId)) {
+            return false;
+        }
+
+        // 获取黑名单公司列表
+        $blackCompanyList = $this->getBlackCompanyList();
+        if (empty($blackCompanyList)) {
+            return false;
+        }
+
+        // 获取广告主对应的公司名称
+        $companyName = $this->getCompanyNameByAdvId($advId);
+        if (empty($companyName)) {
+            return false;
+        }
+
+        return in_array($companyName, $blackCompanyList);
+    }
+
+    /**
+     * 获取黑名单公司列表
+     * @return array
+     */
+    private function getBlackCompanyList(): array
+    {
+        $config_file_path = APP_PATH . 'api/controller/fission/black_company_config_fission.php';
+
+        if (file_exists($config_file_path)) {
+            try {
+                $black_company_list = include $config_file_path;
+                if (is_array($black_company_list) && !empty($black_company_list)) {
+                    return $black_company_list;
+                }
+            } catch (\Exception $e) {
+                echo "读取黑名单配置文件失败: " . $e->getMessage() . "\n";
+            }
+        }
+
+        return [];
+    }
+
+    /**
+     * 根据广告主ID获取公司名称
+     * @param string $advId 广告主ID
+     * @return string
+     */
+    private function getCompanyNameByAdvId($advId): string
+    {
+        try {
+            $company = \think\Db::name('company')
+                ->where('advertiser_id', $advId)
+                ->value('company_name');
+
+            return $company ?: '';
+        } catch (\Exception $e) {
+            echo "获取公司名称失败: " . $e->getMessage() . "\n";
+            return '';
         }
     }
 }

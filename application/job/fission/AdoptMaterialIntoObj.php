@@ -36,6 +36,13 @@ class AdoptMaterialIntoObj extends BaseJob
      */
     protected function doJob($data)
     {
+        // 检查广告主是否在黑名单中
+        $advId = $data['adv_id'] ?? '';
+        if ($this->isAdvInBlacklist($advId)) {
+            echo "跳过黑名单广告主: {$advId}\n";
+            return true;
+        }
+
         // 检查是否有相同的任务正在执行或已完成
         if ($this->isDuplicateTask($data)) {
             echo "发现重复任务，跳过执行\n";
@@ -377,5 +384,72 @@ class AdoptMaterialIntoObj extends BaseJob
             'request_id' => $request_id,
             'create_time' => time()
         ];
+    }
+
+    /**
+     * 检查广告主是否在黑名单中
+     * @param string $advId 广告主ID
+     * @return bool
+     */
+    private function isAdvInBlacklist($advId): bool
+    {
+        if (empty($advId)) {
+            return false;
+        }
+
+        // 获取黑名单公司列表
+        $blackCompanyList = $this->getBlackCompanyList();
+        if (empty($blackCompanyList)) {
+            return false;
+        }
+
+        // 获取广告主对应的公司名称
+        $companyName = $this->getCompanyNameByAdvId($advId);
+        if (empty($companyName)) {
+            return false;
+        }
+
+        return in_array($companyName, $blackCompanyList);
+    }
+
+    /**
+     * 获取黑名单公司列表
+     * @return array
+     */
+    private function getBlackCompanyList(): array
+    {
+        $config_file_path = APP_PATH . 'api/controller/fission/black_company_config_fission.php';
+
+        if (file_exists($config_file_path)) {
+            try {
+                $black_company_list = include $config_file_path;
+                if (is_array($black_company_list) && !empty($black_company_list)) {
+                    return $black_company_list;
+                }
+            } catch (\Exception $e) {
+                echo "读取黑名单配置文件失败: " . $e->getMessage() . "\n";
+            }
+        }
+
+        return [];
+    }
+
+    /**
+     * 根据广告主ID获取公司名称
+     * @param string $advId 广告主ID
+     * @return string
+     */
+    private function getCompanyNameByAdvId($advId): string
+    {
+        try {
+            $company = \think\Db::name('company')
+                ->where('advertiser_id', $advId)
+                ->value('company_name');
+
+            return $company ?: '';
+        } catch (\Exception $e) {
+            echo "获取公司名称失败: " . $e->getMessage() . "\n";
+            return '';
+        }
     }
 }
