@@ -72,8 +72,8 @@ abstract class BaseUpdateGlobalJob
         $this->applyLunchTimeControl();
 
         // 优化：智能延时计算，避免魔法数字
-//        $delay = $this->calculateOptimalDelay($data['delay']);
-        sleep($data['delay']);
+        $delay = $this->calculateOptimalDelay($data['delay']);
+        sleep($delay);
 
         // 优化：缓存token，减少重复获取
         $token = $this->getCachedAccessToken();
