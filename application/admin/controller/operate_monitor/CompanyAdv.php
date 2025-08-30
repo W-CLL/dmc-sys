@@ -85,8 +85,8 @@ class CompanyAdv extends Backend
         if(!isset($data['percentage'])){
             $this->error('请输入百分比');
         }else{
-            if(!is_numeric($data['percentage']) || $data['percentage'] < 0 || $data['percentage'] > 100){
-                $this->error('百分比填写有误, 请填写0-100之间的数字');
+            if(!is_numeric($data['percentage']) || $data['percentage'] < 0 || $data['percentage'] > 200){
+                $this->error('百分比填写有误, 请填写0-200之间的数字');
             }
         }
         if(empty($data['ids'])){
