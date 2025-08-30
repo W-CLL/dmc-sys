@@ -88,20 +88,30 @@ class AutoUpdateGlobalObjName extends Api
         }
 //        $queue = new Queue();
 
+        // 先收集所有有效的广告主数据
+        $validAdvList = [];
         foreach ($list as $item) {
             // 使用动态计算方法
             $needComNum = $this->calculateNeedComNum($item, $notWhiteCom);
-            $list = sendApiRes(API_BASE_URL."/getGlobalObjListApi/", [
+
+            if ($needComNum <= 0) {
+                continue;
+            }
+
+            $objList = sendApiRes(API_BASE_URL."/getGlobalObjListApi/", [
                 $item['advertiser_id'], $needComNum
             ])['data'];
 
-            if (!$list) {
+            if (!$objList) {
+                echo "❌ 广告主 {$item['advertiser_id']} 获取计划列表失败或为空\n";
                 continue;
             }
+
             if($this->specialAdvObj($item['advertiser_id'],$user_name)){
-                $list = $this->specialAdvObj($item['advertiser_id'],$user_name);
+                $objList = $this->specialAdvObj($item['advertiser_id'],$user_name);
             }
-            $count = count($list);
+
+            $count = count($objList);
             $totalOps = $needComNum;
             $perObjOps = ceil($totalOps / $count);
 
@@ -111,17 +121,42 @@ class AutoUpdateGlobalObjName extends Api
                 continue;
             }
 
-            foreach ($list as $objId) {
-                $distributor->addTask($item['advertiser_id'], $objId, $perObjOps);
-            }
-//            $queueData = [
-//                'need_opt_num' => $needComNum,
-//                'adv_id' => $item['advertiser_id'],
-//                'obj_list' => $list
-//            ];
-//            //一个广告主下的托管计划，总的操作次数，写入任务再平分次数到每个计划，进行延时修改
-//            $queue->addQueue('分块处理自动化【全域】', 'app\job\ChunkAutoGlobalObj', 'chunkAutoGlobalObj', $queueData);
+            $validAdvList[] = [
+                'advertiser_id' => $item['advertiser_id'],
+                'objList' => $objList,
+                'needComNum' => $needComNum,
+                'perObjOps' => $perObjOps
+            ];
         }
+
+        if (empty($validAdvList)) {
+            echo "❌ 没有有效的广告主需要处理\n";
+            $taskNum = $distributor->dispatch();
+            echo "全部处理完了";
+            echo $taskNum;
+            Cache::rm('chunk_obj_global_page');
+            $redis->rm(self::GLOBAL_CACHE_KEY . '_over');
+            Cache::set(self::GLOBAL_CACHE_KEY, strtotime(date('Y-m-d')));
+            die;
+        }
+
+        // 判断是否只有一个广告主需要操作
+        if (count($validAdvList) == 1) {
+            echo "🎯 检测到只有一个广告主需要操作，使用直接操作模式\n";
+            $this->processGlobalSingleAdvertiser($validAdvList[0]);
+        } else {
+            echo "🔄 检测到多个广告主需要操作，使用TaskDistributor分发模式\n";
+            foreach ($validAdvList as $advData) {
+                foreach ($advData['objList'] as $objId) {
+                    $distributor->addTask($advData['advertiser_id'], $objId, $advData['perObjOps']);
+                }
+            }
+        }
+
+        // 处理完所有数据后，统一dispatch
+        $taskCount = $distributor->dispatch();
+        echo "任务分发完成，共生成 {$taskCount} 个任务\n";
+
         if ($is_special) {
             echo "全部处理完了";
             die;
@@ -802,6 +837,57 @@ class AutoUpdateGlobalObjName extends Api
             return $special[$user_name][$adv_id];
         }
         return false;
+    }
+
+    /**
+     * 处理单个广告主（全域推广直接操作模式）
+     */
+    private function processGlobalSingleAdvertiser($advData)
+    {
+        $queue = new Queue();
+        $advertiser_id = $advData['advertiser_id'];
+        $objList = $advData['objList'];
+        $needComNum = $advData['needComNum'];
+        $objCount = count($objList);
+
+        echo "🚀 全域单广告主模式：广告主 {$advertiser_id}，需要操作 {$needComNum} 次，分配给 {$objCount} 个计划\n";
+
+        // 计算每个计划应该操作多少次
+        $perObjOps = ceil($needComNum / $objCount);
+        echo "📊 每个计划操作 {$perObjOps} 次\n";
+
+        $totalTasks = 0;
+
+        // 为每个计划创建对应次数的任务
+        foreach ($objList as $objId) {
+            for ($i = 0; $i < $perObjOps; $i++) {
+                $delay = rand(2, 8); // 全域推广延时2-8秒
+                $taskData = [
+                    'adv_id' => $advertiser_id,
+                    'obj_id' => $objId,
+                    'delay' => $delay,
+                    'last_one' => false
+                ];
+
+                $queue->addQueue(
+                    "【全域单户】{$advertiser_id}_{$objId}",
+                    'app\job\AutoUpdateGlobalObjName',
+                    'autoUpdateGlobalObjName',
+                    $taskData,
+                    '',
+                    "延迟{$delay}秒执行"
+                );
+
+                $totalTasks++;
+
+                // 只记录前10个任务的详细日志，避免日志过多
+                if ($totalTasks <= 10) {
+                    echo "➕ 全域单户任务：广告主 {$advertiser_id}，计划 {$objId}，延时 {$delay} 秒\n";
+                }
+            }
+        }
+
+        echo "✅ 全域单广告主任务创建完成，共生成 {$totalTasks} 个队列任务\n";
     }
 
 }

@@ -104,21 +104,23 @@ class AutoUpdateObjName extends Api
             return;
         }
 
-        // 使用TaskDistributor进行任务调度
-        $distributor = new TaskDistributor();
-        $distributor->delayMin = 8;
-        $distributor->delayMax = 20;
-        $distributor->setMaxConsecutiveTasks(3); // 标准推广更保守，连续任务数更少
-        $distributor->setJob('【标准】账户_计划', 'app\job\AutoUpdateObjName', 'autoUpdateObjName');
-
+        // 先收集所有有效的广告主数据
+        $validAdvList = [];
         foreach ($list as $item) {
-            // 使用动态计算方法
             $needComNum = $this->calculateStandardNeedComNum($item, $notWhiteCom);
+
+            if ($needComNum <= 0) {
+                continue;
+            }
+
+            $this->writeLog("📋 开始处理广告主 {$item['advertiser_id']}，需要操作 {$needComNum} 次");
+
             $objList = sendApiRes(API_BASE_URL."/getObjListApi/", [
                 $item['advertiser_id'], $needComNum
             ])['data'];
 
             if (!$objList) {
+                $this->writeLog("❌ 广告主 {$item['advertiser_id']} 获取计划列表失败或为空");
                 continue;
             }
 
@@ -126,20 +128,39 @@ class AutoUpdateObjName extends Api
             $totalOps = $needComNum;
             $perObjOps = ceil($totalOps / $count);
 
+            $this->writeLog("📊 广告主 {$item['advertiser_id']} 获取到 {$count} 个计划，每个计划操作 {$perObjOps} 次");
+
             // 跳过无效的任务
             if ($perObjOps <= 0) {
                 $this->writeLog("跳过广告主 {$item['advertiser_id']}，操作次数为 {$perObjOps}，需要操作数为 {$needComNum}");
                 continue;
             }
 
-            foreach ($objList as $objId) {
-                $distributor->addTask($item['advertiser_id'], $objId, $perObjOps);
-            }
+            $validAdvList[] = [
+                'advertiser_id' => $item['advertiser_id'],
+                'objList' => $objList,
+                'needComNum' => $needComNum,
+                'perObjOps' => $perObjOps
+            ];
         }
 
-        // 处理完所有数据后，统一dispatch
-        $taskCount = $distributor->dispatch();
-        $this->writeLog("任务分发完成，共生成 {$taskCount} 个任务");
+        if (empty($validAdvList)) {
+            $this->writeLog("❌ 没有有效的广告主需要处理");
+            $this->finishStandardProcessing($redis, $type);
+            return;
+        }
+
+        // 判断是否只有一个广告主需要操作
+        if (count($validAdvList) == 1) {
+            $this->writeLog("🎯 检测到只有一个广告主需要操作，使用直接操作模式");
+            $advData = $validAdvList[0];
+            $this->processSingleAdvertiser($advData);
+        } else {
+            $this->writeLog("🔄 检测到多个广告主需要操作，使用TaskDistributor分发模式");
+            $this->processMultipleAdvertisers($validAdvList);
+        }
+
+        $this->writeLog("任务分发完成");
         if ($is_special) {
             $this->finishStandardProcessing($redis, $type);
             return;
@@ -545,16 +566,16 @@ class AutoUpdateObjName extends Api
             return false;
         }
 
-        // 2. 检查最近执行时间间隔
-        $lastExecutionKey = "last_execution_{$taskType}_{$user_name}";
-        $lastExecution = $redis->get($lastExecutionKey);
-        $minInterval = $executionConfig['min_interval_hours'] ?? 6; // 默认6小时间隔
+        // 2. 检查最近执行时间间隔（已移除时间限制）
+        // $lastExecutionKey = "last_execution_{$taskType}_{$user_name}";
+        // $lastExecution = $redis->get($lastExecutionKey);
+        // $minInterval = $executionConfig['min_interval_hours'] ?? 6; // 默认6小时间隔
 
-        if ($lastExecution && (time() - $lastExecution) < ($minInterval * 3600)) {
-            $nextTime = date('H:i', $lastExecution + ($minInterval * 3600));
-            $this->writeLog("⚠️ 距离上次执行时间不足{$minInterval}小时，下次可执行时间：{$nextTime}");
-            return false;
-        }
+        // if ($lastExecution && (time() - $lastExecution) < ($minInterval * 3600)) {
+        //     $nextTime = date('H:i', $lastExecution + ($minInterval * 3600));
+        //     $this->writeLog("⚠️ 距离上次执行时间不足{$minInterval}小时，下次可执行时间：{$nextTime}");
+        //     return false;
+        // }
 
         // 3. 检查饭点时间限制
         $currentMealPeriod = $this->getCurrentMealPeriod();
@@ -570,8 +591,8 @@ class AutoUpdateObjName extends Api
             }
         }
 
-        // 4. 记录执行状态（移除每日执行标记，改为记录最后执行时间）
-        $redis->set($lastExecutionKey, time(), 86400 * 7); // 7天过期
+        // 4. 记录执行状态（移除时间限制后，不再需要记录执行时间）
+        // $redis->set($lastExecutionKey, time(), 86400 * 7); // 7天过期
 
         $this->writeLog("✅ 执行权限检查通过，开始执行标准推广任务");
         return true;
@@ -619,6 +640,83 @@ class AutoUpdateObjName extends Api
         }
 
         return null; // 不在任何饭点时间内
+    }
+
+    /**
+     * 处理单个广告主（直接操作模式）
+     */
+    private function processSingleAdvertiser($advData)
+    {
+        $queue = new Queue();
+        $advertiser_id = $advData['advertiser_id'];
+        $objList = $advData['objList'];
+        $needComNum = $advData['needComNum'];
+        $objCount = count($objList);
+
+        $this->writeLog("🚀 单广告主模式：广告主 {$advertiser_id}，需要操作 {$needComNum} 次，分配给 {$objCount} 个计划");
+
+        // 计算每个计划应该操作多少次
+        $perObjOps = ceil($needComNum / $objCount);
+        $this->writeLog("📊 每个计划操作 {$perObjOps} 次");
+
+        $totalTasks = 0;
+
+        // 为每个计划创建对应次数的任务
+        foreach ($objList as $objId) {
+            for ($i = 0; $i < $perObjOps; $i++) {
+                $delay = rand(8, 20); // 延时8-20秒
+                $taskData = [
+                    'adv_id' => $advertiser_id,
+                    'obj_id' => $objId,
+                    'delay' => $delay,
+                    'last_one' => false
+                ];
+
+                $queue->addQueue(
+                    "【标准单户】{$advertiser_id}_{$objId}",
+                    'app\job\AutoUpdateObjName',
+                    'autoUpdateObjName',
+                    $taskData,
+                    '',
+                    "延迟{$delay}秒执行"
+                );
+
+                $totalTasks++;
+
+                // 只记录前10个任务的详细日志，避免日志过多
+                if ($totalTasks <= 10) {
+                    $this->writeLog("➕ 单户任务：广告主 {$advertiser_id}，计划 {$objId}，延时 {$delay} 秒");
+                }
+            }
+        }
+
+        $this->writeLog("✅ 单广告主任务创建完成，共生成 {$totalTasks} 个队列任务");
+    }
+
+    /**
+     * 处理多个广告主（TaskDistributor模式）
+     */
+    private function processMultipleAdvertisers($validAdvList)
+    {
+        $distributor = new TaskDistributor();
+        $distributor->delayMin = 8;
+        $distributor->delayMax = 20;
+        $distributor->setMaxConsecutiveTasks(10); // 多广告主时适当增加连续任务数
+        $distributor->setJob('【标准】账户_计划', 'app\job\AutoUpdateObjName', 'autoUpdateObjName');
+
+        foreach ($validAdvList as $advData) {
+            $advertiser_id = $advData['advertiser_id'];
+            $objList = $advData['objList'];
+            $perObjOps = $advData['perObjOps'];
+
+            foreach ($objList as $objId) {
+                $distributor->addTask($advertiser_id, $objId, $perObjOps);
+                $this->writeLog("➕ 多户任务：广告主 {$advertiser_id}，计划 {$objId}，操作 {$perObjOps} 次");
+            }
+        }
+
+        $taskCount = $distributor->dispatch();
+        $this->writeLog("✅ 多广告主任务分发完成，共生成 {$taskCount} 个任务");
     }
 
 }
