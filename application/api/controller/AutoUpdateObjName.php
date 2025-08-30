@@ -536,12 +536,12 @@ class AutoUpdateObjName extends Api
         $today = date('Y-m-d');
         $currentHour = (int)date('H');
 
-        // 1. 检查今日是否已执行过
-        $dailyKey = "task_executed_{$taskType}_{$user_name}_{$today}";
-        $executedToday = $redis->get($dailyKey);
+        // 1. 检查Redis中是否还有标准推广队列任务在执行
+        $mainQueueNum = getQueueNumWithKey('autoUpdateObjName');
+        $chunkQueueNum = getQueueNumWithKey('chunkAutoObj');
 
-        if ($executedToday) {
-            $this->writeLog("⚠️ 今日已执行过标准推广任务，跳过执行");
+        if ($mainQueueNum > 10 || $chunkQueueNum > 0) {
+            $this->writeLog("⚠️ 检测到还有{$mainQueueNum}条主队列任务和{$chunkQueueNum}条分块队列任务正在执行，跳过本次执行");
             return false;
         }
 
@@ -570,8 +570,7 @@ class AutoUpdateObjName extends Api
             }
         }
 
-        // 4. 记录执行状态
-        $redis->set($dailyKey, time(), 86400); // 24小时过期
+        // 4. 记录执行状态（移除每日执行标记，改为记录最后执行时间）
         $redis->set($lastExecutionKey, time(), 86400 * 7); // 7天过期
 
         $this->writeLog("✅ 执行权限检查通过，开始执行标准推广任务");
