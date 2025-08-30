@@ -273,10 +273,9 @@ class Api
     {
         $objModel = new ObjModel();
         $list = $objModel->where([
-            'obj_status' => ['not in', ['DELETE', 'FROZEN']],
+            'obj_status' => ['in', ['DELIVERY_OK', 'DISABLE']],
             'lab_ad_type' => "LAB_AD",
             "marketing_goal" => "LIVE_PROM_GOODS",//2025-5-22号标准商品全下线了，只有推直播间的了
-            'opt_status' => ['not in', ['DELETE', 'FROZEN']],
             'adv_id' => $adv_id
         ])
             ->field('obj_id,adv_id')
@@ -329,6 +328,42 @@ class Api
 
         $comSettingModel = new CompanySetting();
         return json($comSettingModel->where($where)->column('percentage', 'company_name'));
+    }
+
+    /**
+     * 批量获取账户级别的比例设置
+     * @return Json
+     */
+    public function getAccountPercentagesApi(): Json
+    {
+        try {
+            // 获取当前请求对象
+            $request = \think\Request::instance();
+            // 获取并解析JSON数据
+            $jsonData = $request->getContent();
+            $data = json_decode($jsonData, true);
+
+            if (!isset($data['adv_ids']) || !is_array($data['adv_ids'])) {
+                return json(['status' => -1, 'msg' => 'adv_ids参数必须是数组']);
+            }
+
+            $advIds = $data['adv_ids'];
+            if (empty($advIds)) {
+                return json(['status' => 0, 'data' => []]);
+            }
+
+            // 从fa_company表批量获取账户的monitor_percentage
+            $companyModel = new \app\admin\model\Company();
+            $accountPercentages = $companyModel
+                ->where('advertiser_id', 'in', $advIds)
+                ->where('monitor_percentage', '>', 10) // 只获取自定义设置的比例
+                ->column('monitor_percentage', 'advertiser_id');
+
+            return json(['status' => 0, 'data' => $accountPercentages]);
+
+        } catch (\Exception $e) {
+            return json(['status' => -1, 'msg' => '获取账户比例设置失败：' . $e->getMessage()]);
+        }
     }
 
 

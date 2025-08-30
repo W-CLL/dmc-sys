@@ -294,9 +294,13 @@ class AutoUpdateGlobalObjName extends Api
         $batchObjData = [];
         $apiRequests = []; // 批量API请求数据
 
+        // 批量获取账户级别比例设置，提高性能
+        $advIds = array_column($optCountData, 'advertiser_id');
+        $accountPercentages = $this->getBatchAccountPercentages($advIds);
+
         // 准备批量请求数据
         foreach ($optCountData as $item) {
-            $needComNum = $this->calculateNeedComNum($item, $notWhiteCom);
+            $needComNum = $this->calculateNeedComNum($item, $notWhiteCom, $accountPercentages);
             $apiRequests[] = [
                 'advertiser_id' => $item['advertiser_id'],
                 'need_num' => $needComNum
@@ -337,7 +341,7 @@ class AutoUpdateGlobalObjName extends Api
     /**
      * 计算需要的操作次数（动态计算，避免比例无限上升）
      */
-    private function calculateNeedComNum($item, $notWhiteCom)
+    private function calculateNeedComNum($item, $notWhiteCom, $accountPercentages = [])
     {
         $totalNum = (int)$item['total_num'];
         $companyNum = (int)$item['company_num'];
@@ -362,12 +366,8 @@ class AutoUpdateGlobalObjName extends Api
         $currentPercentage = $companyNum > 0 ? ($companyNum / $cusNum) * 100 : 0;
         $operatingSpace = $activityThreshold - $currentPercentage; // 到600%的操作空间
 
-        // 获取公司配置的目标比例
-        $targetPercentage = $notWhiteCom[$item['company_name']] ?? 0;
-        if ($targetPercentage <= 0) {
-            $targetPercentage = 30; // 默认30%的目标比例
-            $this->writeLog("⚠️ 广告主 {$item['advertiser_id']} 公司 {$item['company_name']} 未配置目标比例，使用默认30%");
-        }
+        // 获取目标比例：优先使用账户级别设置，其次使用公司级别设置
+        $targetPercentage = $this->getTargetPercentage($item['advertiser_id'], $item['company_name'], $notWhiteCom, $accountPercentages);
 
         // 🎯 新策略分层判断
         if ($currentPercentage > $activityThreshold) {
@@ -506,6 +506,87 @@ class AutoUpdateGlobalObjName extends Api
         $this->writeLog("---");
 
         return (int)ceil($finalAddAmount);
+    }
+
+    /**
+     * 获取目标比例：优先使用账户级别设置，其次使用公司级别设置
+     * @param string $advertiserId 广告主ID
+     * @param string $companyName 公司名称
+     * @param array $notWhiteCom 公司级别比例设置
+     * @param array $accountPercentages 批量获取的账户级别比例设置
+     * @return int 目标比例
+     */
+    private function getTargetPercentage($advertiserId, $companyName, $notWhiteCom, $accountPercentages = [])
+    {
+        // 1. 优先获取账户级别的比例设置
+        $accountPercentage = $accountPercentages[$advertiserId] ?? 0;
+        if ($accountPercentage > 0) {
+            $this->writeLog("✅ 广告主 {$advertiserId} 使用账户级别比例设置: {$accountPercentage}%");
+            return $accountPercentage;
+        }
+
+        // 2. 其次使用公司级别的比例设置
+        $companyPercentage = $notWhiteCom[$companyName] ?? 0;
+        if ($companyPercentage > 0) {
+            $this->writeLog("📊 广告主 {$advertiserId} 使用公司级别比例设置: {$companyPercentage}%");
+            return $companyPercentage;
+        }
+
+        // 3. 最后使用默认比例
+        $defaultPercentage = 30;
+        $this->writeLog("⚠️ 广告主 {$advertiserId} 公司 {$companyName} 未配置任何比例，使用默认{$defaultPercentage}%");
+        return $defaultPercentage;
+    }
+
+    /**
+     * 批量获取账户级别的比例设置
+     * @param array $advIds 广告主ID数组
+     * @return array 账户比例设置数组，key为广告主ID，value为比例
+     */
+    private function getBatchAccountPercentages($advIds)
+    {
+        try {
+            if (empty($advIds)) {
+                return [];
+            }
+
+            // 调用API接口获取账户级别的比例设置
+            $response = sendApiRes(API_BASE_URL . "/getAccountPercentagesApi/", [
+                'adv_ids' => $advIds
+            ], 'POST');
+
+            if (isset($response['status']) && $response['status'] !== 0) {
+                $this->writeLog("⚠️ 调用账户比例设置API失败: " . ($response['msg'] ?? '未知错误'));
+                return [];
+            }
+
+            $accountPercentages = $response['data'] ?? [];
+            $this->writeLog("📊 批量获取到 " . count($accountPercentages) . " 个账户级别比例设置");
+
+            return $accountPercentages;
+
+        } catch (\Exception $e) {
+            $this->writeLog("⚠️ 批量获取账户比例设置失败: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * 获取账户级别的比例设置（单个查询，保留用于兼容性）
+     * @param string $advertiserId 广告主ID
+     * @return int 账户比例设置，0表示未设置
+     */
+    private function getAccountPercentage($advertiserId)
+    {
+        try {
+            // 调用批量接口获取单个账户的比例设置
+            $accountPercentages = $this->getBatchAccountPercentages([$advertiserId]);
+            return $accountPercentages[$advertiserId] ?? 0;
+
+        } catch (\Exception $e) {
+            $this->writeLog("⚠️ 获取广告主 {$advertiserId} 账户比例设置失败: " . $e->getMessage());
+            return 0;
+        }
     }
 
     /**
