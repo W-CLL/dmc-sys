@@ -79,6 +79,18 @@ class MaterialConsumption extends Backend
         if ($kahuna !== null && $kahuna !== '') {
             $where['com.kahuna'] = ['like', "%" . $kahuna . "%"];
         }
+        
+        // 是否裂变素材筛选
+        $is_generated = $params['is_generated'] ?? '';
+        if ($is_generated !== null && $is_generated !== '') {
+            if ($is_generated == '1') {
+                // 已裂变素材（在fission_derive_material表中有记录）
+                $where['dm.adopt_material_id'] = ['not null', ''];
+            } else if ($is_generated == '0') {
+                // 未裂变素材（在fission_derive_material表中没有记录）
+                $where['dm.adopt_material_id'] = ['null', ''];
+            }
+        }
 
     }
 
