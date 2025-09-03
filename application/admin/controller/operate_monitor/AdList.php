@@ -5,6 +5,7 @@ namespace app\admin\controller\operate_monitor;
 use app\common\controller\Backend;
 use app\admin\model\Company as CompanyModel;
 use app\common\model\QcAdvDayCost;
+use think\Db;
 
 
 class AdList extends Backend
@@ -70,6 +71,46 @@ class AdList extends Backend
                     'adv_c.adv_id = global_company_stats.adv_id',
                     'left'
                 )
+                // 统计标准推商品计划数
+                ->join(
+                    "(SELECT ol.adv_id, COUNT(*) AS product_promotion_count FROM fa_qc_obj o 
+                      INNER JOIN fa_qc_obj_opt_log ol ON o.obj_id = ol.obj_id 
+                      WHERE ol.opt_time BETWEEN " . $start_time . " AND " . $end_time . " 
+                      AND o.marketing_goal = 'VIDEO_PROM_GOODS' 
+                      GROUP BY ol.adv_id) AS product_promotion_stats",
+                    'adv_c.adv_id = product_promotion_stats.adv_id',
+                    'left'
+                )
+                // 统计标准推直播间计划数
+                ->join(
+                    "(SELECT ol.adv_id, COUNT(*) AS live_promotion_count FROM fa_qc_obj o 
+                      INNER JOIN fa_qc_obj_opt_log ol ON o.obj_id = ol.obj_id 
+                      WHERE ol.opt_time BETWEEN " . $start_time . " AND " . $end_time . " 
+                      AND o.marketing_goal = 'LIVE_PROM_GOODS' 
+                      GROUP BY ol.adv_id) AS live_promotion_stats",
+                    'adv_c.adv_id = live_promotion_stats.adv_id',
+                    'left'
+                )
+                // 统计全域推商品计划数
+                ->join(
+                    "(SELECT ol.adv_id, COUNT(*) AS global_product_promotion_count FROM fa_qc_global_obj o 
+                      INNER JOIN fa_qc_global_obj_opt_log ol ON o.obj_id = ol.obj_id 
+                      WHERE ol.opt_time BETWEEN " . $start_time . " AND " . $end_time . " 
+                      AND o.marketing_goal = 'VIDEO_PROM_GOODS' 
+                      GROUP BY ol.adv_id) AS global_product_promotion_stats",
+                    'adv_c.adv_id = global_product_promotion_stats.adv_id',
+                    'left'
+                )
+                // 统计全域推直播间计划数
+                ->join(
+                    "(SELECT ol.adv_id, COUNT(*) AS global_live_promotion_count FROM fa_qc_global_obj o 
+                      INNER JOIN fa_qc_global_obj_opt_log ol ON o.obj_id = ol.obj_id 
+                      WHERE ol.opt_time BETWEEN " . $start_time . " AND " . $end_time . " 
+                      AND o.marketing_goal = 'LIVE_PROM_GOODS' 
+                      GROUP BY ol.adv_id) AS global_live_promotion_stats",
+                    'adv_c.adv_id = global_live_promotion_stats.adv_id',
+                    'left'
+                )
                 ->where(['adv_c.cost_date' => ['between', [$start_time, $end_time]]])
                 ->where('adv_c.cost','>', '0')
                 ->where($list_where)
@@ -86,7 +127,11 @@ class AdList extends Backend
                 (CASE 
                     WHEN (global_total_num - IFNULL(global_company_num, 0)) > 0 THEN (IFNULL(global_company_num, 0) / (global_total_num - IFNULL(global_company_num, 0))) * 100
                 ELSE 0
-                END) as global_percentage
+                END) as global_percentage,
+                IFNULL(product_promotion_stats.product_promotion_count, 0) as product_promotion_count,
+                IFNULL(live_promotion_stats.live_promotion_count, 0) as live_promotion_count,
+                IFNULL(global_product_promotion_stats.global_product_promotion_count, 0) as global_product_promotion_count,
+                IFNULL(global_live_promotion_stats.global_live_promotion_count, 0) as global_live_promotion_count
                  ")
                 ->cache(true,3600)
                 ->group('adv_c.adv_id')

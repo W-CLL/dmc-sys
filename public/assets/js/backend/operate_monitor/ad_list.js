@@ -31,6 +31,8 @@ define(['jquery', 'bootstrap', 'company', 'table', 'form'], function ($, undefin
                         {field: 'total_num', title: "总次数[标]",sortable:true},
                         {field: 'company_num', title: "斑马次数[标]",sortable:true},
                         {field: 'cus_num', title: "客户次数[标]",sortable:true},
+                        {field: 'product_promotion_count', title: "推商品次数[标]", sortable:true},
+                        {field: 'live_promotion_count', title: "推直播间次数[标]", sortable:true},
                         {field: 'percentage', title: "[标准]百分比",sortable:true,formatter: function (value, row, index) {
                             let result = value.replace(/%/g, '');
                             if (result < 200) {
@@ -42,6 +44,8 @@ define(['jquery', 'bootstrap', 'company', 'table', 'form'], function ($, undefin
                         {field: 'global_total_num', title: "总次数[全]",sortable:true},
                         {field: 'global_company_num', title: "斑马次数[全]",sortable:true},
                         {field: 'global_cus_num', title: "客户次数[全]",sortable:true},
+                        {field: 'global_product_promotion_count', title: "推商品次数[全]", sortable:true},
+                        {field: 'global_live_promotion_count', title: "推直播间次数[全]", sortable:true},
                         {field: 'global_percentage', title: "[全域]百分比",sortable:true,formatter: function (value, row, index) {
                                 let result = value.replace(/%/g, '');
                                 if (result < 200) {
@@ -118,6 +122,10 @@ define(['jquery', 'bootstrap', 'company', 'table', 'form'], function ($, undefin
                                     return '<span style="color:green;">' +value+'</span>';
                                 }
                             }},
+                        {field: 'product_promotion_count', title: "推商品次数[标]", sortable:true},
+                        {field: 'live_promotion_count', title: "推直播间次数[标]", sortable:true},
+                        {field: 'global_product_promotion_count', title: "推商品次数[全]", sortable:true},
+                        {field: 'global_live_promotion_count', title: "推直播间次数[全]", sortable:true},
                         {field: 'stand_cost', title: "标准消耗",sortable:true},
                         {field: 'global_cost', title: "全域消耗",sortable:true},
                         {field: 'mon_cost', title: "总消耗",sortable:true},
