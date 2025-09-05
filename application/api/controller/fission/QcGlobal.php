@@ -552,6 +552,20 @@ class QcGlobal extends Controller
             }
         }
 
+        // 预先获取所有video_id对应的adopt_material_id映射
+        $all_video_ids = [];
+        foreach ($old_material_list as $material_list) {
+            $all_video_ids = array_merge($all_video_ids, $material_list);
+        }
+
+        // 批量获取video_id到adopt_material_id的映射，避免在循环中查询数据库
+        $material_id_map = [];
+        if (!empty($all_video_ids)) {
+            $material_id_map = Db::name('fission_derive_material')
+                ->whereIn('video_id', array_unique($all_video_ids))
+                ->column('adopt_material_id', 'video_id');
+        }
+
         foreach ($old_material_list as $key => $material_list) {
             list($adv_id, $old_material_id) = explode('_', $key);
             // 检查是否在黑名单中
@@ -618,10 +632,19 @@ class QcGlobal extends Controller
                             $video_batches = array_chunk($video_ids, 200);
 
                             foreach ($video_batches as $video_batch) {
+                                // 从预获取的映射中提取当前批次的material_ids
+                                $batch_material_ids = [];
+                                foreach ($video_batch as $video_id) {
+                                    if (isset($material_id_map[$video_id])) {
+                                        $batch_material_ids[$video_id] = $material_id_map[$video_id];
+                                    }
+                                }
+
                                 $task_data = [
                                     'adv_id' => $adv_id,
                                     'obj_ids' => $final_obj_product,
                                     'video_ids' => $video_batch,
+                                    'material_ids' => $batch_material_ids
                                 ];
                                 Queue::push('app\job\fission\AdoptMaterialIntoObj', $task_data, 'adoptMaterialIntoObj');
                             }
