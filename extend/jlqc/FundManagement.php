@@ -727,6 +727,45 @@ class FundManagement
         return sendApiRes($url, $params, 'GET', ['Access-Token' => $access_token]);
     }
 
+
+    /**
+     * 素材预审
+     * @param $params
+     * @return mixed
+     */
+    public static function open_material_audit($params)
+    {
+        $access_token = Cache::get("qc_access_token");
+        $url = "https://api.oceanengine.com/open_api/v3.0/security/open_material_audit/";
+        return sendApiRes($url, $params, 'POST', ['Access-Token' => $access_token])['data'];
+    }
+
+    /**
+     * 查询预审结果【无用，有spi】此处仅作测试查询
+     * @param $params
+     * @return array
+     */
+    public static function audit_results($params)
+    {
+        $access_token = Cache::get("qc_access_token");
+        $url = "https://api.oceanengine.com/open_api/v3.0/security/audit_results/";
+        return sendApiRes($url, $params, 'GET', ['Access-Token' => $access_token]);
+    }
+
+
+    /**
+     * 获取素材图片
+     * @param $params
+     * @return array
+     */
+    public static function get_material_image($params)
+    {
+        $access_token = Cache::get("qc_access_token");
+        $url = "https://ad.oceanengine.com/open_api/v1.0/qianchuan/image/get/";
+        return sendApiRes($url, $params, 'GET', ['Access-Token' => $access_token]);
+    }
+
+
 }
 
 
