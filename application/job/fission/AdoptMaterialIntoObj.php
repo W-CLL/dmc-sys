@@ -175,7 +175,7 @@ class AdoptMaterialIntoObj extends BaseJob
                     ],
                     'page' => 1,
                     'page_size' => 20 // page_size最大支持20
-                ]);
+                ])['data'];
             } catch (\Exception $e) {
                 echo "调用API获取素材信息异常: " . $e->getMessage() . "\n";
                 continue;
@@ -210,7 +210,7 @@ class AdoptMaterialIntoObj extends BaseJob
                             ],
                             'page' => $page,
                             'page_size' => 20
-                        ]);
+                        ])['data'];
                     } catch (\Exception $e) {
                         echo "调用API获取素材信息异常(第{$page}页): " . $e->getMessage() . "\n";
                         continue;
