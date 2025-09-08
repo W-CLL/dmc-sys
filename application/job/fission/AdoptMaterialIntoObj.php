@@ -100,13 +100,14 @@ class AdoptMaterialIntoObj extends BaseJob
                         'video_id' => $video_id,
                         'video_cover_id' => $materialImageMap[$material_id]
                     ];
-                } else {
-                    // 如果没有图片ID，仍然添加视频素材但不包含封面
-                    $video_materials[] = [
-                        'image_mode' => 'VIDEO_VERTICAL',
-                        'video_id' => $video_id,
-                    ];
                 }
+//                else {
+//                    // 如果没有图片ID，仍然添加视频素材但不包含封面
+//                    $video_materials[] = [
+//                        'image_mode' => 'VIDEO_VERTICAL',
+//                        'video_id' => $video_id,
+//                    ];
+//                }
             }
         }
 
