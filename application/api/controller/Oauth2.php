@@ -711,6 +711,7 @@ class Oauth2 extends Api
 
 
     public function uploadImage(){
+        $time = time();
         $model = new FissionDeriveMaterial();
         $list = $model
             ->whereNull('adopt_cover_id')  // 使用专门的 whereNull 方法
@@ -743,6 +744,7 @@ class Oauth2 extends Api
         }
         try {
             $model->saveAll($update);
+            echo "更新成功，总更新条数：".count($update)."。总花费时间:".(time() - $time);
         }catch (\Exception $e){
             echo "更新失败";
         }
