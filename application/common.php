@@ -685,28 +685,71 @@ if (!function_exists('sendApiRes')) {
      * @param array $params
      * @param string $method
      * @param array $header
+     * @param string $type 请求类型: json|form_params|multipart|query
+     * @param array $options 额外的 Guzzle 选项
      * @return array
      */
-    function sendApiRes($url, array $params, string $method = 'GET', array $header = []): array
+    function sendApiRes($url, array $params, string $method = 'GET', array $header = [], string $type = 'json', array $options = []): array
     {
         $base_header = ['Content-Type' => 'application/json'];
-        if ($header) {
-            $headers = array_merge($base_header, $header);
+        $headers = array_merge($base_header, $header);
+        if ($method == 'GET') {
+            $type = 'query';
         }
-
         try {
             $client = new Client(['verify' => false]);
-            if ($method === 'POST') {
-                $response = $client->post($url, [
-                    'headers' => $headers ?? $base_header,
-                    'json' => $params // 自动将数组转为 JSON 字符串
-                ]);
-            } else {
-                $response = $client->get($url, [
-                    'headers' => $headers ?? $base_header,
-                    'query' => $params
-                ]);
+
+            // 构建请求选项
+            $requestOptions = [];
+
+            // 根据类型设置参数
+            switch ($type) {
+                case 'multipart':
+                    // 对于 multipart 请求，移除 Content-Type 头部，让 Guzzle 自动设置
+                    unset($headers['Content-Type']);
+                    $requestOptions['headers'] = $headers;
+                    $requestOptions['multipart'] = [];
+                    foreach ($params as $key => $value) {
+                        if (is_array($value) && isset($value['name']) && isset($value['contents'])) {
+                            // 已经是正确的 multipart 格式
+                            $requestOptions['multipart'][] = $value;
+                        } else {
+                            // 普通键值对转换为 multipart 格式
+                            $requestOptions['multipart'][] = [
+                                'name' => $key,
+                                'contents' => $value
+                            ];
+                        }
+                    }
+                    break;
+                case 'form_params':
+                    $requestOptions['headers'] = $headers;
+                    $requestOptions['form_params'] = $params;
+                    break;
+                case 'query':
+                    $requestOptions['headers'] = $headers;
+                    $requestOptions['query'] = $params;
+                    break;
+                case 'json':
+                default:
+                    $requestOptions['headers'] = $headers;
+                    $requestOptions['json'] = $params;
+                    break;
             }
+
+            // 合并额外选项
+            $requestOptions = array_merge($requestOptions, $options);
+
+            if ($method === 'POST') {
+                $response = $client->post($url, $requestOptions);
+            } else if ($method === 'PUT') {
+                $response = $client->put($url, $requestOptions);
+            } else if ($method === 'DELETE') {
+                $response = $client->delete($url, $requestOptions);
+            } else {
+                $response = $client->get($url, $requestOptions);
+            }
+
             $contents = $response->getBody()->getContents();
             return ['data' => json_decode($contents, true), 'status' => 0];
         } catch (Exception|GuzzleException $e) {
