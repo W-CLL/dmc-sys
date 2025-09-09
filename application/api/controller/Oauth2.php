@@ -713,8 +713,8 @@ class Oauth2 extends Api
     public function uploadImage(){
         $model = new FissionDeriveMaterial();
         $list = $model
-            ->where('adopt_cover_id','is null')
-            ->where('create_time','>',strtotime("-7 day"))
+            ->whereNull('adopt_cover_id')  // 使用专门的 whereNull 方法
+            ->where('create_time', '>', strtotime("-7 day"))
             ->field('id, adv_id, adopt_cover_id, material_info')
             ->limit(50)
             ->order('id desc')
