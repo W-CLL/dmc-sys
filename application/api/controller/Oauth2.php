@@ -7,6 +7,7 @@ use app\admin\model\Company;
 use app\admin\model\QcGlobalObj;
 use app\common\controller\Api;
 use app\common\model\Queue;
+use app\common\model\viral_fission\FissionDeriveMaterial;
 use app\store\model\TransferRecords;
 use app\store\model\ShareWalletTransferLog;
 use fast\Random;
@@ -704,6 +705,45 @@ class Oauth2 extends Api
         if ($res){
             echo "更新成功，总更新条数：".count($save);
         }else{
+            echo "更新失败";
+        }
+    }
+
+
+    public function uploadImage(){
+        $model = new FissionDeriveMaterial();
+        $list = $model
+            ->where('adopt_cover_id','is null')
+            ->where('create_time','>',strtotime("-7 day"))
+            ->field('id, adv_id, adopt_cover_id, material_info')
+            ->limit(50)
+            ->order('id desc')
+            ->select();
+        if (empty($list)){
+            echo "空列表";
+            die;
+        }
+        $update = [];
+        foreach ($list as $item){
+            $res = FundManagement::upload_image([
+                'advertiser_id' => (int)$item['adv_id'],
+                'upload_type' => 'UPLOAD_BY_URL',
+                'image_url' => json_decode($item['material_info'], true)['cover_url']
+            ]);
+            if ($res['message'] == "OK" && $res['code'] == 0){
+                $update[] = [
+                    'id' => $item['id'],
+                    'adopt_cover_id' => $res['data']['id']
+                ];
+            }
+        }
+        if (empty($update)){
+            echo "无更新";
+            die;
+        }
+        try {
+            $model->saveAll($update);
+        }catch (\Exception $e){
             echo "更新失败";
         }
     }
