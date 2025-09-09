@@ -80,25 +80,19 @@ class AdoptMaterialIntoObj extends BaseJob
             'Content-Type' => 'application/json'
         ];
         $requests = [];
-        
-        // 获取视频素材信息
-        $materialImageMap = $this->getVideoMaterials($data['adv_id'], $data['material_ids'], $data['video_ids']);
-        if (empty($materialImageMap)) {
-            echo "未获取到有效的视频素材信息\n";
-            return $requests;
-        }
+
 
         // 先构建所有video_material
         $video_materials = [];
         foreach ($data['video_ids'] as $video_id) {
-            if ($video_id && isset($data['material_ids'][$video_id])) {
-                $material_id = $data['material_ids'][$video_id];
+            if ($video_id && isset($data['cover_ids'][$video_id])) {
+                $cover_id = $data['cover_ids'][$video_id];
                 // 检查是否有对应的图片ID
-                if (isset($materialImageMap[$material_id])) {
+                if (!empty($cover_id)) {
                     $video_materials[] = [
                         'image_mode' => 'VIDEO_VERTICAL',
                         'video_id' => $video_id,
-                        'video_cover_id' => $materialImageMap[$material_id]
+                        'video_cover_id' => $cover_id
                     ];
                 }
 //                else {
@@ -140,104 +134,6 @@ class AdoptMaterialIntoObj extends BaseJob
         return $requests;
     }
 
-    /**
-     * 获取视频素材信息（处理分页）
-     * @param int $adv_id
-     * @param array $material_ids_map
-     * @param array $video_ids
-     * @return array
-     */
-    private function getVideoMaterials($adv_id, $material_ids_map, $video_ids): array
-    {
-        $materialImageMap = []; // array格式：key为素材id，value为图片id
-        
-        // 收集所有需要的material_ids
-        $material_ids = [];
-        foreach ($video_ids as $video_id) {
-            if ($video_id && isset($material_ids_map[$video_id])) {
-                $material_ids[] = (int)$material_ids_map[$video_id];
-            }
-        }
-
-        if (empty($material_ids)) {
-            echo "未找到有效的素材ID\n";
-            return $materialImageMap;
-        }
-
-        // 每次请求最多支持100个material_ids
-        $batches = array_chunk($material_ids, 100);
-
-        foreach ($batches as $batch) {
-            try {
-                $res = FundManagement::get_material_image([
-                    'advertiser_id' => (int)$adv_id,
-                    'filtering' => [
-                        'material_ids' => $batch
-                    ],
-                    'page' => 1,
-                    'page_size' => 20 // page_size最大支持20
-                ])['data'];
-            } catch (\Exception $e) {
-                echo "调用API获取素材信息异常: " . $e->getMessage() . "\n";
-                continue;
-            }
-
-            // 检查API调用是否成功
-            if (!empty($res['code']) && $res['code'] != 0) {
-                echo "获取素材信息失败: code={$res['code']}, message={$res['message']}\n";
-                continue;
-            }
-
-            // 处理第一页数据
-            if (!empty($res['data']['list'])) {
-                foreach ($res['data']['list'] as $info) {
-                    if (isset($info['material_id']) && isset($info['id'])) {
-                        $materialImageMap[$info['material_id']] = $info['id'];
-                    }
-                }
-            }
-
-            // 检查是否有更多页面需要处理
-            if (!empty($res['data']['page_info'])) {
-                $total_page = $res['data']['page_info']['total_page'] ?? 1;
-
-                // 如果有多页，继续获取其他页面的数据
-                for ($page = 2; $page <= $total_page; $page++) {
-                    try {
-                        $next_res = FundManagement::get_material_image([
-                            'advertiser_id' => (int)$adv_id,
-                            'filtering' => [
-                                'material_ids' => $batch
-                            ],
-                            'page' => $page,
-                            'page_size' => 20
-                        ])['data'];
-                    } catch (\Exception $e) {
-                        echo "调用API获取素材信息异常(第{$page}页): " . $e->getMessage() . "\n";
-                        continue;
-                    }
-
-                    // 检查API调用是否成功
-                    if (!empty($next_res['code']) && $next_res['code'] != 0) {
-                        echo "获取素材信息失败(第{$page}页): code={$next_res['code']}, message={$next_res['message']}\n";
-                        continue;
-                    }
-
-                    // 处理当前页数据
-                    if (!empty($next_res['data']['list'])) {
-                        foreach ($next_res['data']['list'] as $info) {
-                            if (isset($info['material_id']) && isset($info['id'])) {
-                                $materialImageMap[$info['material_id']] = $info['id'];
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        echo "共获取到" . count($materialImageMap) . "个素材的图片信息\n";
-        return $materialImageMap;
-    }
 
     /**
      * 发送请求

@@ -558,12 +558,12 @@ class QcGlobal extends Controller
             $all_video_ids = array_merge($all_video_ids, $material_list);
         }
 
-        // 批量获取video_id到adopt_material_id的映射，避免在循环中查询数据库
+        // 批量获取video_id到adopt_cover_id的映射，避免在循环中查询数据库
         $material_id_map = [];
         if (!empty($all_video_ids)) {
             $material_id_map = Db::name('fission_derive_material')
                 ->whereIn('video_id', array_unique($all_video_ids))
-                ->column('adopt_material_id', 'video_id');
+                ->column('adopt_cover_id', 'video_id');
         }
 
         foreach ($old_material_list as $key => $material_list) {
@@ -644,7 +644,7 @@ class QcGlobal extends Controller
                                     'adv_id' => $adv_id,
                                     'obj_ids' => $final_obj_product,
                                     'video_ids' => $video_batch,
-                                    'material_ids' => $batch_material_ids
+                                    'cover_ids' => $batch_material_ids
                                 ];
                                 Queue::push('app\job\fission\AdoptMaterialIntoObj', $task_data, 'adoptMaterialIntoObj');
                             }
