@@ -56,6 +56,14 @@ class AdoptFissionMaterial extends BaseJob
                     'adopt_status_code'=>$item["status_code"],
                     'adopt_status_message'=>$item['status_message'],
                 ];
+               $res = FundManagement::upload_image([
+                    'advertiser_id' => $adv_id,
+                    'upload_type' => 'UPLOAD_BY_URL',
+                    'image_url' => $material_info['cover_url']
+                ]);
+               if($res['message'] == "OK" && $res['code'] == 0){
+                   $update_data['adopt_cover_id'] = $res['data']['id'];
+               }
              $derive_model->where(['video_id'=>$item['video_id'],'adv_id'=>$adv_id])->update($update_data);
 
            }
