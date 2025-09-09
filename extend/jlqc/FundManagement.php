@@ -766,6 +766,32 @@ class FundManagement
     }
 
 
+
+
+    /**
+     * 上传图片素材
+     * @param $params
+     * @return mixed
+     */
+    public static function upload_image($params)
+    {
+        $access_token = Cache::get("qc_access_token");
+        $url = "https://ad.oceanengine.com/open_api/2/file/image/ad/";
+
+        // 构建 multipart 参数
+        $multipart_params = [];
+
+        foreach ($params as $key => $value) {
+            $multipart_params[] = [
+                'name' => $key,
+                'contents' => $value
+            ];
+        }
+
+        return sendApiRes($url, $multipart_params, 'POST', ['Access-Token' => $access_token], 'multipart')['data'];
+    }
+
+
 }
 
 
