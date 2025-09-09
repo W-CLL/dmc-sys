@@ -715,6 +715,7 @@ class Oauth2 extends Api
         $model = new FissionDeriveMaterial();
         $list = $model
             ->whereNull('adopt_cover_id')  // 使用专门的 whereNull 方法
+            ->whereNull('cover_msg')
             ->where('create_time', '>', strtotime("-7 day"))
             ->field('id, adv_id, adopt_cover_id, material_info')
             ->limit(50)
@@ -735,6 +736,11 @@ class Oauth2 extends Api
                 $update[] = [
                     'id' => $item['id'],
                     'adopt_cover_id' => $res['data']['id']
+                ];
+            }else{
+                $update[] = [
+                    'id' => $item['id'],
+                    'cover_msg' => $res['message']
                 ];
             }
         }
