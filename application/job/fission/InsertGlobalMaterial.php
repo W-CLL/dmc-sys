@@ -172,8 +172,8 @@ class InsertGlobalMaterial extends BaseJob
                             'total_prepay_and_pay_order_roi2' =>  str_replace(',', '',  $metrics['total_prepay_and_pay_order_roi2']['Value'])
                         ];
                     }
-                    if ($resData['data']['pagination']['total_page'] > $request_info['page']) {
-                        echo $resData['data']['pagination']['total_page'] . "页";
+                    if ($resData['data']['page_info']['total_page'] > $request_info['page']) {
+                        echo $resData['data']['page_info']['total_page'] . "页";
                         echo $adv_id . "  " . $request_info['page'];
                         $next = ['adv_list' => [$adv_id], 'start_time' => $request_info['start_time'], 'end_time' => $request_info['end_time'], 'page' => $request_info['page'] + 1];
                         \think\Queue::later(3, 'app\job\fission\InsertGlobalMaterial', $next, "insertGlobalMaterial");
