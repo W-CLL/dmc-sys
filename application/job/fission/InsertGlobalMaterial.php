@@ -159,7 +159,7 @@ class InsertGlobalMaterial extends BaseJob
                         $metrics = $item['metrics'];
                         $material_id = $dimensions['material_id']['Value'];
                         $material_name = $dimensions['roi2_material_video_name']['Value'] ?? '';
-                        $stat_time_day = strtotime($dimensions['stat_time_day']['Value']);
+                        $stat_time_day = strtotime($dimensions['stat_time_day']['ValueStr']);
                         $cost = str_replace(',', '', $metrics['stat_cost_for_roi2']['Value']);;
                         $total_pay =  str_replace(',', '',  $metrics['total_pay_order_count_for_roi2']['Value']);
                         $insertData[] = [
