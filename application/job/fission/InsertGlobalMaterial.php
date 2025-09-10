@@ -98,7 +98,7 @@ class InsertGlobalMaterial extends BaseJob
                 'advertiser_id' => (int)$adv_id,
                 'data_topic' => "SITE_PROMOTION_PRODUCT_POST_DATA_VIDEO",
                 'dimensions' => json_encode([
-                    'stat_time_day', 'roi2_material_video_name'
+                    'stat_time_day', 'roi2_material_video_name', 'material_id'
                 ]),
                 'metrics' => json_encode([
                     "product_show_count_for_roi2",
