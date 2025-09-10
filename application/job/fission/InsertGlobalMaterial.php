@@ -98,7 +98,7 @@ class InsertGlobalMaterial extends BaseJob
                 'advertiser_id' => (int)$adv_id,
                 'data_topic' => "SITE_PROMOTION_PRODUCT_POST_DATA_VIDEO",
                 'dimensions' => json_encode([
-                    'stat_time_day', 'roi2_material_video_name', 'material_id'
+                    'stat_time_day', 'roi2_material_video_name', 'material_id', 'roi2_material_upload_time'
                 ]),
                 'metrics' => json_encode([
                     "product_show_count_for_roi2",
@@ -157,11 +157,11 @@ class InsertGlobalMaterial extends BaseJob
                     foreach ($resData['data']['rows'] as $item) {
                         $dimensions = $item['dimensions'];
                         $metrics = $item['metrics'];
-                        $material_id = $dimensions['material_id'];
-                        $material_name = $dimensions['roi2_material_video_name'] ?? '';
-                        $stat_time_day = strtotime($dimensions['stat_time_day']);
-                        $cost = str_replace(',', '', $metrics['stat_cost_for_roi2']);;
-                        $total_pay =  str_replace(',', '',  $metrics['total_pay_order_count_for_roi2']);
+                        $material_id = $dimensions['material_id']['Value'];
+                        $material_name = $dimensions['roi2_material_video_name']['Value'] ?? '';
+                        $stat_time_day = strtotime($dimensions['stat_time_day']['Value']);
+                        $cost = str_replace(',', '', $metrics['stat_cost_for_roi2']['Value']);;
+                        $total_pay =  str_replace(',', '',  $metrics['total_pay_order_count_for_roi2']['Value']);
                         $insertData[] = [
                             'adv_id' => $adv_id,
                             'material_id' => $material_id,
@@ -169,7 +169,7 @@ class InsertGlobalMaterial extends BaseJob
                             'stat_cost_for_roi2' => $cost,
                             'total_pay_order_count_for_roi2' => $total_pay,
                             'cost_date' => $stat_time_day,
-                            'total_prepay_and_pay_order_roi2' =>  str_replace(',', '',  $metrics['total_prepay_and_pay_order_roi2'])
+                            'total_prepay_and_pay_order_roi2' =>  str_replace(',', '',  $metrics['total_prepay_and_pay_order_roi2']['Value'])
                         ];
                     }
                     if ($resData['data']['pagination']['total_page'] > $request_info['page']) {
