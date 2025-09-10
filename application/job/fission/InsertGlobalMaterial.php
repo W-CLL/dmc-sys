@@ -87,7 +87,7 @@ class InsertGlobalMaterial extends BaseJob
     {
 
         $access_token = Cache::get("qc_access_token");
-        $url = "https://api.oceanengine.com/open_api/v1.0/qianchuan/report/custom/get/";
+        $url = "https://api.oceanengine.com/open_api/v1.0/qianchuan/report/uni_promotion/data/get/";
         $headers = [
             'Access-Token' => $access_token,
             'Content-Type' => 'application/json'
