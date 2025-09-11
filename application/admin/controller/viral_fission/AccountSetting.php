@@ -32,7 +32,10 @@ class AccountSetting extends Backend
         'MIX_CUT' => '重新混剪',
         'PRE_VIDEO_CLIP_REPLACE' => '前贴扩写',
         'DERIVE_FROM_CHOSEN_HOT_MID' => '自有爆款套路',
-        'DERIVE_FROM_INDUSTRY_HOT_PATTERN' => '行业爆款套路'
+        'DERIVE_FROM_INDUSTRY_HOT_PATTERN' => '行业爆款套路',
+        'SMART_REPLACE' => '智能裂变',
+        'AIGC_HUMAN_REPLACE' => 'AIGC人物替换',
+        'AIGC_PRE_VIDEO' => 'AIGC前贴新增'
     ];
 
     protected $daySetting = [
