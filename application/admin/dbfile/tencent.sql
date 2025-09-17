@@ -14,7 +14,7 @@ CREATE TABLE `fa_tencent_account` (
                                       PRIMARY KEY (`id`),
                                       UNIQUE KEY `account_id` (`account_id`) USING BTREE,
                                       KEY `normal` (`store_id`,`group_id`,`status`,`create_time`,`update_time`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=195 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 
@@ -31,7 +31,7 @@ CREATE TABLE `fa_tencent_refund` (
                                      `update_time` bigint(11) DEFAULT NULL COMMENT '更新时间',
                                      PRIMARY KEY (`id`),
                                      KEY `normal` (`store_id`,`platform_id`,`type`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 
@@ -114,7 +114,7 @@ CREATE TABLE `fa_tencent_transfer_log` (
                                            PRIMARY KEY (`id`),
                                            UNIQUE KEY `only` (`order_uid`) USING BTREE,
                                            KEY `normal` (`store_id`,`tencent_account_id`,`account_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 
