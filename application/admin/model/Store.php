@@ -105,4 +105,12 @@ class Store extends Model
         return $this->belongsTo('StoreGroup', 'group_id', 'id', [], 'LEFT')->setEagerlyType(0);
     }
 
+    /**
+     * 关联腾讯账户信息
+     */
+    public function tencent()
+    {
+        return $this->hasOne('app\common\model\txgg\TencentStore', 'store_id', 'id')->setEagerlyType(0);
+    }
+
 }

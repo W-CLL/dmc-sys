@@ -1,0 +1,159 @@
+<form id="transfer-form" class="form-horizontal" role="form" data-toggle="validator" method="POST" action="">
+  {:token()}
+  
+  <div class="form-group">
+    <label for="c-account_id" class="control-label col-xs-12 col-sm-2">账户ID:</label>
+    <div class="col-xs-12 col-sm-8" style="width: 230px">
+      <input id="c-account_id" class="form-control" name="account_id" type="text" value="{$account.account_id}" readonly>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="c-account_name" class="control-label col-xs-12 col-sm-2">账户名称:</label>
+    <div class="col-xs-12 col-sm-8" style="width: 230px">
+      <input id="c-account_name" class="form-control" name="account_name" type="text" value="{$account.name}" readonly>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label class="control-label col-xs-12 col-sm-2">转账方向:</label>
+    <div class="col-xs-12 col-sm-8">
+      <div class="radio">
+        <label style="margin-right: 20px;">
+          <input name="transfer_direction" checked type="radio" value="AGENCY_TO_ADVERTISER"> 转入
+        </label>
+        <label>
+          <input name="transfer_direction" type="radio" value="ADVERTISER_TO_AGENCY"> 转出
+        </label>
+      </div>
+      <span style="font-size: 12px;color: #999;display: block;margin-top: 5px;">以广告主视角确定</span>
+    </div>
+  </div>
+  <br>
+  
+  <div class="form-group">
+    <label class="control-label col-xs-12 col-sm-2">账户类型:</label>
+    <div class="col-xs-12 col-sm-8">
+      <div style="display: inline-block; padding: 5px 15px; background-color: #f0f8ff; border: 1px solid #cce6ff; border-radius: 20px; color: #0d7be0; font-size: 16px; font-weight: bold;">
+        {if $account.account_type == 1}
+        公账
+        {elseif $account.account_type == 2}
+        私账
+        {else}
+        未设置
+        {/if}
+      </div>
+    </div>
+  </div>
+
+  {if $account.account_type == 1}
+  <div class="form-group">
+    <div class="col-xs-12 col-sm-8 col-sm-offset-2">
+      <div style="background: #ffffff; border: 1px solid #e1e8ed; border-radius: 12px; padding: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.08);">
+        <div class="row">
+          <div class="col-sm-4 text-center">
+            <div style="font-size: 14px; color: #666; margin-bottom: 8px;">余额(公)</div>
+            <div style="font-size: 22px; color: #0d7be0; font-weight: bold;">{$storeInfo.public_money_tencent}</div>
+            <div style="font-size: 12px; color: #999;">元</div>
+          </div>
+          <div class="col-sm-4 text-center">
+            <div style="font-size: 14px; color: #666; margin-bottom: 8px;">授信额度(公)</div>
+            <div style="font-size: 22px; color: #0d7be0; font-weight: bold;">{$storeInfo.public_credit_limit_tencent}</div>
+            <div style="font-size: 12px; color: #999;">元</div>
+          </div>
+          <div class="col-sm-4 text-center">
+            <div style="font-size: 14px; color: #666; margin-bottom: 8px;">返点比例(公)</div>
+            <div style="font-size: 22px; color: #0d7be0; font-weight: bold;">
+              {if $account.discount_percentage != 0}
+              {$account.discount_percentage}
+              {else}
+              {$storeInfo.public_discount_percentage_tencent}
+              {/if}
+            </div>
+            <div style="font-size: 12px; color: #999;">%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {elseif $account.account_type == 2}
+  <div class="form-group">
+    <div class="col-xs-12 col-sm-8 col-sm-offset-2">
+      <div style="background: #ffffff; border: 1px solid #e1e8ed; border-radius: 12px; padding: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.08);">
+        <div class="row">
+          <div class="col-sm-4 text-center">
+            <div style="font-size: 14px; color: #666; margin-bottom: 8px;">余额(私)</div>
+            <div style="font-size: 22px; color: #0d7be0; font-weight: bold;">{$storeInfo.private_money_tencent}</div>
+            <div style="font-size: 12px; color: #999;">元</div>
+          </div>
+          <div class="col-sm-4 text-center">
+            <div style="font-size: 14px; color: #666; margin-bottom: 8px;">授信额度(私)</div>
+            <div style="font-size: 22px; color: #0d7be0; font-weight: bold;">{$storeInfo.private_credit_limit_tencent}</div>
+            <div style="font-size: 12px; color: #999;">元</div>
+          </div>
+          <div class="col-sm-4 text-center">
+            <div style="font-size: 14px; color: #666; margin-bottom: 8px;">返点比例(私)</div>
+            <div style="font-size: 22px; color: #0d7be0; font-weight: bold;">
+              {if $account.discount_percentage != 0}
+              {$account.discount_percentage}
+              {else}
+              {$storeInfo.private_discount_percentage_tencent}
+              {/if}
+            </div>
+            <div style="font-size: 12px; color: #999;">%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {/if}
+  
+  <div class="form-group">
+    <div class="col-xs-12 col-sm-8 col-sm-offset-2">
+      <div style="background: #ffffff; border: 1px solid #e1e8ed; border-radius: 12px; padding: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.08);">
+        <div class="row">
+          <div class="col-sm-12 text-center" style="margin-bottom: 15px;">
+            <div style="font-size: 14px; color: #666; margin-bottom: 8px;">可转出金额</div>
+            <div style="font-size: 28px; color: #28a745; font-weight: bold;">{$canTransferOutMoney}</div>
+            <div style="font-size: 14px; color: #999;">元</div>
+          </div>
+          <div class="col-sm-12">
+            <div style="font-size: 12px; color: #999; background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 6px; padding: 12px;">
+              <i class="fa fa-info-circle" style="color: #007bff; margin-right: 5px;"></i>
+              为确保投放效果并考虑竞价广告从竞胜到实际产生用户曝光/点击的时延，系统会锁定一定金额。可转出金额上限=账户余额-预估需锁定金额。如果转出失败，请修改转出金额或稍后重试。
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <br>
+  <div class="form-group">
+    <label for="c-transfer_amount" class="control-label col-xs-12 col-sm-2">转账金额:</label>
+    <div class="col-xs-12 col-sm-8" style="width: 230px">
+      <input id="c-transfer_amount" data-rule="required" class="form-control" name="transfer_amount" type="number" min="50" max="20000000" step="0.01" style="height: 40px; font-size: 16px;">
+      <div style="font-size: 12px; color: #999; margin-top: 5px;">
+        <span>最小转入值：50</span>
+        <br>
+        <span>最大转入值：20,000,000</span>
+      </div>
+      <span id="deduction" style="font-size: 12px;color: #999;display: block; margin-top: 5px;"></span>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="c-remark" class="control-label col-xs-12 col-sm-2">备注:</label>
+    <div class="col-xs-12 col-sm-8" style="width: 230px">
+      <input id="c-remark" class="form-control" name="remark" type="text" style="height: 40px;">
+    </div>
+  </div>
+
+  <div class="form-group layer-footer">
+    <label class="control-label col-xs-12 col-sm-2"></label>
+    <div class="col-xs-12 col-sm-8">
+      <button type="submit" class="btn btn-primary btn-embossed" style="padding: 8px 25px;">{:__('OK')}</button>
+      <button type="reset" class="btn btn-default btn-embossed" style="padding: 8px 25px; margin-left: 10px;">{:__('Reset')}</button>
+    </div>
+  </div>
+</form>

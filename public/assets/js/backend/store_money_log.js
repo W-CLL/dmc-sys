@@ -178,6 +178,77 @@ define(['jquery', 'bootstrap', 'company', 'table', 'form'], function ($, undefin
             // 为表格绑定事件
             Table.api.bindevent(table);
         },
+        tencent_transaction: function () {
+            Controller.api.bindevent();
+            // 初始化表格参数配置
+            Table.api.init({
+                extend: {
+                    index_url: 'store_money_log/tencent_transaction' + location.search,
+                    table: 'tencent_transaction_log',
+                }
+            });
+
+            var table = $("#tencentTable");
+
+            // 初始化表格
+            table.bootstrapTable({
+                search: false,
+                commonSearch: false,
+                searchFormVisible: true,
+                url: $.fn.bootstrapTable.defaults.extend.index_url,
+                pk: 'id',
+                sortName: 'id',
+                fixedColumns: true,
+                fixedRightNumber: 1,
+                columns: [
+                    [
+                        {checkbox: true},
+                        {field: 'id', title: __('Id'), visible: false},
+                        {field: 'id', title: "ID"},
+                        {field: 'account_id', title: "腾讯子客id"},
+                        {field: 'store_username', title: "账户名称"},
+                        {field: 'money', title: "变更金额"},
+                        {field: 'type', title: "类型", formatter: function(value,row,index) {
+                            const types = {
+                                1: "总后台增加余额",
+                                2: "总后台扣款",
+                                3: "回单充值",
+                                4: "转入",
+                                5: "转出",
+                                8: "共享钱包转入",
+                                9: "共享钱包转出"
+                            };
+                            return types[row.type] || "未知";
+                        }, operate: 'LIKE'},
+                        {field: 'explain', title: "说明"},
+                        {field: 'account_type', title: "账户类型", formatter: function(value,row,index) {
+                            if (row.account_type == 1){
+                                return "公";
+                            }else if(row.account_type == 2){
+                                return "私";
+                            } else {
+                                return "未知";
+                            }
+                        }, operate: 'LIKE'},
+                        {field: 'deduction_balance', title: "扣除余额"},
+                        {field: 'deduction_credit_limit', title: "授信额度扣款"},
+                        {field: 'create_time', title:"时间" ,formatter: Table.api.formatter.datetime},
+                    ]
+                ],
+                queryParams:function (params) {
+                    let time_data = document.getElementById('tencentDateRange').value.split(' - ');
+                    params.start_date = time_data[0];
+                    params.end_date = time_data[1];
+                    params.account_id = document.getElementById('tencentAccountId').value;
+                    params.store_id = document.getElementById('tencentStoreId').value;
+                    params.money = document.getElementById('tencentMoney').value;
+                    return params;
+                }
+            });
+
+            // 为表格绑定事件
+            Table.api.bindevent(table);
+        },
         auditing: function () {
             Controller.api.bindevent();
         },

@@ -1,0 +1,57 @@
+<form id="batch-create-form" class="form-horizontal" role="form" data-toggle="validator" method="POST" action="">
+    {:token()}
+    <div class="alert alert-info">
+        <p>一键创建功能将为所有尚未配置腾讯账户的商户批量创建配置。</p>
+        <p>请设置默认的钱包额度、授信额度和折扣百分比，系统将为每个商户应用这些配置。</p>
+    </div>
+    
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">公账钱包:</label>
+        <div class="col-xs-12 col-sm-4">
+            <input type="number" class="form-control" name="row[public_money_tencent]" value="0.00" step="0.01" min="0">
+        </div>
+    </div>
+    
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">私有钱包:</label>
+        <div class="col-xs-12 col-sm-4">
+            <input type="number" class="form-control" name="row[private_money_tencent]" value="0.00" step="0.01" min="0">
+        </div>
+    </div>
+    
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">授信额度(公):</label>
+        <div class="col-xs-12 col-sm-4">
+            <input type="number" class="form-control" name="row[public_credit_limit_tencent]" value="0.00" step="0.01" min="0">
+        </div>
+    </div>
+    
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">授信额度(私):</label>
+        <div class="col-xs-12 col-sm-4">
+            <input type="number" class="form-control" name="row[private_credit_limit_tencent]" value="0.00" step="0.01" min="0">
+        </div>
+    </div>
+    
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">折扣百分比(公):</label>
+        <div class="col-xs-12 col-sm-4">
+            <input type="number" class="form-control" name="row[public_discount_percentage_tencent]" value="0.0000" step="0.0001" min="0" max="100">
+        </div>
+    </div>
+    
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">折扣百分比(私):</label>
+        <div class="col-xs-12 col-sm-4">
+            <input type="number" class="form-control" name="row[private_discount_percentage_tencent]" value="0.0000" step="0.0001" min="0" max="100">
+        </div>
+    </div>
+    
+    <div class="form-group layer-footer">
+        <label class="control-label col-xs-12 col-sm-2"></label>
+        <div class="col-xs-12 col-sm-8">
+            <button type="submit" class="btn btn-success btn-embossed">{:__('OK')}</button>
+            <button type="reset" class="btn btn-default btn-embossed">{:__('Reset')}</button>
+        </div>
+    </div>
+</form>
