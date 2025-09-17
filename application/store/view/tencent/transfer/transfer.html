@@ -19,11 +19,13 @@
     <label class="control-label col-xs-12 col-sm-2">转账方向:</label>
     <div class="col-xs-12 col-sm-8">
       <div class="radio">
+        {if $account.status == 1}
         <label style="margin-right: 20px;">
           <input name="transfer_direction" checked type="radio" value="AGENCY_TO_ADVERTISER"> 转入
         </label>
+        {/if}
         <label>
-          <input name="transfer_direction" type="radio" value="ADVERTISER_TO_AGENCY"> 转出
+          <input name="transfer_direction" type="radio" {if $account.status != 1}checked{/if} value="ADVERTISER_TO_AGENCY"> 转出
         </label>
       </div>
       <span style="font-size: 12px;color: #999;display: block;margin-top: 5px;">以广告主视角确定</span>

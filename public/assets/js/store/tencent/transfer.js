@@ -57,10 +57,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                             var that = this;
                             // 获取操作按钮HTML
                             var html = Table.api.formatter.operate.call(that, value, row, index);
-                            // 只有当状态为1时才添加转账按钮
-                            if (row.status == 1) {
                                 html = '<a href="javascript:;" class="btn btn-xs btn-success btn-transfer" data-id="' + row.id + '">转账</a> ' + html;
-                            }
                             return html;
                         }}
                     ]
