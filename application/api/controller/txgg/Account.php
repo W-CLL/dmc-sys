@@ -70,15 +70,13 @@ class Account
                 sleep(1);
             }
         } while ($hasMore); // 当还有更多数据时继续循环
-        // 获取已绑定的账号ID
-        $idBindAccount = $model->where('id','>',0)->column('id','account_id');
+        // 获取已绑定的账号ID与状态
+        $idBindAccount = $model->where('id','>',0)->column('id, status','account_id');
         $update = [];
         $insert = [];
-        $cache = [];
         // 处理数据
         foreach ($total as $item){
-            $status = Cache::get('txgg_account_'.$item['account_id']);
-            if (!$status){
+            if (!isset($idBindAccount[$item['account_id']])){
                 if(in_array($this->system_status[$item['system_status']],[1,4])){ // 只获取账号有效and封禁状态的
                     $insert[] = [
                         'account_id' => $item['account_id'],
@@ -87,21 +85,13 @@ class Account
                         'reject_message' => $item['reject_message'],
                         'agency_account_id' => $item['agency_account_id'],
                     ];
-                    $cache[] = [
-                        'account_id' => $item['account_id'],
-                        'system_status' => $item['system_status']
-                    ];
                 }
             }
-            if ($status != $item['system_status'] && $status){
+            if (isset($idBindAccount[$item['account_id']]) && $idBindAccount[$item['account_id']]['status'] != $this->system_status[$item['system_status']]){
                 $update[] = [
-                    'id' => $idBindAccount[$item['account_id']],
+                    'id' => $idBindAccount[$item['account_id']]['id'],
                     'status' => $this->system_status[$item['system_status']],
                     'reject_message' => $item['reject_message'],
-                ];
-                $cache[] = [
-                    'account_id' => $item['account_id'],
-                    'system_status' => $item['system_status']
                 ];
             }
         }
@@ -113,13 +103,6 @@ class Account
             if ($update){
                 echo '更新数据条数：'.count($update)."\n";
                 $model->saveAll($update);
-            }
-            // 插入缓存
-            if ($cache){
-                echo '缓存修改数据条数：'.count($cache)."\n";
-                foreach ($cache as $cacheItem){
-                    Cache::set('txgg_account_'.$cacheItem['account_id'],$cacheItem['system_status']);
-                }
             }
             echo '处理完成！';
         }catch (\Exception $e){
