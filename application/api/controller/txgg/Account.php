@@ -2,8 +2,6 @@
 
 namespace app\api\controller\txgg;
 
-use think\Cache;
-use think\Db;
 use txgg\AdvInfo;
 use app\common\model\txgg\TencentAccount;
 
@@ -82,16 +80,15 @@ class Account
                         'account_id' => $item['account_id'],
                         'name' => $item['mdm_name'],
                         'status' => $this->system_status[$item['system_status']],
-                        'reject_message' => $item['reject_message'],
                         'agency_account_id' => $item['agency_account_id'],
                     ];
                 }
             }
-            if (isset($idBindAccount[$item['account_id']]) && $idBindAccount[$item['account_id']]['status'] != $this->system_status[$item['system_status']]){
+            if (isset($idBindAccount[$item['account_id']]) && ($idBindAccount[$item['account_id']]['status'] != $this->system_status[$item['system_status']] || $idBindAccount[$item['account_id']]['name'] != $item['mdm_name'])){
                 $update[] = [
                     'id' => $idBindAccount[$item['account_id']]['id'],
+                    'name' => $item['mdm_name'],
                     'status' => $this->system_status[$item['system_status']],
-                    'reject_message' => $item['reject_message'],
                 ];
             }
         }
