@@ -1,0 +1,38 @@
+<form id="bind-by-wallet-id-form" class="form-horizontal" role="form" data-toggle="validator" method="POST" action="">
+    {:token()}
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">绑定账号:</label>
+        <div class="col-xs-12 col-sm-4">
+            {$storeList}
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="c-discount_percentage" class="control-label col-xs-12 col-sm-2">折扣比例:</label>
+        <div class="col-xs-12 col-sm-4">
+            <input id="c-discount_percentage" class="form-control" name="discount_percentage" type="number" value="0.0000" step="0.0001" placeholder="折扣比例" />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">公账钱包ID:</label>
+        <div class="col-xs-12 col-sm-8">
+            <textarea name="public_wallet_id" class="form-control" rows="5" placeholder="请输入公账钱包ID，每行一个"></textarea>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">私账钱包ID:</label>
+        <div class="col-xs-12 col-sm-8">
+            <textarea name="private_wallet_id" class="form-control" rows="5" placeholder="请输入私账钱包ID，每行一个"></textarea>
+        </div>
+    </div>
+
+    <div class="form-group hidden layer-footer">
+        <label class="control-label col-xs-12 col-sm-2"></label>
+        <div class="col-xs-12 col-sm-8">
+            <button type="submit" class="btn btn-primary btn-embossed">{:__('OK')}</button>
+            <button type="reset" class="btn btn-default btn-embossed">{:__('Reset')}</button>
+        </div>
+    </div>
+</form>

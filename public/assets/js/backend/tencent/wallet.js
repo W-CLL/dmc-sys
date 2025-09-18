@@ -5,9 +5,9 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
             // 初始化表格参数配置
             Table.api.init({
                 extend: {
-                    index_url: 'tencent/account/index',
-                    edit_url: 'tencent/account/edit',
-                    table: 'txgg_account',
+                    index_url: 'tencent/wallet/index',
+                    edit_url: 'tencent/wallet/edit',
+                    table: 'tencent_share_wallet',
                 }
             });
 
@@ -18,49 +18,29 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                 url: $.fn.bootstrapTable.defaults.extend.index_url,
                 pk: 'id',
                 sortName: 'id',
-                searchFormVisible: true,
-                searchFormTemplate: 'customformtpl',
                 columns: [
                     [
                         {checkbox: true},
-                        {field: 'id', title: "ID", sortable: true},
-                        {field: 'account_id', title: '账户ID', sortable: true},
-                        {field: 'name', title: "账户名称", operate: 'LIKE'},
-                        {field: 'store.username', title: "绑定账号", operate: 'LIKE'},
-                        {field: 'account_type', title: "账号类型", formatter: function(value, row, index) {
-                                switch(value) {
-                                    case 1: return "公账";
-                                    case 2: return "私账";
-                                    default: return "未设置";
-                                }
+                        {field: 'id', title: __('Id'), operate: false},
+                        {field: 'store.username', title: __('商户名称'), operate: 'LIKE'},
+                        {field: 'sub_wallet_id', title: __('钱包id')},
+                        {field: 'sub_wallet_name', title: __('钱包名称'), operate: 'LIKE'},
+                        {field: 'wallet_type', title: __('钱包类型'), formatter: function(value, row, index) {
+                            switch(value) {
+                                case 0: return '未绑定';
+                                case 1: return '公账';
+                                case 2: return '私账';
+                                default: return '未知';
                             }
-                        },
-                        {field: 'discount_percentage', title: "折扣比例", formatter: function(value, row, index) {
-                                const discount_percentage = parseFloat(value);
-                                if (discount_percentage == 0){
-                                    return "不适用";
-                                }else{
-                                    return discount_percentage;
-                                }
+                        }, searchList: {0: '未绑定', 1: '公账', 2: '私账'}},
+                        {field: 'discount_percentage', title: __('折扣比例'), formatter: function(value, row, index) {
+                            // 如果折扣百分比为0，则显示"不适用"
+                            if (parseFloat(value) == 0) {
+                                return '不适用';
                             }
-                        },
-                        {field: 'status', title: "状态", formatter: function(value, row, index) {
-                                switch(value) {
-                                    case 1: return "有效";
-                                    case 4: return "封禁";
-                                    default: return "未知";
-                                }
-                            }
-                        },
-                        {field: 'create_time', title: "创建时间", formatter: Table.api.formatter.datetime, operate: 'RANGE', addclass: 'datetimerange', sortable: true},
-                        {field: 'update_time', title: "更新时间", formatter: Table.api.formatter.datetime, operate: 'RANGE', addclass: 'datetimerange', sortable: true},
-                        {
-                            field: 'operate', 
-                            title: __('Operate'), 
-                            table: table, 
-                            events: Table.api.events.operate, 
-                            formatter: Table.api.formatter.operate
-                        }
+                            return value + '%';
+                        }},
+                        {field: 'operate', title: __('Operate'), table: table, events: Table.api.events.operate, formatter: Table.api.formatter.operate}
                     ]
                 ]
             });
@@ -94,30 +74,28 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                 var width = isMobile ? '80%' : '40%';
                 var height = '60%';
                 
-                // 修改：使用正确的相对路径格式
                 layer.open({
                     type: 2,
                     area: [width, height],
-                    content: 'account/batch_binding', // 修改：去掉模块前缀的斜杠
+                    content: 'wallet/batch_binding',
                     fixed: false,
                     maxmin: true,
                     shadeClose: true,
                     btn: ['提交', '取消'],
                     btnAlign: 'c',
                     yes: function (index, layero) {
-                        // 修复：使用正确的layer API获取iframe中的元素
                         var iframeWin = window[layero.find('iframe')[0]['name']];
                         var store_id = iframeWin.$("select[name='store_id']").val();
-                        var account_type = iframeWin.$("select[name='account_type']").val();
+                        var wallet_type = iframeWin.$("select[name='wallet_type']").val();
                         var discount_percentage = iframeWin.$("input[name='discount_percentage']").val();
                         var token = iframeWin.$("input[name='__token__']").val();
                         
                         Fast.api.ajax({
-                            url: 'tencent/account/batch_binding', // 修改：去掉模块前缀的斜杠
+                            url: 'tencent/wallet/batch_binding',
                             data: {
                                 __token__: token,
                                 store_id: store_id,
-                                account_type: account_type,
+                                wallet_type: wallet_type,
                                 discount_percentage: discount_percentage,
                                 ids: checkids.join(','),
                             }
@@ -132,7 +110,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                 });
             });
             
-            // 添加根据账户ID绑定按钮
+            // 添加根据钱包ID绑定按钮
             $("#toolbar").prepend('<a href="javascript:;" class="btn btn-success btn-bindbyid" title="根据ID绑定"><i class="fa fa-link"></i> 根据ID绑定</a> ');
             
             // 根据ID绑定按钮点击事件
@@ -144,29 +122,29 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                 layer.open({
                     type: 2,
                     area: [width, height],
-                    content: 'account/bind_by_account_id',
+                    content: 'wallet/bind_by_wallet_id',
                     fixed: false,
                     maxmin: true,
                     shadeClose: true,
-                    title: '根据账户ID绑定',
+                    title: '根据钱包ID绑定',
                     btn: ['提交', '取消'],
                     btnAlign: 'c',
                     yes: function (index, layero) {
                         var iframeWin = window[layero.find('iframe')[0]['name']];
                         var store_id = iframeWin.$("select[name='store_id']").val();
                         var discount_percentage = iframeWin.$("input[name='discount_percentage']").val();
-                        var public_account_id = iframeWin.$("textarea[name='public_account_id']").val();
-                        var private_account_id = iframeWin.$("textarea[name='private_account_id']").val();
+                        var public_wallet_id = iframeWin.$("textarea[name='public_wallet_id']").val();
+                        var private_wallet_id = iframeWin.$("textarea[name='private_wallet_id']").val();
                         var token = iframeWin.$("input[name='__token__']").val();
                         
                         Fast.api.ajax({
-                            url: 'tencent/account/bind_by_account_id',
+                            url: 'tencent/wallet/bind_by_wallet_id',
                             data: {
                                 __token__: token,
                                 store_id: store_id,
                                 discount_percentage: discount_percentage,
-                                public_account_id: public_account_id,
-                                private_account_id: private_account_id
+                                public_wallet_id: public_wallet_id,
+                                private_wallet_id: private_wallet_id
                             }
                         }, function (data, ret) {
                             table.bootstrapTable('refresh', {});
@@ -185,7 +163,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
         batch_binding: function () {
             Controller.api.bindevent();
         },
-        bind_by_account_id: function () {
+        bind_by_wallet_id: function () {
             Controller.api.bindevent();
         },
         api: {

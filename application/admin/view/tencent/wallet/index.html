@@ -1,0 +1,32 @@
+<div class="panel panel-default panel-intro">
+    {:build_heading()}
+
+    <div class="panel-body">
+        <div id="myTabContent" class="tab-content">
+            <div class="tab-pane fade active in" id="one">
+                <div class="widget-body no-padding">
+                    <div id="toolbar" class="toolbar">
+                        {:build_toolbar('refresh')}
+                        <a href="javascript:;" class="btn btn-primary btn-changeteacher btn-disabled disabled" title="批量绑定" > 批量绑定(<span id="select_total">0</span>)</a>
+                    </div>
+                    <table id="table" class="table table-striped table-bordered table-hover table-nowrap"
+                           data-operate-edit="{:$auth->check('tencent/wallet/edit')}"
+                           width="100%">
+                        <thead>
+                            <tr>
+                                <th data-field="checkbox" data-checkbox="true"></th>
+                                <th data-field="id" data-visible="true">ID</th>
+                                <th data-field="store.username">商户名称</th>
+                                <th data-field="sub_wallet_id">子钱包ID</th>
+                                <th data-field="sub_wallet_name">子钱包名称</th>
+                                <th data-field="wallet_type">钱包类型</th>
+                                <th data-field="discount_percentage">折扣比例</th>
+                                <th data-field="operate" data-operate="true">操作</th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

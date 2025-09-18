@@ -1,0 +1,141 @@
+<style>
+    .form-container {
+        background: #fff;
+        border-radius: 4px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        padding: 20px;
+        margin: 15px 0;
+    }
+    
+    .form-title {
+        border-bottom: 1px solid #eee;
+        padding-bottom: 15px;
+        margin-bottom: 20px;
+        color: #333;
+        font-size: 18px;
+        font-weight: 500;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .control-label {
+        font-weight: 500;
+        color: #555;
+        padding-top: 7px;
+        text-align: right;
+    }
+    
+    .form-control {
+        border-radius: 3px;
+        box-shadow: none;
+        border-color: #d2d6de;
+        height: 38px;
+    }
+    
+    .form-control:focus {
+        border-color: #3c8dbc;
+        box-shadow: none;
+    }
+    
+    .selectpicker {
+        width: 100%;
+    }
+    
+    .radio label {
+        font-weight: 400;
+        margin-right: 15px;
+    }
+    
+    .btn-embossed {
+        border-radius: 3px;
+        padding: 8px 20px;
+        font-weight: 500;
+    }
+    
+    .btn-primary {
+        background-color: #3c8dbc;
+        border-color: #367fa9;
+    }
+    
+    .btn-default {
+        background-color: #f4f4f4;
+        border-color: #ddd;
+        color: #555;
+    }
+    
+    .readonly-field {
+        background-color: #f9f9f9;
+        cursor: not-allowed;
+    }
+</style>
+
+<form id="edit-form" class="form-horizontal" role="form" data-toggle="validator" method="POST" action="">
+    {:token()}
+    <input type="hidden" name="id" value="{$row.id}">
+    
+    <div class="form-container">
+        <div class="form-title">编辑腾讯共享钱包</div>
+        
+        <div class="form-group">
+            <label class="control-label col-xs-12 col-sm-2">子钱包ID:</label>
+            <div class="col-xs-12 col-sm-8">
+                <input type="text" class="form-control readonly-field" value="{$row.sub_wallet_id}" readonly>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label class="control-label col-xs-12 col-sm-2">子钱包名称:</label>
+            <div class="col-xs-12 col-sm-8">
+                <input type="text" class="form-control readonly-field" value="{$row.sub_wallet_name}" readonly>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label class="control-label col-xs-12 col-sm-2">绑定商户:</label>
+            <div class="col-xs-12 col-sm-8">
+                <select class="form-control selectpicker" name="store_id" data-live-search="true" data-style="btn-default">
+                    <option value="">请选择</option>
+                    {foreach $storeList as $k => $v}
+                    <option value="{$v.id}" {if $row.store_id==$v.id}selected{/if}>{$v.username}</option>
+                    {/foreach}
+                </select>
+                <span class="help-block">支持搜索商户名称</span>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="control-label col-xs-12 col-sm-2">钱包类型:</label>
+            <div class="col-xs-12 col-sm-8">
+                <div class="radio">
+                    <label>
+                        <input name="wallet_type" type="radio" value="0" {if $row.wallet_type==0}checked{/if}> 未绑定
+                    </label>
+                    <label>
+                        <input name="wallet_type" type="radio" value="1" {if $row.wallet_type==1}checked{/if}> 公账
+                    </label>
+                    <label>
+                        <input name="wallet_type" type="radio" value="2" {if $row.wallet_type==2}checked{/if}> 私账
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="c-discount_percentage" class="control-label col-xs-12 col-sm-2">折扣比例:</label>
+            <div class="col-xs-12 col-sm-8">
+                <input id="c-discount_percentage" class="form-control" name="discount_percentage" type="number" step="0.0001" value="{$row.discount_percentage}" placeholder="请输入折扣比例" />
+                <span class="help-block">请输入折扣比例，填0则不适用</span>
+            </div>
+        </div>
+
+        <div class="form-group layer-footer">
+            <label class="control-label col-xs-12 col-sm-2"></label>
+            <div class="col-xs-12 col-sm-8">
+                <button type="submit" class="btn btn-primary btn-embossed disabled">{:__('OK')}</button>
+                <button type="reset" class="btn btn-default btn-embossed">{:__('Reset')}</button>
+            </div>
+        </div>
+    </div>
+</form>

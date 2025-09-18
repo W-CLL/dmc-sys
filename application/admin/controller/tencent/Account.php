@@ -114,4 +114,72 @@ class Account extends Backend
         $this->view->assign('storeList', build_select('store_id', $store_data, 0, ['class' => 'form-control selectpicker' ,'data-live-search'=>'true']));
         return $this->view->fetch();
     }
+    
+    /**
+     * 根据账户ID进行批量绑定
+     */
+    public function bind_by_account_id()
+    {
+        if ($this->request->isPost()) {
+            $err_num = 0;
+            $err_id = '';
+            $public_account_id_list = [];
+            $private_account_id_list = [];
+            
+            $this->token();
+            $post = $this->request->post();
+            $post['discount_percentage'] = number_format($post['discount_percentage'], 4, '.', '');
+            
+            if (empty($post['store_id'])) {
+                $this->error('请选择绑定账号');
+            }
+            
+            if (empty($post['public_account_id']) && empty($post['private_account_id'])) {
+                $this->error('空提交');
+            }
+            
+            // 处理公账账户ID列表
+            if (!empty($post['public_account_id'])) {
+                $public_account_id_list = array_filter(explode("\n", $post['public_account_id']), function ($value) {
+                    return trim($value) !== '';
+                });
+                $public_account_id_list = array_combine($public_account_id_list, array_fill(0, count($public_account_id_list), 1));
+            }
+            
+            // 处理私账账户ID列表
+            if (!empty($post['private_account_id'])) {
+                $private_account_id_list = array_filter(explode("\n", $post['private_account_id']), function ($value) {
+                    return trim($value) !== '';
+                });
+                $private_account_id_list = array_combine($private_account_id_list, array_fill(0, count($private_account_id_list), 2));
+            }
+            
+            // 合并公账和私账列表
+            $account_id_list = $public_account_id_list + $private_account_id_list;
+            
+            // 遍历处理每个账户ID
+            foreach ($account_id_list as $account_id => $account_type) {
+                $account_id = trim($account_id);
+                
+                if (!$this->model->where(["account_id" => $account_id])->update([
+                    'store_id' => $post['store_id'], 
+                    'account_type' => $account_type, 
+                    'discount_percentage' => $post['discount_percentage']
+                ])) {
+                    $err_num++;
+                    $err_id .= $account_id . ",";
+                }
+            }
+            
+            if ($err_num != 0) {
+                $this->error("部分成功，失败了" . $err_num . "次，绑定失败的ID为：" . $err_id);
+            } else {
+                $this->success("批量绑定成功");
+            }
+        }
+        
+        $store_data = Db::name("store")->column('id,username');
+        $this->view->assign('storeList', build_select('store_id', $store_data, 0, ['class' => 'form-control selectpicker' ,'data-live-search'=>'true']));
+        return $this->view->fetch();
+    }
 }
