@@ -69,7 +69,7 @@ class Account
             }
         } while ($hasMore); // 当还有更多数据时继续循环
         // 获取已绑定的账号ID与状态
-        $idBindAccount = $model->where('id','>',0)->column('id, status','account_id');
+        $idBindAccount = $model->where('id','>',0)->column('id, status, name','account_id');
         $update = [];
         $insert = [];
         // 处理数据
