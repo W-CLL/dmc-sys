@@ -6,6 +6,14 @@ class Fund extends Base
 {
     // 转账测试账号：67475647
 
+    public static function getAgentFundInfo($params){
+        self::initCommonParams();
+        $commonParams = is_array(self::$common_params) ? self::$common_params : [];
+        $params = array_merge($commonParams, $params);
+        $url = self::$url . 'funds/get';
+        return sendApiRes($url, $params);
+    }
+
     public static function getFundAccountInfo($params){
         self::initCommonParams();
         $commonParams = is_array(self::$common_params) ? self::$common_params : [];
@@ -29,4 +37,26 @@ class Fund extends Base
         $url = self::$url . 'agency_wallet_list/get';
         return sendApiRes($url, $params);
     }
+
+
+    public static function transferToShareWallet($params){
+        self::initCommonParams();
+        $commonParams = is_array(self::$common_params) ? self::$common_params : [];
+        $url = self::$url . 'wallet_transfer/add';
+        $url .= '?' . http_build_query($commonParams);
+        return sendApiRes($url, $params, 'POST');
+    }
+
+    public static function getWalletBasicInfo($params){
+        self::initCommonParams();
+        $commonParams = is_array(self::$common_params) ? self::$common_params : [];
+        $params = array_merge($commonParams, $params);
+        $url = self::$url . 'wallet_basic_info/get';
+        return sendApiRes($url, $params);
+    }
+
+
+
+
+
 }

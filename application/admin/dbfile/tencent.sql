@@ -5,7 +5,6 @@ CREATE TABLE `fa_tencent_account` (
                                       `account_id` int(11) NOT NULL DEFAULT '0' COMMENT '子客id',
                                       `name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '主体名称',
                                       `status` tinyint(2) NOT NULL DEFAULT '0' COMMENT '账号状态',
-                                      `reject_message` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '审核信息',
                                       `agency_account_id` int(11) NOT NULL DEFAULT '0' COMMENT '所属服务商id',
                                       `account_type` tinyint(1) NOT NULL DEFAULT '1' COMMENT '账户类型:1公账,2私账',
                                       `discount_percentage` decimal(7,4) NOT NULL DEFAULT '0.0000' COMMENT '折扣百分比',
@@ -116,6 +115,46 @@ CREATE TABLE `fa_tencent_transfer_log` (
                                            KEY `normal` (`store_id`,`tencent_account_id`,`account_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+
+
+
+CREATE TABLE `fa_tencent_share_wallet` (
+                                           `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+                                           `store_id` int(11) NOT NULL DEFAULT '0',
+                                           `sub_wallet_id` int(11) NOT NULL DEFAULT '0' COMMENT '子钱包id',
+                                           `sub_wallet_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+                                           `wallet_type` tinyint(1) NOT NULL DEFAULT '0' COMMENT '账户类型:0未绑定,1公账,2私账',
+                                           `discount_percentage` decimal(7,4) NOT NULL DEFAULT '0.0000' COMMENT '折扣百分比',
+                                           PRIMARY KEY (`id`),
+                                           UNIQUE KEY `only` (`sub_wallet_id`) USING BTREE,
+                                           KEY `normal` (`store_id`,`sub_wallet_name`,`wallet_type`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+CREATE TABLE `fa_tencent_wallet_transfer_log` (
+                                                  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+                                                  `store_id` int(11) NOT NULL COMMENT '转账账号id',
+                                                  `tencent_wallet_id` int(11) NOT NULL COMMENT '关联id',
+                                                  `sub_wallet_id` int(11) NOT NULL COMMENT '腾讯广告子钱包id',
+                                                  `transfer_direction` tinyint(1) NOT NULL DEFAULT '1' COMMENT '1转入，2转出',
+                                                  `rebate` decimal(10,2) NOT NULL DEFAULT '0.00' COMMENT '返点',
+                                                  `money` decimal(10,2) NOT NULL COMMENT '转账金额',
+                                                  `deduction_credit_limit` decimal(10,2) NOT NULL DEFAULT '0.00' COMMENT '扣除授信额度',
+                                                  `deduction_balance` decimal(10,2) NOT NULL DEFAULT '0.00' COMMENT '扣除余额',
+                                                  `actual_money` decimal(10,2) NOT NULL DEFAULT '0.00' COMMENT '实际金额',
+                                                  `order_uid` varchar(50) CHARACTER SET utf8mb4 DEFAULT NULL COMMENT '转账编号',
+                                                  `record` text CHARACTER SET utf8mb4 COMMENT '转账返回记录',
+                                                  `image` varchar(255) CHARACTER SET utf8mb4 DEFAULT NULL COMMENT '截图',
+                                                  `create_time` int(11) NOT NULL COMMENT '创建时间',
+                                                  `update_time` int(11) DEFAULT NULL COMMENT '更新时间',
+                                                  `account_type` tinyint(1) NOT NULL DEFAULT '1' COMMENT '账户类型:1公账,2私账',
+                                                  `discount_percentage` decimal(5,3) DEFAULT NULL,
+                                                  `remark` varchar(255) CHARACTER SET utf8mb4 DEFAULT NULL COMMENT '备注',
+                                                  `from` tinyint(1) NOT NULL DEFAULT '1' COMMENT '1：dmc后台； 2：robot',
+                                                  PRIMARY KEY (`id`),
+                                                  UNIQUE KEY `only` (`order_uid`) USING BTREE,
+                                                  KEY `normal` (`store_id`,`tencent_wallet_id`,`sub_wallet_id`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 

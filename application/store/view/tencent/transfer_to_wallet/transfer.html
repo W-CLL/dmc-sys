@@ -1,0 +1,418 @@
+<style>
+    .transfer-container {
+        background: #fff;
+        border-radius: 4px;
+        padding: 20px;
+        margin: 15px 0;
+    }
+    
+    .transfer-title {
+        font-size: 18px;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #eee;
+        text-align: center;
+    }
+    
+    .form-group {
+        margin-bottom: 15px;
+    }
+    
+    .control-label {
+        font-weight: normal;
+        color: #666;
+        padding-top: 7px;
+        text-align: right;
+    }
+    
+    .wallet-type-badge {
+        display: inline-block;
+        padding: 5px 15px;
+        background-color: #f0f8ff;
+        border: 1px solid #cce6ff;
+        border-radius: 20px;
+        color: #0d7be0;
+        font-size: 14px;
+        font-weight: bold;
+    }
+    
+    .balance-card {
+        background: #ffffff;
+        border: 1px solid #e1e8ed;
+        border-radius: 4px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .balance-title {
+        margin-top: 0;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 10px;
+        color: #333;
+        font-size: 16px;
+        font-weight: bold;
+    }
+    
+    .balance-table {
+        margin-bottom: 0;
+    }
+    
+    .balance-table th {
+        background-color: #f8f9fa;
+        font-weight: normal;
+        color: #666;
+        border-top: none;
+    }
+    
+    .balance-table td {
+        vertical-align: middle;
+    }
+    
+    .form-control, .selectpicker {
+        border-radius: 4px;
+        box-shadow: none;
+        border-color: #ced4da;
+        height: 35px;
+    }
+    
+    .form-control:focus, .selectpicker:focus {
+        border-color: #80bdff;
+        box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+    }
+    
+    .radio-group {
+        padding-top: 7px;
+    }
+    
+    .radio-inline {
+        margin-right: 20px;
+        font-weight: normal;
+        cursor: pointer;
+    }
+    
+    .radio-inline input[type="radio"] {
+        margin-right: 5px;
+    }
+    
+    .amount-info {
+        font-size: 12px;
+        color: #999;
+        margin-top: 5px;
+    }
+    
+    .btn-primary {
+        background-color: #337ab7;
+        border-color: #2e6da4;
+        padding: 6px 20px;
+        font-weight: normal;
+        border-radius: 4px;
+    }
+    
+    .btn-default {
+        padding: 6px 20px;
+        border-radius: 4px;
+        margin-left: 10px;
+    }
+    
+    .form-footer {
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px solid #eee;
+        text-align: center;
+    }
+    
+    .input-group-width {
+        width: 230px;
+    }
+    
+    .account-info-card {
+        background: #ffffff;
+        border: 1px solid #e1e8ed;
+        border-radius: 4px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .account-info-title {
+        margin-top: 0;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 10px;
+        color: #333;
+        font-size: 16px;
+        font-weight: bold;
+    }
+    
+    .account-info-content {
+        text-align: center;
+    }
+    
+    .info-item {
+        margin-bottom: 15px;
+    }
+    
+    .info-label {
+        font-size: 13px;
+        color: #666;
+        margin-bottom: 5px;
+    }
+    
+    .info-value {
+        font-size: 18px;
+        color: #0d7be0;
+        font-weight: bold;
+    }
+    
+    .info-unit {
+        font-size: 12px;
+        color: #999;
+    }
+    
+    @media (max-width: 768px) {
+        .control-label {
+            text-align: left;
+            padding-bottom: 5px;
+        }
+        
+        .input-group-width {
+            width: 100%;
+        }
+    }
+</style>
+
+<form id="transfer-form" class="form-horizontal" role="form" data-toggle="validator" method="POST" action="">
+  {:token()}
+
+  <div class="transfer-container">
+    <div class="transfer-title">腾讯钱包转账</div>
+
+    <div class="form-group">
+      <label class="control-label col-xs-12 col-sm-2">账户类型:</label>
+      <div class="col-xs-12 col-sm-8">
+        <div class="wallet-type-badge">
+          {if $wallet_info.wallet_type == 1}
+          公帐
+          {elseif $wallet_info.wallet_type == 2}
+          私账
+          {/if}
+        </div>
+      </div>
+    </div>
+    
+    <!-- 账户信息 -->
+    <div class="form-group">
+      <label class="control-label col-xs-12 col-sm-2"></label>
+      <div class="col-xs-12 col-sm-8">
+        <div class="account-info-card">
+          <h5 class="account-info-title">账户信息</h5>
+          <div class="account-info-content">
+            {if $wallet_info.wallet_type == 1}
+            <!-- 公账 -->
+            <div class="row">
+              <div class="col-sm-4">
+                <div class="info-item">
+                  <div class="info-label">余额(公)</div>
+                  <div class="info-value">{$store_info.public_money_tencent|number_format=2}</div>
+                  <div class="info-unit">元</div>
+                </div>
+              </div>
+              <div class="col-sm-4">
+                <div class="info-item">
+                  <div class="info-label">授信额度(公)</div>
+                  <div class="info-value">{$store_info.public_credit_limit_tencent|number_format=2}</div>
+                  <div class="info-unit">元</div>
+                </div>
+              </div>
+              <div class="col-sm-4">
+                <div class="info-item">
+                  <div class="info-label">返点比例(公)</div>
+                  <div class="info-value">{$store_info.public_discount_percentage_tencent|number_format=4}</div>
+                  <div class="info-unit">%</div>
+                </div>
+              </div>
+            </div>
+            {elseif $wallet_info.wallet_type == 2}
+            <!-- 私账 -->
+            <div class="row">
+              <div class="col-sm-4">
+                <div class="info-item">
+                  <div class="info-label">余额(私)</div>
+                  <div class="info-value">{$store_info.private_money_tencent|number_format=2}</div>
+                  <div class="info-unit">元</div>
+                </div>
+              </div>
+              <div class="col-sm-4">
+                <div class="info-item">
+                  <div class="info-label">授信额度(私)</div>
+                  <div class="info-value">{$store_info.private_credit_limit_tencent|number_format=2}</div>
+                  <div class="info-unit">元</div>
+                </div>
+              </div>
+              <div class="col-sm-4">
+                <div class="info-item">
+                  <div class="info-label">返点比例(私)</div>
+                  <div class="info-value">{$store_info.private_discount_percentage_tencent|number_format=4}</div>
+                  <div class="info-unit">%</div>
+                </div>
+              </div>
+            </div>
+            {/if}
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="form-group">
+      <label for="c-wallet_id" class="control-label col-xs-12 col-sm-2">钱包ID:</label>
+      <div class="col-xs-12 col-sm-8">
+        <div class="input-group-width">
+          <input id="c-wallet_id" class="form-control" name="wallet_id" type="text" value="{$wallet_info.sub_wallet_id}" readonly>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="c-wallet_name" class="control-label col-xs-12 col-sm-2">钱包名称:</label>
+      <div class="col-xs-12 col-sm-8">
+        <div class="input-group-width">
+          <input id="c-wallet_name" class="form-control" name="wallet_name" type="text" value="{$wallet_info.sub_wallet_name}" readonly>
+        </div>
+      </div>
+    </div>
+
+
+    <div class="form-group">
+      <label class="control-label col-xs-12 col-sm-2"></label>
+      <div class="col-xs-12 col-sm-8">
+        <div class="balance-card">
+          <h5 class="balance-title">子钱包余额信息</h5>
+          <div class="table-responsive">
+            <table class="table table-striped balance-table">
+              <thead>
+                <tr>
+                  <th>资金类型</th>
+                  <th>余额 (元)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {foreach $balance as $item}
+                <tr>
+                  <td>{$item.fund_type_text}</td>
+                  <td>¥{$item.balance / 100|number_format=2}</td>
+                </tr>
+                {/foreach}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="c-transfer_amount" class="control-label col-xs-12 col-sm-2">转账金额:</label>
+      <div class="col-xs-12 col-sm-8">
+        <div class="input-group-width">
+          <input id="c-transfer_amount" data-rule="required" class="form-control" name="transfer_amount" type="number" min="5000" step="0.01" placeholder="请输入转账金额">
+          <div class="amount-info">
+            <span>最低5000元，最大20,000,000元</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="control-label col-xs-12 col-sm-2">资金类型:</label>
+      <div class="col-xs-12 col-sm-8">
+        <div class="input-group-width">
+          <select id="c-fund_type" data-rule="required" class="form-control selectpicker" name="fund_type" data-live-search="true">
+            <option value="" disabled>请选择资金类型</option>
+            {foreach $balance as $item}
+            <option value="{$item.fund_type}" {if $item.fund_type == 'FUND_TYPE_CASH'}selected{/if}>{$item.fund_type_text}</option>
+            {/foreach}
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="control-label col-xs-12 col-sm-2">转账方向:</label>
+      <div class="col-xs-12 col-sm-8 radio-group">
+        <label class="radio-inline">
+          <input name="transfer_direction" type="radio" value="AGENCY_TO_WALLET" checked> 钱包转入
+        </label>
+        <label class="radio-inline">
+          <input name="transfer_direction" type="radio" value="WALLET_TO_AGENCY"> 钱包转出
+        </label>
+      </div>
+    </div>
+
+
+    <div class="form-group">
+      <label for="c-remark" class="control-label col-xs-12 col-sm-2">备注:</label>
+      <div class="col-xs-12 col-sm-8">
+        <div class="input-group-width">
+          <input id="c-remark" class="form-control" name="remark" type="text" placeholder="请输入转账备注（选填）">
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group form-footer">
+      <div class="col-xs-12 col-sm-8 col-sm-offset-2">
+        <button type="submit" class="btn btn-primary btn-embossed">{:__('OK')}</button>
+        <button type="reset" class="btn btn-default btn-embossed">{:__('Reset')}</button>
+      </div>
+    </div>
+  </div>
+</form>
+
+<script>
+window.onload = function() {
+    // 获取代理商赠送资金余额（如果有）
+    var grantFundBalance = 0;
+    var cashFundType = 'FUND_TYPE_CASH';
+    var grantFundType = '';
+    
+    // 遍历代理商余额信息，找到赠送资金类型和余额
+    // agent_balance_info是PHP传递的关联数组，键为资金类型，值为余额
+    var agentBalanceInfo = {
+        {foreach $agent_balance_info as $fundType => $balance}
+        '{$fundType}': {$balance},
+        {/foreach}
+    };
+
+    
+    // 查找赠送资金类型（非现金类型）
+    for (var fundType in agentBalanceInfo) {
+        if (fundType !== cashFundType) {
+            grantFundType = fundType;
+            grantFundBalance = agentBalanceInfo[fundType];
+            break;
+        }
+    }
+    
+    console.log('赠送资金类型:', grantFundType, '余额:', grantFundBalance);
+    
+    // 监听转账金额输入框变化
+    document.getElementById('c-transfer_amount').addEventListener('input', function() {
+        var amount = parseFloat(this.value) || 0;
+        var fundTypeSelect = document.getElementById('c-fund_type');
+        
+        console.log('输入金额:', amount);
+        
+        // 如果有赠送资金且输入金额小于等于赠送资金余额，则默认选择赠送资金
+        if (grantFundType && amount > 0 && amount <= grantFundBalance) {
+            fundTypeSelect.value = grantFundType;
+            console.log('选择赠送资金类型:', grantFundType);
+        } else {
+            // 否则默认选择现金账户
+            fundTypeSelect.value = cashFundType;
+            console.log('选择现金账户');
+        }
+        
+        // 触发select更新
+        var event = new Event('change');
+        fundTypeSelect.dispatchEvent(event);
+    });
+};
+</script>

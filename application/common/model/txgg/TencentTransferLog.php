@@ -52,8 +52,8 @@ class TencentTransferLog extends Model
     ];
     
     const FROM_LIST = [
-        1 => 'dmc后台',
-        2 => 'robot'
+        1 => '抖秒冲后台',
+        2 => '群聊助手'
     ];
 
     public function getTypeList()
