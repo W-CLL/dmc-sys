@@ -329,7 +329,7 @@ class Transfer extends Store
      */
     private function createTransactionLog($transfer_id, $insert_data, $store_info){
         $money_log_data = [
-            'store_id' => $store_info['id'],
+            'store_id' => $store_info['store_id'],
             'tencent_account_id' => $insert_data['tencent_account_id'],
             'account_id' => $insert_data['account_id'],
             'transfer_log_id' => $transfer_id,

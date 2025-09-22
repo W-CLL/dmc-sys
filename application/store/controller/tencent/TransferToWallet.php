@@ -343,7 +343,7 @@ class TransferToWallet extends Store
      */
     private function createTransactionLog($transfer_id, $insert_data, $store_info){
         $money_log_data = [
-            'store_id' => $store_info['id'],
+            'store_id' => $store_info['store_id'],
             'swtl_id' => $transfer_id,
             'money' => $insert_data['money'],
             'account_type' =>$insert_data['account_type'],
