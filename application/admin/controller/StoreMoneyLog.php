@@ -249,6 +249,11 @@ Class StoreMoneyLog extends Backend{
             if($account_id){
                 $where['account_id'] = $account_id;
             }
+
+            $sub_wallet_id = input('sub_wallet_id');
+            if($sub_wallet_id){
+                $where['sub_wallet_id'] = $sub_wallet_id;
+            }
             
             $store_id = input('store_id');
             if($store_id){
@@ -294,7 +299,14 @@ Class StoreMoneyLog extends Backend{
             $store_data = Db::name('store')->field("id,username")->select();
         }
 
+        // 获取腾讯子钱包列表
+        $account_wallet_data = Db::name("tencent_transaction_log")
+            ->field("sub_wallet_id")
+            ->group("sub_wallet_id")
+            ->select();
+
         $this->assign('account_data', is_array($account_data) ? $account_data : []);
+        $this->assign('account_wallet_data', is_array($account_wallet_data) ? $account_wallet_data : []);
         $this->assign('store_data', $store_data);
         return $this->view->fetch();
     }

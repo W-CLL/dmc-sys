@@ -206,6 +206,7 @@ define(['jquery', 'bootstrap', 'company', 'table', 'form'], function ($, undefin
                         {field: 'id', title: __('Id'), visible: false},
                         {field: 'id', title: "ID"},
                         {field: 'account_id', title: "腾讯子客id"},
+                        {field: 'sub_wallet_id', title: "腾讯子钱包id"},
                         {field: 'store_username', title: "账户名称"},
                         {field: 'money', title: "变更金额"},
                         {field: 'type', title: "类型", formatter: function(value,row,index) {
@@ -230,8 +231,27 @@ define(['jquery', 'bootstrap', 'company', 'table', 'form'], function ($, undefin
                                 return "未知";
                             }
                         }, operate: 'LIKE'},
-                        {field: 'deduction_balance', title: "扣除余额"},
-                        {field: 'deduction_credit_limit', title: "授信额度扣款"},
+                        {field: 'balance_surplus', title: "变动后钱包余额", formatter: function(value,row,index) {
+                                if (row.balance_surplus == 0 && row.credit_limit_surplus == 0){
+                                    return "-"
+                                }else{
+                                    return row.balance_surplus
+                                }
+                            }, operate: 'LIKE'},
+                        {field: 'credit_limit_surplus', title: "变动后授信余额", formatter: function(value,row,index) {
+                                if (row.balance_surplus == 0 && row.credit_limit_surplus == 0){
+                                    return "-"
+                                }else{
+                                    return row.credit_limit_surplus
+                                }
+                            }, operate: 'LIKE'},
+                        {field: 'from', title: "来源", formatter: function(value,row,index) {
+                                if (row.from === 2) {
+                                    return "群聊助手";
+                                } else {
+                                    return "抖秒冲";
+                                }
+                            }, operate: 'LIKE'},
                         {field: 'create_time', title:"时间" ,formatter: Table.api.formatter.datetime},
                     ]
                 ],
@@ -240,6 +260,7 @@ define(['jquery', 'bootstrap', 'company', 'table', 'form'], function ($, undefin
                     params.start_date = time_data[0];
                     params.end_date = time_data[1];
                     params.account_id = document.getElementById('tencentAccountId').value;
+                    params.sub_wallet_id = document.getElementById('tencentSubWalletId').value;
                     params.store_id = document.getElementById('tencentStoreId').value;
                     params.money = document.getElementById('tencentMoney').value;
                     return params;

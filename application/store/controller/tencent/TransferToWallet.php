@@ -362,12 +362,12 @@ class TransferToWallet extends Store
                 $money_log_data['actual_money'] = $insert_data['actual_money'];
                 $money_log_data["deduction_balance"] = $insert_data["deduction_balance"];
                 $money_log_data['deduction_credit_limit'] = $insert_data["deduction_credit_limit"];
-                $money_log_data['type'] = 4;
+                $money_log_data['type'] = 8;
                 $money_log_data['explain'] = "转入腾讯广告子钱包[".$insert_data['sub_wallet_id']."]，返点：".$insert_data['rebate']."，扣除余额：".$insert_data['deduction_balance']."，扣除授信额度：".$insert_data['deduction_credit_limit']."，实际扣除金额：".$insert_data['actual_money']."【单位：元】";
                 $money_log_data['balance_surplus'] = $store_info[$prefix.'money_tencent'] - $insert_data['deduction_balance'];
                 $money_log_data['credit_limit_surplus'] = $store_info[$prefix.'credit_limit_tencent'] - $insert_data['deduction_credit_limit'];
             }else{
-                $money_log_data['type'] = 5;
+                $money_log_data['type'] = 9;
                 $money_log_data["actual_money"] = $insert_data["actual_money"] - $insert_data["rebate"];
                 $money_log_data['explain'] = "腾讯广告子钱包[".$insert_data['sub_wallet_id']."]转出，转出金额：".$insert_data['money']."，扣除返点：".$insert_data['rebate']."，预计到账金额：".$insert_data['actual_money'];
                 if($store_info[$prefix.'spending_credit_limit_tencent'] >= $money_log_data['actual_money']){

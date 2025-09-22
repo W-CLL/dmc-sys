@@ -4,10 +4,10 @@
     <div class="panel-body">
         <ul class="nav nav-tabs modern-tabs" role="tablist">
             <li role="presentation">
-                <a href="{:url('store_money_log/index')}" id="index-tab">资金流水</a>
+                <a href="{:url('store_money_log/index')}" id="index-tab">千川流水</a>
             </li>
             <li role="presentation" class="active">
-                <a href="#tencent" id="tencent-tab" role="tab" data-toggle="tab" aria-controls="tencent">腾讯动账</a>
+                <a href="#tencent" id="tencent-tab" role="tab" data-toggle="tab" aria-controls="tencent">腾讯流水</a>
             </li>
         </ul>
         
@@ -35,6 +35,19 @@
                                                     <option value="0" selected="selected">无</option>
                                                     {foreach $account_data as $vo}
                                                     <option value="{$vo.account_id}">{$vo.account_id}</option>
+                                                    {/foreach}
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-xs-3 col-sm-3 col-md-3">
+                                        <div class="form-group">
+                                            <label class="control-label">腾讯子钱包id</label>
+                                            <div>
+                                                <select data-live-search="true" name="sub_wallet_id" id="tencentSubWalletId" class="form-control selectpicker">
+                                                    <option value="0" selected="selected">无</option>
+                                                    {foreach $account_wallet_data as $vo}
+                                                    <option value="{$vo.sub_wallet_id}">{$vo.sub_wallet_id}</option>
                                                     {/foreach}
                                                 </select>
                                             </div>
