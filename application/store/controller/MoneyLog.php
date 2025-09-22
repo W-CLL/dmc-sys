@@ -48,7 +48,7 @@ Class MoneyLog extends Store{
                     $list[$k]['sub_wallet_id'] = $matches[1];
                 }
             }
-            $count = Db::name("store_money_log")->where(['store_id'=>$this->auth->id])->count();
+            $count = Db::name("store_money_log")->where($where)->count();
             $result = array("total" => $count, "rows" => $list);
 
             return json($result);

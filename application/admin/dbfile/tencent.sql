@@ -60,6 +60,8 @@ CREATE TABLE `fa_tencent_transaction_log` (
                                               `tencent_account_id` int(11) DEFAULT NULL COMMENT '关联id',
                                               `account_id` varchar(50) CHARACTER SET utf8mb4 DEFAULT NULL COMMENT '腾讯子客id',
                                               `transfer_log_id` int(11) DEFAULT NULL COMMENT '转账记录id',
+                                              `swtl_id` int(11) DEFAULT NULL COMMENT '共享钱包转账记录id',
+                                              `sub_wallet_id` int(11) DEFAULT NULL COMMENT '子钱包id',
                                               `money` decimal(10,2) NOT NULL DEFAULT '0.00' COMMENT '金额',
                                               `deduction_balance` decimal(10,2) NOT NULL DEFAULT '0.00' COMMENT '扣除余额',
                                               `deduction_credit_limit` decimal(10,2) DEFAULT '0.00' COMMENT '授信额度扣款',
@@ -79,13 +81,12 @@ CREATE TABLE `fa_tencent_transaction_log` (
                                               `update_time` int(11) DEFAULT NULL COMMENT '更新时间',
                                               `before_money` decimal(10,2) DEFAULT '0.00' COMMENT '当前余额',
                                               `today_money` decimal(10,2) DEFAULT '0.00' COMMENT '变动后余额',
-                                              `swtl_id` int(11) DEFAULT NULL COMMENT '共享钱包转账记录id',
                                               `balance_surplus` decimal(10,2) NOT NULL DEFAULT '0.00' COMMENT '变动后钱包余额',
                                               `credit_limit_surplus` decimal(10,2) NOT NULL DEFAULT '0.00' COMMENT '变动后授信余额',
                                               `from` tinyint(1) NOT NULL DEFAULT '1' COMMENT '1：dmc后台； 2：robot',
                                               PRIMARY KEY (`id`),
                                               UNIQUE KEY `only` (`order_number`) USING BTREE,
-                                              KEY `normal` (`admin_id`,`store_id`,`tencent_account_id`,`account_id`,`transfer_log_id`,`swtl_id`)
+                                              KEY `normal` (`admin_id`,`store_id`,`tencent_account_id`,`account_id`,`transfer_log_id`,`swtl_id`,`sub_wallet_id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
