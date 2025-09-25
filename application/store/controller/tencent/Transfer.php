@@ -116,8 +116,8 @@ class Transfer extends Store
             }
             $update = $this->TencentTransferModel->update($id,
                 [
-                    'order_uid' => $transfer_result['data']['external_bill_no'],
-                    'record' => json_encode($transfer_result['data'],JSON_UNESCAPED_UNICODE),
+                    'order_uid' => '',
+                    'record' => '',
                     'update_time' => time()
                 ]
             );
