@@ -95,6 +95,7 @@ class Transfer extends Store
                 $this->error('超出本次同比可退最大值，本次转出金额最大值：'.$maxTTO);
             }
             $wallet_info = $this->checkParam($post, $account, $store_info, $fund_info);
+            $array_data = [];
             Db::startTrans();
             try{
                 $insert_data = $this->buildData($account,$post,$wallet_info);
@@ -103,14 +104,14 @@ class Transfer extends Store
                     throw new Exception('添加转账记录失败');
                 }
                 $this->deductMoney($store_info,$insert_data);
-                $transfer_result = $this->initiateTransfer($post);
-                if ($transfer_result['code'] != 0){
-                    \think\Log::write($transfer_result, 'errorInfo');
+                list($transfer_result, $array_data) = $this->initiateTransfer($post,$agent_balance_info, $fund_info);
+                if ($transfer_result === false){
                     throw new Exception('发起转账失败');
                 }
                 Db::commit();
             }catch (\Exception $e){
                 Db::rollback();
+                $this->rollbackMoney($array_data);
                 $this->error($e->getMessage());
             }
             $update = $this->TencentTransferModel->update($id,
@@ -142,7 +143,7 @@ class Transfer extends Store
                 $this->error('转账异常');
             }
         }
-        $this->view->assign('fundInfo',$fund_info);
+        $this->view->assign('totalFund',$fund_info['FUND_TYPE_CASH'] + $fund_info['FUND_TYPE_GIFT']);
         $this->view->assign('account', $account);
         $this->view->assign('storeInfo', $store_info);
         $this->view->assign('agentBalanceInfo', $agent_balance_info);
@@ -187,7 +188,7 @@ class Transfer extends Store
                 $this->error('转入余额超出上限');
             }
         }elseif ($post['transfer_direction'] == 'ADVERTISER_TO_AGENCY'){
-            if ($post['transfer_amount'] > $fund_info[$post['fund_type']]) {
+            if ($post['transfer_amount'] > $fund_info['FUND_TYPE_CASH'] + $fund_info['FUND_TYPE_GIFT']) {
                 $this->error('转出余额超出上限');
             }
         }else{
@@ -303,19 +304,76 @@ class Transfer extends Store
     /**
      * 发起转账
      * @param $post
+     * @param $agent_balance_info
+     * @param $balance_info
      * @return mixed
      */
-    private function initiateTransfer($post){
+    private function initiateTransfer($post, $agent_balance_info, $balance_info){
+        switch ($post['transfer_direction']) {
+            case 'AGENCY_TO_ADVERTISER':
+                if ($agent_balance_info['FUND_TYPE_GIFT'] == 0){
+                    $transfer = $this->sendRequest($post, $post['transfer_amount'], 'FUND_TYPE_CASH');
+                    if ($transfer['code'] != 0){
+                        return [false,[]];
+                    }
+                }
+                else if ($post['transfer_amount'] > $agent_balance_info['FUND_TYPE_GIFT']){
+                    $remaining_amount = $post['transfer_amount'] - $agent_balance_info['FUND_TYPE_GIFT'];
+                    $first = $this->sendRequest($post, $agent_balance_info['FUND_TYPE_GIFT'], 'FUND_TYPE_GIFT');
+                    if ($first['code'] != 0){
+                        return [false,[]];
+                    }
+                    $second = $this->sendRequest($post, $remaining_amount, 'FUND_TYPE_CASH');
+                    if ($second['data']['code'] != 0){
+                        return [false, ['money' => $agent_balance_info['FUND_TYPE_GIFT'], 'transfer_type' => 1]];
+                    }
+                }elseif ($post['transfer_amount'] <= $agent_balance_info['FUND_TYPE_GIFT']){
+                    $transfer = $this->sendRequest($post, $post['transfer_amount'], 'FUND_TYPE_GIFT');
+                    if ($transfer['code'] != 0){
+                        return [false,[]];
+                    }
+                }
+                break;
+            case 'ADVERTISER_TO_AGENCY':
+                if ($balance_info['FUND_TYPE_CASH'] == 0){
+                    $transfer = $this->sendRequest($post, $post['transfer_amount'], 'FUND_TYPE_GIFT');
+                    if ($transfer['code'] != 0){
+                        return [false,[]];
+                    }
+                }
+                else if ($post['transfer_amount'] <= $balance_info['FUND_TYPE_CASH']){
+                    $transfer = $this->sendRequest($post, $post['transfer_amount'], 'FUND_TYPE_CASH');
+                    if ($transfer['code'] != 0){
+                        return [false,[]];
+                    }
+                }
+                elseif ($post['transfer_amount'] > $balance_info['FUND_TYPE_CASH']){
+                    $remaining_amount = $post['transfer_amount'] - $balance_info['FUND_TYPE_CASH'];
+                    $first = $this->sendRequest($post, $agent_balance_info['FUND_TYPE_CASH'], 'FUND_TYPE_CASH');
+                    if ($first['code'] != 0){
+                        return [false,[]];
+                    }
+                    $second = $this->sendRequest($post, $remaining_amount, 'FUND_TYPE_GIFT');
+                    if ($second['data']['code'] != 0){
+                        return [false, ['money' => $agent_balance_info['FUND_TYPE_CASH'], 'transfer_type' => 2, 'account_id' => $post['account_id']]];
+                    }
+                }
+                break;
+        }
+        return true;
+    }
+
+
+    private function sendRequest($post, $money, $fund_type){
         return Fund::transfer([
             'account_id' => $post['account_id'],
-            'fund_type' => $post['fund_type'],
-            'amount' => $post['transfer_amount'] * 100,
+            'fund_type' => $fund_type,
+            'amount' => $money * 100,
             'transfer_type' => $post['transfer_direction'],
             'external_bill_no' => uniqid('hxsz-zz-'),
             'memo' => $post['remark'],
             'transfer_try_best' => 0,
             'high_frequency_transfer' => 0,
-            'pre_fetch_amount' => 0
         ])['data'];
     }
 
@@ -391,6 +449,46 @@ class Transfer extends Store
             \think\Log::write('金额变更失败：'.$e->getMessage(),'error');
             Db::rollback();
             return false;
+        }
+    }
+
+
+    private function rollbackMoney($array){
+        if (!empty($array)){
+            $bool = true;
+            $i = 0;
+            do {
+                if ($array['account_type'] == 1){
+                    // 发起转入就回滚转出
+                    $res = Fund::transfer([
+                        'account_id' => $array['account_id'],
+                        'fund_type' => "FUND_TYPE_GIFT",
+                        'amount' => $array['money'] * 100,
+                        'transfer_type' => "ADVERTISER_TO_AGENCY",
+                        'external_bill_no' => uniqid('hxsz-zz-'),
+                        'memo' => "失败回退",
+                        'transfer_try_best' => 0,
+                        'high_frequency_transfer' => 0,
+                    ])['data'];
+                }else{
+                    // 发起转出就回滚转入
+                    $res = Fund::transfer([
+                        'account_id' => $array['account_id'],
+                        'fund_type' => "FUND_TYPE_CASH",
+                        'amount' => $array['money'] * 100,
+                        'transfer_type' => "AGENCY_TO_ADVERTISER",
+                        'external_bill_no' => uniqid('hxsz-zz-'),
+                        'memo' => "失败回退",
+                        'transfer_try_best' => 0,
+                        'high_frequency_transfer' => 0,
+                    ])['data'];
+                }
+                if($res['code'] == 0 && $i < 3){
+                    $bool = false;
+                }else{
+                    $i++;
+                }
+            } while ($bool);
         }
     }
 

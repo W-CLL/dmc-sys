@@ -126,24 +126,14 @@
                 <i class="fa fa-list-alt" style="margin-right: 8px;"></i>各资金类型可转出金额
               </div>
               <ul style="margin-top: 5px; margin-bottom: 0; padding-left: 0; list-style: none;">
-                {foreach $fundInfo as $fundType => $amount}
-                <li style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px dashed #e1e8ed;">
+                <li style="margin-top: 15px; padding-top: 15px; border-top: 2px dashed #ccc;">
                   <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-size: 14px;">
-                      {if $fundType == 'FUND_TYPE_CASH'}
-                      <i class="fa fa-money" style="color: #28a745; margin-right: 8px;"></i>现金账户
-                      {elseif $fundType == 'FUND_TYPE_GIFT'}
-                      <i class="fa fa-gift" style="color: #ffc107; margin-right: 8px;"></i>赠送账户
-                      {elseif $fundType == 'FUND_TYPE_SHARED'}
-                      <i class="fa fa-share-alt" style="color: #17a2b8; margin-right: 8px;"></i>分成账户
-                      {else}
-                      <i class="fa fa-university" style="color: #6c757d; margin-right: 8px;"></i>{$fundType}
-                      {/if}
+                    <span style="font-size: 16px; font-weight: bold;">
+                      <i class="fa fa-calculator" style="color: #007bff; margin-right: 8px;"></i>最大可转出总金额
                     </span>
-                    <span style="font-weight: bold; color: #28a745; font-size: 18px;">{$amount|default='0.00'} <span style="font-size: 14px;">元</span></span>
+                    <span style="font-weight: bold; color: #007bff; font-size: 20px;">{$totalFund|default='0.00'} <span style="font-size: 14px;">元</span></span>
                   </div>
                 </li>
-                {/foreach}
               </ul>
             </div>
           </div>
@@ -152,16 +142,16 @@
     </div>
   </div>
 
-  <div class="form-group">
-    <label class="control-label col-xs-12 col-sm-2">资金类型:</label>
-    <div class="col-xs-12 col-sm-8" style="width: 230px">
-      <select id="c-fund_type" data-rule="required" class="form-control selectpicker" name="fund_type" data-live-search="true">
-        <option value="FUND_TYPE_CASH" selected>现金账户</option>
-        <option value="FUND_TYPE_GIFT">赠送账户</option>
-        <option value="FUND_TYPE_SHARED">分成账户</option>
-      </select>
-    </div>
-  </div>
+<!--  <div class="form-group">-->
+<!--    <label class="control-label col-xs-12 col-sm-2">资金类型:</label>-->
+<!--    <div class="col-xs-12 col-sm-8" style="width: 230px">-->
+<!--      <select id="c-fund_type" data-rule="required" class="form-control selectpicker" name="fund_type" data-live-search="true">-->
+<!--        <option value="FUND_TYPE_CASH" selected>现金账户</option>-->
+<!--        <option value="FUND_TYPE_GIFT">赠送账户</option>-->
+<!--        <option value="FUND_TYPE_SHARED">分成账户</option>-->
+<!--      </select>-->
+<!--    </div>-->
+<!--  </div>-->
 
   <br>
   <div class="form-group">
@@ -193,38 +183,38 @@
   </div>
 </form>
 
-<script>
-// 使用window.onload确保在所有资源加载完成后再执行
-window.onload = function() {
-  // 获取赠送账户金额
-  var giftAmount = 0;
-  {foreach $agentBalanceInfo as $fundType => $amount}
-    {if $fundType == 'FUND_TYPE_GIFT'}
-      giftAmount = parseFloat('{$amount|default="0.00"}');
-    {/if}
-  {/foreach}
+<!--<script>-->
+<!--// 使用window.onload确保在所有资源加载完成后再执行-->
+<!--window.onload = function() {-->
+<!--  // 获取赠送账户金额-->
+<!--  var giftAmount = 0;-->
+<!--  {foreach $agentBalanceInfo as $fundType => $amount}-->
+<!--    {if $fundType == 'FUND_TYPE_GIFT'}-->
+<!--      giftAmount = parseFloat('{$amount|default="0.00"}');-->
+<!--    {/if}-->
+<!--  {/foreach}-->
 
-  console.log('赠送账户金额:', giftAmount);
-  
-  // 监听转账金额输入框变化
-  document.getElementById('c-transfer_amount').addEventListener('input', function() {
-    var transferAmount = parseFloat(this.value) || 0;
-    var fundTypeSelect = document.getElementById('c-fund_type');
-    console.log('转账金额:', transferAmount);
-    console.log('赠送账户金额:', giftAmount);
-    
-    // 如果输入金额小于等于赠送账户金额，选择赠送账户，否则选择现金账户
-    if (transferAmount > 0 && transferAmount <= giftAmount) {
-      fundTypeSelect.value = 'FUND_TYPE_GIFT';
-      console.log('选择赠送账户');
-    } else {
-      fundTypeSelect.value = 'FUND_TYPE_CASH';
-      console.log('选择现金账户');
-    }
-    
-    // 触发change事件
-    var event = new Event('change');
-    fundTypeSelect.dispatchEvent(event);
-  });
-};
-</script>
+<!--  console.log('赠送账户金额:', giftAmount);-->
+<!--  -->
+<!--  // 监听转账金额输入框变化-->
+<!--  document.getElementById('c-transfer_amount').addEventListener('input', function() {-->
+<!--    var transferAmount = parseFloat(this.value) || 0;-->
+<!--    var fundTypeSelect = document.getElementById('c-fund_type');-->
+<!--    console.log('转账金额:', transferAmount);-->
+<!--    console.log('赠送账户金额:', giftAmount);-->
+<!--    -->
+<!--    // 如果输入金额小于等于赠送账户金额，选择赠送账户，否则选择现金账户-->
+<!--    if (transferAmount > 0 && transferAmount <= giftAmount) {-->
+<!--      fundTypeSelect.value = 'FUND_TYPE_GIFT';-->
+<!--      console.log('选择赠送账户');-->
+<!--    } else {-->
+<!--      fundTypeSelect.value = 'FUND_TYPE_CASH';-->
+<!--      console.log('选择现金账户');-->
+<!--    }-->
+<!--    -->
+<!--    // 触发change事件-->
+<!--    var event = new Event('change');-->
+<!--    fundTypeSelect.dispatchEvent(event);-->
+<!--  });-->
+<!--};-->
+<!--</script>-->
