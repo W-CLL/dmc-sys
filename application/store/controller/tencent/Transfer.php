@@ -8,6 +8,7 @@ use app\common\model\txgg\TencentStore;
 use app\common\model\txgg\TencentRefund;
 use app\common\model\txgg\TencentTransferLog as TencentTransfer;
 use app\common\model\txgg\TencentTransactionLog;
+use Symfony\Component\Cache\Adapter\NullAdapter;
 use think\Exception;
 use txgg\Fund;
 use think\Db;
@@ -104,7 +105,7 @@ class Transfer extends Store
                     throw new Exception('添加转账记录失败');
                 }
                 $this->deductMoney($store_info,$insert_data);
-                list($transfer_result, $array_data) = $this->initiateTransfer($post,$agent_balance_info, $fund_info);
+                list($transfer_result, $array_data, $order_uid, $record) = $this->initiateTransfer($post,$agent_balance_info, $fund_info);
                 if ($transfer_result === false){
                     throw new Exception('发起转账失败');
                 }
@@ -114,10 +115,10 @@ class Transfer extends Store
                 $this->rollbackMoney($array_data);
                 $this->error($e->getMessage());
             }
-            $update = $this->TencentTransferModel->update($id,
+            $update = $this->TencentTransferModel->where('id',$id)->update(
                 [
-                    'order_uid' => '',
-                    'record' => '',
+                    'order_uid' => $order_uid,
+                    'record' => $record,
                     'update_time' => time()
                 ]
             );
@@ -314,53 +315,65 @@ class Transfer extends Store
                 if ($agent_balance_info['FUND_TYPE_GIFT'] == 0){
                     $transfer = $this->sendRequest($post, $post['transfer_amount'], 'FUND_TYPE_CASH');
                     if ($transfer['code'] != 0){
-                        return [false,[]];
+                        return [false,[],NUll,Null];
                     }
+                    $record = json_encode($transfer, JSON_UNESCAPED_UNICODE);
+                    $order_uid = $transfer['data']['external_bill_no'];
                 }
                 else if ($post['transfer_amount'] > $agent_balance_info['FUND_TYPE_GIFT']){
                     $remaining_amount = $post['transfer_amount'] - $agent_balance_info['FUND_TYPE_GIFT'];
                     $first = $this->sendRequest($post, $agent_balance_info['FUND_TYPE_GIFT'], 'FUND_TYPE_GIFT');
                     if ($first['code'] != 0){
-                        return [false,[]];
+                        return [false,[],NUll,Null];
                     }
                     $second = $this->sendRequest($post, $remaining_amount, 'FUND_TYPE_CASH');
                     if ($second['data']['code'] != 0){
-                        return [false, ['money' => $agent_balance_info['FUND_TYPE_GIFT'], 'transfer_type' => 1]];
+                        return [false, ['money' => $agent_balance_info['FUND_TYPE_GIFT'], 'transfer_type' => 1], NUll,Null];
                     }
+                    $record = json_encode($first, JSON_UNESCAPED_UNICODE) . ',' . json_encode($second, JSON_UNESCAPED_UNICODE);
+                    $order_uid = $first['data']['external_bill_no'].'、'. $second['data']['external_bill_no'];
                 }elseif ($post['transfer_amount'] <= $agent_balance_info['FUND_TYPE_GIFT']){
                     $transfer = $this->sendRequest($post, $post['transfer_amount'], 'FUND_TYPE_GIFT');
                     if ($transfer['code'] != 0){
-                        return [false,[]];
+                        return [false,[],NUll,Null];
                     }
+                    $record = json_encode($transfer, JSON_UNESCAPED_UNICODE);
+                    $order_uid = $transfer['data']['external_bill_no'];
                 }
                 break;
             case 'ADVERTISER_TO_AGENCY':
                 if ($balance_info['FUND_TYPE_CASH'] == 0){
                     $transfer = $this->sendRequest($post, $post['transfer_amount'], 'FUND_TYPE_GIFT');
                     if ($transfer['code'] != 0){
-                        return [false,[]];
+                        return [false,[],NUll,Null];
                     }
+                    $record = json_encode($transfer, JSON_UNESCAPED_UNICODE);
+                    $order_uid = $transfer['data']['external_bill_no'];
                 }
                 else if ($post['transfer_amount'] <= $balance_info['FUND_TYPE_CASH']){
                     $transfer = $this->sendRequest($post, $post['transfer_amount'], 'FUND_TYPE_CASH');
                     if ($transfer['code'] != 0){
-                        return [false,[]];
+                        return [false,[],NUll,Null];
                     }
+                    $record = json_encode($transfer, JSON_UNESCAPED_UNICODE);
+                    $order_uid = $transfer['data']['external_bill_no'];
                 }
                 elseif ($post['transfer_amount'] > $balance_info['FUND_TYPE_CASH']){
                     $remaining_amount = $post['transfer_amount'] - $balance_info['FUND_TYPE_CASH'];
                     $first = $this->sendRequest($post, $agent_balance_info['FUND_TYPE_CASH'], 'FUND_TYPE_CASH');
                     if ($first['code'] != 0){
-                        return [false,[]];
+                        return [false,[],NUll,Null];
                     }
                     $second = $this->sendRequest($post, $remaining_amount, 'FUND_TYPE_GIFT');
                     if ($second['data']['code'] != 0){
-                        return [false, ['money' => $agent_balance_info['FUND_TYPE_CASH'], 'transfer_type' => 2, 'account_id' => $post['account_id']]];
+                        return [false, ['money' => $agent_balance_info['FUND_TYPE_CASH'], 'transfer_type' => 2, 'account_id' => $post['account_id']], NUll,Null];
                     }
+                    $record = json_encode($first, JSON_UNESCAPED_UNICODE) . ',' . json_encode($second, JSON_UNESCAPED_UNICODE);
+                    $order_uid = $first['data']['external_bill_no'].'、'. $second['data']['external_bill_no'];
                 }
                 break;
         }
-        return true;
+        return [true,[],$order_uid,$record];
     }
 
 
