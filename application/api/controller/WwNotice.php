@@ -11,14 +11,19 @@ use think\Controller;
  */
 class WwNotice extends Controller
 {
-    public function sendAutoOrderMsg($auth, $msg = '测试不用管')
+    public function sendAutoOrderMsg($auth, $msg = '测试不用管',$user="")
     {
-//        dump($auth);
+        $base_user = "WuZhongTuan|PanHaoWei|WangChunLong";
         if ($auth != "auto-order") {
             $this->error('非法请求');
         }
-        \qywx\Api::send_application_messages('WangChunLong|PaoHaoWei', $msg);
+        if($user){
+            $touser = $base_user.'|'.$user;
+        }else{
+            $touser = $base_user;
+        }
 
+        \qywx\Api::send_application_messages($touser, $msg);
 
     }
 
