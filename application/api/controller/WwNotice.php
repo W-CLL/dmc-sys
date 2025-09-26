@@ -17,7 +17,7 @@ class WwNotice extends Controller
         if ($auth != "auto-order") {
             $this->error('非法请求');
         }
-        \qywx\Api::send_application_messages('WangChunLong', $msg);
+        \qywx\Api::send_application_messages('WangChunLong|PaoHaoWei', $msg);
 
 
     }
