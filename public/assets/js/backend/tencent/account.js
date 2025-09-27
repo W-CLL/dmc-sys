@@ -135,6 +135,9 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
             // 添加根据账户ID绑定按钮
             $("#toolbar").prepend('<a href="javascript:;" class="btn btn-success btn-bindbyid" title="根据ID绑定"><i class="fa fa-link"></i> 根据ID绑定</a> ');
             
+            // 添加根据账户名称绑定按钮
+            $("#toolbar").prepend('<a href="javascript:;" class="btn btn-info btn-bindbyname" title="根据名称绑定"><i class="fa fa-font"></i> 根据名称绑定</a> ');
+            
             // 根据ID绑定按钮点击事件
             $(".btn-bindbyid").on('click', function () {
                 var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -178,6 +181,50 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                     }
                 });
             });
+            
+            // 根据名称绑定按钮点击事件
+            $(".btn-bindbyname").on('click', function () {
+                var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                var width = isMobile ? '80%' : '40%';
+                var height = '60%';
+                
+                layer.open({
+                    type: 2,
+                    area: [width, height],
+                    content: 'account/bind_by_account_name',
+                    fixed: false,
+                    maxmin: true,
+                    shadeClose: true,
+                    title: '根据账户名称绑定',
+                    btn: ['提交', '取消'],
+                    btnAlign: 'c',
+                    yes: function (index, layero) {
+                        var iframeWin = window[layero.find('iframe')[0]['name']];
+                        var store_id = iframeWin.$("select[name='store_id']").val();
+                        var account_type = iframeWin.$("select[name='account_type']").val();
+                        var discount_percentage = iframeWin.$("input[name='discount_percentage']").val();
+                        var account_names = iframeWin.$("textarea[name='account_names']").val();
+                        var token = iframeWin.$("input[name='__token__']").val();
+                        
+                        Fast.api.ajax({
+                            url: 'tencent/account/bind_by_account_name',
+                            data: {
+                                __token__: token,
+                                store_id: store_id,
+                                account_type: account_type,
+                                discount_percentage: discount_percentage,
+                                account_names: account_names
+                            }
+                        }, function (data, ret) {
+                            table.bootstrapTable('refresh', {});
+                            Layer.close(index);
+                        }, function (data, ret) {
+                            // 错误处理
+                            console.log(ret);
+                        });
+                    }
+                });
+            });
         },
         edit: function () {
             Controller.api.bindevent();
@@ -186,6 +233,9 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
             Controller.api.bindevent();
         },
         bind_by_account_id: function () {
+            Controller.api.bindevent();
+        },
+        bind_by_account_name: function () {
             Controller.api.bindevent();
         },
         api: {

@@ -182,4 +182,56 @@ class Account extends Backend
         $this->view->assign('storeList', build_select('store_id', $store_data, 0, ['class' => 'form-control selectpicker' ,'data-live-search'=>'true']));
         return $this->view->fetch();
     }
+    
+    /**
+     * 根据账户名称进行批量绑定
+     */
+    public function bind_by_account_name()
+    {
+        if ($this->request->isPost()) {
+            $err_num = 0;
+            $err_name = '';
+            
+            $this->token();
+            $post = $this->request->post();
+            $post['discount_percentage'] = number_format($post['discount_percentage'], 4, '.', '');
+            
+            if (empty($post['store_id'])) {
+                $this->error('请选择绑定账号');
+            }
+            
+            if (empty($post['account_names'])) {
+                $this->error('请填写账户名称');
+            }
+            
+            // 处理账户名称列表
+            $account_names = array_filter(explode("\n", $post['account_names']), function ($value) {
+                return trim($value) !== '';
+            });
+            
+            // 遍历处理每个账户名称
+            foreach ($account_names as $account_name) {
+                $account_name = trim($account_name);
+                
+                if (!$this->model->where(["name" => $account_name])->update([
+                    'store_id' => $post['store_id'], 
+                    'account_type' => $post['account_type'], 
+                    'discount_percentage' => $post['discount_percentage']
+                ])) {
+                    $err_num++;
+                    $err_name .= $account_name . ",";
+                }
+            }
+            
+            if ($err_num != 0) {
+                $this->error("部分成功，失败了" . $err_num . "次，绑定失败的名称为：" . $err_name);
+            } else {
+                $this->success("批量绑定成功");
+            }
+        }
+        
+        $store_data = Db::name("store")->column('id,username');
+        $this->view->assign('storeList', build_select('store_id', $store_data, 0, ['class' => 'form-control selectpicker' ,'data-live-search'=>'true']));
+        return $this->view->fetch();
+    }
 }
