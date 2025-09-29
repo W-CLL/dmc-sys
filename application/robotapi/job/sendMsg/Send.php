@@ -7,6 +7,7 @@ class Send
 {
     public function doJob($data)
     {
+        usleep(500000); // 500毫秒
         $url = $data["url"];
         $params = $data["params"];
         try {

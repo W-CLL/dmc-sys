@@ -327,7 +327,7 @@ class Transfer extends Store
                         return [false,[],NUll,Null];
                     }
                     $second = $this->sendRequest($post, $remaining_amount, 'FUND_TYPE_CASH');
-                    if ($second['data']['code'] != 0){
+                    if ($second['code'] != 0){
                         return [false, ['money' => $agent_balance_info['FUND_TYPE_GIFT'], 'transfer_type' => 1], NUll,Null];
                     }
                     $record = json_encode($first, JSON_UNESCAPED_UNICODE) . ',' . json_encode($second, JSON_UNESCAPED_UNICODE);
@@ -365,7 +365,7 @@ class Transfer extends Store
                         return [false,[],NUll,Null];
                     }
                     $second = $this->sendRequest($post, $remaining_amount, 'FUND_TYPE_GIFT');
-                    if ($second['data']['code'] != 0){
+                    if ($second['code'] != 0){
                         return [false, ['money' => $agent_balance_info['FUND_TYPE_CASH'], 'transfer_type' => 2, 'account_id' => $post['account_id']], NUll,Null];
                     }
                     $record = json_encode($first, JSON_UNESCAPED_UNICODE) . ',' . json_encode($second, JSON_UNESCAPED_UNICODE);

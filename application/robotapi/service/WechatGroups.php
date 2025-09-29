@@ -9,6 +9,23 @@ use think\Db;
 class WechatGroups extends Controller
 {
 
+    public function getGroupPower($data){
+        $power_type = [
+            'qc_power' => 1,  // 千川
+            'tx_power' => 2,  // 腾讯
+        ];
+        $wechat_group_model = new WechatGroup();
+        $power_list = $wechat_group_model->getPowerList($data['group_id']);
+        foreach ($power_type as $k => $v){
+            if (in_array($v, $power_list)){
+                $power[$k] = 1;
+            }else{
+                $power[$k] = 0;
+            }
+        }
+        return $power;
+    }
+
     public function updateGroupData($data){
         $wechat_group_model = new WechatGroup();
         Db::startTrans();
@@ -77,7 +94,17 @@ class WechatGroups extends Controller
     {
         switch ($type) {
             case 1: // get
-                return [false, '不允许使用'];
+                if (!is_array($data)) {
+                    return [false, '数据与预期不一致'];
+                }
+                $validate = [
+                    ['group_id', 'require|max:50', 'group_id 的格式不正确'],
+                ];
+                $result = $this->validate($data, $validate);
+                if ($result !== true) {
+                    return [false, $result];
+                }
+                return true;
             case 2: // post
             case 3: // put
                 if (!is_array($data)) {

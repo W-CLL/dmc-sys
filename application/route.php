@@ -47,3 +47,17 @@ Route::delete('dmc-surplus', 'robotapi/DMCSurplus/delete');
 // 备款网址
 Route::get('recharge/[:token]', 'index/Reserve/index');
 Route::post('recharge/[:token]', 'index/Reserve/index');
+
+
+// 腾讯广告转账接口
+Route::get('tencent-account', 'robotapi/TencentAccount/get');
+Route::post('tencent-account', 'robotapi/TencentAccount/post');
+Route::put('tencent-account', 'robotapi/TencentAccount/put');
+Route::delete('tencent-account', 'robotapi/TencentAccount/delete');
+
+
+// 腾讯广告共享钱包转账接口
+Route::get('tencent-wallet', 'robotapi/TencentWallet/get');
+Route::post('tencent-wallet', 'robotapi/TencentWallet/post');
+Route::put('tencent-wallet', 'robotapi/TencentWallet/put');
+Route::delete('tencent-wallet', 'robotapi/TencentWallet/delete');

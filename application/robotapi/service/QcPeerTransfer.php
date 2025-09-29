@@ -5,6 +5,7 @@ namespace app\robotapi\service;
 use app\robotapi\model\WechatGroup;
 use app\robotapi\model\StoreRefund;
 use app\robotapi\model\QueueRobot;
+use app\robotapi\model\Store;
 use jlqc\FundManagement;
 use think\Cache;
 use think\Controller;
@@ -148,9 +149,18 @@ class QcPeerTransfer extends Controller
     private function checkGroup($group_id)
     {
         $wechat_group = new WechatGroup();
+        $store = new Store();
         $store_id = $wechat_group->getStoreId($group_id);
         if (!$store_id) {
             return "尚未绑定商户，请先联系客服绑定商户";
+        }
+        $status = $store->getStatus($store_id);
+        if ($status != 1) {
+            return "商户已禁用，请先联系客服解禁商户";
+        }
+        $power_list = $wechat_group->getPowerList($group_id);
+        if (!in_array(1, $power_list)){
+            return "尚未开通千川助手权限，请先联系客服开通权限";
         }
         return true;
     }

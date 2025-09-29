@@ -15,6 +15,12 @@ class WechatGroup extends Model
         return $this->belongsTo('Store','bind_store_id','id');
     }
 
+
+    public function tencentStore()
+    {
+        return $this->belongsTo('TencentStore','bind_store_id','store_id');
+    }
+
     public function company()
     {
         return $this->hasMany('Company', 'store_id', 'bind_store_id');
@@ -23,6 +29,17 @@ class WechatGroup extends Model
     public function wallet()
     {
         return $this->hasMany('QcShareWallet', 'bind_store_id', 'bind_store_id');
+    }
+
+    public function tencentAccount()
+    {
+        return $this->hasMany('TencentAccount', 'store_id', 'bind_store_id');
+    }
+
+
+    public function tencentShareWallet()
+    {
+        return $this->hasMany('TencentShareWallet', 'store_id', 'bind_store_id');
     }
 
 
@@ -45,6 +62,26 @@ class WechatGroup extends Model
     }
 
 
+    public function getTencentAccountByStoreId($group_id, $account_id_list)
+    {
+        return $this->with(['TencentAccount' => function($query) use ($account_id_list) {
+            $query->whereIn('account_id', $account_id_list)
+                ->whereIn('status', [1,4])
+                ->field('id, account_id, store_id, account_type, discount_percentage');
+        }])->where('group_id', $group_id)->find();
+    }
+
+
+
+    public function getTencentWalletByStoreId($group_id, $wallet_id_list)
+    {
+        return $this->with(['TencentShareWallet' => function($query) use ($wallet_id_list) {
+            $query->whereIn('sub_wallet_id', $wallet_id_list)
+                ->field('id, sub_wallet_id, store_id, wallet_type, discount_percentage');
+        }])->where('group_id', $group_id)->find();
+    }
+
+
 
     /**
      * 根据群id获取关联DMC账户余额信息
@@ -60,6 +97,30 @@ class WechatGroup extends Model
             $query->field('id, public_money, private_money, public_credit_limit, private_credit_limit, public_discount_percentage, private_discount_percentage');
         }])->where('group_id', $group_id)->field('bind_store_id')->find();
     }
+
+
+    /**
+     * 根据群id获取关联DMC腾讯账户余额信息
+     * @param $group_id
+     * @return array
+     * @throws \think\Exception
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\ModelNotFoundException
+     * @throws \think\exception\DbException
+     */
+    public function getDMCTencentBalance($group_id){
+        return $this->with(['tencentStore' => function($query) {
+            $query->field('store_id,
+             public_money_tencent,
+             private_money_tencent,
+             public_credit_limit_tencent,
+             private_credit_limit_tencent,
+             public_discount_percentage_tencent, 
+             private_discount_percentage_tencent');
+        }])->where('group_id', $group_id)->field('bind_store_id')->find();
+    }
+
+
 
 
     /**
@@ -81,6 +142,11 @@ class WechatGroup extends Model
 
     public function getStoreId($group_id){
         return $this->where('group_id', $group_id)->value('bind_store_id');
+    }
+
+    public function getPowerList($group_id){
+        $power_str = $this->where('group_id', $group_id)->value('power');
+        return explode(',', $power_str);
     }
 
 

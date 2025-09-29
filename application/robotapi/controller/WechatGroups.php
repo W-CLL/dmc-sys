@@ -5,8 +5,7 @@ namespace app\robotapi\controller;
 class WechatGroups extends Base
 {
     public function get(){
-        return $this->handleRequest(1, '', '');
-
+        return $this->handleRequest(1, 'getGroupPower', '');
     }
 
     public function post()

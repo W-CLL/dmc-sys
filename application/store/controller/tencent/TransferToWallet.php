@@ -345,6 +345,7 @@ class TransferToWallet extends Store
         $money_log_data = [
             'store_id' => $store_info['store_id'],
             'swtl_id' => $transfer_id,
+            'sub_wallet_id' => $insert_data['sub_wallet_id'],
             'money' => $insert_data['money'],
             'account_type' =>$insert_data['account_type'],
             'rebate' => $insert_data['rebate'],

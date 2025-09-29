@@ -9,4 +9,9 @@ class Store extends Model
     public function getStoreInfo($store_id){
         return $this->where('id', $store_id)->find();
     }
+
+
+    public function getStatus($store_id){
+        return $this->where('id', $store_id)->value('status');
+    }
 }

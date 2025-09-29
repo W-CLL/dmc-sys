@@ -62,6 +62,15 @@ class QueryWalletTransferInfo
                         if(!$this->changeSubWalletMoneyTotal($transfer_data)){
                             throw new Exception("更新累计额度发生错误");
                         }
+                        //添加同步转账记录任务
+                        //暂时转入账户才同步
+                        $name = $transfer_data["transfer_direction"] == 1 ? "同步共享钱包充值记录":"同步共享钱包退款记录";
+                        $queueModel = new \app\common\model\Queue();
+                        $queueModel->addQueue($name, "app\job\SyncCharge",
+                            "syncCharge",
+                            ["log_id" => $data["swtl_id"], 'data' => $transfer_data],
+                            "share_wallet_transfer_log"
+                        );
                         Db::commit();
                         $prefix = $transfer_data['account_type'] == 1 ? "public_" : "private_";
                         $msg = "{$operate}成功！\n钱包余额{$type}：" . $store_money_log_data["balance_surplus"] . "\n授信余额{$type}：" . $store_money_log_data["credit_limit_surplus"] . "\n已使用授信额度{$type}：" . number_format((($store_info[$prefix."spending_credit_limit"] + $store_info[$prefix."credit_limit"]) - $store_money_log_data["credit_limit_surplus"]), 2);
@@ -137,7 +146,6 @@ class QueryWalletTransferInfo
                     $money_log_data['credit_limit_surplus'] = $store_info[$prefix.'credit_limit'] + (float)$money_log_data['actual_money'];
                 }else{
                     $money_log_data["deduction_credit_limit"] = (float)$store_info[$prefix.'spending_credit_limit'];
-                    // 有bug
                     $money_log_data['explain'] .= "，归还已使用授信额度：".(float)$store_info[$prefix.'spending_credit_limit']."，实际到账金额：".((float)$money_log_data['actual_money'] - (float)$store_info[$prefix.'spending_credit_limit'])."【单位：元】";
                     $money_log_data['balance_surplus'] = $store_info[$prefix.'money'] + ((float)$money_log_data['actual_money'] - (float)$store_info[$prefix.'spending_credit_limit']);
                     $money_log_data['credit_limit_surplus'] = $store_info[$prefix.'credit_limit'] + (float)$store_info[$prefix.'spending_credit_limit'];
