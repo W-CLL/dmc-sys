@@ -34,21 +34,23 @@ class Wallet
         }
         $model = new TencentShareWallet();
         // 获取数据库中的数据
-        $db_wallet_info = $model->column('id, sub_wallet_name', 'sub_wallet_id');
+        $db_wallet_info = $model->column('id, sub_wallet_name, name', 'sub_wallet_id');
         // 处理数据
         foreach ($total as $item){
             // 处理需要插入的数据
             if (!isset($db_wallet_info[$item['wallet_id']])){
                 $insert[] = [
                     'sub_wallet_id' => $item['wallet_id'],
-                    'sub_wallet_name' => $item['wallet_name']
+                    'sub_wallet_name' => $item['wallet_name'],
+                    'name' => $item['mdm_name']
                 ];
             }
             // 处理需要更新的数据
-            if (isset($db_wallet_info[$item['wallet_id']]) && $db_wallet_info[$item['wallet_id']]['sub_wallet_name'] != $item['wallet_name']){
+            if (isset($db_wallet_info[$item['wallet_id']]) && ($db_wallet_info[$item['wallet_id']]['sub_wallet_name'] != $item['wallet_name'] || $db_wallet_info[$item['wallet_id']]['name'] != $item['mdm_name'])){
                 $update[] = [
                     'id' => $db_wallet_info[$item['wallet_id']]['id'],
-                    'sub_wallet_name' => $item['wallet_name']
+                    'sub_wallet_name' => $item['wallet_name'],
+                    'name' => $item['mdm_name']
                 ];
             }
         }
