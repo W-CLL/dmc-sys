@@ -230,12 +230,20 @@ class TencentWallet extends Controller
                 $StoreRefund = new TencentRefund();
                 $str = '';
                 foreach ($wallet_info['tencent_share_wallet'] as $wallet){
+                    $no_wallet_id = false;
                     do{
                         $res = Fund::getWalletBasicInfo([
                             'account_id' => 64568612,
                             'wallet_id' => (int)$wallet['sub_wallet_id'],
                         ])['data'];
+                        if ($res['code']  == 67001){
+                            $no_wallet_id = true;
+                            break;
+                        }
                     }while ($res['code'] != 0);
+                    if ($no_wallet_id){
+                        return '子钱包id：' . $wallet['sub_wallet_id'] . '不存在';
+                    }
                     $fund_info = [];
                     foreach ($res['data']['wallet_info']['balance_info_list'] as $item){
                         $fund_info[$item['fund_type']] = $item['balance'] / 100;

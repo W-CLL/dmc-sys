@@ -173,17 +173,25 @@ class TencentAccount extends Controller
                 $StoreRefund = new TencentRefund();
                 $str = '';
                 foreach ($account_info['tencent_account'] as $account){
+                    $no_token = false;
                     do{
                         $res = Fund::getFundAccountInfo([
                             'account_id' => (int)$account['account_id'],
                         ])['data'];
+                        if ($res['code']  == 12201){
+                            $no_token = true;
+                            break;
+                        }
                     }while ($res['code'] != 0);
+                    if ($no_token){
+                        return 'token无权限操作账户：'.$account['account_id'];
+                    }
                     $fund_info = [];
                     foreach ($res['data']['list'] as $item){
                         $fund_info[$item['fund_type']] = ($item['balance'] - (isset($item['bill_deposit_amount']) ? $item['bill_deposit_amount'] : 0)) / 100;
                     }
                     if ($data['amount'] > $fund_info['FUND_TYPE_CASH'] + $fund_info['FUND_TYPE_GIFT']) {
-                        return '账户'.$account['account_id'].'，余额不足以转出'.$data['amount'].'剩余金额为：'.($fund_info['FUND_TYPE_CASH'] + $fund_info['FUND_TYPE_GIFT']);
+                        return '账户'.$account['account_id'].'，余额不足以转出'.$data['amount'].'，剩余金额为：'.($fund_info['FUND_TYPE_CASH'] + $fund_info['FUND_TYPE_GIFT']);
                     }
                     $last_transfer_info = $StoreRefund->getSingleItem([
                         'account_type' => $account['account_type'],
