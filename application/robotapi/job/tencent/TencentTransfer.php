@@ -184,7 +184,7 @@ class TencentTransfer
             'transfer_type' => $data['transfer_direction'] == 1 ? 'AGENCY_TO_ADVERTISER' : 'ADVERTISER_TO_AGENCY',
             'external_bill_no' => uniqid('hxsz-zz-'),
             'memo' => $data['remark'],
-            'transfer_try_best' => 0,
+            'transfer_try_best' => 1,
             'high_frequency_transfer' => 0,
         ])['data'];
     }
