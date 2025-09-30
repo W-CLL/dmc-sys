@@ -241,7 +241,7 @@ class TencentWallet extends Controller
                         $fund_info[$item['fund_type']] = $item['balance'] / 100;
                     }
                     if ($data['amount'] > $fund_info['FUND_TYPE_CASH'] + $fund_info['FUND_TYPE_GIFT']) {
-                        return '转出余额超出上限';
+                        return '转出余额超出上限，最大转出余额为：' . ($fund_info['FUND_TYPE_CASH'] + $fund_info['FUND_TYPE_GIFT']) . '元';
                     }
                     $last_transfer_info = $StoreRefund->getSingleItem([
                         'account_type' => $wallet['wallet_type'],

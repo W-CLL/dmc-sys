@@ -183,7 +183,7 @@ class TencentAccount extends Controller
                         $fund_info[$item['fund_type']] = ($item['balance'] - (isset($item['bill_deposit_amount']) ? $item['bill_deposit_amount'] : 0)) / 100;
                     }
                     if ($data['amount'] > $fund_info['FUND_TYPE_CASH'] + $fund_info['FUND_TYPE_GIFT']) {
-                        return '账户'.$account['account_id'].'，余额不足以转出'.$data['amount'];
+                        return '账户'.$account['account_id'].'，余额不足以转出'.$data['amount'].'剩余金额为：'.($fund_info['FUND_TYPE_CASH'] + $fund_info['FUND_TYPE_GIFT']);
                     }
                     $last_transfer_info = $StoreRefund->getSingleItem([
                         'account_type' => $account['account_type'],
