@@ -162,7 +162,7 @@ class TencentAccount extends Controller
                     $no_access[] = $account['account_id'];
                 }
             }
-        }else{
+        }elseif (empty($account_info['tencent_account'])){
             return '未查询到账户信息，请确认是否绑定';
         }
         if (!empty($no_access)){
