@@ -274,6 +274,19 @@ class TencentWallet extends Controller
         if ($data['amount'] > 20000000){
             return '转账金额不能高于20,000,000元';
         }
+        $agent_balance = Fund::getAgentFundInfo([
+            'account_id' => 64568612,
+        ])['data'];
+        if ($agent_balance['code'] != 0){
+            return "腾讯接口异常，请稍后再试";
+        }
+        $agent_balance_info = [];
+        foreach ($agent_balance['data']['list'] as $item){
+            $agent_balance_info[$item['fund_type']] = $item['balance'] / 100;
+        }
+        if ($agent_balance_info['FUND_TYPE_CASH'] + $agent_balance_info['FUND_TYPE_GIFT'] < $data['amount'] * count($wallet_info['tencent_share_wallet'])){
+            return "转账金额大于备款余额，发起失败，请联系管理员进行备款处理";
+        }
         $wechat_group_model = new WechatGroup();
         $balance_info = $wechat_group_model->getDMCTencentBalance($data['group_id']);
         if (empty($balance_info) || empty($balance_info['tencent_store'])){
