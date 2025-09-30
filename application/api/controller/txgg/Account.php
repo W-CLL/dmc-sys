@@ -70,6 +70,7 @@ class Account
         } while ($hasMore); // 当还有更多数据时继续循环
         // 获取已绑定的账号ID与状态
         $idBindAccount = $model->where('id','>',0)->column('id, status, name','account_id');
+        $array = $model->where('store_id','neq', 0)->where('name','neq', '')->group('name')->column('store_id, account_type','name');
         $update = [];
         $insert = [];
         // 处理数据
@@ -81,6 +82,8 @@ class Account
                         'name' => $item['mdm_name'],
                         'status' => $this->system_status[$item['system_status']],
                         'agency_account_id' => $item['agency_account_id'],
+                        'store_id' => $array[$item['mdm_name']]['store_id'] ?? 0,
+                        'account_type' => $array[$item['mdm_name']]['account_type'] ?? 1,
                     ];
                 }
             }
