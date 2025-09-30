@@ -176,6 +176,41 @@ class SubWallet extends Store
     }
 
 
+    public function get_adv_list ($ids = null){
+        $sub_wallet_id = $this->WalletModel->where(['id' => $ids])->value('sub_wallet_id');
+        $page_num = 1;
+        $error = 0;
+        $adv_list = [];
+        do{
+            $res = FundManagement::getShareWalletAdvList([
+                'account_id' => 1739518270441480,
+                'shared_wallet_id' => (int)$sub_wallet_id,
+                'page' => $page_num,
+                'page_size' => 100,
+                'account_type' => 'AGENT'
+            ]);
+            if($res['code'] == 0){
+                $page_num++;
+                $total_num  = $res['data']['page_info']['total_number'];
+                $adv_list = array_merge($adv_list, $res['data']['results']);
+            }else{
+                $error++;
+            }
+        }while($error < 3 && $page_num * 100 < $total_num);
+        if ($error >= 3){
+            $this->error('接口异常');
+        }
+        $advIds = array_column($adv_list, 'advId');
+        $this->view->assign('advIds', $advIds);
+        return $this->view->fetch();
+//        $company_info = Db::name('company')
+//            ->where(['advertiser_id' => ['in',$advIds]])
+//            ->field('advertiser_id,company_name,name,first_industry_name,second_industry_name')
+//            ->select();
+    }
+
+
+
     /**
      * 检查参数
      */

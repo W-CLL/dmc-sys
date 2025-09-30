@@ -16,7 +16,6 @@ define(['jquery', 'bootstrap', 'store', 'table', 'form', 'bootstrap-table-fixed-
 
             // 初始化表格
             table.bootstrapTable({
-                // ... 其他配置 ...
                 url: $.fn.bootstrapTable.defaults.extend.index_url,
                 pk: 'id',
                 sortName: 'id',
@@ -57,6 +56,14 @@ define(['jquery', 'bootstrap', 'store', 'table', 'form', 'bootstrap-table-fixed-
                                     icon: 'fa fa-magic',
                                     url: 'sub_wallet/transfer_money',//指向控制器对应方法
                                     confirm: '发起钱包转账？'
+                                },
+                                {
+                                    name: "get_adv_list",
+                                    text: "查看广告主",//按钮名称
+                                    classname: 'btn btn-xs btn-info btn-dialog ',
+                                    icon: 'fa fa-list',
+                                    url: 'sub_wallet/get_adv_list',//指向控制器对应方法
+                                    title: '广告主列表'
                                 },
                             ],table: table, events: Table.api.events.operate, formatter: Table.api.formatter.operate},
                     ]

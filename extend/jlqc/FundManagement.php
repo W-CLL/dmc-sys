@@ -542,6 +542,21 @@ class FundManagement
         return sendApiRes($url, $params, 'GET', ['Access-Token' => $access_token])['data'];
     }
 
+
+
+    /**
+     * 获取共享钱包下的adv
+     * @param array $params
+     * 参数参考：https://open.oceanengine.com/labels/12/docs/1810701753348235?origin=left_nav
+     * @return mixed
+     */
+    public static function getShareWalletAdvList(array $params)
+    {
+        $access_token = Cache::get("qc_access_token");
+        $url = "https://api.oceanengine.com/open_api/v3.0/shared_wallet/wallet_relation/get/";
+        return sendApiRes($url, $params, 'GET', ['Access-Token' => $access_token])['data'];
+    }
+
     /**
      * 获取全域推广计划下素材
      * @param array $params

@@ -1,0 +1,158 @@
+<div class="panel panel-default panel-intro">
+    <div class="panel-body">
+        <div class="row">
+            <div class="col-xs-12">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h4 class="panel-title">
+                            <i class="fa fa-user-circle"></i> 钱包绑定的广告主id列表
+                            <span class="pull-right">
+                                <small>共 {$advIds|count} 个广告主</small>
+                            </span>
+                        </h4>
+                    </div>
+                    <div class="panel-body">
+                        {if condition="$advIds"}
+                            <div class="adv-list-container">
+                                <div class="adv-list-header">
+                                    <div class="header-item">序号</div>
+                                    <div class="header-item flex-grow">广告主ID</div>
+                                    <div class="header-item">操作</div>
+                                </div>
+                                <div class="adv-list-body">
+                                    {foreach name="advIds" item="advId" key="index"}
+                                        <div class="adv-list-row">
+                                            <div class="row-item">{$index+1}</div>
+                                            <div class="row-item flex-grow">{$advId}</div>
+                                            <div class="row-item">
+                                                <button class="btn btn-xs btn-primary" onclick="copyToClipboard('{$advId}')">
+                                                    <i class="fa fa-copy"></i> 复制
+                                                </button>
+                                            </div>
+                                        </div>
+                                    {/foreach}
+                                </div>
+                            </div>
+                        {else/}
+                            <div class="alert alert-warning text-center animated fadeIn">
+                                <h4><i class="fa fa-frown-o"></i> 暂无广告主数据</h4>
+                                <p>当前子钱包未绑定任何广告主</p>
+                                <p><small class="text-muted">如需绑定广告主，请联系系统管理员</small></p>
+                            </div>
+                        {/if}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .adv-list-container {
+        border: 1px solid #e1e6eb;
+        border-radius: 4px;
+        overflow: hidden;
+        box-shadow: 0 1px 2px rgba(0,0,0,.05);
+    }
+    
+    .adv-list-header {
+        display: flex;
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #e1e6eb;
+        padding: 10px 15px;
+        font-weight: bold;
+    }
+    
+    .adv-list-body {
+        max-height: 600px;
+        overflow-y: auto;
+    }
+    
+    .adv-list-row {
+        display: flex;
+        padding: 10px 15px;
+        border-bottom: 1px solid #f0f0f0;
+        transition: background-color 0.2s;
+    }
+    
+    .adv-list-row:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .adv-list-row:last-child {
+        border-bottom: none;
+    }
+    
+    .header-item, .row-item {
+        flex: 0 0 auto;
+        padding: 0 5px;
+    }
+    
+    .flex-grow {
+        flex-grow: 1;
+    }
+    
+    .header-item {
+        color: #6c757d;
+        font-size: 13px;
+    }
+    
+    .row-item {
+        font-size: 14px;
+        word-break: break-all;
+    }
+    
+    .animated {
+        animation-duration: 1s;
+        animation-fill-mode: both;
+    }
+    
+    .fadeIn {
+        animation-name: fadeIn;
+    }
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        
+        to {
+            opacity: 1;
+        }
+    }
+    
+    .btn-primary {
+        background-color: #007bff;
+        border-color: #007bff;
+        padding: 3px 8px;
+        font-size: 12px;
+    }
+    
+    .btn-primary:hover {
+        background-color: #0069d9;
+        border-color: #0062cc;
+    }
+    
+    .btn-xs {
+        padding: 3px 8px;
+        font-size: 12px;
+        line-height: 1.5;
+        border-radius: .2rem;
+    }
+</style>
+
+<script>
+    function copyToClipboard(text) {
+        var tempInput = document.createElement('input');
+        tempInput.style.position = 'absolute';
+        tempInput.style.left = '-1000px';
+        tempInput.value = text;
+        document.body.appendChild(tempInput);
+        tempInput.select();
+        document.execCommand('copy');
+        document.body.removeChild(tempInput);
+        
+        // 显示提示信息
+        alert('已复制到剪贴板: ' + text);
+    }
+</script>
