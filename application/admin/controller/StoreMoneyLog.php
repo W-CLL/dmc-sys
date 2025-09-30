@@ -275,6 +275,12 @@ Class StoreMoneyLog extends Backend{
                 
             foreach ($list as $k => &$v) {
                 $v['store_username'] = Db::name("store")->where("id", $v['store_id'])->value("username");
+                if (!empty($v['account_id'])){
+                    $v['mdm_name'] = Db::name("tencent_account")->where("account_id", $v['account_id'])->value("name");
+                }
+                if (!empty($v['sub_wallet_id'])){
+                    $v['mdm_name'] = Db::name("tencent_share_wallet")->where("sub_wallet_id", $v['sub_wallet_id'])->value("name");
+                }
             }
             
             $count = Db::name("tencent_transaction_log")->where($where)->count();

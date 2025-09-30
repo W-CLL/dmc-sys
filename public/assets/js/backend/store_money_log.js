@@ -207,6 +207,7 @@ define(['jquery', 'bootstrap', 'company', 'table', 'form'], function ($, undefin
                         {field: 'id', title: "ID"},
                         {field: 'account_id', title: "腾讯子客id"},
                         {field: 'sub_wallet_id', title: "腾讯子钱包id"},
+                        {field: 'mdm_name', title: "主体名称"},
                         {field: 'store_username', title: "账户名称"},
                         {field: 'money', title: "变更金额"},
                         {field: 'type', title: "类型", formatter: function(value,row,index) {
