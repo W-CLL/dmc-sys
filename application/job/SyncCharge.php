@@ -27,6 +27,15 @@ class SyncCharge
     /** 共享钱包 */
     const CHARGE_TYPE_SUB = 2;
 
+    /** 备款 */
+    const CHARGE_TYPE_TENCENT_READY = 3;
+
+    /** 共享钱包 */
+    const CHARGE_TYPE_TENCENT_SUB = 4;
+
+
+
+
 
     /**
      * fire方法是消息队列默认调用的方法
@@ -79,9 +88,20 @@ class SyncCharge
      */
     private function beforeSync($data, $queueData): bool
     {
-        $type = self::CHARGE_TYPE_READY;//
-        if ($queueData['relation_table'] == 'share_wallet_transfer_log') {
-            $type = self::CHARGE_TYPE_SUB;
+        switch ($queueData['relation_table']) {
+            case 'share_wallet_transfer_log':
+                $type = self::CHARGE_TYPE_SUB;
+                break;
+            case 'transfer_records':
+                $type = self::CHARGE_TYPE_READY;
+                break;
+            case 'tencent_transfer_log':
+                $type = self::CHARGE_TYPE_TENCENT_READY;
+                break;
+            case 'tencent_wallet_transfer_log':
+                $type = self::CHARGE_TYPE_TENCENT_SUB;
+                break;
+
         }
         $account = Db::name('external_accounts')->where('status', 1)->find();
         $params = [
@@ -158,9 +178,20 @@ class SyncCharge
                 $job_status = false;
             } else {
                 $syncChargeRecordModel = new SyncChargeRecord();
-                $type = self::CHARGE_TYPE_READY;
-                if ($queueData['relation_table'] == 'share_wallet_transfer_log') {
-                    $type = self::CHARGE_TYPE_SUB;
+                switch ($queueData['relation_table']) {
+                    case 'share_wallet_transfer_log':
+                        $type = self::CHARGE_TYPE_SUB;
+                        break;
+                    case 'transfer_records':
+                        $type = self::CHARGE_TYPE_READY;
+                        break;
+                    case 'tencent_transfer_log':
+                        $type = self::CHARGE_TYPE_TENCENT_READY;
+                        break;
+                    case 'tencent_wallet_transfer_log':
+                        $type = self::CHARGE_TYPE_TENCENT_SUB;
+                        break;
+
                 }
                 $insertData = [
                     'log_id' => $moneyLog['id'],
@@ -215,20 +246,33 @@ class SyncCharge
             ->field($field)
             ->find();
 
-        if ($queueData['relation_table'] == 'share_wallet_transfer_log') {
 
-//            $transferData = $transferLog->field($field)->find();
-            $account = $transferData['sub_wallet_id'];
-            $note = $transferData['remark'];
-            $extra_type = self::CHARGE_TYPE_SUB;//crm标识 1备款 2共享
-            $addTime = $transferData['create_time'];
-        } else {
+        switch ($queueData['relation_table']) {
+            case 'share_wallet_transfer_log':
+                $account = $transferData['sub_wallet_id'];
+                $note = $transferData['remark'];
+                $extra_type = self::CHARGE_TYPE_SUB;//crm标识 1备款 2共享
+                $addTime = $transferData['create_time'];
+                break;
+            case 'transfer_records':
+                $account = $transferData['advertiser_id'];
+                $note = $transferData['remark'];
+                $extra_type = self::CHARGE_TYPE_READY;//crm标识 1备款 2共享
+                $addTime = $transferData['create_time'];
+                break;
+            case 'tencent_transfer_log':
+                $account = $transferData['account_id'];
+                $note = $transferData['remark'];
+                $extra_type = self::CHARGE_TYPE_TENCENT_READY;//crm标识 1备款 2共享
+                $addTime = $transferData['create_time'];
+                break;
+            case 'tencent_wallet_transfer_log':
+                $account = $transferData['sub_wallet_id'];
+                $note = $transferData['remark'];
+                $extra_type = self::CHARGE_TYPE_TENCENT_SUB;//crm标识 1备款 2共享
+                $addTime = $transferData['create_time'];
+                break;
 
-//            $transferData = $transferLog->field($field)->find();
-            $account = $transferData['advertiser_id'];
-            $note = $transferData['remark'];
-            $extra_type = self::CHARGE_TYPE_READY;//crm标识 1备款 2共享
-            $addTime = $transferData['create_time'];
         }
         $money = $transferData['actual_money'];
         // 如果为退款账单，则金额取负
