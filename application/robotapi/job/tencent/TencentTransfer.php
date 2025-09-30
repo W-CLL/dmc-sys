@@ -146,7 +146,7 @@ class TencentTransfer
                     $record = json_encode($transfer, JSON_UNESCAPED_UNICODE);
                     $order_uid = $transfer['data']['external_bill_no'];
                 }
-                elseif ($data['money'] > $fund_info['FUND_TYPE_CASH']){
+                else if ($data['money'] > $fund_info['FUND_TYPE_CASH']){
                     do{
                         $remaining_amount = $data['money'] - $fund_info['FUND_TYPE_CASH'];
                         if ($first_bool){
@@ -180,11 +180,11 @@ class TencentTransfer
         return Fund::transfer([
             'account_id' => $data['account_id'],
             'fund_type' => $fund_type,
-            'amount' => $money * 100,
+            'amount' => (int) ($money * 100),
             'transfer_type' => $data['transfer_direction'] == 1 ? 'AGENCY_TO_ADVERTISER' : 'ADVERTISER_TO_AGENCY',
             'external_bill_no' => uniqid('hxsz-zz-'),
             'memo' => $data['remark'],
-            'transfer_try_best' => 1,
+            'transfer_try_best' => 0,
             'high_frequency_transfer' => 0,
         ])['data'];
     }
