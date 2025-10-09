@@ -201,7 +201,7 @@ class InsertObjProduct
                             'product_id' => $product_info['product_id'],
                             "name" => $product_info['product_name'],
                             "product_image" =>$product_info['product_image'],
-                            "tag" => json_encode($product_info['product_tag']),
+                            "tag" => isset($product_info['product_tag'])?json_encode($product_info['product_tag']):'',
                             "is_del" => $item['is_del'],
                             "audit_status" => strtotime($product_info['audit_status']),
                         ];
