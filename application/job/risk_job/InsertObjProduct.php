@@ -219,6 +219,7 @@ class InsertObjProduct
                     }
                 } elseif ($resData['code'] != 0) {
                     echo $resData['message'];
+                    dump($requestInfo);
                     if (!$this->skipIfContainsError($resData['message'])) {
                         $rebuild_data = [
                             'adv_id' => $requestAdvId,
