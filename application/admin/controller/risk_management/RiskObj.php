@@ -49,7 +49,7 @@ class RiskObj extends Backend
             $where['ro.name'] = ['like',"%".$params['keyword']."%"];
         }
         if(!isset($params['sys_tag'])){
-            $where['ro.sys_tag'] = ['>',0];
+            $where['ro.sys_tag'] = ['>=',0];
         }elseif(strlen($params['sys_tag'])>0){
             $where['ro.sys_tag'] = $params['sys_tag'];
         }
