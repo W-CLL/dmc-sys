@@ -157,30 +157,88 @@ class CheckRiskWords
         $key_words_model = new Keyword();
         $obj_product_model = new ObjProduct();
 
-        $key_words = $key_words_model->field('tag_id, keyword, sort')->order('sort desc')  ->select();
+        $key_words = $key_words_model->field('tag_id, keyword, sort')->order('sort desc')->select();
         $product_ids = array_keys($data);
         $product_adv_map = $obj_product_model->whereIn('product_id', $product_ids)->column('adv_id', 'product_id');
 
-        $results = [];
+        // 预处理所有关键词，构建高效的匹配模式
+        $keyword_patterns = [];
+        $tag_sort_map = [];
+        foreach ($key_words as $item) {
+            $tag_id = $item['tag_id'];
+            $keywords = array_filter(explode(',', $item['keyword'])); // 过滤空值
+            if (!empty($keywords)) {
+                $keyword_patterns[$tag_id] = $keywords;
+                $tag_sort_map[$tag_id] = $item['sort'];
+            }
+        }
+
+        $product_results = []; // 存储每个商品的检测结果
         $now = time();
 
+        // 对每个商品进行全面检测
         foreach ($data as $product_id => $product_name) {
             $adv_id = $product_adv_map[$product_id] ?? null;
             if (!$adv_id) continue;
-            foreach ($key_words as $item) {
-                $tag_id = $item['tag_id'];
-                $keywords = explode(',', $item['keyword']);
+
+            $all_hits = []; // 存储该商品所有命中的关键词
+            $highest_tag = 0;
+            $highest_sort = 0;
+
+            // 检测所有关键词组
+            foreach ($keyword_patterns as $tag_id => $keywords) {
                 $hit = $this->findMatchedKeyword($product_name, $keywords);
                 if ($hit) {
-                    $results[$tag_id][] = [
-                        'product_id' => $product_id,
-                        'keywords' => $hit
-                    ];
-                    break; // 命中就不再检测后续关键词
+                    $all_hits[] = $hit;
+                    // 记录最高权重的标签
+                    if ($tag_sort_map[$tag_id] > $highest_sort) {
+                        $highest_sort = $tag_sort_map[$tag_id];
+                        $highest_tag = $tag_id;
+                    }
                 }
             }
+
+            // 如果有命中，记录结果
+            if (!empty($all_hits)) {
+                // 合并所有命中的关键词并去重
+                $all_keywords = [];
+                foreach ($all_hits as $hit) {
+                    $keywords = explode(',', $hit);
+                    $all_keywords = array_merge($all_keywords, $keywords);
+                }
+                $unique_keywords = array_unique(array_filter($all_keywords));
+
+                $product_results[$product_id] = [
+                    'tag_id' => $highest_tag,
+                    'keywords' => implode(',', $unique_keywords)
+                ];
+            }
         }
-        foreach ($results as $tag_id => $items) {
+
+        // 批量更新数据库
+        if (!empty($product_results)) {
+            $this->batchUpdateProducts($product_results, $now);
+        }
+
+        return true;
+    }
+
+    /**
+     * 批量更新商品风险信息
+     */
+    private function batchUpdateProducts($product_results, $now)
+    {
+        // 按标签分组进行批量更新
+        $tag_groups = [];
+        foreach ($product_results as $product_id => $result) {
+            $tag_id = $result['tag_id'];
+            $tag_groups[$tag_id][] = [
+                'product_id' => $product_id,
+                'keywords' => $result['keywords']
+            ];
+        }
+
+        foreach ($tag_groups as $tag_id => $items) {
             $productIds = array_column($items, 'product_id');
             $updates = [];
             foreach ($items as $item) {
@@ -190,16 +248,14 @@ class CheckRiskWords
             }
 
             $caseSql = "CASE product_id " . implode(' ', $updates) . " END";
-            $sql = "UPDATE `" . config('database.prefix') . "risk_obj_product` 
-                SET 
-                    sys_tag = '{$tag_id}', 
-                    key_words = {$caseSql}, 
+            $sql = "UPDATE `" . config('database.prefix') . "risk_obj_product`
+                SET
+                    sys_tag = '{$tag_id}',
+                    key_words = {$caseSql},
                     update_time = {$now}
                 WHERE product_id IN (" . implode(',', $productIds) . ")";
             Db::execute($sql);
         }
-
-        return true;
     }
 
 
@@ -209,12 +265,29 @@ class CheckRiskWords
         if (empty($keywords)) {
             return false;
         }
-        $pattern = '/(' . implode('|', array_map('preg_quote', $keywords)) . ')/i';
-        $matches = [];
-        preg_match_all($pattern, $str, $matches);
-        if (!empty($matches[0])) {
-            return implode(';', array_unique($matches[0]));
+
+        // 过滤空关键词并去重
+        $keywords = array_unique(array_filter($keywords, function($keyword) {
+            return !empty(trim($keyword));
+        }));
+
+        if (empty($keywords)) {
+            return false;
         }
+
+        // 构建正则表达式，使用非捕获组提高性能
+        $escaped_keywords = array_map('preg_quote', $keywords);
+        $pattern = '/(' . implode('|', $escaped_keywords) . ')/iu'; // 添加u修饰符支持UTF-8
+
+        $matches = [];
+        if (preg_match_all($pattern, $str, $matches, PREG_SET_ORDER)) {
+            $found_keywords = [];
+            foreach ($matches as $match) {
+                $found_keywords[] = $match[1];
+            }
+            return implode(',', array_unique($found_keywords));
+        }
+
         return false;
     }
 
