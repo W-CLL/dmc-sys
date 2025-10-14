@@ -219,7 +219,7 @@ class TencentWallet extends Controller
     private function checkTransferParam($data)
     {
         $wechat_group_model = new WechatGroup();
-        $wallet_info = $wechat_group_model->getTencentAccountByStoreId($data['group_id'], [$data['wallet_id']]);
+        $wallet_info = $wechat_group_model->getTencentWalletByStoreId($data['group_id'], [$data['wallet_id']]);
         if (empty($wallet_info) || empty($wallet_info['tencent_share_wallet'])){
             return '无权操作此子钱包id';
         }
