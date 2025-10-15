@@ -4,6 +4,7 @@ namespace app\admin\controller\store;
 
 use app\admin\model\Store as StoreModel;
 use app\common\model\txgg\TencentStore as TencentStoreModel;
+use app\common\model\txgg\TencentTransactionLog as TencentTransactionLogModel;
 use think\Db;
 
 class Tencent extends Store
@@ -89,6 +90,9 @@ class Tencent extends Store
                 // 确保存储ID不被修改
                 unset($params['store_id']);
                 
+                // 保存修改前的数据，用于生成交易日志
+                $oldData = $row->toArray();
+                
                 // 处理钱包和授信额度的增减操作
                 if (isset($params['public_money_tencent_add'])) {
                     $params['public_money_tencent'] = bcadd($row['public_money_tencent'], $params['public_money_tencent_add'], 2);
@@ -147,6 +151,8 @@ class Tencent extends Store
                 // 更新数据
                 $result = $row->save($params);
                 if ($result !== false) {
+                    // 生成交易日志
+                    $this->generateTransactionLogs($oldData, $params, $row['store_id']);
                     $this->success("更新成功");
                 } else {
                     $this->error("更新失败");
@@ -161,6 +167,159 @@ class Tencent extends Store
         
         $this->view->assign("row", $row);
         return $this->view->fetch();
+    }
+    
+    /**
+     * 生成交易日志
+     * @param array $oldData 修改前的数据
+     * @param array $newData 修改后的数据
+     * @param int $storeId 商户ID
+     */
+    private function generateTransactionLogs($oldData, $newData, $storeId)
+    {
+        $logsToInsert = [];
+        
+        // 获取当前管理员信息
+        $adminId = session('admin.id');
+        $adminUsername = session('admin.username');
+        
+        // 处理公账余额变动
+        if (isset($newData['public_money_tencent']) && 
+            bccomp($oldData['public_money_tencent'], $newData['public_money_tencent'], 2) !== 0) {
+            $amount = bcsub($newData['public_money_tencent'], $oldData['public_money_tencent'], 2);
+            $logsToInsert[] = [
+                'admin_id' => $adminId,
+                'admin_username' => $adminUsername,
+                'store_id' => $storeId,
+                'money' => abs($amount),
+                'explain' => ($amount > 0 ? '总后台增加公账余额' : '总后台减少公账余额') . '，变更前：' . $oldData['public_money_tencent'] . '，变更后：' . $newData['public_money_tencent'] . '，操作人：' . $adminUsername,
+                'type' => $amount > 0 ? 1 : 2, // 1为增加余额，2为扣款
+                'account_type' => 1, // 公账
+                'before_money' => $oldData['public_money_tencent'], // 当前余额
+                'today_money' => $newData['public_money_tencent'],  // 变动后余额
+                'balance_surplus' => $newData['public_money_tencent'],
+                'credit_limit_surplus' => $newData['public_credit_limit_tencent'],
+                'create_time' => time()
+            ];
+        }
+        
+        // 处理私账余额变动
+        if (isset($newData['private_money_tencent']) && 
+            bccomp($oldData['private_money_tencent'], $newData['private_money_tencent'], 2) !== 0) {
+            $amount = bcsub($newData['private_money_tencent'], $oldData['private_money_tencent'], 2);
+            $logsToInsert[] = [
+                'admin_id' => $adminId,
+                'admin_username' => $adminUsername,
+                'store_id' => $storeId,
+                'money' => abs($amount),
+                'explain' => ($amount > 0 ? '总后台增加私账余额' : '总后台减少私账余额') . '，变更前：' . $oldData['private_money_tencent'] . '，变更后：' . $newData['private_money_tencent'] . '，操作人：' . $adminUsername,
+                'type' => $amount > 0 ? 1 : 2, // 1为增加余额，2为扣款
+                'account_type' => 2, // 私账
+                'before_money' => $oldData['private_money_tencent'], // 当前余额
+                'today_money' => $newData['private_money_tencent'],  // 变动后余额
+                'balance_surplus' => $newData['private_money_tencent'],
+                'credit_limit_surplus' => $newData['private_credit_limit_tencent'],
+                'create_time' => time()
+            ];
+        }
+        
+        // 处理公账授信额度变动
+        if (isset($newData['public_credit_limit_tencent']) && 
+            bccomp($oldData['public_credit_limit_tencent'], $newData['public_credit_limit_tencent'], 2) !== 0) {
+            $amount = bcsub($newData['public_credit_limit_tencent'], $oldData['public_credit_limit_tencent'], 2);
+            $spendingAmount = bcsub($newData['public_spending_credit_limit_tencent'] ?? 0, $oldData['public_spending_credit_limit_tencent'] ?? 0, 2);
+            
+            // 判断是授信总额度变化还是已使用额度转移
+            $totalOld = bcadd($oldData['public_credit_limit_tencent'], $oldData['public_spending_credit_limit_tencent'], 2);
+            $totalNew = bcadd($newData['public_credit_limit_tencent'], $newData['public_spending_credit_limit_tencent'], 2);
+            $totalChange = bcsub($totalNew, $totalOld, 2);
+            
+            if (bccomp($totalChange, '0', 2) !== 0) {
+                // 授信总额度发生变化
+                $logsToInsert[] = [
+                    'admin_id' => $adminId,
+                    'admin_username' => $adminUsername,
+                    'store_id' => $storeId,
+                    'money' => abs($amount),
+                    'explain' => ($amount > 0 ? '总后台增加公账授信额度' : '总后台减少公账授信额度') . '，授信总额度变更前：' . $totalOld . '，变更后：' . $totalNew . '（可用额度：' . $oldData['public_credit_limit_tencent'] . '→' . $newData['public_credit_limit_tencent'] . '，已使用额度：' . $oldData['public_spending_credit_limit_tencent'] . '→' . $newData['public_spending_credit_limit_tencent'] . '），操作人：' . $adminUsername,
+                    'type' => $amount > 0 ? 1 : 2, // 1为增加额度，2为减少额度
+                    'account_type' => 1, // 公账
+                    'before_money' => $oldData['public_credit_limit_tencent'], // 当前余额
+                    'today_money' => $newData['public_credit_limit_tencent'],  // 变动后余额
+                    'balance_surplus' => $newData['public_money_tencent'],
+                    'credit_limit_surplus' => $newData['public_credit_limit_tencent'],
+                    'create_time' => time()
+                ];
+            } else {
+                // 仅是已使用额度转移（总额度不变）
+                $logsToInsert[] = [
+                    'admin_id' => $adminId,
+                    'admin_username' => $adminUsername,
+                    'store_id' => $storeId,
+                    'money' => abs($spendingAmount),
+                    'explain' => ($spendingAmount > 0 ? '总后台增加公账已使用授信额度' : '总后台减少公账已使用授信额度') . '，授信总额度：' . $totalOld . '（可用额度：' . $oldData['public_credit_limit_tencent'] . '→' . $newData['public_credit_limit_tencent'] . '，已使用额度：' . $oldData['public_spending_credit_limit_tencent'] . '→' . $newData['public_spending_credit_limit_tencent'] . '），操作人：' . $adminUsername,
+                    'type' => $spendingAmount > 0 ? 1 : 2, // 1为增加额度，2为减少额度
+                    'account_type' => 1, // 公账
+                    'before_money' => $oldData['public_credit_limit_tencent'], // 当前余额
+                    'today_money' => $newData['public_credit_limit_tencent'],  // 变动后余额
+                    'balance_surplus' => $newData['public_money_tencent'],
+                    'credit_limit_surplus' => $newData['public_credit_limit_tencent'],
+                    'create_time' => time()
+                ];
+            }
+        }
+        
+        // 处理私账授信额度变动
+        if (isset($newData['private_credit_limit_tencent']) && 
+            bccomp($oldData['private_credit_limit_tencent'], $newData['private_credit_limit_tencent'], 2) !== 0) {
+            $amount = bcsub($newData['private_credit_limit_tencent'], $oldData['private_credit_limit_tencent'], 2);
+            $spendingAmount = bcsub($newData['private_spending_credit_limit_tencent'] ?? 0, $oldData['private_spending_credit_limit_tencent'] ?? 0, 2);
+            
+            // 判断是授信总额度变化还是已使用额度转移
+            $totalOld = bcadd($oldData['private_credit_limit_tencent'], $oldData['private_spending_credit_limit_tencent'], 2);
+            $totalNew = bcadd($newData['private_credit_limit_tencent'], $newData['private_spending_credit_limit_tencent'], 2);
+            $totalChange = bcsub($totalNew, $totalOld, 2);
+            
+            if (bccomp($totalChange, '0', 2) !== 0) {
+                // 授信总额度发生变化
+                $logsToInsert[] = [
+                    'admin_id' => $adminId,
+                    'admin_username' => $adminUsername,
+                    'store_id' => $storeId,
+                    'money' => abs($amount),
+                    'explain' => ($amount > 0 ? '总后台增加私账授信额度' : '总后台减少私账授信额度') . '，授信总额度变更前：' . $totalOld . '，变更后：' . $totalNew . '（可用额度：' . $oldData['private_credit_limit_tencent'] . '→' . $newData['private_credit_limit_tencent'] . '，已使用额度：' . $oldData['private_spending_credit_limit_tencent'] . '→' . $newData['private_spending_credit_limit_tencent'] . '），操作人：' . $adminUsername,
+                    'type' => $amount > 0 ? 1 : 2, // 1为增加额度，2为减少额度
+                    'account_type' => 2, // 私账
+                    'before_money' => $oldData['private_credit_limit_tencent'], // 当前余额
+                    'today_money' => $newData['private_credit_limit_tencent'],  // 变动后余额
+                    'balance_surplus' => $newData['private_money_tencent'],
+                    'credit_limit_surplus' => $newData['private_credit_limit_tencent'],
+                    'create_time' => time()
+                ];
+            } else {
+                // 仅是已使用额度转移（总额度不变）
+                $logsToInsert[] = [
+                    'admin_id' => $adminId,
+                    'admin_username' => $adminUsername,
+                    'store_id' => $storeId,
+                    'money' => abs($spendingAmount),
+                    'explain' => ($spendingAmount > 0 ? '总后台增加私账已使用授信额度' : '总后台减少私账已使用授信额度') . '，授信总额度：' . $totalOld . '（可用额度：' . $oldData['private_credit_limit_tencent'] . '→' . $newData['private_credit_limit_tencent'] . '，已使用额度：' . $oldData['private_spending_credit_limit_tencent'] . '→' . $newData['private_spending_credit_limit_tencent'] . '），操作人：' . $adminUsername,
+                    'type' => $spendingAmount > 0 ? 1 : 2, // 1为增加额度，2为减少额度
+                    'account_type' => 2, // 私账
+                    'before_money' => $oldData['private_credit_limit_tencent'], // 当前余额
+                    'today_money' => $newData['private_credit_limit_tencent'],  // 变动后余额
+                    'balance_surplus' => $newData['private_money_tencent'],
+                    'credit_limit_surplus' => $newData['private_credit_limit_tencent'],
+                    'create_time' => time()
+                ];
+            }
+        }
+        
+        // 批量插入日志记录
+        if (!empty($logsToInsert)) {
+            $logModel = new TencentTransactionLogModel();
+            $logModel->saveAll($logsToInsert);
+        }
     }
     
     /**
