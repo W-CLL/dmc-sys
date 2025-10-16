@@ -762,6 +762,7 @@ if (!function_exists('generateTransferImg')) {
      * @param $headerTexts
      * 表头，有默认值 ['转账时间', '转出方', '转入方', '转账类型', '资金池', '非赠款金额(元)', '余额类型', '操作人'];
      * @param $data
+     * 需要生成多行图片时$data为二维数组
      * 对应表头示例：$data = [
      * '2025-03-26 05:51:05',
      * "荆州区睿悦百货行 bm3 \n转出方ID: 1826996040404171",
@@ -783,71 +784,98 @@ if (!function_exists('generateTransferImg')) {
         if (empty($headerTexts)) {
             $headerTexts = ['转账时间', '转出方', '转入方', '转账类型', '资金池', '非赠款金额(元)', '余额类型', '操作人'];
         }
+
+        // 支持多行数据
+        if (isset($data[0]) && is_array($data[0])) {
+            $multiRowData = $data;
+        } else {
+            $multiRowData = [$data];
+        }
+
         // 字体路径和大小定义
         $baseFontPath = ROOT_PATH . 'public/assets/fonts/';
         $fontHeader = $baseFontPath . 'msyh.ttc';
         $fontSizeHeader = 12;
         $fontData = $baseFontPath . 'simfang.ttf';
         $fontSizeData = 11;
+
         // 动态计算每列的宽度
         $colWidths = [];
         for ($i = 0; $i < count($headerTexts); $i++) {
             // 表头宽度
             $bboxHeader = imagettfbbox($fontSizeData, 0, $fontHeader, $headerTexts[$i]);
-            $headerWidth = ($bboxHeader[2] - $bboxHeader[0]) + 15; // 增加左右边距
+            $headerWidth = ($bboxHeader[2] - $bboxHeader[0]) + 15;
+
             // 数据宽度（取所有行中最大宽度）
-            $dataText = $data[$i];
-            $lines = explode("\n", $dataText);
             $maxDataWidth = 0;
-            foreach ($lines as $line) {
-                $bboxData = imagettfbbox($fontSizeData, 0, $fontData, $line);
-                $width = $bboxData[2] - $bboxData[0];
-                if ($width > $maxDataWidth) {
-                    $maxDataWidth = $width;
+            foreach ($multiRowData as $rowData) {
+                if (isset($rowData[$i])) {
+                    $dataText = $rowData[$i];
+                    $lines = explode("\n", $dataText);
+                    foreach ($lines as $line) {
+                        $bboxData = imagettfbbox($fontSizeData, 0, $fontData, $line);
+                        $width = $bboxData[2] - $bboxData[0];
+                        if ($width > $maxDataWidth) {
+                            $maxDataWidth = $width;
+                        }
+                    }
                 }
             }
-            $dataWidth = $maxDataWidth + 15; // 增加左右边距
+            $dataWidth = $maxDataWidth + 15;
             $colWidths[] = max($headerWidth, $dataWidth);
         }
+
         // 动态计算图片宽度和高度
         $width = array_sum($colWidths);
         $heightPerRow = 50;
-        $totalHeight = $heightPerRow * 2; // 表头 + 数据行
+        $dataRowCount = count($multiRowData);
+        $totalHeight = $heightPerRow * (1 + $dataRowCount); // 表头 + 多行数据
+
         $img = imagecreatetruecolor($width, $totalHeight);
         $bgColor = imagecolorallocate($img, 255, 255, 255); // 白色背景
         $headerBg = imagecolorallocate($img, 245, 245, 245); // 表头浅灰色背景
         $borderColor = imagecolorallocate($img, 240, 240, 240); // 浅灰色边框
         $textColor = imagecolorallocate($img, 0, 0, 0); // 黑色
-        imagefill($img, 0, 0, $bgColor);// 填充背景
-        imagefilledrectangle($img, 0, 0, $width - 1, $heightPerRow - 1, $headerBg);// 绘制表头背景
-        imagerectangle($img, 0, 0, $width - 1, $totalHeight - 1, $borderColor); // 外框
-//        $x = 0;
-//        foreach ($colWidths as $key=> $w) {
-//            imageline($img, $x, 0, $x, $totalHeight - 1, $borderColor); // 竖线
-//            $x += $w;
-//        }
-        imageline($img, 0, $heightPerRow - 1, $width - 1, $heightPerRow - 1, $borderColor); // 表头与数据行分隔线
+
+        imagefill($img, 0, 0, $bgColor);
+        imagefilledrectangle($img, 0, 0, $width - 1, $heightPerRow - 1, $headerBg);
+        imagerectangle($img, 0, 0, $width - 1, $totalHeight - 1, $borderColor);
+
+        // 绘制表头与数据行分隔线
+        imageline($img, 0, $heightPerRow - 1, $width - 1, $heightPerRow - 1, $borderColor);
+
+        // 绘制表头
         $x = 0;
         foreach ($headerTexts as $i => $text) {
             imagettftext($img, $fontSizeData, 0, $x + 5, 20, $textColor, $fontHeader, $text);
             $x += $colWidths[$i];
         }
-        $baseY = $heightPerRow + 20;
-        $x = 0;
-        foreach ($data as $i => $text) {
-            $lines = explode("\n", $text);
-            foreach ($lines as $lineIndex => $lineContent) {
-                if ($lineIndex == 0) {
-                    $currentY = $baseY + ($lineIndex * 20); // 行高18像素
-                    imagettftext($img, $fontSizeData, 0, $x + 5, $currentY, $textColor, $fontData, $lineContent);
-                } else {
-                    $grayColor = imagecolorallocate($img, 140, 140, 140); // 灰色
-                    $currentY = $baseY + ($lineIndex * 20); // 行高18像素
-                    imagettftext($img, $fontSizeData, 0, $x + 5, $currentY, $grayColor, $fontData, $lineContent);
+
+        // 绘制多行数据
+        foreach ($multiRowData as $rowIndex => $rowData) {
+            $rowBaseY = $heightPerRow + 20 + ($rowIndex * $heightPerRow);
+            $x = 0;
+            foreach ($rowData as $i => $text) {
+                if (!isset($colWidths[$i])) continue;
+                $lines = explode("\n", $text);
+                foreach ($lines as $lineIndex => $lineContent) {
+                    if ($lineIndex == 0) {
+                        $currentY = $rowBaseY + ($lineIndex * 20);
+                        imagettftext($img, $fontSizeData, 0, $x + 5, $currentY, $textColor, $fontData, $lineContent);
+                    } else {
+                        $grayColor = imagecolorallocate($img, 140, 140, 140);
+                        $currentY = $rowBaseY + ($lineIndex * 20);
+                        imagettftext($img, $fontSizeData, 0, $x + 5, $currentY, $grayColor, $fontData, $lineContent);
+                    }
                 }
+                $x += $colWidths[$i];
             }
-            $x += $colWidths[$i];
+            // 添加行分隔线
+            if ($rowIndex < $dataRowCount - 1) {
+                imageline($img, 0, $heightPerRow * ($rowIndex + 2) - 1, $width - 1, $heightPerRow * ($rowIndex + 2) - 1, $borderColor);
+            }
         }
+
         $res = imagepng($img, $filePath . $fileName);
         imagedestroy($img);
         return $res;

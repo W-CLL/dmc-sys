@@ -5,6 +5,7 @@ namespace app\robotapi\job\tencent;
 use app\robotapi\model\QueueRobot;
 use app\robotapi\model\TencentAccount;
 use app\robotapi\model\TencentShareWallet;
+use think\Cache;
 use think\Db;
 use think\Exception;
 use app\robotapi\model\TencentTransferLog;
@@ -115,8 +116,25 @@ class SubsequentOperations
             Db::rollback();
             throw new Exception($e->getMessage()); // 重新抛出异常
         }
-        $msg = "账户：{$money_log_data['account_id']}\n{$operate}成功！\n钱包余额{$type}：" . $money_log_data["balance_surplus"] . "\n授信余额{$type}：" . $money_log_data["credit_limit_surplus"] . "\n已使用授信额度{$type}：" . number_format((($store_info[$prefix."spending_credit_limit_tencent"] + $store_info[$prefix."credit_limit_tencent"]) - $money_log_data["credit_limit_surplus"]), 2);
-        $this->callBack($data["callback_data"], $msg, $img_url);
+        $bool = $this->checkRemaining($data["callback_data"]);
+
+        if ($bool) {
+            $msg = Cache::get($data["callback_data"]["msg_uuid"]."msg") ? Cache::get($data["callback_data"]["msg_uuid"]."msg") : "";
+            $transfer_log_id = Cache::get($data["callback_data"]["msg_uuid"]."transfer_log_id") ? Cache::get($data["callback_data"]["msg_uuid"]."transfer_log_id") : "";
+            $transfer_log_id .= $data["transfer_records_id"];
+            $msg .= "{$operate}成功！\n钱包余额{$type}：" . $money_log_data["balance_surplus"] . "\n授信余额{$type}：" . $money_log_data["credit_limit_surplus"] . "\n已使用授信额度{$type}：" . number_format((($store_info[$prefix."spending_credit_limit_tencent"] + $store_info[$prefix."credit_limit_tencent"]) - $money_log_data["credit_limit_surplus"]), 2)."\n\n";
+            $merge_img_url = $this->createMergeImg($transfer_log_id);
+            $this->callBack($data["callback_data"], $msg, $merge_img_url);
+            Cache::rm($data["callback_data"]["msg_uuid"]."msg");
+            Cache::rm($data["callback_data"]["msg_uuid"]."transfer_log_id");
+        }else{
+            $msg = Cache::get($data["callback_data"]["msg_uuid"]."msg") ? Cache::get($data["callback_data"]["msg_uuid"]."msg") : "";
+            $transfer_log_id = Cache::get($data["callback_data"]["msg_uuid"]."transfer_log_id") ? Cache::get($data["callback_data"]["msg_uuid"]."transfer_log_id") : "";
+            $transfer_log_id .= $data["transfer_records_id"].',';
+            $msg .= "{$operate}成功！\n钱包余额{$type}：" . $money_log_data["balance_surplus"] . "\n授信余额{$type}：" . $money_log_data["credit_limit_surplus"] . "\n已使用授信额度{$type}：" . number_format((($store_info[$prefix."spending_credit_limit_tencent"] + $store_info[$prefix."credit_limit_tencent"]) - $money_log_data["credit_limit_surplus"]), 2)."\n\n";
+            Cache::set($data["callback_data"]["msg_uuid"]."msg", $msg, 1800);
+            Cache::set($data["callback_data"]["msg_uuid"]."transfer_log_id", $transfer_log_id, 1800);
+        }
         return true;
     }
 
@@ -279,6 +297,86 @@ class SubsequentOperations
         }
     }
 
+    private function createMergeImg(string $transfer_id){
+        $transfer_id_list = explode(',', $transfer_id);
+        $model = new TencentTransferLog();
+        $transfer_records_list = $model->where(["id" => ["in", $transfer_id_list]])->select();
+        $combined_data = [];
+        $headers = [
+            '转账时间',
+            '转出方',
+            '转入方',
+            '转账类型',
+            '转账金额',
+            '订单号'
+        ];
+
+        foreach ($transfer_records_list as $transfer_records_data) {
+            if (isset($transfer_records_data['sub_wallet_id'])) {
+                $model = new TencentShareWallet();
+                $info = $model->getByWalletId($transfer_records_data['sub_wallet_id']);
+                $array = [
+                    'name' => $info['sub_wallet_name'],
+                    'id' => $info['sub_wallet_id'],
+                ];
+                $prefix = '共享钱包';
+            } else {
+                $model = new TencentAccount();
+                $info = $model->getByAccountId($transfer_records_data['account_id']);
+                $array = [
+                    'name' => $info['name'],
+                    'id' => $info['account_id'],
+                ];
+                $prefix = '';
+            }
+
+            $account_info = [
+                'name' => '广州浣熊数字信息科技有限公司',
+                'id' => 64568612,
+            ];
+
+            $money = number_format($transfer_records_data['money'], 2);
+            if ($transfer_records_data['transfer_direction'] == 1) {
+                $transfer_type = $prefix."加款";
+                $transfer_in = $array['name'] . "\n转入方ID：" . $array['id'];
+                $transfer_out = $account_info['name'] . "\n转出方ID：" . $account_info['id'];
+            } else if ($transfer_records_data['transfer_direction'] == 2) {
+                $transfer_type = $prefix."退款";
+                $money = '-'.$money;
+                $transfer_in = $account_info['name'] . "\n转入方ID：" . $account_info['id'];
+                $transfer_out = $array['name'] . "\n转出方ID：" . $array['id'];
+            }
+
+            $combined_data[] = [
+                date('Y-m-d H:i:s',$transfer_records_data['update_time']),
+                $transfer_out,
+                $transfer_in,
+                $transfer_type,
+                $money,
+                $transfer_records_data['order_uid']
+            ];
+        }
+
+        $day = date('Ymd');
+        $path = ROOT_PATH . 'public/tencent_transfer_images/' . $day . '/';
+        $file_name = (int)round(microtime(true) * 1000) . '.png';
+
+        if (!file_exists($path)) {
+            $created = mkdir($path, 0755, true);
+            if (!$created) {
+                throw new Exception("目录创建失败: {$path}");
+            }
+        }
+
+        $res = generateTransferImg($combined_data, $headers, $path, $file_name);
+
+        if ($res) {
+            return 'tencent_transfer_images/' . $day . '/' . $file_name;
+        } else {
+            throw new Exception($res);
+        }
+    }
+
 
     private function callback($data, $msg, $img_url = ''){
         $url = $data["url"];
@@ -311,5 +409,16 @@ class SubsequentOperations
             "url" => $url,
             "params" => $params,
         ]);
+    }
+
+
+    private function checkRemaining($data){
+        $queue = new QueueRobot();
+        $count = $queue->getRemaining($data["msg_uuid"]);
+        if ($count > 1){  // 检查是不是最后一条
+            return false;
+        }else{
+            return true;
+        }
     }
 }

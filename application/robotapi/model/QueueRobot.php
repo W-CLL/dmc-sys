@@ -174,4 +174,13 @@ class QueueRobot extends Model
         }
         return false;
     }
+
+
+    public function getRemaining($msg_uuid){
+        return $this->where([
+            'job_name' => '腾讯广告【转账后续操作】',
+            'status' => 0  // 未完成状态
+        ])->where('job_data', 'like', '%"msg_uuid":"' . $msg_uuid . '"%')
+            ->count();
+    }
 }
