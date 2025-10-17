@@ -50,7 +50,8 @@ class SubsequentOperations
             'account_type' =>$transfer_records_data['account_type'],
             'rebate' => $transfer_records_data['rebate'],
             'discount_percentage' => $transfer_records_data['discount_percentage'],
-            'create_time' => time()
+            'create_time' => time(),
+            'from' => 2
         ];
         Db::startTrans();
         try {
@@ -128,11 +129,13 @@ class SubsequentOperations
             Cache::rm($data["callback_data"]["msg_uuid"]."msg");
             Cache::rm($data["callback_data"]["msg_uuid"]."transfer_log_id");
         }else{
-            $msg = Cache::get($data["callback_data"]["msg_uuid"]."msg") ? Cache::get($data["callback_data"]["msg_uuid"]."msg") : "";
+            if($transfer_records_data['transfer_direction'] == 2){
+                $msg = Cache::get($data["callback_data"]["msg_uuid"]."msg") ? Cache::get($data["callback_data"]["msg_uuid"]."msg") : "";
+                $msg .= "{$operate}成功！\n钱包余额{$type}：" . $money_log_data["balance_surplus"] . "\n授信余额{$type}：" . $money_log_data["credit_limit_surplus"] . "\n已使用授信额度{$type}：" . number_format((($store_info[$prefix."spending_credit_limit_tencent"] + $store_info[$prefix."credit_limit_tencent"]) - $money_log_data["credit_limit_surplus"]), 2)."\n\n";
+                Cache::set($data["callback_data"]["msg_uuid"]."msg", $msg, 1800);
+            }
             $transfer_log_id = Cache::get($data["callback_data"]["msg_uuid"]."transfer_log_id") ? Cache::get($data["callback_data"]["msg_uuid"]."transfer_log_id") : "";
             $transfer_log_id .= $data["transfer_records_id"].',';
-            $msg .= "{$operate}成功！\n钱包余额{$type}：" . $money_log_data["balance_surplus"] . "\n授信余额{$type}：" . $money_log_data["credit_limit_surplus"] . "\n已使用授信额度{$type}：" . number_format((($store_info[$prefix."spending_credit_limit_tencent"] + $store_info[$prefix."credit_limit_tencent"]) - $money_log_data["credit_limit_surplus"]), 2)."\n\n";
-            Cache::set($data["callback_data"]["msg_uuid"]."msg", $msg, 1800);
             Cache::set($data["callback_data"]["msg_uuid"]."transfer_log_id", $transfer_log_id, 1800);
         }
         return true;
@@ -156,7 +159,8 @@ class SubsequentOperations
             'account_type' =>$transfer_records_data['account_type'],
             'rebate' => $transfer_records_data['rebate'],
             'discount_percentage' => $transfer_records_data['discount_percentage'],
-            'create_time' => time()
+            'create_time' => time(),
+            'from' => 2
         ];
         Db::startTrans();
         try {
