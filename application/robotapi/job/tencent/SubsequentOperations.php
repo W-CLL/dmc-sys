@@ -123,7 +123,7 @@ class SubsequentOperations
             $msg = Cache::get($data["callback_data"]["msg_uuid"]."msg") ? Cache::get($data["callback_data"]["msg_uuid"]."msg") : "";
             $transfer_log_id = Cache::get($data["callback_data"]["msg_uuid"]."transfer_log_id") ? Cache::get($data["callback_data"]["msg_uuid"]."transfer_log_id") : "";
             $transfer_log_id .= $data["transfer_records_id"];
-            $msg .= "{$operate}成功！\n钱包余额{$type}：" . $money_log_data["balance_surplus"] . "\n授信余额{$type}：" . $money_log_data["credit_limit_surplus"] . "\n已使用授信额度{$type}：" . number_format((($store_info[$prefix."spending_credit_limit_tencent"] + $store_info[$prefix."credit_limit_tencent"]) - $money_log_data["credit_limit_surplus"]), 2)."\n\n";
+            $msg .= "{$operate}成功！\n钱包余额{$type}：" . $money_log_data["balance_surplus"] . "\n授信余额{$type}：" . $money_log_data["credit_limit_surplus"] . "\n已使用授信额度{$type}：" . number_format((($store_info[$prefix."spending_credit_limit_tencent"] + $store_info[$prefix."credit_limit_tencent"]) - $money_log_data["credit_limit_surplus"]), 2);
             $merge_img_url = $this->createMergeImg($transfer_log_id);
             $this->callBack($data["callback_data"], $msg, $merge_img_url);
             Cache::rm($data["callback_data"]["msg_uuid"]."msg");
