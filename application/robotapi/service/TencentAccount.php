@@ -105,6 +105,7 @@ class TencentAccount extends Controller
                         'money' => $money,
                         'transfer_records_data' => $transfer_records_data,
                     ];
+                    break;
                 case 2:
                     $refund_model = new TencentRefund();
                     list($real_rebate,$actual_per) = $refund_model->getRealRefundRebate($transfer_records_data,1,false);
@@ -122,6 +123,7 @@ class TencentAccount extends Controller
                         'money' => [],
                         'transfer_records_data' => $transfer_records_data,
                     ];
+                    break;
             }
         }
         return $array;
