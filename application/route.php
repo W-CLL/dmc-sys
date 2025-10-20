@@ -61,3 +61,10 @@ Route::get('tencent-wallet', 'robotapi/TencentWallet/get');
 Route::post('tencent-wallet', 'robotapi/TencentWallet/post');
 Route::put('tencent-wallet', 'robotapi/TencentWallet/put');
 Route::delete('tencent-wallet', 'robotapi/TencentWallet/delete');
+
+
+// 腾讯广告全额转出接口
+Route::get('tencent-refund-all', 'robotapi/TencentRefundAll/get');
+Route::post('tencent-refund-all', 'robotapi/TencentRefundAll/post');
+Route::put('tencent-refund-all', 'robotapi/TencentRefundAll/put');
+Route::delete('tencent-refund-all', 'robotapi/TencentRefundAll/delete');

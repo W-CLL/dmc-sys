@@ -156,12 +156,12 @@ class TencentAccount extends Controller
         $wechat_group_model = new WechatGroup();
         $account_info = $wechat_group_model->getTencentAccountByStoreId($data['group_id'], $data['account_id_list']);
         $no_access = [];
+        $can_option = [];
         if (!empty($account_info) && !empty($account_info['tencent_account'])){
             foreach ($account_info['tencent_account'] as $account){
-                if (!in_array($account['account_id'],$data['account_id_list'])){
-                    $no_access[] = $account['account_id'];
-                }
+                $can_option[] = $account['account_id'];
             }
+            $no_access = array_diff($data['account_id_list'], $can_option);
         }elseif (empty($account_info['tencent_account'])){
             return '未查询到账户信息，请确认是否绑定';
         }
