@@ -141,7 +141,7 @@ class Oauth2 extends Api
             if ($info) {
                 if ($item['name'] != $info['name'] || $item['company'] != $info['company_name']) {
                     $company_add_data[] = [
-                        'id'=>$info['id'],
+                        'id' => $info['id'],
                         "name" => $item["name"],
                         "company_name" => $item["company"]
                     ];
@@ -174,7 +174,7 @@ class Oauth2 extends Api
                     'count' => $count,
                     'cursor' => $advertiser_data['data']['cursor_page_info']['cursor'],
                 ];
-                \think\Queue::push('app\job\SyncAdv',$queue_data,'syncAdv');
+                \think\Queue::push('app\job\SyncAdv', $queue_data, 'syncAdv');
 //                $queue->addQueue('检查更新广告账户', 'app\job\SyncAdv', 'syncAdv', $queue_data);
             }
             if (!empty($company_add_data)) {
@@ -209,7 +209,7 @@ class Oauth2 extends Api
             ->where(['transfer_serial' => ['>', 0]])
             ->where(["create_time" => [">", strtotime('today midnight')]])
             ->where(["create_time" => ["<", time() - 300]])
-            ->limit(0,20)  // 做个分页，防止Google无头开启过多导致js脚本罢工【PS：因为下面更新url写入，所以每次获取的第0页都是不一样的，故写死】
+            ->limit(0, 20)  // 做个分页，防止Google无头开启过多导致js脚本罢工【PS：因为下面更新url写入，所以每次获取的第0页都是不一样的，故写死】
             ->select();
         foreach ($data as $k => $v) {
             $url = "http://127.0.0.1:3000/jlfz/get_transfer_image";
@@ -244,7 +244,7 @@ class Oauth2 extends Api
     public function genTransferImageUrl()
     {
         $list = Db::name("transfer_records")
-            ->where(["status" => 1,"from" => 1]) // 仅处理dmc充值的
+            ->where(["status" => 1, "from" => 1]) // 仅处理dmc充值的
             ->whereNull("image")
             ->whereNotNull('transfer_serial')
 //            ->where(["create_time" => [">", strtotime('today midnight')]])
@@ -252,7 +252,7 @@ class Oauth2 extends Api
             ->limit(30)
             ->order('create_time desc')
             ->select();
-        if(!$list){
+        if (!$list) {
             return "没有需要处理的数据";
         }
         $token = Cache::get("qc_access_token");
@@ -263,12 +263,12 @@ class Oauth2 extends Api
         $update = [];
         $error = [];
         foreach ($list as $k => $v) {
-            $data = FundManagement::transfer_detail($token,  $biz_request_no,(int)$account_id, $v['transfer_serial']);
-            if($data['code'] == 0 && $data['data']) {
+            $data = FundManagement::transfer_detail($token, $biz_request_no, (int)$account_id, $v['transfer_serial']);
+            if ($data['code'] == 0 && $data['data']) {
                 $transfer_info = $data['data']['transfer_target_record_list'][0];
                 $target_account_info = $company_model->where(['advertiser_id' => $transfer_info['target_account_id']])->find();
                 $account_info = $company_model->where(['advertiser_id' => $transfer_info['account_id']])->find();
-                if($transfer_info['account_id'] == "1739518270441480"){
+                if ($transfer_info['account_id'] == "1739518270441480") {
                     $account_info['name'] = "广州斑马数字科技有限公司";
                     $account_info['advertiser_id'] = $transfer_info['account_id'];
                     $account_info['company_name'] = "广州斑马数字科技有限公司";
@@ -280,7 +280,7 @@ class Oauth2 extends Api
                     $transfer_out = $account_info['name'] . "\n转出方ID：" . $account_info['advertiser_id'];
                 } else if ($v['transfer_direction'] == 2) {
                     $transfer_type = "退款";
-                    $money = '-'.$money;
+                    $money = '-' . $money;
                     $transfer_in = $account_info['name'] . "\n转入方ID：" . $account_info['advertiser_id'];
                     $transfer_out = $target_account_info['name'] . "\n转出方ID：" . $target_account_info['advertiser_id'];
                 }
@@ -310,28 +310,28 @@ class Oauth2 extends Api
                 $res = generateTransferImg($img_data, [], $path, $file_name);
                 if ($res) {
                     $update[] = [
-                        'id'=>$v['id'],
-                        'image'=>'transfer_images/' . $day . '/' . $file_name
+                        'id' => $v['id'],
+                        'image' => 'transfer_images/' . $day . '/' . $file_name
                     ];
                 } else {
                     dump($res);
                 }
-            }else{
-                $error[]= $data['message'].$v['id'];
+            } else {
+                $error[] = $data['message'] . $v['id'];
                 $update[] = [
-                    'id'=>$v['id'],
-                    'explain'=>$data['message']
+                    'id' => $v['id'],
+                    'explain' => $data['message']
                 ];
             }
         }
-        if($error){
+        if ($error) {
             echo json_encode($error);
         }
-        if($update){
-            $res =  $transfer_model->saveAll($update);
-            if($res){
+        if ($update) {
+            $res = $transfer_model->saveAll($update);
+            if ($res) {
                 return "执行成功";
-            }else{
+            } else {
                 return "执行失败";
             }
         }
@@ -347,7 +347,7 @@ class Oauth2 extends Api
     {
         $swtl_model = new ShareWalletTransferLog();
         $list = $swtl_model
-            ->where(["status" => 1,"from" => 1]) // 仅处理dmc充值的
+            ->where(["status" => 1, "from" => 1]) // 仅处理dmc充值的
             ->whereNull("image")
             ->whereNotNull('transfer_serial')
 //            ->where(["create_time" => [">", strtotime('today midnight')]])
@@ -355,7 +355,7 @@ class Oauth2 extends Api
             ->limit(30)
             ->order('create_time desc')
             ->select();
-        if(!$list){
+        if (!$list) {
             return "没有需要处理的数据";
         }
         $update = [];
@@ -368,11 +368,11 @@ class Oauth2 extends Api
                 generate_random_string(10, true),
                 $v['transfer_serial']
             );
-            if($transfer_detail['code'] != 0){
-                $error[] = $transfer_detail['message'].$v['id'];
+            if ($transfer_detail['code'] != 0) {
+                $error[] = $transfer_detail['message'] . $v['id'];
                 $update[] = [
-                    'id'=>$v['id'],
-                    'image'=>$transfer_detail['message']
+                    'id' => $v['id'],
+                    'image' => $transfer_detail['message']
                 ];
                 continue;
             }
@@ -385,11 +385,11 @@ class Oauth2 extends Api
                 Env::get('dmc_ad_config.advertiser_id'),
                 json_encode([(int)$v['sub_wallet_id']]),
                 'AGENT');
-            if($res['code'] != 0){
-                $error[] = $res['message'].$v['id'];
+            if ($res['code'] != 0) {
+                $error[] = $res['message'] . $v['id'];
                 $update[] = [
-                    'id'=>$v['id'],
-                    'fail_reason'=>$res['message']
+                    'id' => $v['id'],
+                    'fail_reason' => $res['message']
                 ];
                 continue;
             }
@@ -404,7 +404,7 @@ class Oauth2 extends Api
                 $transfer_out = $main_wallet_info['name'] . "\n钱包ID：" . $main_wallet_info['wallet_id'];
             } else if ($v['transfer_direction'] == 2) {
                 $transfer_type = "退款";
-                $money = '-'.$money;
+                $money = '-' . $money;
                 $transfer_in = $main_wallet_info['name'] . "\n钱包ID：" . $main_wallet_info['wallet_id'];
                 $transfer_out = $sub_wallet_info['name'] . "\n钱包ID：" . $sub_wallet_info['wallet_id'];
             }
@@ -430,21 +430,21 @@ class Oauth2 extends Api
             $result = generateTransferImg($img_data, $headerTexts, $path, $file_name);
             if ($result) {
                 $update[] = [
-                    'id'=>$v['id'],
-                    'image'=>'share_wallet_images/' . $day . '/' . $file_name
+                    'id' => $v['id'],
+                    'image' => 'share_wallet_images/' . $day . '/' . $file_name
                 ];
             } else {
                 dump($result);
             }
         }
-        if($error){
+        if ($error) {
             echo json_encode($error);
         }
-        if($update){
-            $update_res =  $swtl_model->saveAll($update);
-            if($update_res){
+        if ($update) {
+            $update_res = $swtl_model->saveAll($update);
+            if ($update_res) {
                 return "执行成功";
-            }else{
+            } else {
                 return "执行失败";
             }
         }
@@ -462,7 +462,7 @@ class Oauth2 extends Api
      * @throws Exception
      * @throws PDOException
      */
-    public function updateKahuna(bool $cancel_day_update=false)
+    public function updateKahuna(bool $cancel_day_update = false)
     {
         if (Cache::get('kahuna_run_status') == 1 && !$cancel_day_update) {
             echo "今日已经更新完毕";
@@ -471,19 +471,15 @@ class Oauth2 extends Api
         $i = 0;
         $access_token = Cache::get("qc_access_token");
         $advertiser_ids = Cache::get("ad_ids");
-        $advertiser_ids_kahuna_info = Cache::get("ad_ids_kahuna_info");
-        $advertiser_ids_agent_info = Cache::get("ad_ids_agent_info");
+        $advertiser_info = Cache::get("advertiser_info");
+
         if (!$advertiser_ids) {
-            $advertiser_ids = Db::name("company")->column("advertiser_id");
+            $advertiser_info = Db::name("company")->field('advertiser_id,kahuna,agent,collaborators')->where('adv_status', 1)->select();
+            $advertiser_ids = array_column((array)$advertiser_info, 'advertiser_id');
+            Cache::set('ad_ids', $advertiser_ids);
+            Cache::set('advertiser_info', $advertiser_info);
         }
-        if (!$advertiser_ids_kahuna_info) {
-            $advertiser_ids_kahuna_info = Db::name("company")->column("kahuna", "advertiser_id");
-            Cache::set('ad_ids_agent_info', $advertiser_ids_kahuna_info);
-        }
-        if (!$advertiser_ids_agent_info) {
-            $advertiser_ids_agent_info = Db::name("company")->column("agent_id", "advertiser_id");
-            Cache::set('ad_ids_agent_info', $advertiser_ids_agent_info);
-        }
+
         $advertiser_ids = array_map(function ($item) {
             return (int)$item;
         }, $advertiser_ids);
@@ -493,13 +489,20 @@ class Oauth2 extends Api
             }
             $arr = [];
             $res1 = FundManagement::get_ad_info($access_token, json_encode([$split], JSON_UNESCAPED_UNICODE));
-            if ($res1['code'] == 0 && $res1['data']['account_detail_list'][0]['optimizer_name'] != $advertiser_ids_kahuna_info[$split]) {
-                $arr['kahuna'] = $res1['data']['account_detail_list'][0]['optimizer_name'];
+            if ($res1['code'] == 0) {
+                $account_detail = $res1['data']['account_detail_list'][0];
+                if ($account_detail['optimizer_name'] != $advertiser_info[$split]['kahuna']) {
+                    $arr['kahuna'] = $account_detail['optimizer_name'];
+                }
+                if ($account_detail['collaborators'] != $advertiser_info[$split]['collaborators']) {
+                    $arr['collaborators'] = json_encode($account_detail['collaborators']);
+                }
+                if ($account_detail['first_agent_id'] != $advertiser_info[$split]['agent_id']) {
+                    $arr['agent_id'] = $account_detail['first_agent_id'];
+                }
             }
-            if ($res1['code'] == 0 && $res1['data']['account_detail_list'][0]['first_agent_id'] != $advertiser_ids_agent_info[$split]){
-                $arr['agent_id'] = $res1['data']['account_detail_list'][0]['first_agent_id'];
-            }
-            if($arr){
+
+            if ($arr) {
                 $res = Db::name('company')->where(['advertiser_id' => $split])->update($arr);  // 有更新则返回1,无更新返回0，出错返回报错 故下面使用is_int判断
                 if (!is_int($res)) {
                     throw new \Exception('出错');
@@ -513,8 +516,7 @@ class Oauth2 extends Api
             $expiryDate->setTime(0, 0, 0);
             $expiryDate->modify('+1 day');
             Cache::rm('ad_ids');
-            Cache::rm('ad_ids_agent_info');
-            Cache::rm('ad_ids_kahuna_info');
+            Cache::rm('advertiser_info');
             Cache::set('kahuna_run_status', 1, $expiryDate);
             echo "全部完成";
             return;
@@ -600,7 +602,6 @@ class Oauth2 extends Api
     }
 
 
-
     // 获取广告主负责人名称
     public function getKahuna()
     {
@@ -611,7 +612,7 @@ class Oauth2 extends Api
             return;
         }
 
-        $advertiser_ids = Db::name("company")->where('kahuna', null)->limit(100)->column("advertiser_id");
+        $advertiser_ids = Db::name("company")->where('kahuna', null)->whereOr('collaborators', null)->limit(100)->column("advertiser_id");
         if (empty($advertiser_ids)) {
             echo '无更新';
             return;
@@ -623,6 +624,7 @@ class Oauth2 extends Api
         foreach ($advertiser_ids as $key => $split) {
             $res1 = FundManagement::get_ad_info($access_token, json_encode([$split], JSON_UNESCAPED_UNICODE));
             if ($res1['code'] == 0) {
+                $arr['collaborators'] = json_encode($res1['data']['account_detail_list'][0]['collaborators']);
                 $arr['kahuna'] = $res1['data']['account_detail_list'][0]['optimizer_name'];
                 $arr['agent_id'] = $res1['data']['account_detail_list'][0]['first_agent_id'];
                 $arr['update_time'] = time();
@@ -682,35 +684,38 @@ class Oauth2 extends Api
     }
 
 
-    public function btNotice(){
+    public function btNotice()
+    {
         return 1;
     }
 
 
-    public function updateGlobalObjStatus(){
-        for ($i = 0; $i <= 1000; $i++){
+    public function updateGlobalObjStatus()
+    {
+        for ($i = 0; $i <= 1000; $i++) {
             $data = Cache::store('redis')->handler()->lpop('updateGlobalObjStatus');
-            if (empty($data)){
+            if (empty($data)) {
                 break;
             }
             $data = json_decode($data, true);
             $save[] = $data;
         }
-        if (empty($save)){
+        if (empty($save)) {
             echo "无数据不更新";
             die;
         }
         $qcGlobalObjModel = new QcGlobalObj();
         $res = $qcGlobalObjModel->saveAll($save);
-        if ($res){
-            echo "更新成功，总更新条数：".count($save);
-        }else{
+        if ($res) {
+            echo "更新成功，总更新条数：" . count($save);
+        } else {
             echo "更新失败";
         }
     }
 
 
-    public function uploadImage(){
+    public function uploadImage()
+    {
         $time = time();
         $model = new FissionDeriveMaterial();
         $list = $model
@@ -722,37 +727,37 @@ class Oauth2 extends Api
             ->limit(50)
             ->order('id desc')
             ->select();
-        if (empty($list)){
+        if (empty($list)) {
             echo "空列表";
             die;
         }
         $update = [];
-        foreach ($list as $item){
+        foreach ($list as $item) {
             $res = FundManagement::upload_image([
                 'advertiser_id' => (int)$item['adv_id'],
                 'upload_type' => 'UPLOAD_BY_URL',
                 'image_url' => json_decode($item['material_info'], true)['cover_url']
             ]);
-            if ($res['message'] == "OK" && $res['code'] == 0){
+            if ($res['message'] == "OK" && $res['code'] == 0) {
                 $update[] = [
                     'id' => $item['id'],
                     'adopt_cover_id' => $res['data']['id']
                 ];
-            }else{
+            } else {
                 $update[] = [
                     'id' => $item['id'],
                     'cover_msg' => $res['message']
                 ];
             }
         }
-        if (empty($update)){
+        if (empty($update)) {
             echo "无更新";
             die;
         }
         try {
             $model->saveAll($update);
-            echo "更新成功，总更新条数：".count($update)."。总花费时间:".(time() - $time);
-        }catch (\Exception $e){
+            echo "更新成功，总更新条数：" . count($update) . "。总花费时间:" . (time() - $time);
+        } catch (\Exception $e) {
             echo "更新失败";
         }
     }

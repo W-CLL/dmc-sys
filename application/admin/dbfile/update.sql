@@ -282,3 +282,6 @@ ALTER TABLE fa_qc_global_obj
 --2025-07-17
 ALTER TABLE fa_share_wallet_transfer_log
     ADD COLUMN `image` varchar(255) COMMENT '方舟截图';
+--2025-10-21
+ALTER TABLE fa_company
+    ADD COLUMN `collaborators` tinytext COMMENT '协作者';
