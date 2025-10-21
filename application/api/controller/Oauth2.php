@@ -483,27 +483,27 @@ class Oauth2 extends Api
         $advertiser_ids = array_map(function ($item) {
             return (int)$item;
         }, $advertiser_ids);
-        foreach ($advertiser_ids as $key => $split) {
+        foreach ($advertiser_info as $key => $info) {
             if ($i == 50) {
                 break;
             }
             $arr = [];
-            $res1 = FundManagement::get_ad_info($access_token, json_encode([$split], JSON_UNESCAPED_UNICODE));
+            $res1 = FundManagement::get_ad_info($access_token, json_encode([(int)$info['advertiser_id']], JSON_UNESCAPED_UNICODE));
             if ($res1['code'] == 0) {
                 $account_detail = $res1['data']['account_detail_list'][0];
-                if ($account_detail['optimizer_name'] != $advertiser_info[$split]['kahuna']) {
+                if ($account_detail['optimizer_name'] != $info['kahuna']) {
                     $arr['kahuna'] = $account_detail['optimizer_name'];
                 }
-                if ($account_detail['collaborators'] != $advertiser_info[$split]['collaborators']) {
+                if ($account_detail['collaborators'] != $info['collaborators']) {
                     $arr['collaborators'] = json_encode($account_detail['collaborators']);
                 }
-                if ($account_detail['first_agent_id'] != $advertiser_info[$split]['agent_id']) {
+                if ($account_detail['first_agent_id'] != $info['agent_id']) {
                     $arr['agent_id'] = $account_detail['first_agent_id'];
                 }
             }
 
             if ($arr) {
-                $res = Db::name('company')->where(['advertiser_id' => $split])->update($arr);  // 有更新则返回1,无更新返回0，出错返回报错 故下面使用is_int判断
+                $res = Db::name('company')->where(['advertiser_id' => $info['advertiser_id']])->update($arr);  // 有更新则返回1,无更新返回0，出错返回报错 故下面使用is_int判断
                 if (!is_int($res)) {
                     throw new \Exception('出错');
                 }
