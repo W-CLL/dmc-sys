@@ -474,7 +474,7 @@ class Oauth2 extends Api
         $advertiser_info = Cache::get("advertiser_info");
 
         if (!$advertiser_ids) {
-            $advertiser_info = Db::name("company")->field('advertiser_id,kahuna,agent_id,collaborators')->where('adv_status', 1)->select();
+            $advertiser_info = Db::name("company")->field('advertiser_id,kahuna,agent_id,collaborators')->where('collaborators',null)->where('adv_status', 1)->select();
             $advertiser_ids = array_column((array)$advertiser_info, 'advertiser_id');
             Cache::set('ad_ids', $advertiser_ids);
             Cache::set('advertiser_info', $advertiser_info);
