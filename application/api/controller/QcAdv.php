@@ -41,7 +41,7 @@ class QcAdv extends Api
         } else {
             $disable_adv = [];
             foreach ($res['data'] as $item) {
-                if ($item['status'] == "STATUS_DISABLE") {
+                if (in_array($item['status'] , ["STATUS_DISABLE","STATUS_LIMIT"]) ) {
                     $disable_adv[] = $item['id'];
                 }
             }
@@ -52,7 +52,7 @@ class QcAdv extends Api
         //防止一些户恢复了权限
         $page++;
         Cache::set('qc_adv_status_page', $page);
-        $this->index();
+//        $this->index();
     }
 
 
