@@ -462,7 +462,7 @@ class Oauth2 extends Api
      * @throws Exception
      * @throws PDOException
      */
-    public function updateKahuna(bool $cancel_day_update = false)
+    public function updateKahuna($cancel_day_update = false)
     {
         if (Cache::get('kahuna_run_status') == 1 && !$cancel_day_update) {
             echo "今日已经更新完毕";
