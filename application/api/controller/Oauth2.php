@@ -464,15 +464,15 @@ class Oauth2 extends Api
     {
 
 
-        $access_token = Cache::get("qc_access_token");
-//        $access_token = "0474ae375e72b53459aea289373b8b15e41ea2a7";
+//        $access_token = Cache::get("qc_access_token");
+        $access_token = "0474ae375e72b53459aea289373b8b15e41ea2a7";
         $page = Cache::get('update_company_info_page', 1);
         $com_model = new Company();
         $advertiser_info = $com_model
             ->field('id,advertiser_id,kahuna,agent_id,collaborators')
             ->where('adv_status', 1)
             ->order('id desc')
-            ->limit(50)
+            ->limit(200)
             ->page($page)
             ->select();
         if (empty($advertiser_info)) {
@@ -480,40 +480,45 @@ class Oauth2 extends Api
             echo "处理完成";
             die;
         }
-        $advertiser_ids = array_column((array)$advertiser_info, 'advertiser_id');
-        $advertiser_ids = array_map(function ($item) {
-            return (int)$item;
-        }, $advertiser_ids);
-        $res = FundManagement::get_ad_info($access_token, json_encode($advertiser_ids, JSON_UNESCAPED_UNICODE));
+        $chunks = array_chunk((array)$advertiser_info, '50');
         $update = [];
-        if ($res['code'] == 0 && !empty($res['data']['account_detail_list'])) {
-            foreach ($advertiser_info as $info) {
-                foreach ($res['data']['account_detail_list'] as $list) {
-                    if ($info['advertiser_id'] == $list['advertiser_id']) {
-                        $collaborators = implode(',', array_column($list['collaborators'], 'employee_name'));
-                        if (
-                            ($info['kahuna'] != $list['optimizer_name']) ||
-                            ($info['collaborators'] != $collaborators) ||
-                            ($info['agent_id'] != $list['first_agent_id'])
+        foreach ($chunks as $chunk) {
+            $advertiser_ids = array_column((array)$chunk, 'advertiser_id');
+            $advertiser_ids = array_map(function ($item) {
+                return (int)$item;
+            }, $advertiser_ids);
+            $res = FundManagement::get_ad_info($access_token, json_encode($advertiser_ids, JSON_UNESCAPED_UNICODE));
 
-                        ) {
-                            $update[] = [
-                                'id' => $info['id'],
-                                'kahuna' => $list['optimizer_name'],
-                                'collaborators' => $collaborators,
-                                'agent_id' => $list['first_agent_id'],
-                            ];
+            if ($res['code'] == 0 && !empty($res['data']['account_detail_list'])) {
+                foreach ($chunk as $info) {
+                    foreach ($res['data']['account_detail_list'] as $list) {
+                        if ($info['advertiser_id'] == $list['advertiser_id']) {
+                            $collaborators = implode(',', array_column($list['collaborators'], 'employee_name'));
+                            if (
+                                ($info['kahuna'] != $list['optimizer_name']) ||
+                                ($info['collaborators'] != $collaborators) ||
+                                ($info['agent_id'] != $list['first_agent_id'])
+
+                            ) {
+                                $update[] = [
+                                    'id' => $info['id'],
+                                    'kahuna' => $list['optimizer_name'],
+                                    'collaborators' => $collaborators,
+                                    'agent_id' => $list['first_agent_id'],
+                                ];
+                            }
+
                         }
-
                     }
-                }
 
+                }
             }
         }
+
         try {
             $com_model->saveAll($update);
-            echo "处理完了第" . $page . ("页，准备处理下一页");
-            $page = $page+1;
+            echo "处理完了第" . $page . ("页，准备处理下一页,一页处理200条");
+            $page = $page + 1;
             Cache::set('update_company_info_page', $page);
 
         } catch (Exception $e) {
