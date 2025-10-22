@@ -456,18 +456,16 @@ class Oauth2 extends Api
 
     /**
      * 更新负责人
-     * @param bool $cancel_day_update
-     * 取消一天限制
      * @return void
      * @throws Exception
      * @throws PDOException
      */
-    public function updateKahuna($cancel_day_update = false)
+    public function updateKahuna()
     {
 
 
-//        $access_token = Cache::get("qc_access_token","0474ae375e72b53459aea289373b8b15e41ea2a7");
-        $access_token = "0474ae375e72b53459aea289373b8b15e41ea2a7";
+        $access_token = Cache::get("qc_access_token");
+//        $access_token = "0474ae375e72b53459aea289373b8b15e41ea2a7";
         $page = Cache::get('update_company_info_page', 1);
         $com_model = new Company();
         $advertiser_info = $com_model
