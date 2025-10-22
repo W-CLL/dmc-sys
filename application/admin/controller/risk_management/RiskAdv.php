@@ -45,7 +45,7 @@ class RiskAdv extends Backend
             $where['ra.staff'] = $params['staff'];
         }
         if (!empty($params['collaborators'])) {
-            $where['c.collaborators'] = $params['collaborators'];
+            $where['c.collaborators'] =['like', '%' . $params['collaborators']. '%'];
         }
 
         if (isset($params['handle_status'])) {
