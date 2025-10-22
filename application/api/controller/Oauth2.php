@@ -464,65 +464,64 @@ class Oauth2 extends Api
      */
     public function updateKahuna($cancel_day_update = false)
     {
-        if (Cache::get('kahuna_run_status') == 1 && !$cancel_day_update) {
-            echo "今日已经更新完毕";
-            return;
-        }
-        $i = 0;
-        $access_token = Cache::get("qc_access_token");
-        $advertiser_ids = Cache::get("ad_ids");
-        $advertiser_info = Cache::get("advertiser_info");
 
-        if (!$advertiser_ids) {
-            $advertiser_info = Db::name("company")->field('advertiser_id,kahuna,agent_id,collaborators')->where('collaborators',NULL)->where('adv_status', 1)->select();
-            $advertiser_ids = array_column((array)$advertiser_info, 'advertiser_id');
-            Cache::set('ad_ids', $advertiser_ids);
-            Cache::set('advertiser_info', $advertiser_info);
-        }
 
+//        $access_token = Cache::get("qc_access_token","0474ae375e72b53459aea289373b8b15e41ea2a7");
+        $access_token = "0474ae375e72b53459aea289373b8b15e41ea2a7";
+        $page = Cache::get('update_company_info_page', 1);
+        $com_model = new Company();
+        $advertiser_info = $com_model
+            ->field('id,advertiser_id,kahuna,agent_id,collaborators')
+            ->where('adv_status', 1)
+            ->order('id desc')
+            ->limit(50)
+            ->page($page)
+            ->select();
+        if (empty($advertiser_info)) {
+            Cache::rm('update_company_info_page');
+            echo "处理完成";
+            die;
+        }
+        $advertiser_ids = array_column((array)$advertiser_info, 'advertiser_id');
         $advertiser_ids = array_map(function ($item) {
             return (int)$item;
         }, $advertiser_ids);
-        foreach ($advertiser_info as $key => $info) {
-            if ($i == 50) {
-                break;
-            }
-            $arr = [];
-            $res1 = FundManagement::get_ad_info($access_token, json_encode([(int)$info['advertiser_id']], JSON_UNESCAPED_UNICODE));
-            if ($res1['code'] == 0) {
-                $account_detail = $res1['data']['account_detail_list'][0];
-                if ($account_detail['optimizer_name'] != $info['kahuna']) {
-                    $arr['kahuna'] = $account_detail['optimizer_name'];
-                }
-                if ($account_detail['collaborators'] != $info['collaborators']) {
-                    $arr['collaborators'] = json_encode($account_detail['collaborators']);
-                }
-                if ($account_detail['first_agent_id'] != $info['agent_id']) {
-                    $arr['agent_id'] = $account_detail['first_agent_id'];
-                }
-            }
+        $res = FundManagement::get_ad_info($access_token, json_encode($advertiser_ids, JSON_UNESCAPED_UNICODE));
+        $update = [];
+        if ($res['code'] == 0 && !empty($res['data']['account_detail_list'])) {
+            foreach ($advertiser_info as $info) {
+                foreach ($res['data']['account_detail_list'] as $list) {
+                    if ($info['advertiser_id'] == $list['advertiser_id']) {
+                        $collaborators = implode(',', array_column($list['collaborators'], 'employee_name'));
+                        if (
+                            ($info['kahuna'] != $list['optimizer_name']) ||
+                            ($info['collaborators'] != $collaborators) ||
+                            ($info['agent_id'] != $list['first_agent_id'])
 
-            if ($arr) {
-                $res = Db::name('company')->where(['advertiser_id' => $info['advertiser_id']])->update($arr);  // 有更新则返回1,无更新返回0，出错返回报错 故下面使用is_int判断
-                if (!is_int($res)) {
-                    throw new \Exception('出错');
+                        ) {
+                            $update[] = [
+                                'id' => $info['id'],
+                                'kahuna' => $list['optimizer_name'],
+                                'collaborators' => $collaborators,
+                                'agent_id' => $list['first_agent_id'],
+                            ];
+                        }
+
+                    }
                 }
+
             }
-            unset($advertiser_ids[$key]);
-            $i++;
         }
-        if ($i < 50) {
-            $expiryDate = new \DateTime();
-            $expiryDate->setTime(0, 0, 0);
-            $expiryDate->modify('+1 day');
-            Cache::rm('ad_ids');
-            Cache::rm('advertiser_info');
-            Cache::set('kahuna_run_status', 1, $expiryDate);
-            echo "全部完成";
-            return;
+        try {
+            $com_model->saveAll($update);
+            echo "处理完了第" . $page . ("页，准备处理第" . ($page + 1)) . "页";
+
+            Cache::set('update_company_info_page', $page);
+
+        } catch (Exception $e) {
+            throw new \Exception($e->getMessage());
         }
-        Cache::set('ad_ids', $advertiser_ids);
-        echo "本次更新完成";
+
     }
 
     // 创建获取广告计划队列 [每天凌晨执行]
