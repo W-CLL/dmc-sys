@@ -111,7 +111,8 @@ class RiskAdv extends Backend
                 ->where(function ($query) use ($staff) {
                     $query->whereOr(['ra.check_staff' => ['like', "%" . $staff . "%"]])
                         ->whereOr(['c.kahuna' => ['like', "%" . $staff . "%"]])
-                        ->whereOr(['ra.business_staff' => ['like', "%" . $staff . "%"]]);
+                        ->whereOr(['ra.business_staff' => ['like', "%" . $staff . "%"]])
+                        ->whereOr(['c.collaborators' => ['like', "%" . $staff . "%"]]);
                 })
                 ->group('ra.adv_id, c.company_name, s.one_class_score')
                 ->order($order_filed)
