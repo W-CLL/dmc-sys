@@ -512,8 +512,8 @@ class Oauth2 extends Api
         }
         try {
             $com_model->saveAll($update);
-            echo "处理完了第" . $page . ("页，准备处理第" . ($page + 1)) . "页";
-
+            echo "处理完了第" . $page . ("页，准备处理下一页");
+            $page = $page+1;
             Cache::set('update_company_info_page', $page);
 
         } catch (Exception $e) {
