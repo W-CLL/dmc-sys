@@ -150,7 +150,7 @@ class AdoptMaterialIntoObj extends BaseJob
                 'verify' => false,
                 'curl' => [CURLOPT_FORBID_REUSE => true, CURLOPT_FRESH_CONNECT => true],
                 'pool' => ['max_connections' => 50, 'idle_timeout' => 30],
-                'proxy'=>"183.6.112.44:23100"
+//                'proxy'=>"183.6.112.44:23100"
             ]);
         }
         $pool = new Pool($this->connectionPool, array_column($requests, 'request'), [
