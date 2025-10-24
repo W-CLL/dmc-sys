@@ -44,6 +44,9 @@ class RiskAdv extends Backend
         if (!empty($params['staff'])) {
             $where['ra.staff'] = $params['staff'];
         }
+        if (!empty($params['collaborators'])) {
+            $where['c.collaborators'] =['like', '%' . $params['collaborators']. '%'];
+        }
 
         if (isset($params['handle_status'])) {
             if ($params['handle_status'] != '-1') {
@@ -90,6 +93,7 @@ class RiskAdv extends Backend
                 'ra.remark' => 'remark',
                 'c.company_name' => 'company_name',
                 'c.kahuna' => 'kahuna',
+                'c.collaborators' => 'collaborators',
                 's.one_class_score' => 'one_class_score',
                 's.two_three_class_score' => 'two_three_class_score',
                 'COUNT(rop.obj_id)' => 'total_obj',
@@ -141,6 +145,7 @@ class RiskAdv extends Backend
                     $query->whereOr(['ra.check_staff' => ['like', "%" . $staff . "%"]])
                         ->whereOr(['c.kahuna' => ['like', "%" . $staff . "%"]])
                         ->whereOr(['ra.business_staff' => ['like', "%" . $staff . "%"]]);
+
                 })
                 ->group('ra.adv_id, c.company_name, s.one_class_score')->count();
             $result = array("total" => $countQuery, "rows" => $list);
