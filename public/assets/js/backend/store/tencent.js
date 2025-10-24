@@ -94,7 +94,31 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
         },
         edit: function () {
             // 初始化表单
-            Form.api.bindevent($("form[role=form]"));
+            Form.api.bindevent($("form[role=form]"), function(data) {
+                // 提交成功后的回调处理
+                console.log("表单提交成功");
+            }, function(data, ret) {
+                // 提交失败后的回调处理
+                console.log("表单提交失败");
+                console.log(ret);
+            }, function(success, error, $form) {
+                // 表单提交前确保使用正确的enctype
+                // 检查$form是否存在且长度大于0
+                if ($form && $form.length > 0) {
+                    // 确保表单使用正确的enctype
+                    $form.attr('enctype', 'multipart/form-data');
+                    
+                    // 手动触发表单验证以确保enctype设置生效
+                    $form[0].enctype = 'multipart/form-data';
+                    
+                    // 添加额外的日志记录
+                    console.log("设置表单enctype为multipart/form-data");
+                }
+                
+                // 不再在这里处理文件上传，完全由HTML中的原生JavaScript处理
+                // 返回false以完全阻止FastAdmin的默认提交行为
+                return false;
+            });
         },
         api: {
             bindevent: function () {
