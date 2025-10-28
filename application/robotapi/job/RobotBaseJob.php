@@ -45,7 +45,7 @@ class RobotBaseJob
                 // 超过最大重试次数，标记为失败并删除任务
                 $queueData->save(['id' => $queueData['id'], 'status' => 2, 'msg' => $e->getMessage()]);
                 $job->delete();
-                $this->callback($data, $e->getMessage());
+                $this->callback($data["callback_data"], $e->getMessage());
                 return false;
             }
         }
