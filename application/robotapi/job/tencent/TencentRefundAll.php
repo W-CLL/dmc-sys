@@ -18,7 +18,11 @@ class TencentRefundAll
         // 执行全额转出
         $res = $this->sendRequest($data,'FUND_TYPE_CASH', 1);
         if ($res['code'] != 0){
-            throw new Exception($res['message_cn']);
+            $message_cn = $res['message_cn'];
+            if (strpos($message_cn, 'traceId:') !== false) {
+                $message_cn = trim(substr($message_cn, 0, strpos($message_cn, 'traceId:')));
+            }
+            throw new Exception($message_cn);
         }
         Db::startTrans();
         try {
@@ -45,8 +49,8 @@ class TencentRefundAll
                 if(!empty($last_transfer_info)){
                     $maxTTO = $last_transfer_info['wallet'] + $last_transfer_info['credit'];
                 }
-                if(isset($maxTTO) && $res['data']['recommend_amount'] > $maxTTO * 100){
-                    $money = isset($surplus) ? $surplus - $maxTTO * 100 : $res['data']['recommend_amount'] - $maxTTO * 100;
+                if(isset($maxTTO) && (($surplus??$res['data']['recommend_amount']) > $maxTTO * 100)){
+                    $money = $maxTTO * 100;
                     $transfer_records_data = [
                         "store_id"              => $account['store_id'],
                         "tencent_account_id"    => $account['id'],
@@ -69,6 +73,7 @@ class TencentRefundAll
                     }
                     $surplus = isset($surplus) ? $surplus - $money : $res['data']['recommend_amount'] - $money;
                     $bool = true;
+                    unset($maxTTO);
                 }else{
                     $money = $surplus ?? $res['data']['recommend_amount'];
                     $transfer_records_data = [
@@ -92,18 +97,23 @@ class TencentRefundAll
                         }
                     }
                     $bool = false;
+                    unset($surplus);
                 }
                 $transfer_records_data["rebate"] = $real_rebate;
                 $transfer_records_data['actual_money'] = $transfer_records_data["money"];
                 $transfer_records_data['discount_percentage'] = $actual_per;
                 $transfer_records_id_list[] = $transfer_log->insertGetId($transfer_records_data);
-                Db::commit();
             }while($bool);
             // 执行全额转出
             $result = $this->sendRequest($data,'FUND_TYPE_CASH');
             if ($result['code'] != 0){
-                throw new Exception($result['message_cn']);
+                $message_cn = $res['message_cn'];
+                if (strpos($message_cn, 'traceId:') !== false) {
+                    $message_cn = trim(substr($message_cn, 0, strpos($message_cn, 'traceId:')));
+                }
+                throw new Exception($message_cn);
             }
+            Db::commit();
         }catch (\Exception $e){
             Db::rollback();
             throw new Exception($e->getMessage());
