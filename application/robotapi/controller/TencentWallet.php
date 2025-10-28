@@ -9,7 +9,7 @@ class TencentWallet extends Base
     }
 
     public function post(){
-        return $this->handleRequest(2, 'transfer', '转账处理中...');
+        return $this->handleRequest(2, 'transfer', '转账处理中...【结果最晚将于10分钟后返回】');
     }
 
 

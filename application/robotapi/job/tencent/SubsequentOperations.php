@@ -120,23 +120,29 @@ class SubsequentOperations
         $bool = $this->checkRemaining($data["callback_data"]);
 
         if ($bool) {
-            $msg = Cache::get($data["callback_data"]["msg_uuid"]."msg") ? Cache::get($data["callback_data"]["msg_uuid"]."msg") : "";
             $transfer_log_id = Cache::get($data["callback_data"]["msg_uuid"]."transfer_log_id") ? Cache::get($data["callback_data"]["msg_uuid"]."transfer_log_id") : "";
             $transfer_log_id .= $data["transfer_records_id"];
-            $msg .= "{$operate}成功！\n钱包余额{$type}：" . $money_log_data["balance_surplus"] . "\n授信余额{$type}：" . $money_log_data["credit_limit_surplus"] . "\n已使用授信额度{$type}：" . number_format((($store_info[$prefix."spending_credit_limit_tencent"] + $store_info[$prefix."credit_limit_tencent"]) - $money_log_data["credit_limit_surplus"]), 2);
+            $count = Cache::get($data["callback_data"]["msg_uuid"]."count") ? Cache::get($data["callback_data"]["msg_uuid"]."count") : 0;
+            $count++;
+            $total_money = Cache::get($data["callback_data"]["msg_uuid"]."total_money") ? Cache::get($data["callback_data"]["msg_uuid"]."total_money") : 0;
+            $total_money += $transfer_records_data["actual_money"];
+            $msg = "{$operate}成功！\n总成功次数：{$count}\n操作总金额：{$total_money}\n";
+            $msg .= "钱包余额{$type}：" . $money_log_data["balance_surplus"] . "\n授信余额{$type}：" . $money_log_data["credit_limit_surplus"] . "\n已使用授信额度{$type}：" . number_format((($store_info[$prefix."spending_credit_limit_tencent"] + $store_info[$prefix."credit_limit_tencent"]) - $money_log_data["credit_limit_surplus"]), 2);
             $merge_img_url = $this->createMergeImg($transfer_log_id);
             $this->callBack($data["callback_data"], $msg, $merge_img_url);
-            Cache::rm($data["callback_data"]["msg_uuid"]."msg");
             Cache::rm($data["callback_data"]["msg_uuid"]."transfer_log_id");
+            Cache::rm($data["callback_data"]["msg_uuid"]."count");
+            Cache::rm($data["callback_data"]["msg_uuid"]."total_money");
         }else{
-            if($transfer_records_data['transfer_direction'] == 2){
-                $msg = Cache::get($data["callback_data"]["msg_uuid"]."msg") ? Cache::get($data["callback_data"]["msg_uuid"]."msg") : "";
-                $msg .= "{$operate}成功！\n钱包余额{$type}：" . $money_log_data["balance_surplus"] . "\n授信余额{$type}：" . $money_log_data["credit_limit_surplus"] . "\n已使用授信额度{$type}：" . number_format((($store_info[$prefix."spending_credit_limit_tencent"] + $store_info[$prefix."credit_limit_tencent"]) - $money_log_data["credit_limit_surplus"]), 2)."\n\n";
-                Cache::set($data["callback_data"]["msg_uuid"]."msg", $msg, 1800);
-            }
+            $count = Cache::get($data["callback_data"]["msg_uuid"]."count") ? Cache::get($data["callback_data"]["msg_uuid"]."count") : 0;
+            $count++;
+            Cache::set($data["callback_data"]["msg_uuid"]."count", $count, 1800);  // 统计次数
+            $total_money = Cache::get($data["callback_data"]["msg_uuid"]."total_money") ? Cache::get($data["callback_data"]["msg_uuid"]."total_money") : 0;
+            $total_money += $transfer_records_data["actual_money"];
+            Cache::set($data["callback_data"]["msg_uuid"]."total_money", $total_money, 1800);  // 统计金额
             $transfer_log_id = Cache::get($data["callback_data"]["msg_uuid"]."transfer_log_id") ? Cache::get($data["callback_data"]["msg_uuid"]."transfer_log_id") : "";
             $transfer_log_id .= $data["transfer_records_id"].',';
-            Cache::set($data["callback_data"]["msg_uuid"]."transfer_log_id", $transfer_log_id, 1800);
+            Cache::set($data["callback_data"]["msg_uuid"]."transfer_log_id", $transfer_log_id, 1800);  // 统计日志id
         }
         return true;
     }

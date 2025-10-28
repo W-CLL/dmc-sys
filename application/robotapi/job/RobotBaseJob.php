@@ -45,8 +45,30 @@ class RobotBaseJob
                 // 超过最大重试次数，标记为失败并删除任务
                 $queueData->save(['id' => $queueData['id'], 'status' => 2, 'msg' => $e->getMessage()]);
                 $job->delete();
+                $this->callback($data, $e->getMessage());
                 return false;
             }
         }
+    }
+
+
+    private function callback($data, $msg){
+        $url = $data["url"];
+        $msg = "您于" . date("Y-m-d H:i:s", $data["time"])."发起的请求结果如下：\n" . $msg;
+        $msg_data = [
+            "msg" => $msg,
+        ];
+        $params = [
+            "group_wxid" => $data["group_id"],
+            "sender_name" => $data["sender_name"],
+            "message" => $msg_data,
+            "msg_wxid" => $data["msg_uuid"],
+        ];
+        $queue = new QueueRobot();
+        $queue->addQueue('回调请求', 'app\robotapi\job\RobotBaseJob', 'robotBaseJob',[
+            "job_class" => '\app\robotapi\job\sendMsg\Send',
+            "url" => $url,
+            "params" => $params,
+        ]);
     }
 }

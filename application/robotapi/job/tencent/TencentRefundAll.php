@@ -8,6 +8,7 @@ use app\robotapi\model\TencentRefund;
 use app\robotapi\model\TencentStore;
 use app\robotapi\model\TencentTransferLog;
 use think\Exception;
+use think\Db;
 use txgg\Fund;
 
 class TencentRefundAll
@@ -15,10 +16,11 @@ class TencentRefundAll
     public function doJob($data)
     {
         // 执行全额转出
-        $res = $this->sendRequest($data,'FUND_TYPE_CASH');
+        $res = $this->sendRequest($data,'FUND_TYPE_CASH', 1);
         if ($res['code'] != 0){
             throw new Exception($res['message_cn']);
         }
+        Db::startTrans();
         try {
             $account_model = new TencentAccount();
             $dmc_balance = new TencentStore();
@@ -43,18 +45,16 @@ class TencentRefundAll
                 if(!empty($last_transfer_info)){
                     $maxTTO = $last_transfer_info['wallet'] + $last_transfer_info['credit'];
                 }
-                if(isset($maxTTO) && $res['data']['amount'] > $maxTTO * 100){
+                if(isset($maxTTO) && $res['data']['recommend_amount'] > $maxTTO * 100){
                     $transfer_records_data = [
                         "store_id"              => $account['store_id'],
                         "tencent_account_id"    => $account['id'],
                         "account_id"            => $account['account_id'],
                         "account_type"          => $account['account_type'],
                         "transfer_direction"    => 2,
-                        "money"                 => number_format(($res['data']['amount'] - $maxTTO * 100) / 100, 2, '.', ''),
+                        "money"                 => number_format(($res['data']['recommend_amount'] - $maxTTO * 100) / 100, 2, '.', ''),
                         "discount_percentage"   => $discount_percentage,
                         "remark"                => '',
-                        "order_uid"             => $res['data']['external_bill_no'],
-                        "record"                => json_encode($res, JSON_UNESCAPED_UNICODE),
                         "create_time"           => time(),
                         "from"                  => 2         // 机器人接口充值
                     ];
@@ -74,11 +74,9 @@ class TencentRefundAll
                         "account_id"            => $account['account_id'],
                         "account_type"          => $account['account_type'],
                         "transfer_direction"    => 2,
-                        "money"                 => number_format($res['data']['amount'] / 100, 2, '.', ''),
+                        "money"                 => number_format($res['data']['recommend_amount'] / 100, 2, '.', ''),
                         "discount_percentage"   => $discount_percentage,
                         "remark"                => '',
-                        "order_uid"             => $res['data']['external_bill_no'],
-                        "record"                => json_encode($res, JSON_UNESCAPED_UNICODE),
                         "create_time"           => time(),
                         "from"                  => 2         // 机器人接口充值
                     ];
@@ -96,10 +94,22 @@ class TencentRefundAll
                 $transfer_records_data['actual_money'] = $transfer_records_data["money"];
                 $transfer_records_data['discount_percentage'] = $actual_per;
                 $transfer_records_id_list[] = $transfer_log->insertGetId($transfer_records_data);
+                Db::commit();
             }while($bool);
+            // 执行全额转出
+            $result = $this->sendRequest($data,'FUND_TYPE_CASH');
+            if ($result['code'] != 0){
+                throw new Exception($result['message_cn']);
+            }
         }catch (\Exception $e){
+            Db::rollback();
             throw new Exception($e->getMessage());
         }
+        $transfer_log->where(['id' => ['in',$transfer_records_id_list]])->update([
+            "order_uid"             => $result['data']['external_bill_no'],
+            "record"                => json_encode($result, JSON_UNESCAPED_UNICODE),
+            "update_time"           => time(),
+            ]);
         $queue = new QueueRobot();
         foreach ($transfer_records_id_list as $transfer_records_id){
             $queue->addQueue('腾讯广告【转账后续操作】', 'app\robotapi\job\RobotBaseJob', 'robotBaseJob',
@@ -114,7 +124,7 @@ class TencentRefundAll
     }
 
 
-    private function sendRequest($data,$fund_type){
+    private function sendRequest($data, $fund_type, $pre_fetch_amount = 0){
         return Fund::transfer([
             'account_id' => $data['account_id'],
             'fund_type' => $fund_type,
@@ -123,6 +133,7 @@ class TencentRefundAll
             'external_bill_no' => uniqid('hxsz-zz-'),
             'memo' => '全额转出',
             'transfer_try_best' => 1,
+            'pre_fetch_amount' => $pre_fetch_amount,  // 是否查询余额 0 否，直接转账 1 是，不转账
         ])['data'];
     }
 }

@@ -91,7 +91,11 @@ class TencentTransfer
                 if ($agent_balance_info['FUND_TYPE_GIFT'] == 0){
                     $transfer = $this->sendRequest($data, $data['money'],'FUND_TYPE_CASH');
                     if ($transfer['code'] != 0){
-                        throw new Exception("发起转账失败");
+                        $message_cn = $transfer['message_cn'];
+                        if (strpos($message_cn, 'traceId:') !== false) {
+                            $message_cn = trim(substr($message_cn, 0, strpos($message_cn, 'traceId:')));
+                        }
+                        throw new Exception("发起转账失败，失败原因：".$message_cn);
                     }
                     $record = json_encode($transfer, JSON_UNESCAPED_UNICODE);
                     $order_uid = $transfer['data']['external_bill_no'];
@@ -123,7 +127,11 @@ class TencentTransfer
                 }elseif ($data['money'] <= $agent_balance_info['FUND_TYPE_GIFT']){
                     $transfer = $this->sendRequest($data, $data['money'], 'FUND_TYPE_GIFT');
                     if ($transfer['code'] != 0){
-                        throw new Exception("发起转账失败");
+                        $message_cn = $transfer['message_cn'];
+                        if (strpos($message_cn, 'traceId:') !== false) {
+                            $message_cn = trim(substr($message_cn, 0, strpos($message_cn, 'traceId:')));
+                        }
+                        throw new Exception("发起转账失败，失败原因：".$message_cn);
                     }
                     $record = json_encode($transfer, JSON_UNESCAPED_UNICODE);
                     $order_uid = $transfer['data']['external_bill_no'];
@@ -133,7 +141,11 @@ class TencentTransfer
                 if ($fund_info['FUND_TYPE_CASH'] == 0){
                     $transfer = $this->sendRequest($data, $data['money'], 'FUND_TYPE_GIFT');
                     if ($transfer['code'] != 0){
-                        throw new Exception("发起转账失败");
+                        $message_cn = $transfer['message_cn'];
+                        if (strpos($message_cn, 'traceId:') !== false) {
+                            $message_cn = trim(substr($message_cn, 0, strpos($message_cn, 'traceId:')));
+                        }
+                        throw new Exception("发起转账失败，失败原因：".$message_cn);
                     }
                     $record = json_encode($transfer, JSON_UNESCAPED_UNICODE);
                     $order_uid = $transfer['data']['external_bill_no'];
@@ -141,7 +153,11 @@ class TencentTransfer
                 else if ($data['money'] <= $fund_info['FUND_TYPE_CASH']){
                     $transfer = $this->sendRequest($data, $data['money'], 'FUND_TYPE_CASH');
                     if ($transfer['code'] != 0){
-                        throw new Exception("发起转账失败");
+                        $message_cn = $transfer['message_cn'];
+                        if (strpos($message_cn, 'traceId:') !== false) {
+                            $message_cn = trim(substr($message_cn, 0, strpos($message_cn, 'traceId:')));
+                        }
+                        throw new Exception("发起转账失败，失败原因：".$message_cn);
                     }
                     $record = json_encode($transfer, JSON_UNESCAPED_UNICODE);
                     $order_uid = $transfer['data']['external_bill_no'];
