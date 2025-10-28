@@ -46,13 +46,14 @@ class TencentRefundAll
                     $maxTTO = $last_transfer_info['wallet'] + $last_transfer_info['credit'];
                 }
                 if(isset($maxTTO) && $res['data']['recommend_amount'] > $maxTTO * 100){
+                    $money = isset($surplus) ? $surplus - $maxTTO * 100 : $res['data']['recommend_amount'] - $maxTTO * 100;
                     $transfer_records_data = [
                         "store_id"              => $account['store_id'],
                         "tencent_account_id"    => $account['id'],
                         "account_id"            => $account['account_id'],
                         "account_type"          => $account['account_type'],
                         "transfer_direction"    => 2,
-                        "money"                 => number_format(($res['data']['recommend_amount'] - $maxTTO * 100) / 100, 2, '.', ''),
+                        "money"                 => number_format($money / 100, 2, '.', ''),
                         "discount_percentage"   => $discount_percentage,
                         "remark"                => '',
                         "create_time"           => time(),
@@ -66,15 +67,17 @@ class TencentRefundAll
                             $real_rebate = 0;
                         }
                     }
+                    $surplus = isset($surplus) ? $surplus - $money : $res['data']['recommend_amount'] - $money;
                     $bool = true;
                 }else{
+                    $money = $surplus ?? $res['data']['recommend_amount'];
                     $transfer_records_data = [
                         "store_id"              => $account['store_id'],
                         "tencent_account_id"    => $account['id'],
                         "account_id"            => $account['account_id'],
                         "account_type"          => $account['account_type'],
                         "transfer_direction"    => 2,
-                        "money"                 => number_format($res['data']['recommend_amount'] / 100, 2, '.', ''),
+                        "money"                 => number_format($money / 100, 2, '.', ''),
                         "discount_percentage"   => $discount_percentage,
                         "remark"                => '',
                         "create_time"           => time(),
