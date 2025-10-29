@@ -178,6 +178,10 @@
                         <span class="file-name"></span>
                         <span class="file-size"></span>
                     </div>
+                    <!-- 图片预览区域 -->
+                    <div class="image-preview" id="image-preview" style="display: none; margin-top: 15px; text-align: center;">
+                        <img id="preview-image" src="" alt="预览图片" style="max-width: 100%; max-height: 200px; border-radius: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); border: 1px solid #ddd;">
+                    </div>
                 </div>
                 <div class="help-text">清账操作必须上传凭证图片</div>
             </div>
@@ -290,6 +294,17 @@
                 fileName.textContent = file.name;
                 fileSize.textContent = formatFileSize(file.size);
                 fileInfo.style.display = 'flex';
+                
+                // 添加图片预览功能
+                if (file.type.startsWith('image/')) {
+                    var reader = new FileReader();
+                    reader.onload = function(e) {
+                        var previewImage = document.getElementById('preview-image');
+                        previewImage.src = e.target.result;
+                        document.getElementById('image-preview').style.display = 'block';
+                    };
+                    reader.readAsDataURL(file);
+                }
             } else {
                 clearFileInfo();
             }
@@ -298,6 +313,8 @@
         // 清除文件信息显示
         function clearFileInfo() {
             fileInfo.style.display = 'none';
+            document.getElementById('image-preview').style.display = 'none';
+            document.getElementById('preview-image').src = '';
         }
         
         // 格式化文件大小
@@ -632,6 +649,20 @@
         color: #6c757d;
         white-space: nowrap;
         margin-left: 10px;
+    }
+    
+    /* 图片预览样式 */
+    .image-preview {
+        text-align: center;
+        padding: 10px 0;
+    }
+    
+    .image-preview img {
+        max-width: 100%;
+        max-height: 200px;
+        border-radius: 4px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        border: 1px solid #ddd;
     }
     
     /* 解决提示文字显示不全问题 */
