@@ -49,6 +49,8 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                     parent.$("#table").bootstrapTable('refresh');
                     parent.layer.close(index);
                 }
+                // 返回false以避免重复提示
+                return false;
             }, function (data) {
                 // 上传失败后的回调处理
                 console.log('上传失败:', data);
@@ -57,6 +59,8 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                 } else {
                     Toastr.error("上传失败");
                 }
+                // 返回false以避免重复提示
+                return false;
             }, function (ret) {
                 // 自定义处理
                 console.log('自定义处理:', ret);
