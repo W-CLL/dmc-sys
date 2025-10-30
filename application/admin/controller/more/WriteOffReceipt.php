@@ -177,16 +177,6 @@ class WriteOffReceipt extends Backend
                             }
                         }
                     }
-                    
-                    // 如果没找到特定标识，使用第一个非空的Value作为回单号
-                    if (empty($order_number)) {
-                        foreach ($data['BankSlipInfos'] as $item) {
-                            if (isset($item['Value']) && !empty($item['Value']) && strlen($item['Value']) > 5) {
-                                $order_number = $item['Value'];
-                                break;
-                            }
-                        }
-                    }
                 }
                 
                 if (empty($order_number)) {
