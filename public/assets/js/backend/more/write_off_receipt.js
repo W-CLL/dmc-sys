@@ -40,31 +40,8 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
             Controller.api.bindevent();
         },
         upload: function () {
-            // 绑定表单提交事件
-            Form.api.bindevent($("form"), function (data) {
-                // 上传成功后的回调处理
-                if (data.code === 1) {
-                    // 刷新父页面表格
-                    var index = parent.layer.getFrameIndex(window.name);
-                    parent.$("#table").bootstrapTable('refresh');
-                    parent.layer.close(index);
-                }
-                // 返回false以避免重复提示
-                return false;
-            }, function (data) {
-                // 上传失败后的回调处理
-                console.log('上传失败:', data);
-                if (data.msg) {
-                    Toastr.error(data.msg);
-                } else {
-                    Toastr.error("上传失败");
-                }
-                // 返回false以避免重复提示
-                return false;
-            }, function (ret) {
-                // 自定义处理
-                console.log('自定义处理:', ret);
-            });
+            // 空函数，实际处理在模板中的JavaScript完成
+            // 这样可以避免FastAdmin框架自动绑定表单提交事件
         },
         api: {
             bindevent: function () {
