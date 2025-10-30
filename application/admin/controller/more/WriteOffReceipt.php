@@ -135,21 +135,15 @@ class WriteOffReceipt extends Backend
                 // 获取上传后的文件路径
                 $imagePath = $attachment->url;
             } catch (\Exception $e) {
-                if ($this->request->isAjax()) {
-                    $this->error("图片上传失败：" . $e->getMessage());
-                } else {
-                    $this->error("图片上传失败：" . $e->getMessage());
-                }
+                $this->error("图片上传失败：" . $e->getMessage());
+                return;
             }
             
             // 获取配置信息
             $config_data = Db::name("qc_config")->where("id", 2)->find();
             if (!$config_data) {
-                if ($this->request->isAjax()) {
-                    $this->error('未找到配置信息');
-                } else {
-                    $this->error('未找到配置信息');
-                }
+                $this->error('未找到配置信息');
+                return;
             }
 
                 // 调用腾讯云OCR识别回单信息
@@ -191,20 +185,12 @@ class WriteOffReceipt extends Backend
                 }
                 
                 if (empty($order_number)) {
-                    if ($this->request->isAjax()) {
-                        $this->error('无法从图片中识别回单号');
-                    } else {
-                        $this->error('无法从图片中识别回单号');
-                    }
+                    $this->error('无法从图片中识别回单号');
                 }
                 
                 // 检查回单号是否已存在
                 if (Db::name('receipt_use_log')->where('receipt_no', $order_number)->find()) {
-                    if ($this->request->isAjax()) {
-                        $this->error('回单号已存在');
-                    } else {
-                        $this->error('回单号已存在');
-                    }
+                    $this->error('回单号已存在');
                 }
                 
                 // 保存回单信息
@@ -218,11 +204,7 @@ class WriteOffReceipt extends Backend
                 
                 $result = Db::name('receipt_use_log')->insert($insertData);
                 if (!$result) {
-                    if ($this->request->isAjax()) {
-                        $this->error('保存失败');
-                    } else {
-                        $this->error('保存失败');
-                    }
+                    $this->error('保存失败');
                 }
                 
                 $this->success('识别并保存成功');
