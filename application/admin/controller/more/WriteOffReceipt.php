@@ -120,7 +120,11 @@ class WriteOffReceipt extends Backend
             
             // 检查是否有文件被上传
             if (empty($file)) {
-                $this->error("请上传回单图片");
+                if ($this->request->isAjax()) {
+                    $this->error("请上传回单图片");
+                } else {
+                    $this->error("请上传回单图片");
+                }
             }
             
             try {
@@ -131,16 +135,23 @@ class WriteOffReceipt extends Backend
                 // 获取上传后的文件路径
                 $imagePath = $attachment->url;
             } catch (\Exception $e) {
-                $this->error("图片上传失败：" . $e->getMessage());
+                if ($this->request->isAjax()) {
+                    $this->error("图片上传失败：" . $e->getMessage());
+                } else {
+                    $this->error("图片上传失败：" . $e->getMessage());
+                }
             }
             
             // 获取配置信息
             $config_data = Db::name("qc_config")->where("id", 2)->find();
             if (!$config_data) {
-                $this->error('未找到配置信息');
+                if ($this->request->isAjax()) {
+                    $this->error('未找到配置信息');
+                } else {
+                    $this->error('未找到配置信息');
+                }
             }
-            
-            try {
+
                 // 调用腾讯云OCR识别回单信息
                 // 注意：这里需要使用完整的URL地址，而不是相对路径
                 $fullImageUrl = request()->domain() . $imagePath;
@@ -180,12 +191,20 @@ class WriteOffReceipt extends Backend
                 }
                 
                 if (empty($order_number)) {
-                    $this->error('无法从图片中识别回单号');
+                    if ($this->request->isAjax()) {
+                        $this->error('无法从图片中识别回单号');
+                    } else {
+                        $this->error('无法从图片中识别回单号');
+                    }
                 }
                 
                 // 检查回单号是否已存在
                 if (Db::name('receipt_use_log')->where('receipt_no', $order_number)->find()) {
-                    $this->error('回单号已存在');
+                    if ($this->request->isAjax()) {
+                        $this->error('回单号已存在');
+                    } else {
+                        $this->error('回单号已存在');
+                    }
                 }
                 
                 // 保存回单信息
@@ -199,13 +218,14 @@ class WriteOffReceipt extends Backend
                 
                 $result = Db::name('receipt_use_log')->insert($insertData);
                 if (!$result) {
-                    $this->error('保存失败');
+                    if ($this->request->isAjax()) {
+                        $this->error('保存失败');
+                    } else {
+                        $this->error('保存失败');
+                    }
                 }
                 
-                $this->success('识别并保存成功', null, ['receipt_no' => $order_number, 'image_path' => $imagePath]);
-            } catch (\Exception $e) {
-                $this->error('识别失败：' . $e->getMessage());
-            }
+                $this->success('识别并保存成功');
         }
         
         return $this->view->fetch();

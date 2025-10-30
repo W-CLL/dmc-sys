@@ -191,22 +191,25 @@
                                 console.error("响应解析失败详情:", e);
                                 console.error("原始响应:", xhr.responseText);
                                 
-                                // 检查响应内容是否包含错误信息
-                                var responseText = xhr.responseText;
-                                if (responseText.indexOf('识别失败：文件下载失败') !== -1) {
-                                    // 如果响应中包含具体的错误信息，直接显示
-                                    if (typeof Toastr !== 'undefined') {
-                                        Toastr.error("识别失败：文件下载失败");
-                                    } else {
-                                        alert("识别失败：文件下载失败");
+                                // 尝试解析可能的错误信息
+                                var errorMsg = "服务器响应格式错误，请联系管理员";
+                                try {
+                                    var errorResponse = JSON.parse(xhr.responseText);
+                                    if (errorResponse && errorResponse.msg) {
+                                        errorMsg = errorResponse.msg;
                                     }
+                                } catch (parseError) {
+                                    // 检查响应内容是否包含错误信息
+                                    var responseText = xhr.responseText;
+                                    if (responseText.indexOf('识别失败：文件下载失败') !== -1) {
+                                        errorMsg = "识别失败：文件下载失败";
+                                    }
+                                }
+                                
+                                if (typeof Toastr !== 'undefined') {
+                                    Toastr.error(errorMsg);
                                 } else {
-                                    // 其他解析错误
-                                    if (typeof Toastr !== 'undefined') {
-                                        Toastr.error("服务器响应格式错误，请联系管理员");
-                                    } else {
-                                        alert("服务器响应格式错误，请联系管理员");
-                                    }
+                                    alert(errorMsg);
                                 }
                                 
                                 // 重置提交状态，允许重新提交
