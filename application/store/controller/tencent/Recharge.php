@@ -93,6 +93,9 @@ class Recharge extends Store
             if (Db::name("tencent_transaction_log")->where("order_number", $order['order_number'])->count()) {
                 $this->error("该回单已充值");
             }
+            if (Db::name("store_money_log")->where("order_number", $order['order_number'])->count()) {
+                $this->error("该回单已充值");
+            }
             if (Db::name('receipt_use_log')->where("receipt_no", $order['order_number'])->count()){
                 $this->error("该回单已使用");
             }
