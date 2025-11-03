@@ -24,6 +24,9 @@ class TencentRefundAll
             }
             throw new Exception($message_cn);
         }
+        if ($res['data']['recommend_amount'] == 0){
+            throw new Exception('没有可转出金额');
+        }
         Db::startTrans();
         try {
             $account_model = new TencentAccount();
