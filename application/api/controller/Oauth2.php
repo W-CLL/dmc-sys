@@ -464,8 +464,7 @@ class Oauth2 extends Api
     {
 
 
-//        $access_token = Cache::get("qc_access_token");
-        $access_token = "0474ae375e72b53459aea289373b8b15e41ea2a7";
+        $access_token = Cache::get("qc_access_token");
         $page = Cache::get('update_company_info_page', 1);
         $com_model = new Company();
         $advertiser_info = $com_model
