@@ -119,7 +119,7 @@ class TencentRefundAll extends Controller
                 return '账户' . $account['account_id'] . '查询余额失败：' . $res['message'];
             }
             if ($res['data']['recommend_amount'] == 0){
-                $str .=  "账户" . $account['account_id'] . "余额不足，发起转出失败\n";
+                $str .=  "账户" . $account['account_id'] . "余额不足\n";
             }
         }
         if ($str){
