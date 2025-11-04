@@ -6,6 +6,7 @@ use app\robotapi\model\QueueRobot;
 use app\robotapi\model\Store;
 use app\robotapi\model\WechatGroup;
 use think\Controller;
+use txgg\Fund;
 
 class TencentRefundAll extends Controller
 {
@@ -105,6 +106,20 @@ class TencentRefundAll extends Controller
         }
         if (!empty($no_access)){
             return '无权操作这些账户：' . implode(',', $no_access);
+        }
+        foreach ($account_info['tencent_account'] as $account){
+            $res = Fund::transfer([
+                'account_id' => (int)$account['account_id'],
+                'fund_type' => 'FUND_TYPE_CASH',
+                'transfer_type' => 'ADVERTISER_TO_AGENCY',
+                'pre_fetch_amount' => 1,  // 是否查询余额 0 否，直接转账 1 是，不转账
+            ])['data'];
+            if ($res['code'] != 0){
+                return '账户' . $account['account_id'] . '查询余额失败：' . $res['message'];
+            }
+            if ($res['data']['recommend_amount'] == 0){
+                return '账户' . $account['account_id'] . '余额不足，发起转出失败';
+            }
         }
         return true;
     }
