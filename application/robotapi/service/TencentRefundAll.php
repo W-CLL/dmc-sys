@@ -96,6 +96,7 @@ class TencentRefundAll extends Controller
         $account_info = $wechat_group_model->getTencentAccountByStoreId($data['group_id'], $data['account_id_list']);
         $no_access = [];
         $can_option = [];
+        $str = '';
         if (!empty($account_info) && !empty($account_info['tencent_account'])){
             foreach ($account_info['tencent_account'] as $account){
                 $can_option[] = $account['account_id'];
@@ -118,8 +119,11 @@ class TencentRefundAll extends Controller
                 return '账户' . $account['account_id'] . '查询余额失败：' . $res['message'];
             }
             if ($res['data']['recommend_amount'] == 0){
-                return '账户' . $account['account_id'] . '余额不足，发起转出失败';
+                $str .=  "账户" . $account['account_id'] . "余额不足，发起转出失败\n";
             }
+        }
+        if ($str){
+            return $str;
         }
         return true;
     }
