@@ -614,11 +614,21 @@ class Oauth2 extends Api
             return;
         }
 
-        $advertiser_ids = Db::name("company")->where('kahuna', null)->whereOr('collaborators', null)->limit(100)->column("advertiser_id");
+        $advertiser_ids = Cache::store('redis')->handler()->lpop('advertiser_ids');
         if (empty($advertiser_ids)) {
-            echo '无更新';
+            $advertiser_ids = Db::name("company")->where('kahuna', null)->whereOr('collaborators', null)->column("advertiser_id");
+            if (empty($advertiser_ids)) {
+                echo '无更新';
+                return;
+            }
+            $split_array = array_chunk($advertiser_ids, 100);
+            foreach ($split_array as $split) {
+                Cache::store('redis')->handler()->rpush('advertiser_ids', serialize($split));
+            }
+            echo '重排序';
             return;
         }
+        $advertiser_ids = unserialize($advertiser_ids);
         $access_token = Cache::get("qc_access_token");
         $advertiser_ids = array_map(function ($item) {
             return (int)$item;
