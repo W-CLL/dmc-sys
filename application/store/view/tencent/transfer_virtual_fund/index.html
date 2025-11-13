@@ -1,0 +1,211 @@
+<style>
+/* 现代化样式 */
+.form-container {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    overflow: hidden;
+    margin-top: 20px;
+}
+
+.form-header {
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    padding: 20px;
+}
+
+.form-header h4 {
+    margin: 0;
+    color: #495057;
+    font-weight: 500;
+}
+
+.form-body {
+    padding: 25px;
+}
+
+.form-section {
+    margin-bottom: 25px;
+}
+
+.form-section:last-child {
+    margin-bottom: 0;
+}
+
+.section-title {
+    color: #495057;
+    font-weight: 500;
+    font-size: 16px;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #e9ecef;
+    display: flex;
+    align-items: center;
+}
+
+.section-title i {
+    margin-right: 8px;
+    font-size: 14px;
+}
+
+.form-group label {
+    color: #6c757d;
+    font-weight: 500;
+    font-size: 13px;
+    margin-bottom: 6px;
+}
+
+.form-control {
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-size: 13px;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-control:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+
+.selectpicker {
+    width: 100%;
+}
+
+.account-info {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.balance-display {
+    font-size: 18px;
+    font-weight: 600;
+    color: #28a745;
+}
+
+.btn-submit {
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 10px 20px;
+    border: none;
+    transition: all 0.2s ease;
+    background-color: #007bff;
+    color: white;
+}
+
+.btn-submit:hover {
+    background-color: #0069d9;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.btn-submit:disabled {
+    background-color: #6c757d;
+    transform: none;
+    box-shadow: none;
+}
+
+.note-box {
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 4px;
+    padding: 12px 15px;
+    color: #856404;
+    font-size: 13px;
+    margin-bottom: 20px;
+}
+</style>
+
+<div class="form-container">
+    <div class="form-header">
+        <h4><i class="fa fa-exchange text-primary"></i> 腾讯补偿虚拟金转账</h4>
+    </div>
+    
+    <form id="edit-form" class="form-horizontal form-ajax" role="form" data-toggle="validator" method="POST" action="">
+        <div class="form-body">
+            <!-- 注意事项 -->
+            <div class="form-section">
+                <div class="note-box">
+                    <i class="fa fa-info-circle"></i> 此页面仅操作账户的补偿虚拟金转账。
+                </div>
+            </div>
+
+            <!-- 账户选择 -->
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="fa fa-user text-primary"></i>
+                    账户选择
+                </div>
+                
+                <div class="form-group">
+                    <label class="control-label col-xs-12 col-sm-3">腾讯账户【发起方】:</label>
+                    <div class="col-xs-12 col-sm-9">
+                        <select data-live-search="true" name="account_id_initiate" id="account_id_initiate" class="form-control selectpicker">
+                            <option value="0" selected="selected">请选择发起账户</option>
+                            {foreach $account_data as $vo}
+                            <option value="{$vo.account_id}">{$vo.account_id} {$vo.name}</option>
+                            {/foreach}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="control-label col-xs-12 col-sm-3">腾讯账户【接收方】:</label>
+                    <div class="col-xs-12 col-sm-9">
+                        <select data-live-search="true" name="to_account_id" id="to_account_id" class="form-control selectpicker">
+                            <option value="0" selected="selected">请选择接收账户</option>
+                            {foreach $account_data as $vo}
+                            <option value="{$vo.account_id}">{$vo.account_id} {$vo.name}</option>
+                            {/foreach}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 转账信息 -->
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="fa fa-money text-success"></i>
+                    转账信息
+                </div>
+                
+                <div class="form-group">
+                    <label class="control-label col-xs-12 col-sm-3">【发起方】可操作余额:</label>
+                    <div class="col-xs-12 col-sm-9">
+                        <div id="initiate_money" class="balance-display">¥0.00</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="control-label col-xs-12 col-sm-3">转账金额:</label>
+                    <div class="col-xs-12 col-sm-9">
+                        <input type="number" class="form-control" id="money" name="money" value="" data-rule="required" step="0.01" placeholder="请输入转账金额" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="control-label col-xs-12 col-sm-3">备注说明:</label>
+                    <div class="col-xs-12 col-sm-9">
+                        <textarea class="form-control" id="remark" name="remark" rows="3" maxlength="100" placeholder="请输入转账备注（最多100字）"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 提交按钮 -->
+            <div class="form-group layer-footer" style="text-align: center; margin-top: 30px;">
+                <div class="col-xs-12">
+                    <button id="myButton" type="submit" class="btn btn-submit">
+                        <i class="fa fa-paper-plane"></i> 确认转账
+                    </button>
+                    <button type="reset" class="btn btn-secondary" style="border-radius: 4px; font-size: 14px; padding: 10px 20px; margin-left: 10px;">
+                        <i class="fa fa-refresh"></i> 重置
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
