@@ -40,7 +40,7 @@ class TransferVirtualFund extends Store
                 Db::rollback();
                 $this->error($e->getMessage());
             }
-            $update['transfer_serial'] = $res['data']['external_bill_no'];
+            $update['order_uid'] = $res['data']['external_bill_no'];
             $update['record'] = json_encode($res, JSON_UNESCAPED_UNICODE);
             $update['update_time'] = time();
             Db::name("tencent_transfer_log")->where(["id" => $transfer_records_id])->update($update);
