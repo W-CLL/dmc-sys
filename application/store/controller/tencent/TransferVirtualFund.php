@@ -24,11 +24,11 @@ class TransferVirtualFund extends Store
                 $this->inheritanceRatio($account_id, $to_account_id, $money); // 继承返点比例
 
                 $res = Fund::accountToAccountTransfer([
-                    'account_id' => $account_id,
-                    'to_account_id' => $to_account_id,
+                    'account_id' => (int)$account_id,
+                    'to_account_id' => (int)$to_account_id,
                     'fund_type' => 'FUND_TYPE_COMPENSATE_VIRTUAL',
-                    'amount' => $money * 100,
-                    'external_bill_no' => uniqid('hxsz-tjzz-'),
+                    'amount' => (float)$money * 100,
+                    'external_bill_no' => uniqid('hx-'),
                     'pre_fetch_amount' => 0,
                 ])['data'];
 
@@ -129,8 +129,8 @@ class TransferVirtualFund extends Store
         $account = Db::name("tencent_account")->where(['account_id' => $account_id, "store_id" => $this->auth->id])->find();
         if ($account) {
             $res = Fund::accountToAccountTransfer([
-                'account_id' => $account_id,
-                'to_account_id' => $account_id,
+                'account_id' => (int)$account_id,
+                'to_account_id' => (int)$account_id,
                 'fund_type' => 'FUND_TYPE_COMPENSATE_VIRTUAL',
                 'amount' => 0,
                 'pre_fetch_amount' => 1,
