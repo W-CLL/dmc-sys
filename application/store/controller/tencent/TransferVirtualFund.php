@@ -129,8 +129,8 @@ class TransferVirtualFund extends Store
         $account = Db::name("tencent_account")->where(['account_id' => $account_id, "store_id" => $this->auth->id])->find();
         if ($account) {
             $res = Fund::accountToAccountTransfer([
-                'account_id' => 68896452,
-                'to_account_id' => 68896452,
+                'account_id' => $account_id,
+                'to_account_id' => $account_id,
                 'fund_type' => 'FUND_TYPE_COMPENSATE_VIRTUAL',
                 'amount' => 0,
                 'pre_fetch_amount' => 1,
