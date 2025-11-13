@@ -56,6 +56,15 @@ class Fund extends Base
     }
 
 
+    public static function accountToAccountTransfer($params){
+        self::initCommonParams();
+        $commonParams = is_array(self::$common_params) ? self::$common_params : [];
+        $url = self::$url . 'merge_fund_type_subcustomer_transfer/add';
+        $url .= '?' . http_build_query($commonParams);
+        return sendApiRes($url, $params, 'POST');
+    }
+
+
 
 
 
