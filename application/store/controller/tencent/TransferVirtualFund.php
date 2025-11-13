@@ -44,6 +44,7 @@ class TransferVirtualFund extends Store
             $update['record'] = json_encode($res, JSON_UNESCAPED_UNICODE);
             $update['update_time'] = time();
             Db::name("tencent_transfer_log")->where(["id" => $transfer_records_id])->update($update);
+            $this->success("转账成功");
         }
         $account_data = Db::name("tencent_account")
             ->where("store_id", $this->auth->id)
