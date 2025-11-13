@@ -77,7 +77,7 @@ class TransferVirtualFund extends Store
             "store_id" => $this->auth->id,
             "tencent_account_id" => $target_account['id'],
             "account_type" => $target_account['account_type'],
-            "advertiser_id" => $account_id,
+            "account_id" => $account_id,
             "transfer_direction" => 1,
             "money" => $money,
             "remark" => input("remark", ""),
