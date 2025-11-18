@@ -239,6 +239,24 @@ class SubsequentOperations
     }
 
 
+    public function TransferVirtualFund($data){
+        try {
+            $transfer_records_model = new TencentTransferLog();
+            $info = $transfer_records_model->get($data["transfer_records_id"]);
+            $msg = "补偿金已成功转移";
+            $img_url = $this->createPeerImg($data['account_id'],$data['to_account_id'],$info);
+            if (!$transfer_records_model->where(["id" => $data["transfer_records_id"]])->update(['image' => $img_url])) {
+                throw new Exception('转账成功，状态更新失败');
+            }
+            $this->callBack($data["callback_data"], $msg, $img_url);
+        }catch (Exception $e){
+            throw new Exception($e->getMessage());
+        }
+
+        return true;
+    }
+
+
     private function createTransferImg($transfer_records_data){
         if (isset($transfer_records_data['sub_wallet_id'])){
 
@@ -380,6 +398,44 @@ class SubsequentOperations
 
         $res = generateTransferImg($combined_data, $headers, $path, $file_name);
 
+        if ($res) {
+            return 'tencent_transfer_images/' . $day . '/' . $file_name;
+        } else {
+            throw new Exception($res);
+        }
+    }
+
+
+    private function createPeerImg($account_id, $to_account_id, $transfer_info){
+        $account_model = new TencentAccount();
+        $account_info = $account_model->where(["account_id" => $account_id])->field('name,account_id')->find();
+        $to_account_info = $account_model->where(["account_id" => $to_account_id])->field('name,account_id')->find();
+        $img_data = [
+            date('Y-m-d H:i:s',$transfer_info['update_time']),
+            $account_info['name'] . "\n转出方ID：" . $account_info['account_id'],
+            $to_account_info['name'] . "\n转入方ID：" . $to_account_info['account_id'],
+            '虚拟补偿金转移',
+            number_format($transfer_info['money'], 2),
+            $transfer_info['order_uid']
+        ];
+        $day = date('Ymd');
+        $path = ROOT_PATH . 'public/tencent_transfer_images/' . $day . '/';
+        $file_name = (int)round(microtime(true) * 1000) . '.png';
+        if (!file_exists($path)) {
+            $created = mkdir($path, 0755, true);
+            if (!$created) {
+                // 错误处理
+                throw new Exception("目录创建失败: {$path}");
+            }
+        }
+        $res = generateTransferImg($img_data, [
+            '转账时间',
+            '转出方',
+            '转入方',
+            '转账类型',
+            '转账金额',
+            '订单号'
+        ], $path, $file_name);
         if ($res) {
             return 'tencent_transfer_images/' . $day . '/' . $file_name;
         } else {

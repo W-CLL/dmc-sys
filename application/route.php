@@ -68,3 +68,10 @@ Route::get('tencent-refund-all', 'robotapi/TencentRefundAll/get');
 Route::post('tencent-refund-all', 'robotapi/TencentRefundAll/post');
 Route::put('tencent-refund-all', 'robotapi/TencentRefundAll/put');
 Route::delete('tencent-refund-all', 'robotapi/TencentRefundAll/delete');
+
+
+// 腾讯广告虚拟补偿金转移接口
+Route::get('tencent-virtual-fund', 'robotapi/TransferVirtualFund/get');
+Route::post('tencent-virtual-fund', 'robotapi/TransferVirtualFund/post');
+Route::put('tencent-virtual-fund', 'robotapi/TransferVirtualFund/put');
+Route::delete('tencent-virtual-fund', 'robotapi/TransferVirtualFund/delete');
