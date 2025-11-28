@@ -27,7 +27,7 @@ define(['jquery', 'bootstrap', 'store', 'table', 'form'], function ($, undefined
                         {checkbox: true},
                         {field: 'id', title: __('Id'), visible: false},
                         {field: 'id', title: "ID"},
-                        {field: 'account_id', title: "千川账户ID"},
+                        {field: 'account_id', title: "广告账户ID"},
                         {field: 'sub_wallet_id', title: "子钱包ID"},
                         {field: 'money', title: "变动金额"},
                         {field: 'type', title: "类型", formatter: function(value,row,index) {
