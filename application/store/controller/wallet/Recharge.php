@@ -91,13 +91,13 @@ class Recharge extends Store
             }
             $redis->del($order_num);
             $order = json_decode($order, true);
-            if (Db::name("store_money_log")->where("order_number", $order['order_number'])->count()) {
+            if (Db::name("store_money_log")->where(['order_number' => ['in', $order_num['order_number']]])->count()) {
                 $this->error("该回单已充值");
             }
-            if (Db::name("tencent_transaction_log")->where("order_number", $order['order_number'])->count()) {
+            if (Db::name("tencent_transaction_log")->where(['order_number' => ['in', $order_num['order_number']]])->count()) {
                 $this->error("该回单已充值");
             }
-            if (Db::name('receipt_use_log')->where("receipt_no", $order['order_number'])->count()){
+            if (Db::name('receipt_use_log')->where(["receipt_no" => ['in', $order_num['order_number']]])->count()){
                 $this->error("该回单已使用");
             }
             Db::startTrans();
@@ -207,8 +207,9 @@ class Recharge extends Store
         $data = TextRecognition::get_image_info($config_data['secret'], $config_data['api_key'], request()->domain() . $image);
         $money = 0;
         $payee = '';
-        $order_number = '';
+        $order_number = [];
         $account_type = 0;
+        $info = [];
 
         foreach ($data['BankSlipInfos'] as $k => $v) {
             if (!$money) {
@@ -242,28 +243,28 @@ class Recharge extends Store
             if ($account_type == 0) {
                 $payee = '';
             }
-            if (!$order_number) {
-                foreach (self::$unique_identifier as $key => $vel) {
-                    if ($v["Name"] == $vel) {
-                        if (ctype_digit($v['Value']) && $v["Value"] != 0) {
-                            if (!empty((int)$v['Value'])) {
-                                $order_number = $v['Value'];
-                            }
-                        } else {
-                            if (!empty($v['Value'])) {
-                                $order_number = $v['Value'];
-                            }
-                        }
+            $info[$v["Name"]] = $v['Value'];
+        }
+        foreach (self::$unique_identifier as $vel) {
+            if (isset($info[$vel])) {
+                if (ctype_digit($info[$vel]) && $info[$vel] != 0) {
+                    if (!empty((int)$info[$vel])) {
+                        $order_number[] = $info[$vel];
+                    }
+                } else {
+                    if (!empty($info[$vel])) {
+                        $order_number[] = $info[$vel];
                     }
                 }
             }
         }
+
         if ($account_type == 0) {
             return json(['code' => 0, "msg" => "识别失败,请检查回单"]);
         }
 
         if ($money && $payee && $order_number) {
-            if (Db::name("store_money_log")->where("order_number", $order_number)->count()) {
+            if (Db::name("store_money_log")->where(['order_number' => ['in', $order_number]])->count()) {
                 return json(['code' => 0, "msg" => "该回单已充值"]);
             }
             $order_num = date('YmdHis') . mt_rand(1000, 9999);
