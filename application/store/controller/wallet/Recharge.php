@@ -91,7 +91,7 @@ class Recharge extends Store
             }
             $redis->del($order_num);
             $order = json_decode($order, true);
-            if (Db::name("store_money_log")->whereIn(['order_number' => $order['order_number']])->count()) {
+            if (Db::name("store_money_log")->where(['order_number' => ['in', $order['order_number']]])->count()) {
                 $this->error("该回单已充值");
             }
             if (Db::name("tencent_transaction_log")->where(['order_number' => ['in', $order['order_number']]])->count()) {
