@@ -169,7 +169,7 @@ class Recharge extends Store
                     "receipt_image" => $order['image'],
                     "before_money" => $before_money,
                     "today_money" => $before_money + $actual_money,
-                    "order_number" => $order["order_number"],
+                    "order_number" => $order["order_number"][0],
                     "type" => 3,
                     "explain" => $explain,
                     "create_time" => time(),
