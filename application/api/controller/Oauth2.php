@@ -778,6 +778,9 @@ class Oauth2 extends Api
         $queueModel = new Queue();
         $array = [];
         $user_list = Db::name('wechat_group')->where(['power' => ['like', '%3%']])->field('bind_store_id,power,group_id')->select();
+        if (empty($user_list)){
+            echo "无操作用户";
+        }
         switch ($type){
             case 1:
                 foreach ($user_list as $item){
