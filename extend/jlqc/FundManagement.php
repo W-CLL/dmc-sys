@@ -662,6 +662,12 @@ class FundManagement
         return sendApiRes($url, $params, 'GET', ['Access-Token' => $access_token])['data'];
     }
 
+    public static function get_adv_balance($params){
+        $access_token = Cache::get("qc_access_token");
+        $url = "https://api.oceanengine.com/open_api/v3.0/account/fund/get/";
+        return sendApiRes($url, $params, 'GET', ['Access-Token' => $access_token])['data'];
+    }
+
     /**
      * 获取代理商素材详情
      * @param array $params

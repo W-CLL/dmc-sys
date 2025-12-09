@@ -54,7 +54,7 @@ class GroupList extends Backend
             // 过滤并确保权限值是有效的
             $valid_powers = [];
             foreach ($power as $p) {
-                if (in_array($p, ['1', '2'])) {
+                if (in_array($p, ['1', '2', '3'])) {
                     $valid_powers[] = $p;
                 }
             }
@@ -64,6 +64,10 @@ class GroupList extends Backend
             } else {
                 $data['power'] = '';
             }
+            
+            // 添加预警金额设置
+            $data['qc_warning'] = $this->request->param("qc_warning", 0);
+            $data['tx_warning'] = $this->request->param("tx_warning", 0);
             
             if ($wechat_group_model->where("id",$id)->update($data)){
                 $this->success();
@@ -83,7 +87,8 @@ class GroupList extends Backend
         // 处理权限选项
         $power_options = [
             '1' => '千川助手权限',
-            '2' => '腾讯助手权限'
+            '2' => '腾讯助手权限',
+            '3' => '千川通知权限'
         ];
         $this->view->assign('power_options', $power_options);
         

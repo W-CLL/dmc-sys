@@ -774,4 +774,45 @@ class Oauth2 extends Api
     }
 
 
+    public function getAdFund($type = 1){
+        $queueModel = new Queue();
+        $array = [];
+        $user_list = Db::name('wechat_group')->where(['power' => ['like', '%3%']])->field('bind_store_id,power,group_id')->select();
+        switch ($type){
+            case 1:
+                foreach ($user_list as $item){
+                    $company_list = Db::name('company')->where(['store_id' => $item['bind_store_id']])->field('advertiser_id')->column('advertiser_id');
+                    $array[$item['group_id']] = $company_list;
+                }
+                foreach ($array as $group_id => $advertiser_id_list){
+                    $chunk = array_chunk($advertiser_id_list, 20);
+                    foreach ($chunk as $item){
+                        $data = [
+                            'advertiser_id_list' => $item,
+                            'group_id' => $group_id,
+                            'type' => $type
+                        ];
+                        $queueModel->addQueue('查询目标账户资金', 'app\job\checkAdFund', 'checkAdFund', $data, '');
+                    }
+                }
+                break;
+            case 2:
+                foreach ($user_list as $item){
+                    $wallet_list = Db::name('qc_share_wallet')->where(['bind_store_id' => $item['bind_store_id']])->field('sub_wallet_id')->column('sub_wallet_id');
+                    $array[$item['group_id']] = $wallet_list;
+                }
+                foreach ($array as $group_id => $sub_wallet_id_list){
+                    $chunk = array_chunk($sub_wallet_id_list, 200);
+                    foreach ($chunk as $item){
+                        $data = [
+                            'sub_wallet_id_list' => $item,
+                            'group_id' => $group_id,
+                            'type' => $type
+                        ];
+                        $queueModel->addQueue('查询目标账户资金', 'app\job\checkAdFund', 'checkAdFund', $data, '');
+                    }
+                }
+        }
+        echo "添加任务成功";
+    }
 }
