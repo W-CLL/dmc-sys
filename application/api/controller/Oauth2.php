@@ -780,6 +780,7 @@ class Oauth2 extends Api
         $user_list = Db::name('wechat_group')->where(['power' => ['like', '%3%']])->field('bind_store_id,power,group_id')->select();
         if (empty($user_list)){
             echo "无操作用户";
+            die;
         }
         switch ($type){
             case 1:
