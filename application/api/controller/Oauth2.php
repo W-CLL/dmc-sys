@@ -775,6 +775,12 @@ class Oauth2 extends Api
 
 
     public function getAdFund($type = 1){
+        // 设置免扰时间段，如果处于每天1-6点直接，则跳过
+        $time = time();
+        if ($time >= strtotime("today 01:00:00") && $time < strtotime("today 06:00:00")){
+            echo "免扰时间段";
+            die;
+        }
         $queueModel = new Queue();
         $array = [];
         $user_list = Db::name('wechat_group')->where(['power' => ['like', '%3%']])->field('bind_store_id,power,group_id')->select();
