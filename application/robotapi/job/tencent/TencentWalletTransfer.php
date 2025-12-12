@@ -37,6 +37,7 @@ class TencentWalletTransfer
             // 发起转账
             do{
                 $transfer_result = $this->initiateTransfer($data['transfer_records_data']);
+                var_dump($transfer_result);die;
             }while($transfer_result['code'] != 0);
 
             Db::commit();
@@ -88,7 +89,7 @@ class TencentWalletTransfer
             'account_id' => 64568612,
             'to_account_id' => $data['sub_wallet_id'],
             'fund_type' => 'FUND_TYPE_CASH',
-            'amount' => $data['money'] * 100,
+            'amount' => (int) ($data['money'] * 100),
             'transfer_type' => $data['transfer_direction'] == 1 ? 'AGENCY_TO_WALLET' : 'WALLET_TO_AGENCY',
             'external_bill_no' => uniqid('hxsz-gx-'),
             'memo' => $data['remark'],
