@@ -37,7 +37,6 @@ class TencentWalletTransfer
             // 发起转账
             do{
                 $transfer_result = $this->initiateTransfer($data['transfer_records_data']);
-                var_dump($transfer_result);die;
             }while($transfer_result['code'] != 0);
 
             Db::commit();
