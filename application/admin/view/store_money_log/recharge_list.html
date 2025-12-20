@@ -43,6 +43,12 @@
                     </form>
                     <div id="toolbar" class="toolbar">
                         <a href="javascript:;" id="shuaxin" class="btn btn-primary btn-refresh" title="{:__('Refresh')}" ><i class="fa fa-refresh"></i> </a>
+                        <button type="button" class="btn btn-success" onclick="batchAudit(1)">
+                            <i class="fa fa-check"></i> 批量通过
+                        </button>
+                        <button type="button" class="btn btn-danger" onclick="batchAudit(2)">
+                            <i class="fa fa-times"></i> 批量拒绝
+                        </button>
                     </div>
 
 
@@ -75,7 +81,44 @@
     document.getElementById('tj').addEventListener('click', function(event) {
         document.getElementById('shuaxin').click()
     })
+    
+    // 批量审核功能
+    function batchAudit(status) {
+        var ids = $("#table").bootstrapTable('getSelections');
+        if (ids.length <= 0) {
+            Toastr.error("请至少选择一条记录");
+            return;
+        }
+        
+        var idsArray = [];
+        $.each(ids, function(i, val) {
+            idsArray.push(val.id);
+        });
+        
+        var idsStr = idsArray.join(',');
+        var statusText = status == 1 ? '通过' : '拒绝';
+        
+        Layer.confirm('确定要批量' + statusText + '选中的 ' + idsArray.length + ' 条记录吗？', {
+            btn: ['确定', '取消']
+        }, function(index) {
+            $.ajax({
+                type: "POST",
+                url: "store_money_log/batch_audit",
+                data: {ids: idsStr, status: status},
+                dataType: "json",
+                success: function(ret) {
+                    if (ret.code == 1) {
+                        Toastr.success(ret.msg);
+                        $("#table").bootstrapTable('refresh');
+                    } else {
+                        Toastr.error(ret.msg);
+                    }
+                },
+                error: function() {
+                    Toastr.error("请求失败，请重试");
+                }
+            });
+            Layer.close(index);
+        });
+    }
 </script>
-
-
-

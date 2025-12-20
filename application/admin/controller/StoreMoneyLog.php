@@ -197,6 +197,40 @@ Class StoreMoneyLog extends Backend{
         return $this->view->fetch();
     }
 
+    /**
+     * 一键审核功能
+     */
+    public function batch_audit()
+    {
+        if ($this->request->isPost()) {
+            $ids = input('ids');
+            $status = input('status');
+            
+            if (!$ids || !in_array($status, [1, 2])) {
+                $this->error("参数错误，请重试");
+            }
+            
+            // 将逗号分隔的ID转换为数组
+            $idsArray = explode(',', $ids);
+            
+            // 批量更新状态
+            $result = Db::name("store_money_log")
+                ->where(["id"=>["in", $idsArray], "status"=>0])
+                ->update([
+                    "auditing_admin_id" => $this->auth->id,
+                    "status" => $status,
+                    "update_time" => time()
+                ]);
+            
+            if ($result) {
+                $this->success("批量审核成功");
+            } else {
+                $this->error("审核失败或记录已被审核");
+            }
+        }
+        $this->error("非法请求");
+    }
+
     public function auditing($ids = null)
     {
         if ($this->request->isPost()) {
