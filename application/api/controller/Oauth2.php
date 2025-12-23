@@ -802,7 +802,7 @@ class Oauth2 extends Api
                             'group_id' => $group_id,
                             'type' => $type
                         ];
-                        $queueModel->addQueue('查询目标账户资金', 'app\job\checkAdFund', 'checkAdFund', $data, '');
+                        \think\Queue::push('app\job\checkAdFund', $data, "checkAdFund");
                     }
                 }
                 break;
@@ -819,7 +819,7 @@ class Oauth2 extends Api
                             'group_id' => $group_id,
                             'type' => $type
                         ];
-                        $queueModel->addQueue('查询目标账户资金', 'app\job\checkAdFund', 'checkAdFund', $data, '');
+                        \think\Queue::push('app\job\checkAdFund', $data, "checkAdFund");
                     }
                 }
         }
