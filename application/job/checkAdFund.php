@@ -15,15 +15,15 @@ class checkAdFund
 
     public function fire(Job $job, $data)
     {
-        $jobId = json_decode($job->getRawBody(), true)['id'];
-        $queueModel = new \app\common\model\Queue();
-        $queueData = $queueModel->where('job_id', $jobId)->find();
-        if (!$queueData) {
-            $job->delete();
-            return '';
-        }
+//        $jobId = json_decode($job->getRawBody(), true)['id'];
+//        $queueModel = new \app\common\model\Queue();
+//        $queueData = $queueModel->where('job_id', $jobId)->find();
+//        if (!$queueData) {
+//            $job->delete();
+//            return '';
+//        }
         try {
-            $isJobDone = $this->doJob($data, $queueData);
+            $isJobDone = $this->doJob($data);
             if ($isJobDone) {
                 $job->delete();
             } else {
@@ -37,7 +37,7 @@ class checkAdFund
     }
 
 
-    public function doJob($data, $queueData)
+    public function doJob($data)
     {
         $warning_value = Db::name('wechat_group')->where("group_id", $data['group_id'])->value("qc_warning");
         switch ($data['type']){
