@@ -892,7 +892,8 @@ if (!function_exists('skipIfContainsError')) {
     {
         $defaultPatterns = [
             '广告主账号已禁用',
-            'No permission to operate account'
+            'No permission to operate account',
+            'Can not find ad from nebula'
         ];
 
         $merged = array_merge($defaultPatterns, $patterns);
