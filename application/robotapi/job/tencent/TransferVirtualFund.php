@@ -23,7 +23,11 @@ class TransferVirtualFund
             throw new Exception('获取可操作虚拟补偿金失败');
         }
         $transfer_data = $data['data'];
-        $transfer_data['money'] = number_format($check['data']['recommend_amount'] / 100, 2);
+        // 确保 recommend_amount 是纯数字格式（去除可能的千位分隔符）
+        $recommend_amount = is_string($check['data']['recommend_amount']) ? 
+            floatval(str_replace(',', '', $check['data']['recommend_amount'])) : 
+            $check['data']['recommend_amount'];
+        $transfer_data['money'] = $recommend_amount / 100;  // 直接使用数值，不使用number_format
         try {
             $transfer_records_model = new TencentTransferLog();
             // 生成订单
