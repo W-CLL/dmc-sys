@@ -20,8 +20,7 @@ class TransferVirtualFund
             'pre_fetch_amount' => 1,
         ])['data'];
         if ($check['code'] != 0){
-            var_dump($check);die;
-//            throw new Exception('获取可操作虚拟补偿金失败');
+            throw new Exception('获取可操作虚拟补偿金失败');
         }
         $transfer_data = $data['data'];
         $transfer_data['money'] = number_format($check['data']['recommend_amount'] / 100, 2);
