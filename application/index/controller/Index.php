@@ -460,16 +460,15 @@ class Index extends Frontend
 
     public function updatePolicy(){
         $date = date('Y-m-d');
-        if($date != '2025-07-03'){
-            echo "非2025-07-03禁止访问";
+        if($date != '2026-01-01'){
+            echo "非2026-01-01禁止访问";
             return;
         }
 //        $ids_bp = [1,3,4,11,12];
 //        $ids_pp = [5,8];
-        $ids = [1,3,4,5,6,7,8,10,11,12];
-        Db::name('store')->where(['group_id'=>['in',$ids]])->update(['private_discount_percentage' => 1.03,'public_discount_percentage' => 1.0]);
-//        Db::name('store')->where(['group_id'=>['in',$ids_pp]])->update(['private_discount_percentage' => 1.03,'public_discount_percentage' => 1.0]);
-        Db::name('company')->where(['discount_percentage' => ['neq',0]])->update(['discount_percentage' => 1.03]);
+//        $qc_ids = [1,3,4,5,6,7,8,10,11,12];
+        Db::name('store')->where(['id'=>['in',[161,104]]])->update(['private_discount_percentage' => 1.03]);
+        Db::name('tencent_store')->where(['store_id'=>['in',[157,156,152,154]]])->update(['public_discount_percentage_tencent' => 1.04]);
         echo "更新完成";
     }
 
