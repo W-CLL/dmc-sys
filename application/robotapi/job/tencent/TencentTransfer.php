@@ -101,7 +101,12 @@ class TencentTransfer
                     $order_uid = $transfer['data']['external_bill_no'];
                 }
                 else if ($data['money'] > $agent_balance_info['FUND_TYPE_GIFT']){
+                    $maxRetry = 3;
+                    $retryCount = 0;
                     do{
+                        if (++$retryCount > $maxRetry) {
+                            throw new Exception("转账重试次数超过限制");
+                        }
                         $remaining_amount = $data['money'] - $agent_balance_info['FUND_TYPE_GIFT'];
                         if ($first_bool){
                             $first = $this->sendRequest($data, $agent_balance_info['FUND_TYPE_GIFT'], 'FUND_TYPE_GIFT');
@@ -163,7 +168,12 @@ class TencentTransfer
                     $order_uid = $transfer['data']['external_bill_no'];
                 }
                 else if ($data['money'] > $fund_info['FUND_TYPE_CASH']){
+                    $maxRetry = 3;
+                    $retryCount = 0;
                     do{
+                        if (++$retryCount > $maxRetry) {
+                            throw new Exception("转账重试次数超过限制");
+                        }
                         $remaining_amount = $data['money'] - $fund_info['FUND_TYPE_CASH'];
                         if ($first_bool){
                             $first = $this->sendRequest($data, $agent_balance_info['FUND_TYPE_CASH'], 'FUND_TYPE_CASH');
