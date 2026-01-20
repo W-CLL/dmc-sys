@@ -20,7 +20,7 @@ class RobotBaseJob
         if (!$queueData) {
             Log::error("RobotBaseJob: 队列记录不存在, job_id={$jobId}");
             $job->delete();
-            return false;
+            return '';
         }
 
         try {
@@ -38,7 +38,7 @@ class RobotBaseJob
             if ($isJobDone) {
                 $queueData->save(['id' => $queueData['id'], 'status' => 1, 'msg' => "处理完成"]);
                 $job->delete();
-                return true;
+                return '';
             } else {
                 throw new Exception('任务执行返回失败');
             }
@@ -63,7 +63,7 @@ class RobotBaseJob
                 // 延迟重试 - 使用 return 替代 exit，防止杀死 worker 进程
                 $delay = $currentAttempts * 10 * $currentAttempts;
                 $job->release($delay);
-                return false;
+                return '';
             } else {
                 // 超过最大重试次数
                 $queueData->save(['id' => $queueData['id'], 'status' => 2, 'msg' => $e->getMessage()]);
@@ -71,7 +71,7 @@ class RobotBaseJob
                 if (!empty($data['callback_data'])) {
                     $this->callback($data['callback_data'], $e->getMessage());
                 }
-                return false;
+                return '';
             }
         }
     }
