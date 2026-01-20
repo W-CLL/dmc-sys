@@ -38,7 +38,9 @@ class SubsequentOperations
         $transfer_records_model = new TencentTransferLog();
         $transfer_records_data = $transfer_records_model->where(["id" => $data["transfer_records_id"]])->find();
         $store_model = new TencentStore();
-        $store_info = $store_model->where("store_id", $transfer_records_data["store_id"])->lock(true)->find();
+        $store_info = $store_model->where("store_id", $transfer_records_data["store_id"])
+//            ->lock(true)
+            ->find();
         $operate = $transfer_records_data["transfer_direction"] == 1 ? "腾讯广告转入" : "腾讯广告退款";
         $type = $transfer_records_data["account_type"] == 1 ? "（公）" : "（私）";
         $money_log_data = [
@@ -153,7 +155,9 @@ class SubsequentOperations
         $transfer_records_model = new TencentWalletTransferLog();
         $transfer_records_data = $transfer_records_model->where(["id" => $data["transfer_records_id"]])->find();
         $store_model = new TencentStore();
-        $store_info = $store_model->where("store_id", $transfer_records_data["store_id"])->lock(true)->find()->toArray();
+        $store_info = $store_model->where("store_id", $transfer_records_data["store_id"])
+//            ->lock(true)
+            ->find()->toArray();
         $operate = $transfer_records_data["transfer_direction"] == 1 ? "腾讯广告共享钱包转入" : "腾讯广告共享钱包退款";
         $type = $transfer_records_data["account_type"] == 1 ? "（公）" : "（私）";
 

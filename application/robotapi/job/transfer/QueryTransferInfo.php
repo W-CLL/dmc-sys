@@ -93,7 +93,9 @@ class QueryTransferInfo
                 try {
                     $store_model = new Store();
                     $store_money_log_model = new StoreMoneyLog();
-                    $store_info = $store_model->where("id", $transfer_records_data["store_id"])->lock(true)->find();
+                    $store_info = $store_model->where("id", $transfer_records_data["store_id"])
+//                        ->lock(true)
+                        ->find();
                     $money_log_data = $this->buildMoneyLog($store_info, $transfer_records_data);
                     $money_log_id = $store_money_log_model->insertGetId($money_log_data);
                     if (!$money_log_id) {

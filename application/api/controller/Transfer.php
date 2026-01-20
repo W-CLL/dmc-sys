@@ -37,7 +37,10 @@ class Transfer extends Api
                     //转账成功
                     Db::startTrans();
                     try {
-                        $store = Db::name("store")->where("id", $v["store_id"])->lock(true)->find();
+                        $store = Db::name("store")->where("id", $v["store_id"])
+//                            ->lock(true)
+
+                            ->find();
                         $money_log = [
                             "store_id" => $v["store_id"],
                             "company_id" => $v['company_id'],

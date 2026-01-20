@@ -41,7 +41,9 @@ class QueryWalletTransferInfo
                 switch ($transfer_detail['data']['transfer_status']){
                     case "TRANSFER_SUCCESS":
                         $store_model = new StoreModel();
-                        $store_info = $store_model->where("id", $transfer_data["store_id"])->lock(true)->find();
+                        $store_info = $store_model->where("id", $transfer_data["store_id"])
+//                            ->lock(true)
+                            ->find();
                         $img_url = $this->createTransferImg($transfer_data,$transfer_detail);
                         if(!$transfer_log_model->where(["id" => $data["swtl_id"]])->update([
                             "status" => 1,
