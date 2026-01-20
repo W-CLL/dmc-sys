@@ -12,34 +12,62 @@ use txgg\Fund;
 
 class TencentTransfer
 {
-    public function doJob($data)
+    private function writeLog($type, $message, $context = [])
     {
+        $logDir = __DIR__ . '/log';
+        if (!is_dir($logDir)) {
+            mkdir($logDir, 0755, true);
+        }
+        $logFile = $logDir . '/transfer_' . date('Y-m-d') . '.log';
+        $logData = [
+            'time' => date('Y-m-d H:i:s'),
+            'type' => $type,
+            'message' => $message,
+            'context' => $context
+        ];
+        file_put_contents($logFile, json_encode($logData, JSON_UNESCAPED_UNICODE) . PHP_EOL, FILE_APPEND | LOCK_EX);
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function doJob($data): bool
+    {
+        $this->writeLog('INFO', '开始执行转账任务', [
+            'store_id' => $data['transfer_records_data']['store_id'] ?? '',
+            'account_id' => $data['transfer_records_data']['account_id'] ?? '',
+            'money' => $data['transfer_records_data']['money'] ?? '',
+            'direction' => $data['transfer_records_data']['transfer_direction'] ?? ''
+        ]);
+
         Db::startTrans();
         try {
             if($data['transfer_records_data']['transfer_direction'] == 1){
                 $refund_model = new TencentRefund();
-                //添加当前折扣百分比下的充值记录
                 $refund_model->addStoreRefundRecord($data['money'], $data['transfer_records_data']);
             }else{
                 $refund_model = new TencentRefund();
-                //扣除最新折扣百分比的充值记录
                 $refund_model->getRealRefundRebate($data['transfer_records_data']);
             }
 
             $transfer_records_model = new TencentTransferLog();
-            // 生成订单
             $transfer_records_id = $transfer_records_model->insertGetId($data['transfer_records_data']);
             if (!$transfer_records_id) {
+                $this->writeLog('ERROR', '生成转账记录失败', ['data' => $data['transfer_records_data']]);
                 throw new Exception("生成转账记录失败");
             }
-            // 扣除费用
+            $this->writeLog('INFO', '转账记录已创建', ['transfer_records_id' => $transfer_records_id]);
+
             $this->deductingFees($data['transfer_records_data']);
-            // 发起转账
+            $this->writeLog('INFO', '扣款完成');
+
             list($order_uid,$record) = $this->initiateTransfer($data['transfer_records_data']);
+            $this->writeLog('INFO', 'API转账成功', ['order_uid' => $order_uid]);
             Db::commit();
         }catch (Exception $e){
             Db::rollback();
-            throw new Exception($e->getMessage()); // 重新抛出异常
+            $this->writeLog('ERROR', '事务回滚', ['error' => $e->getMessage()]);
+            throw new Exception($e->getMessage());
         }
         $transfer_records_model->where(["id" => ["=", $transfer_records_id]])->update([
             "order_uid" => $order_uid,
@@ -105,8 +133,18 @@ class TencentTransfer
                     $retryCount = 0;
                     do{
                         if (++$retryCount > $maxRetry) {
+                            $this->writeLog('ERROR', '转入-分批转账重试次数超过限制', [
+                                'max_retry' => $maxRetry,
+                                'first_bool' => $first_bool,
+                                'second_bool' => $second_bool,
+                                'account_id' => $data['account_id']
+                            ]);
                             throw new Exception("转账重试次数超过限制");
                         }
+                        $this->writeLog('INFO', "转入-分批转账 (第{$retryCount}次)", [
+                            'first_pending' => $first_bool,
+                            'second_pending' => $second_bool
+                        ]);
                         $remaining_amount = $data['money'] - $agent_balance_info['FUND_TYPE_GIFT'];
                         if ($first_bool){
                             $first = $this->sendRequest($data, $agent_balance_info['FUND_TYPE_GIFT'], 'FUND_TYPE_GIFT');
@@ -114,6 +152,8 @@ class TencentTransfer
                                 $first_order_uid = $first['data']['external_bill_no'];
                                 $record1 = json_encode($first, JSON_UNESCAPED_UNICODE);
                                 $first_bool = false;
+                            } else {
+                                $this->writeLog('WARN', '转入-GIFT转账失败', ['code' => $first['code'], 'response' => $first]);
                             }
                         }
                         if ($second_bool){
@@ -122,6 +162,8 @@ class TencentTransfer
                                 $second_order_uid = $second['data']['external_bill_no'];
                                 $record2 = json_encode($second, JSON_UNESCAPED_UNICODE);
                                 $second_bool = false;
+                            } else {
+                                $this->writeLog('WARN', '转入-CASH转账失败', ['code' => $second['code'], 'response' => $second]);
                             }
                         }
                         if (!$first_bool && !$second_bool){
@@ -172,8 +214,18 @@ class TencentTransfer
                     $retryCount = 0;
                     do{
                         if (++$retryCount > $maxRetry) {
+                            $this->writeLog('ERROR', '转出-分批转账重试次数超过限制', [
+                                'max_retry' => $maxRetry,
+                                'first_bool' => $first_bool,
+                                'second_bool' => $second_bool,
+                                'account_id' => $data['account_id']
+                            ]);
                             throw new Exception("转账重试次数超过限制");
                         }
+                        $this->writeLog('INFO', "转出-分批转账 (第{$retryCount}次)", [
+                            'first_pending' => $first_bool,
+                            'second_pending' => $second_bool
+                        ]);
                         $remaining_amount = $data['money'] - $fund_info['FUND_TYPE_CASH'];
                         if ($first_bool){
                             $first = $this->sendRequest($data, $agent_balance_info['FUND_TYPE_CASH'], 'FUND_TYPE_CASH');
@@ -181,6 +233,8 @@ class TencentTransfer
                                 $first_order_uid = $first['data']['external_bill_no'];
                                 $record1 = json_encode($first, JSON_UNESCAPED_UNICODE);
                                 $first_bool = false;
+                            } else {
+                                $this->writeLog('WARN', '转出-CASH转账失败', ['code' => $first['code'], 'response' => $first]);
                             }
                         }
                         if ($second_bool){
@@ -189,6 +243,8 @@ class TencentTransfer
                                 $second_order_uid = $second['data']['external_bill_no'];
                                 $record2 = json_encode($second, JSON_UNESCAPED_UNICODE);
                                 $second_bool = false;
+                            } else {
+                                $this->writeLog('WARN', '转出-GIFT转账失败', ['code' => $second['code'], 'response' => $second]);
                             }
                         }
                         if (!$first_bool && !$second_bool){

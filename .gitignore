@@ -24,3 +24,4 @@ node_modules
 /public/transfer_images/
 /application/api/controller/fission/black_company_config_fission.php
 /application/api/controller/fission/black_company_config.php
+/application/robotapi/job/tencent/log/
