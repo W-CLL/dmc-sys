@@ -7,6 +7,7 @@ use app\robotapi\model\WechatGroup;
 use app\robotapi\model\Store;
 use app\robotapi\model\TencentRefund;
 use think\Controller;
+use think\Log;
 use txgg\Fund;
 
 class TencentAccount extends Controller
@@ -182,6 +183,7 @@ class TencentAccount extends Controller
                         $res = Fund::getFundAccountInfo([
                             'account_id' => (int)$account['account_id'],
                         ])['data'];
+                        Log::write("tengxun_test_data".json_encode($res));
                         if ($res['code']  == 12201){
                             $no_token = true;
                             break;
@@ -194,9 +196,10 @@ class TencentAccount extends Controller
                     foreach ($res['data']['list'] as $item){
                         $fund_info[$item['fund_type']] = ($item['balance'] - (isset($item['bill_deposit_amount']) ? $item['bill_deposit_amount'] : 0)) / 100;
                     }
-                    if ($data['amount'] > $fund_info['FUND_TYPE_CASH'] + $fund_info['FUND_TYPE_GIFT']) {
+                    if ($data['amount'] > ($fund_info['FUND_TYPE_CASH'] + $fund_info['FUND_TYPE_GIFT'])) {
                         return '账户'.$account['account_id'].'，余额不足以转出'.$data['amount'].'，剩余金额为：'.($fund_info['FUND_TYPE_CASH'] + $fund_info['FUND_TYPE_GIFT']);
                     }
+                    Log::write("tengxun_test_data_1,here is error".$data['amount']);
                     $last_transfer_info = $StoreRefund->getSingleItem([
                         'account_type' => $account['account_type'],
                         'store_id' => $account['store_id'],
