@@ -53,9 +53,9 @@ class TencentBaseJob
             // 转入
             $store_model = new TencentStore();
             // 添加行锁，防止并发问题
-            $sql = $store_model->where(["store_id" => ["=", $data['store_id']]])->lock(true);
+            $sql = $store_model->where(["store_id" => ["=", $data['store_id']]]);
             $prefix = $data["account_type"] == 1 ? "public_" : "private_";
-            
+
             if ($data["deduction_balance"] > 0) {
                 $sql->where(["$prefix"."money_tencent" => [">=", $data["deduction_balance"]]])->dec("$prefix"."money_tencent", $data["deduction_balance"]);
             }
@@ -63,7 +63,7 @@ class TencentBaseJob
                 $sql->where(["$prefix"."credit_limit_tencent" => [">=", $data["deduction_credit_limit"]]])->dec("$prefix"."credit_limit_tencent", $data["deduction_credit_limit"]);
                 $sql->inc("$prefix"."spending_credit_limit_tencent", $data["deduction_credit_limit"]);
             }
-            
+
             if (!$sql->update(["update_time" => time()])) {
                 throw new Exception("扣款失败");
             }
@@ -83,7 +83,7 @@ class TencentBaseJob
             // 添加行锁，防止并发问题
             $sql = $store_model->where(["store_id" => ["=", $data['store_id']]])->lock(true);
             $prefix = $data["account_type"] == 1 ? "public_" : "private_";
-            
+
             if ($data["deduction_balance"] > 0) {
                 $sql->inc("$prefix"."money_tencent", $data["deduction_balance"]);
             }
@@ -91,10 +91,12 @@ class TencentBaseJob
                 $sql->inc("$prefix"."credit_limit_tencent", $data["deduction_credit_limit"]);
                 $sql->dec("$prefix"."spending_credit_limit_tencent", $data["deduction_credit_limit"]);
             }
-            
+
             if (!$sql->update(["update_time" => time()])) {
                 throw new Exception("恢复扣款失败");
             }
         }
     }
+
+
 }
