@@ -8,26 +8,11 @@ use think\Db;
 use app\robotapi\model\TencentRefund;
 use app\robotapi\model\TencentTransferLog;
 use app\robotapi\model\TencentStore;
+use app\robotapi\model\TransferFailure;
 use txgg\Fund;
 
-class TencentTransfer
+class TencentTransfer extends TencentBaseJob
 {
-    private function writeLog($type, $message, $context = [])
-    {
-        $logDir = __DIR__ . '/log';
-        if (!is_dir($logDir)) {
-            mkdir($logDir, 0755, true);
-        }
-        $logFile = $logDir . '/transfer_' . date('Y-m-d') . '.log';
-        $logData = [
-            'time' => date('Y-m-d H:i:s'),
-            'type' => $type,
-            'message' => $message,
-            'context' => $context
-        ];
-        file_put_contents($logFile, json_encode($logData, JSON_UNESCAPED_UNICODE) . PHP_EOL, FILE_APPEND | LOCK_EX);
-    }
-
     /**
      * @throws Exception
      */
@@ -61,19 +46,67 @@ class TencentTransfer
             $this->deductingFees($data['transfer_records_data']);
             $this->writeLog('INFO', '扣款完成');
 
-            list($order_uid,$record) = $this->initiateTransfer($data['transfer_records_data']);
-            $this->writeLog('INFO', 'API转账成功', ['order_uid' => $order_uid]);
             Db::commit();
         }catch (Exception $e){
             Db::rollback();
             $this->writeLog('ERROR', '事务回滚', ['error' => $e->getMessage()]);
             throw new Exception($e->getMessage());
         }
-        $transfer_records_model->where(["id" => ["=", $transfer_records_id]])->update([
-            "order_uid" => $order_uid,
-            "record" => $record,
-            "update_time" => time(),
-        ]);
+        
+        // 事务提交后，调用接口（在事务外）
+        try {
+            list($order_uid, $record) = $this->initiateTransfer($data['transfer_records_data']);
+            $this->writeLog('INFO', 'API转账成功', ['order_uid' => $order_uid]);
+        } catch (Exception $e) {
+            $this->writeLog('ERROR', 'API转账失败', ['error' => $e->getMessage()]);
+            // 接口失败，需要补偿回滚数据库
+            try {
+                Db::startTrans();
+                // 恢复扣款
+                $this->restoreDeduction($data['transfer_records_data']);
+                // 删除转账记录
+                $transfer_records_model->where('id', $transfer_records_id)->delete();
+                Db::commit();
+                $this->writeLog('INFO', '数据库补偿回滚成功');
+            } catch (Exception $rollbackEx) {
+                $this->writeLog('ERROR', '数据库补偿回滚失败', ['error' => $rollbackEx->getMessage()]);
+            }
+            throw new Exception($e->getMessage());
+        }
+        
+        // 接口成功，更新订单号（在事务内）
+        try {
+            Db::startTrans();
+            $updateResult = $transfer_records_model->where(["id" => ["=", $transfer_records_id]])->update([
+                "order_uid" => $order_uid,
+                "record" => $record,
+                "update_time" => time(),
+            ]);
+            if (!$updateResult) {
+                throw new Exception('订单号更新失败');
+            }
+            $this->writeLog('INFO', '订单号更新成功');
+            Db::commit();
+        } catch (Exception $e) {
+            Db::rollback();
+            $this->writeLog('ERROR', '订单号更新失败，记录到失败表', ['error' => $e->getMessage()]);
+            
+            // 接口已成功，但数据库更新失败
+            // 记录到失败表，后续通过定时任务重试
+            TransferFailure::recordFailure(
+                TransferFailure::TYPE_UPDATE_ORDER_UID,
+                $transfer_records_id,
+                $order_uid,
+                $record,
+                $e->getMessage(),
+                $data['transfer_records_data']
+            );
+            
+            // 不再抛出异常，任务标记为成功
+            // 因为接口已经成功，钱已经转走
+            $this->writeLog('WARN', '任务标记为成功，等待定时任务重试更新订单号');
+            $updateResult = true; // 标记为成功
+        }
         $queue = new QueueRobot();
         $queue->addQueue('腾讯广告【转账后续操作】', 'app\robotapi\job\RobotBaseJob', 'robotBaseJob',
             [
@@ -119,11 +152,7 @@ class TencentTransfer
                 if ($agent_balance_info['FUND_TYPE_GIFT'] == 0){
                     $transfer = $this->sendRequest($data, $data['money'],'FUND_TYPE_CASH');
                     if ($transfer['code'] != 0){
-                        $message_cn = $transfer['message_cn'];
-                        if (strpos($message_cn, 'traceId:') !== false) {
-                            $message_cn = trim(substr($message_cn, 0, strpos($message_cn, 'traceId:')));
-                        }
-                        throw new Exception("发起转账失败，失败原因：".$message_cn);
+                        throw new Exception("发起转账失败，失败原因：".$this->formatErrorMessage($transfer));
                     }
                     $record = json_encode($transfer, JSON_UNESCAPED_UNICODE);
                     $order_uid = $transfer['data']['external_bill_no'];
@@ -228,7 +257,7 @@ class TencentTransfer
                         ]);
                         $remaining_amount = $data['money'] - $fund_info['FUND_TYPE_CASH'];
                         if ($first_bool){
-                            $first = $this->sendRequest($data, $agent_balance_info['FUND_TYPE_CASH'], 'FUND_TYPE_CASH');
+                            $first = $this->sendRequest($data, $fund_info['FUND_TYPE_CASH'], 'FUND_TYPE_CASH');
                             if ($first['code'] == 0){
                                 $first_order_uid = $first['data']['external_bill_no'];
                                 $record1 = json_encode($first, JSON_UNESCAPED_UNICODE);
@@ -269,26 +298,6 @@ class TencentTransfer
             'transfer_try_best' => 0,
             'high_frequency_transfer' => 0,
         ])['data'];
-    }
-
-
-    private function deductingFees($data){
-        if ($data["transfer_direction"] == 1) {
-            //转入
-            $store_model = new TencentStore();
-            $sql = $store_model->where(["store_id" => ["=", $data['store_id']]]);
-            $prefix = $data["account_type"] == 1 ? "public_" : "private_";
-            if ($data["deduction_balance"] > 0) {
-                $sql->where(["$prefix"."money_tencent" => [">=", $data["deduction_balance"]]])->dec("$prefix"."money_tencent", $data["deduction_balance"]);
-            }
-            if ($data["deduction_credit_limit"] > 0) {
-                $sql->where(["$prefix"."credit_limit_tencent" => [">=", $data["deduction_credit_limit"]]])->dec("$prefix"."credit_limit_tencent", $data["deduction_credit_limit"]);
-                $sql->inc("$prefix"."spending_credit_limit_tencent", $data["deduction_credit_limit"]);
-            }
-            if (!$sql->update(["update_time" => time()])) {
-                throw new Exception("扣款失败");
-            }
-        }
     }
 
 }

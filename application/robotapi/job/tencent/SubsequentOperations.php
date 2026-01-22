@@ -39,7 +39,7 @@ class SubsequentOperations
         $transfer_records_data = $transfer_records_model->where(["id" => $data["transfer_records_id"]])->find();
         $store_model = new TencentStore();
         $store_info = $store_model->where("store_id", $transfer_records_data["store_id"])
-//            ->lock(true)
+            ->lock(true)
             ->find();
         $operate = $transfer_records_data["transfer_direction"] == 1 ? "腾讯广告转入" : "腾讯广告退款";
         $type = $transfer_records_data["account_type"] == 1 ? "（公）" : "（私）";
@@ -156,7 +156,7 @@ class SubsequentOperations
         $transfer_records_data = $transfer_records_model->where(["id" => $data["transfer_records_id"]])->find();
         $store_model = new TencentStore();
         $store_info = $store_model->where("store_id", $transfer_records_data["store_id"])
-//            ->lock(true)
+            ->lock(true)
             ->find()->toArray();
         $operate = $transfer_records_data["transfer_direction"] == 1 ? "腾讯广告共享钱包转入" : "腾讯广告共享钱包退款";
         $type = $transfer_records_data["account_type"] == 1 ? "（公）" : "（私）";
@@ -458,11 +458,9 @@ class SubsequentOperations
             $imagePath = ROOT_PATH . "public/" .$img_url;
             // 检查文件是否存在
             if (!file_exists($imagePath)) {
-                var_dump('不存在');
-                die;
+                throw new Exception("图片文件不存在: {$imagePath}");
             }
             $imageData = file_get_contents($imagePath);
-
             // 可以使用 gzip 压缩图片二进制数据
             $compressedData = gzencode($imageData, 9); // 9 是最高压缩等级
             $msg_data['img_data'] = base64_encode($compressedData);

@@ -5,6 +5,9 @@ namespace app\robotapi\controller;
 use think\Cache;
 use think\Db;
 use think\Controller;
+use think\db\exception\DataNotFoundException;
+use think\db\exception\ModelNotFoundException;
+use think\exception\DbException;
 use think\Request;
 
 
@@ -52,9 +55,9 @@ class Base extends Controller
      * @param int $maxRequests int 最大请求数
      * @param int $windowSeconds int 时间窗口（秒）
      * @return bool
-     * @throws \think\db\exception\DataNotFoundException
-     * @throws \think\db\exception\ModelNotFoundException
-     * @throws \think\exception\DbException
+     * @throws DataNotFoundException
+     * @throws ModelNotFoundException
+     * @throws DbException
      */
     protected function rateLimit($account, string $action, int $maxRequests = 10, int $windowSeconds = 60) : bool
     {
