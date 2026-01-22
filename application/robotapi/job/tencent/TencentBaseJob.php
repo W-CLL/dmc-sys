@@ -81,7 +81,7 @@ class TencentBaseJob
             // 转入
             $store_model = new TencentStore();
             // 添加行锁，防止并发问题
-            $sql = $store_model->where(["store_id" => ["=", $data['store_id']]])->lock(true);
+            $sql = $store_model->where(["store_id" => ["=", $data['store_id']]]);
             $prefix = $data["account_type"] == 1 ? "public_" : "private_";
 
             if ($data["deduction_balance"] > 0) {
