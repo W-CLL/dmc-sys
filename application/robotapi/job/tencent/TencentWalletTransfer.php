@@ -21,6 +21,11 @@ class TencentWalletTransfer extends TencentBaseJob
             'direction' => $data['transfer_records_data']['transfer_direction'] ?? ''
         ]);
 
+        // 初始化重试变量（必须在事务外）
+        $maxRetry = 3;
+        $retryCount = 0;
+        $lastError = '';
+        
         Db::startTrans();
         try {
             if($data['transfer_records_data']['transfer_direction'] == 1){
@@ -50,9 +55,6 @@ class TencentWalletTransfer extends TencentBaseJob
         }
         
         // 事务提交后，调用接口（在事务外）
-        $maxRetry = 3;
-        $retryCount = 0;
-        $lastError = '';
         do{
             if (++$retryCount > $maxRetry) {
                 $this->writeLog('ERROR', '转账重试次数超过限制', [

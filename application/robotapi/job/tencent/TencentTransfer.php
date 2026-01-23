@@ -30,9 +30,11 @@ class TencentTransfer extends TencentBaseJob
             if($data['transfer_records_data']['transfer_direction'] == 1){
                 $refund_model = new TencentRefund();
                 $refund_model->addStoreRefundRecord($data['money'], $data['transfer_records_data']);
+                $this->writeLog('INFO', '退款记录已创建');
             }else{
                 $refund_model = new TencentRefund();
                 $refund_model->getRealRefundRebate($data['transfer_records_data']);
+                $this->writeLog('INFO', '返点记录已处理');
             }
 
             $transfer_records_model = new TencentTransferLog();
@@ -107,6 +109,9 @@ class TencentTransfer extends TencentBaseJob
             $this->writeLog('WARN', '任务标记为成功，等待定时任务重试更新订单号');
             $updateResult = true; // 标记为成功
         }
+        
+        // 添加后续任务
+        $this->writeLog('INFO', '添加后续任务');
         $queue = new QueueRobot();
         $queue->addQueue('腾讯广告【转账后续操作】', 'app\robotapi\job\RobotBaseJob', 'robotBaseJob',
             [
@@ -203,11 +208,8 @@ class TencentTransfer extends TencentBaseJob
                 }elseif ($data['money'] <= $agent_balance_info['FUND_TYPE_GIFT']){
                     $transfer = $this->sendRequest($data, $data['money'], 'FUND_TYPE_GIFT');
                     if ($transfer['code'] != 0){
-                        $message_cn = $transfer['message_cn'];
-                        if (strpos($message_cn, 'traceId:') !== false) {
-                            $message_cn = trim(substr($message_cn, 0, strpos($message_cn, 'traceId:')));
-                        }
-                        throw new Exception("发起转账失败，失败原因：".$message_cn);
+                        $this->writeLog('WARN', '转入-GIFT转账失败', ['code' => $transfer['code'], 'response' => $transfer]);
+                        throw new Exception("发起转账失败，失败原因：".$this->formatErrorMessage($transfer));
                     }
                     $record = json_encode($transfer, JSON_UNESCAPED_UNICODE);
                     $order_uid = $transfer['data']['external_bill_no'];
@@ -217,11 +219,8 @@ class TencentTransfer extends TencentBaseJob
                 if ($fund_info['FUND_TYPE_CASH'] == 0){
                     $transfer = $this->sendRequest($data, $data['money'], 'FUND_TYPE_GIFT');
                     if ($transfer['code'] != 0){
-                        $message_cn = $transfer['message_cn'];
-                        if (strpos($message_cn, 'traceId:') !== false) {
-                            $message_cn = trim(substr($message_cn, 0, strpos($message_cn, 'traceId:')));
-                        }
-                        throw new Exception("发起转账失败，失败原因：".$message_cn);
+                        $this->writeLog('WARN', '转出-GIFT转账失败', ['code' => $transfer['code'], 'response' => $transfer]);
+                        throw new Exception("发起转账失败，失败原因：".$this->formatErrorMessage($transfer));
                     }
                     $record = json_encode($transfer, JSON_UNESCAPED_UNICODE);
                     $order_uid = $transfer['data']['external_bill_no'];
@@ -229,11 +228,8 @@ class TencentTransfer extends TencentBaseJob
                 else if ($data['money'] <= $fund_info['FUND_TYPE_CASH']){
                     $transfer = $this->sendRequest($data, $data['money'], 'FUND_TYPE_CASH');
                     if ($transfer['code'] != 0){
-                        $message_cn = $transfer['message_cn'];
-                        if (strpos($message_cn, 'traceId:') !== false) {
-                            $message_cn = trim(substr($message_cn, 0, strpos($message_cn, 'traceId:')));
-                        }
-                        throw new Exception("发起转账失败，失败原因：".$message_cn);
+                        $this->writeLog('WARN', '转出-CASH转账失败', ['code' => $transfer['code'], 'response' => $transfer]);
+                        throw new Exception("发起转账失败，失败原因：".$this->formatErrorMessage($transfer));
                     }
                     $record = json_encode($transfer, JSON_UNESCAPED_UNICODE);
                     $order_uid = $transfer['data']['external_bill_no'];

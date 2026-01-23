@@ -102,11 +102,8 @@ class SubsequentOperations
             if(!$logId){
                 throw new Exception('金额变更记录失败');
             }
-            $img_url = $this->createTransferImg($transfer_records_data);
-            if (!$transfer_records_model->where(["id" => $data["transfer_records_id"]])->update(['image' => $img_url])) {
-                throw new Exception('转账成功，状态更新失败');
-            }
-
+            
+            // 添加同步任务（在事务内）
             $name = $transfer_records_data["transfer_direction"] == 1 ? "同步腾讯广告充值记录":"同步腾讯广告退款记录";
             $queueModel = new \app\common\model\Queue();
             $queueModel->addQueue($name, "app\job\SyncCharge",
@@ -117,8 +114,26 @@ class SubsequentOperations
             Db::commit();
         }catch (Exception $e){
             Db::rollback();
+            // 清理缓存（如果之前有设置）
+            if (isset($data["callback_data"]["msg_uuid"])) {
+                Cache::rm($data["callback_data"]["msg_uuid"]."transfer_log_id");
+                Cache::rm($data["callback_data"]["msg_uuid"]."count");
+                Cache::rm($data["callback_data"]["msg_uuid"]."total_money");
+            }
             throw new Exception($e->getMessage()); // 重新抛出异常
         }
+        
+        // 事务外操作：图片生成（耗时操作，不应在事务内）
+        try {
+            $img_url = $this->createTransferImg($transfer_records_data);
+            if ($img_url) {
+                $transfer_records_model->where(["id" => $data["transfer_records_id"]])->update(['image' => $img_url]);
+            }
+        } catch (Exception $e) {
+            // 图片生成失败不影响主流程，仅记录日志
+            error_log('SubsequentOperations::TencentTransfer 图片生成失败: ' . $e->getMessage());
+        }
+        
         $bool = $this->checkRemaining($data["callback_data"]);
 
         if ($bool) {
@@ -219,12 +234,7 @@ class SubsequentOperations
             if(!$logId){
                 throw new Exception('金额变更记录失败');
             }
-            $img_url = $this->createTransferImg($transfer_records_data);
-            if (!$transfer_records_model->where(["id" => $data["transfer_records_id"]])->update(['image' => $img_url])) {
-                throw new Exception('转账成功，状态更新失败');
-            }
-            //添加同步转账记录任务
-            //暂时转入账户才同步
+            //添加同步转账记录任务（在事务内）
             $name = $transfer_records_data["transfer_direction"] == 1 ? "同步腾讯广告共享钱包充值记录":"同步腾讯广告共享钱包退款记录";
             $queueModel = new \app\common\model\Queue();
             $queueModel->addQueue($name, "app\job\SyncCharge",
@@ -235,8 +245,21 @@ class SubsequentOperations
             Db::commit();
         }catch (Exception $e){
             Db::rollback();
+            // TencentWalletTransfer 不需要清理缓存，因为没有使用批量汇总逻辑
             throw new Exception($e->getMessage()); // 重新抛出异常
         }
+        
+        // 事务外操作：图片生成（耗时操作，不应在事务内）
+        try {
+            $img_url = $this->createTransferImg($transfer_records_data);
+            if ($img_url) {
+                $transfer_records_model->where(["id" => $data["transfer_records_id"]])->update(['image' => $img_url]);
+            }
+        } catch (Exception $e) {
+            // 图片生成失败不影响主流程，仅记录日志
+            error_log('SubsequentOperations::TencentWalletTransfer 图片生成失败: ' . $e->getMessage());
+        }
+        
         $msg = "{$operate}成功！\n钱包余额{$type}：" . $money_log_data["balance_surplus"] . "\n授信余额{$type}：" . $money_log_data["credit_limit_surplus"] . "\n已使用授信额度{$type}：" . number_format((($store_info[$prefix."spending_credit_limit_tencent"] + $store_info[$prefix."credit_limit_tencent"]) - $money_log_data["credit_limit_surplus"]), 2);
         $this->callBack($data["callback_data"], $msg, $img_url);
         return true;

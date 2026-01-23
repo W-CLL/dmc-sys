@@ -96,10 +96,21 @@ class RetryTransferFailure
             if ($failure['type'] == TransferFailure::TYPE_UPDATE_ORDER_UID) {
                 // 判断是哪个表的记录
                 $record = TencentTransferLog::where('id', $failure['transfer_records_id'])->find();
+                $walletRecord = TencentWalletTransferLog::where('id', $failure['transfer_records_id'])->find();
+                
+                $model = null;
+                $handle = '';
+                
                 if ($record) {
                     $model = new TencentTransferLog();
-                } else {
+                    $handle = 'TencentTransfer';
+                } elseif ($walletRecord) {
                     $model = new TencentWalletTransferLog();
+                    $handle = 'TencentWalletTransfer';
+                } else {
+                    // 可能是 TransferVirtualFund 的记录
+                    $model = new TencentTransferLog();
+                    $handle = 'TransferVirtualFund';
                 }
 
                 $result = $model->where('id', $failure['transfer_records_id'])->update([
@@ -113,18 +124,18 @@ class RetryTransferFailure
                 }
 
                 // 添加后续任务
-                if ($record) {
-                    $queue = new QueueRobot();
-                    $data = json_decode($failure['data'], true);
-                    $queue->addQueue('腾讯广告【转账后续操作】', 'app\robotapi\job\RobotBaseJob', 'robotBaseJob',
-                        [
-                            "job_class" => '\app\robotapi\job\tencent\SubsequentOperations',
-                            "transfer_records_id" => $failure['transfer_records_id'],
-                            "handle" => isset($data['sub_wallet_id']) ? "TencentWalletTransfer" : "TencentTransfer",
-                            "callback_data" => isset($data['callback_data']) ? $data['callback_data'] : [],
-                        ]
-                    );
-                }
+                $data = json_decode($failure['data'], true);
+                $queue = new QueueRobot();
+                $queue->addQueue('腾讯广告【转账后续操作】', 'app\robotapi\job\RobotBaseJob', 'robotBaseJob',
+                    [
+                        "job_class" => '\app\robotapi\job\tencent\SubsequentOperations',
+                        "transfer_records_id" => $failure['transfer_records_id'],
+                        "handle" => $handle,
+                        "callback_data" => isset($data['callback_data']) ? $data['callback_data'] : [],
+                        "account_id" => isset($data['account_id']) ? $data['account_id'] : null,
+                        "to_account_id" => isset($data['to_account_id']) ? $data['to_account_id'] : null,
+                    ]
+                );
 
                 Db::commit();
                 return true;

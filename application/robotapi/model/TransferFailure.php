@@ -29,17 +29,24 @@ class TransferFailure extends Model
      */
     public static function recordFailure($type, $transferRecordsId, $orderUid, $record, $error, $data = [])
     {
-        return self::create([
-            'type' => $type,
-            'transfer_records_id' => $transferRecordsId,
-            'order_uid' => $orderUid,
-            'record' => json_encode($record, JSON_UNESCAPED_UNICODE),
-            'error' => $error,
-            'data' => json_encode($data, JSON_UNESCAPED_UNICODE),
-            'retry_count' => 0,
-            'status' => self::STATUS_PENDING,
-            'create_time' => time(),
-        ]);
+        try {
+            return self::create([
+                'type' => $type,
+                'transfer_records_id' => $transferRecordsId,
+                'order_uid' => $orderUid,
+                'record' => json_encode($record, JSON_UNESCAPED_UNICODE),
+                'error' => $error,
+                'data' => json_encode($data, JSON_UNESCAPED_UNICODE),
+                'retry_count' => 0,
+                'status' => self::STATUS_PENDING,
+                'create_time' => time(),
+            ]);
+        } catch (\Exception $e) {
+            // 记录失败时，写入日志避免程序中断
+            error_log("TransferFailure::recordFailure 失败: " . $e->getMessage() . 
+                      ", Params: type={$type}, transferRecordsId={$transferRecordsId}, orderUid={$orderUid}");
+            return false;
+        }
     }
     
     /**
