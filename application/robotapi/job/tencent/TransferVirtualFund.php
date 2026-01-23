@@ -10,9 +10,14 @@ use think\Exception;
 use think\Db;
 use txgg\Fund;
 
-class TransferVirtualFund
+class TransferVirtualFund extends TencentBaseJob
 {
     public function doJob($data){
+        $this->writeLog('INFO', '开始执行虚拟补偿金转账任务', [
+            'account_id' => $data['account_id'] ?? '',
+            'to_account_id' => $data['to_account_id'] ?? '',
+        ]);
+        
         // 查询可转出金额（在事务外）
         $check = Fund::accountToAccountTransfer([
             'account_id' => (int)$data['account_id'],
@@ -22,6 +27,7 @@ class TransferVirtualFund
             'pre_fetch_amount' => 1,
         ])['data'];
         if ($check['code'] != 0){
+            $this->writeLog('ERROR', '获取可操作虚拟补偿金失败', ['code' => $check['code']]);
             throw new Exception('获取可操作虚拟补偿金失败');
         }
         
@@ -30,6 +36,7 @@ class TransferVirtualFund
             floatval(str_replace(',', '', $check['data']['recommend_amount'])) : 
             $check['data']['recommend_amount'];
         if ($recommend_amount <= 0) {
+            $this->writeLog('ERROR', '可转出金额必须大于0', ['recommend_amount' => $recommend_amount]);
             throw new Exception('可转出金额必须大于0');
         }
         
@@ -42,14 +49,18 @@ class TransferVirtualFund
             $transfer_records_model = new TencentTransferLog();
             $transfer_records_id = $transfer_records_model->insertGetId($transfer_data);
             if (!$transfer_records_id) {
+                $this->writeLog('ERROR', '生成转账记录失败', ['data' => $transfer_data]);
                 throw new Exception("生成转账记录失败");
             }
+            $this->writeLog('INFO', '转账记录已创建', ['transfer_records_id' => $transfer_records_id]);
 
             $this->inheritanceRatio($data['account_id'], $data['to_account_id'], $transfer_data['money']);
+            $this->writeLog('INFO', '返点比例继承完成');
             
             Db::commit();
         }catch (Exception $e){
             Db::rollback();
+            $this->writeLog('ERROR', '事务回滚', ['error' => $e->getMessage()]);
             throw new Exception($e->getMessage());
         }
         
@@ -64,8 +75,10 @@ class TransferVirtualFund
                 'pre_fetch_amount' => 0,
             ])['data'];
             if ($res['code'] != 0) {
+                $this->writeLog('ERROR', 'API转账失败', ['code' => $res['code'], 'message' => $res['message_cn'] ?? $res['message']]);
                 throw new Exception("发起转账失败: " . ($res['message_cn'] ?? $res['message'] ?? '未知错误'));
             }
+            $this->writeLog('INFO', 'API转账成功', ['external_bill_no' => $res['data']['external_bill_no']]);
         } catch (Exception $e) {
             // 接口失败，需要补偿回滚数据库
             try {
@@ -73,9 +86,10 @@ class TransferVirtualFund
                 $transfer_records_model->where('id', $transfer_records_id)->delete();
                 // TODO: 恢复 inheritanceRatio 的操作（复杂，可能需要单独处理）
                 Db::commit();
+                $this->writeLog('INFO', '数据库补偿回滚成功');
             } catch (Exception $rollbackEx) {
                 // 回滚失败，记录日志
-                error_log("TransferVirtualFund 回滚失败: " . $rollbackEx->getMessage());
+                $this->writeLog('ERROR', '数据库补偿回滚失败', ['error' => $rollbackEx->getMessage()]);
             }
             throw new Exception($e->getMessage());
         }
@@ -90,10 +104,11 @@ class TransferVirtualFund
             if (!$updateResult) {
                 throw new Exception('订单号更新失败');
             }
+            $this->writeLog('INFO', '订单号更新成功');
             Db::commit();
         } catch (Exception $e) {
             Db::rollback();
-            error_log("TransferVirtualFund 订单号更新失败，记录到失败表: " . $e->getMessage());
+            $this->writeLog('ERROR', '订单号更新失败，记录到失败表', ['error' => $e->getMessage()]);
             
             // 接口已成功，但数据库更新失败
             TransferFailure::recordFailure(
@@ -106,6 +121,7 @@ class TransferVirtualFund
             );
             
             // 不抛出异常，任务标记为成功
+            $this->writeLog('WARN', '任务标记为成功，等待定时任务重试更新订单号');
             $updateResult = true;
         }
         
