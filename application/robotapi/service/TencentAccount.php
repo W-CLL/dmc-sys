@@ -93,10 +93,10 @@ class TencentAccount extends Controller
                     } else {
                         $transfer_records_data["deduction_balance"] = $transfer_records_data['actual_money'];
                         $transfer_records_data["deduction_credit_limit"] = 0;
-                        $wallet_money = $transfer_records_data['actual_money'];
+                        $wallet_money = $transfer_records_data['money'];
                         $credit_limit = 0;
                         // 扣除剩余额度
-                        $wallet_array[$prefix . 'balance'] = number_format((float)$wallet_array[$prefix . 'balance'] - (float)$wallet_money, 2, '.', '');
+                        $wallet_array[$prefix . 'balance'] = number_format((float)$wallet_array[$prefix . 'balance'] - (float)$transfer_records_data['actual_money'], 2, '.', '');
                     }
                     $money = [
                         'wallet' => $wallet_money,
