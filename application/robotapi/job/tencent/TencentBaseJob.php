@@ -39,7 +39,7 @@ class TencentBaseJob
         if (strpos($message_cn, 'traceId:') !== false) {
             $message_cn = trim(substr($message_cn, 0, strpos($message_cn, 'traceId:')));
         }
-        return $message_cn;
+        return $message_cn."code: ".$transfer['code'];
     }
 
     /**
