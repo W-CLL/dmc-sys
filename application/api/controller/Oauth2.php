@@ -57,19 +57,31 @@ class Oauth2 extends Api
     //刷新千川授权，12小时一次
     public function access_token_save()
     {
+        $max_retries = 3;  // 最大重试次数
+        $retry_delay = 1;  // 重试间隔（秒）
+        
 //        dump(Cache::get("qc_access_token"));
 //        $data = Db::name("qc_config")->where("id", 1)->find();
         $app_id = Env::get('dmc_ad_config.app_id');
         $secret = Env::get('dmc_ad_config.secret');
 //        $data = Env::get('dmc_ad_config');
-        $data = \jlqc\AccessToken::refresh_token_save($app_id, $secret);
-        if ($data['code'] == 0 && $data['message'] == "OK") {
-            Cache::set("qc_access_token", $data['data']['access_token'], 0);
-            Cache::set("qc_refresh_token", $data['data']['refresh_token'], 0);
-            return "刷新授权状态成功";
+        
+        for ($i = 1; $i <= $max_retries; $i++) {
+            $data = \jlqc\AccessToken::refresh_token_save($app_id, $secret);
+            
+            if ($data['code'] == 0 && $data['message'] == "OK") {
+                Cache::set("qc_access_token", $data['data']['access_token'], 0);
+                Cache::set("qc_refresh_token", $data['data']['refresh_token'], 0);
+                return "刷新授权状态成功";
+            }
+            
+            // 如果不是最后一次尝试，则等待后重试
+            if ($i < $max_retries) {
+                sleep($retry_delay);
+            }
         }
 
-        return "刷新失败,err:" . json_encode($data, JSON_UNESCAPED_UNICODE);
+        return "刷新失败，已重试{$max_retries}次，错误信息:" . json_encode($data, JSON_UNESCAPED_UNICODE);
     }
 
     //获取百度ai AccessToken 30天获取一次
