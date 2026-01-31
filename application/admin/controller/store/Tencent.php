@@ -455,7 +455,7 @@ class Tencent extends Backend
                     'store_id' => $storeId,
                     'money' => abs($spendingAmount),
                     'explain' => ($spendingAmount > 0 ? '总后台增加公账已使用授信额度' : '总后台减少公账已使用授信额度') . '，授信总额度：' . $totalOld . '（可用额度：' . $oldData['public_credit_limit_tencent'] . '→' . $newData['public_credit_limit_tencent'] . '，已使用额度：' . $oldData['public_spending_credit_limit_tencent'] . '→' . $newData['public_spending_credit_limit_tencent'] . '），操作人：' . $adminUsername,
-                    'type' => ($spendingAmount > 0 ? 2 : 1),
+                    'type' => 3,   // 清账
                     'account_type' => 1, // 公账
                     'before_money' => $oldData['public_credit_limit_tencent'], // 当前余额
                     'today_money' => $newData['public_credit_limit_tencent'],  // 变动后余额
