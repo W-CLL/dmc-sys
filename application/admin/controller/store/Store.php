@@ -330,7 +330,7 @@ class Store extends Backend
                 'store_id' => $store['id'],
                 'money' => abs($money),
                 "account_type" => $account_type,
-                'type' => 2,
+                'type' => ($money>0?1:2),
                 'explain' => '管理员'.$this->auth->username .($money>0?'增加':'扣除'). '额度'. abs($money) .'元' . ($account_type == 1?'(公账额度)':'(私账额度)'),
                 'create_time' => time(),
             ];
