@@ -3,11 +3,12 @@
 namespace app\admin\controller\store;
 
 use app\admin\model\Store as StoreModel;
+use app\common\controller\Backend;
 use app\common\model\txgg\TencentStore as TencentStoreModel;
 use app\common\model\txgg\TencentTransactionLog as TencentTransactionLogModel;
 use think\Db;
 
-class Tencent extends Store
+class Tencent extends Backend
 {
     public function index()
     {
@@ -454,7 +455,7 @@ class Tencent extends Store
                     'store_id' => $storeId,
                     'money' => abs($spendingAmount),
                     'explain' => ($spendingAmount > 0 ? '总后台增加公账已使用授信额度' : '总后台减少公账已使用授信额度') . '，授信总额度：' . $totalOld . '（可用额度：' . $oldData['public_credit_limit_tencent'] . '→' . $newData['public_credit_limit_tencent'] . '，已使用额度：' . $oldData['public_spending_credit_limit_tencent'] . '→' . $newData['public_spending_credit_limit_tencent'] . '），操作人：' . $adminUsername,
-                    'type' => 3, // 3为充值类型
+                    'type' => ($spendingAmount > 0 ? 2 : 1),
                     'account_type' => 1, // 公账
                     'before_money' => $oldData['public_credit_limit_tencent'], // 当前余额
                     'today_money' => $newData['public_credit_limit_tencent'],  // 变动后余额
