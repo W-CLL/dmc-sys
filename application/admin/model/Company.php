@@ -14,7 +14,7 @@ class Company extends Model
 
     public function store()
     {
-        return $this->hasOne('Store', "id", "store_id")->field("id,username");
+        return $this->hasOne('Store', "id", "store_id")->field("*");
     }
 
     /**
