@@ -311,7 +311,7 @@ class TencentWallet extends Controller
                 }else{
                     $rebate = 0;
                 }
-                if (($data['amount'] - $rebate) > ($public_all)){
+                if (bccomp($data['amount'] - $rebate, $public_all, 2) > 0) {
                     return '公帐总额不足以充值，目前公帐总额度（余额+授信）为：' . $public_all;
                 }
                 $public_all -= ($data['amount'] - $rebate);
