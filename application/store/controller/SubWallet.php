@@ -414,7 +414,7 @@ class SubWallet extends Store
                 if(!$this->changeSubWalletMoneyTotal($swtl_info)){
                     throw new \Exception('更新累计额度发生错误');
                 }
-            }elseif ($data['data']['transfer_status'] == 'TRANSFER_FAILURE'){
+            }elseif ($data['data']['transfer_status'] == 'TRANSFER_FAILED'){
                 $update['status'] = 2;
                 $update['fail_reason'] = $data['data']['transfer_wallet_record_list'][0]['transfer_capital_record_list'][0]['fail_reason'];
                 $update['update_time'] = time();
