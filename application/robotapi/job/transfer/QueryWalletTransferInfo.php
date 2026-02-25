@@ -77,7 +77,6 @@ class QueryWalletTransferInfo
                         $prefix = $transfer_data['account_type'] == 1 ? "public_" : "private_";
                         $msg = "{$operate}成功！\n钱包余额{$type}：" . $store_money_log_data["balance_surplus"] . "\n授信余额{$type}：" . $store_money_log_data["credit_limit_surplus"] . "\n已使用授信额度{$type}：" . number_format((($store_info[$prefix."spending_credit_limit"] + $store_info[$prefix."credit_limit"]) - $store_money_log_data["credit_limit_surplus"]), 2);
                         break;
-                    case "TRANSFER_FAILURE":   // 不知名字段
                     case "TRANSFER_FAILED":
                         if(!$transfer_log_model->where(["id" => $data["swtl_id"]])->update([
                             "status" => 2,
