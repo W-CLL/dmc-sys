@@ -208,7 +208,7 @@ class QueryWalletTransferInfo
     private function refund($transfer_data){
         if ($transfer_data["transfer_direction"] == 1) {
             $store_model = new StoreModel();
-            $sql = $store_model->where("id", $transfer_data["bind_store_id"]);
+            $sql = $store_model->where("id", $transfer_data["store_id"]);
             $prefix = $transfer_data["account_type"] == 1 ? "public_" : "private_";
             try {
                 $store_refund_model = new StoreRefundModel();
