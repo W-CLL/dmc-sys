@@ -22,27 +22,28 @@ class TransferVirtualFund extends TencentBaseJob
         $check = Fund::accountToAccountTransfer([
             'account_id' => (int)$data['account_id'],
             'to_account_id' => (int)$data['to_account_id'],
-            'fund_type' => 'FUND_TYPE_COMPENSATE_VIRTUAL',
+            'fund_type' => $data['fund_type'],
             'amount' => 0,
             'pre_fetch_amount' => 1,
         ])['data'];
         if ($check['code'] != 0){
-            $this->writeLog('ERROR', '获取可操作虚拟补偿金失败', ['code' => $check['code']]);
-            throw new Exception('获取可操作虚拟补偿金失败');
+            $this->writeLog('ERROR', '获取可操作余额失败', ['code' => $check['code']]);
+            throw new Exception('获取可操作余额失败');
         }
-        
+
         // 验证金额
         $recommend_amount = is_string($check['data']['recommend_amount']) ? 
             floatval(str_replace(',', '', $check['data']['recommend_amount'])) : 
             $check['data']['recommend_amount'];
-        if ($recommend_amount <= 0) {
-            $this->writeLog('ERROR', '可转出金额必须大于0', ['recommend_amount' => $recommend_amount]);
-            throw new Exception('可转出金额必须大于0');
-        }
+
         
         $transfer_data = $data['data'];
-        $transfer_data['money'] = $recommend_amount / 100;
-        
+        $transfer_data['money'] = $data['amount'] ?? $recommend_amount / 100;
+        if ($recommend_amount < $transfer_data['money'] * 100) {
+            $this->writeLog('ERROR', '可转出金额不足', ['recommend_amount' => $recommend_amount]);
+            throw new Exception('可转出金额不足');
+        }
+
         // 开始事务（数据库操作）
         Db::startTrans();
         try {
@@ -76,8 +77,8 @@ class TransferVirtualFund extends TencentBaseJob
             $res = Fund::accountToAccountTransfer([
                 'account_id' => (int)$data['account_id'],
                 'to_account_id' => (int)$data['to_account_id'],
-                'fund_type' => 'FUND_TYPE_COMPENSATE_VIRTUAL',
-                'amount' => (float)$check['data']['recommend_amount'],
+                'fund_type' => $data['fund_type'],
+                'amount' => (float)$transfer_data['money'] * 100,
                 'external_bill_no' => uniqid('hx-'),
                 'pre_fetch_amount' => 0,
             ])['data'];

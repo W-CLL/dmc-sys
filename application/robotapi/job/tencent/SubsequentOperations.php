@@ -270,7 +270,7 @@ class SubsequentOperations
         try {
             $transfer_records_model = new TencentTransferLog();
             $info = $transfer_records_model->get($data["transfer_records_id"]);
-            $msg = "补偿金已成功转移";
+            $msg = "已成功转移";
             $img_url = $this->createPeerImg($data['account_id'],$data['to_account_id'],$info);
             if (!$transfer_records_model->where(["id" => $data["transfer_records_id"]])->update(['image' => $img_url])) {
                 throw new Exception('转账成功，状态更新失败');
@@ -441,7 +441,7 @@ class SubsequentOperations
             date('Y-m-d H:i:s',$transfer_info['update_time']),
             $account_info['name'] . "\n转出方ID：" . $account_info['account_id'],
             $to_account_info['name'] . "\n转入方ID：" . $to_account_info['account_id'],
-            '虚拟补偿金转移',
+            '腾讯同级互转',
             number_format($transfer_info['money'], 2),
             $transfer_info['order_uid']
         ];

@@ -23,8 +23,12 @@ class TransferVirtualFund extends Controller
         ];
         $array['account_id'] = $data['account_id'];
         $array['to_account_id'] = $data['to_account_id'];
+        $array['fund_type'] = $data['type'] == "现金" ? 'FUND_TYPE_AD_RECHARGE' : 'FUND_TYPE_COMPENSATE_VIRTUAL';
+        if ($data['amount'] != "全额"){
+            $array['amount'] = $data['amount'];
+        }
         $queue = new QueueRobot();
-        $queue->addQueue('腾讯广告【虚拟补偿金转账】', 'app\robotapi\job\RobotBaseJob', 'robotBaseJob', $array);
+        $queue->addQueue('腾讯广告【同级转账】', 'app\robotapi\job\RobotBaseJob', 'robotBaseJob', $array);
     }
 
 
@@ -93,8 +97,11 @@ class TransferVirtualFund extends Controller
                     ['group_id', 'require|max:50', 'group_id 的格式不正确'],
                     ['account_id', 'require', 'account_id 是必需的'],
                     ['to_account_id', 'require', 'to_account_id 是必需的'],
+                    ['type','require','type是必需的'],   // 1:现金   2:虚拟金
+                    ['amount','require','amount是必需的'],   // 传0则全部转
                     ['callback_url', 'require', 'callback_url是必需的'],
                     ['callback_data', 'require|array' , 'callback_data 是必需的且必须是数组']
+                    // 此处得传多一个amount,不传则默认全转
                 ];
                 $result = $this->validate($data, $validate);
                 if ($result !== true) {
@@ -136,6 +143,16 @@ class TransferVirtualFund extends Controller
 
     private function checkTransferParam($data)
     {
+        // 验证type只能为"现金"或"虚拟金"
+        if (!in_array($data['type'], ['现金', '虚拟金'])) {
+            return 'type只能是"现金"或"虚拟金"';
+        }
+
+        // 验证amount：不为"全额"时只能是数字
+        if ($data['amount'] != "全额" && !is_numeric($data['amount'])) {
+            return 'amount不为全额时，仅可输入数字';
+        }
+
         if ($data['account_id'] == $data['to_account_id']){
             return '发起方和接收方不能相同';
         }
@@ -148,26 +165,38 @@ class TransferVirtualFund extends Controller
 
         // 检查发起方账户是否存在
         if (!in_array($data['account_id'], $found_account_ids)) {
-            return '无权操作发起方子钱包id: ' . $data['account_id'];
+            return '无权操作发起方id: ' . $data['account_id'];
         }
 
         // 检查接收方账户是否存在
         if (!in_array($data['to_account_id'], $found_account_ids)) {
-            return '无权操作接收方子钱包id: ' . $data['to_account_id'];
+            return '无权操作接收方id: ' . $data['to_account_id'];
         }
+
+        if($data['amount'] != "全额"){
+            $amount = $data['amount'] * 100;
+        }
+
+        $fund_type = $data['type'] == "现金" ? 'FUND_TYPE_AD_RECHARGE' : 'FUND_TYPE_COMPENSATE_VIRTUAL';
 
         $check = Fund::accountToAccountTransfer([
             'account_id' => (int)$data['account_id'],
             'to_account_id' => (int)$data['to_account_id'],
-            'fund_type' => 'FUND_TYPE_COMPENSATE_VIRTUAL',
+            'fund_type' => $fund_type,
             'amount' => 0,
             'pre_fetch_amount' => 1,
         ])['data'];
         if ($check['code'] != 0){
-            return '查询虚拟补偿金余额返回异常';
+            return '查询余额返回异常';
         }
-        if ($check['data']['recommend_amount'] <= 0){
-            return '发起方可操作虚拟补偿金不足';
+        if(isset($amount)){
+            if ($check['data']['recommend_amount'] < $amount){
+                return '发起方可操作余额不足';
+            }
+        }else{
+            if ($check['data']['recommend_amount'] <= 0){
+                return '发起方可操作余额不足';
+            }
         }
 
         return true;
