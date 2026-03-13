@@ -23,6 +23,14 @@ class RobotBaseJob
             return '';
         }
 
+        // 防护2：记录太久远（3天前）则不执行
+        $threeDaysAgo = time() - (3 * 24 * 60 * 60);
+        if ($queueData['create_time'] < $threeDaysAgo) {
+            Log::error("RobotBaseJob: 记录已超过3天不执行, job_id={$jobId}, create_time=" . date('Y-m-d H:i:s', $queueData['create_time']));
+            $job->delete();
+            return '';
+        }
+
         try {
             if (empty($data['job_class'])) {
                 throw new Exception('任务实际执行类必传');
