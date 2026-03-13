@@ -76,9 +76,9 @@ class checkAdFund
                             $is_send = Cache::get('send_warning_msg_'.$item['wallet_id']);
                             if(!$is_send){
                                 if (!isset($msg)){
-                                    $msg = "⚠ 注 意 ⚠：\n 下列【千川子钱包】余额💰不足，请及时充值！\n 🔔".$item['wallet_id'] . "，💰余额：" .$item['total_balance'] . "元";
+                                    $msg = "⚠ 注 意 ⚠：\n 下列【千川子钱包】余额💰不足，请及时充值！\n 🔔".$item['wallet_id'] . "，💰余额：" . $item['basic_balance_info']['total_balance'] . "元";
                                 }else{
-                                    $msg .= "\n 🔔".$item['wallet_id'] . "，💰余额：" .$item['total_balance']. "元";
+                                    $msg .= "\n 🔔".$item['wallet_id'] . "，💰余额：" . $item['basic_balance_info']['total_balance'] . "元";
                                 }
                                 Cache::set('send_warning_msg_'.$item['wallet_id'],1,rand(1800,7200));
                             }
