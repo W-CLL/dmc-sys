@@ -97,8 +97,8 @@ class TransferVirtualFund extends Controller
                     ['group_id', 'require|max:50', 'group_id 的格式不正确'],
                     ['account_id', 'require', 'account_id 是必需的'],
                     ['to_account_id', 'require', 'to_account_id 是必需的'],
-                    ['type','require','type是必需的'],   // 1:现金   2:虚拟金
-                    ['amount','require','amount是必需的'],   // 传0则全部转
+                    ['type','require','type是必需的'],
+                    ['amount','require','amount是必需的'],
                     ['callback_url', 'require', 'callback_url是必需的'],
                     ['callback_data', 'require|array' , 'callback_data 是必需的且必须是数组']
                     // 此处得传多一个amount,不传则默认全转
@@ -144,8 +144,8 @@ class TransferVirtualFund extends Controller
     private function checkTransferParam($data)
     {
         // 验证type只能为"现金"或"虚拟金"
-        if (!in_array($data['type'], ['现金', '虚拟金'])) {
-            return 'type只能是"现金"或"虚拟金"';
+        if (!in_array($data['type'], ['现金', '补偿虚拟金', '测试虚拟金'])) {
+            return 'type只能是"现金"，"补偿虚拟金"，"测试虚拟金"';
         }
 
         // 验证amount：不为"全额"时只能是数字
@@ -177,7 +177,7 @@ class TransferVirtualFund extends Controller
             $amount = $data['amount'] * 100;
         }
 
-        $fund_type = $data['type'] == "现金" ? 'FUND_TYPE_AD_RECHARGE' : 'FUND_TYPE_COMPENSATE_VIRTUAL';
+        $fund_type = $data['type'] == "现金" ? 'FUND_TYPE_AD_RECHARGE' : ($data['type'] == "测试虚拟金" ? 'FUND_TYPE_TEST_VIRTUAL' : 'FUND_TYPE_COMPENSATE_VIRTUAL');
 
         $check = Fund::accountToAccountTransfer([
             'account_id' => (int)$data['account_id'],
