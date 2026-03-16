@@ -11,6 +11,7 @@ use think\Cache;
 use think\Db;
 use think\db\exception\DataNotFoundException;
 use think\db\exception\ModelNotFoundException;
+use think\Exception;
 use think\exception\DbException;
 
 
@@ -41,7 +42,7 @@ class QcAdv extends Api
         } else {
             $disable_adv = [];
             foreach ($res['data'] as $item) {
-                if (in_array($item['status'] , ["STATUS_DISABLE","STATUS_LIMIT"]) ) {
+                if (in_array($item['status'], ["STATUS_DISABLE", "STATUS_LIMIT"])) {
                     $disable_adv[] = $item['id'];
                 }
             }
@@ -60,10 +61,10 @@ class QcAdv extends Api
     {
         $page = Cache::get('qc_adv_restore_page', 1);
         $companyModel = new Company();
-        if (!empty($ids)){
+        if (!empty($ids)) {
             $all = $ids;
             $all = array_map('intval', $all);
-        }else{
+        } else {
             $all = $companyModel->where(['adv_status' => 0])->order('id desc')->page($page)->limit(100)->column('advertiser_id');
         }
         if (empty($all)) {
@@ -78,7 +79,7 @@ class QcAdv extends Api
             $numbers = $matches[0];
             $ids = array_values(array_diff($all, $numbers));
             $this->restore($ids);
-        } else if ($res['code'] == 0){
+        } else if ($res['code'] == 0) {
             $restore_adv = [];
             foreach ($res['data'] as $item) {
                 if ($item['status'] != "STATUS_DISABLE") {
@@ -92,7 +93,7 @@ class QcAdv extends Api
             $page++;
             Cache::set('qc_adv_restore_page', $page);
             $this->restore();
-        }else{
+        } else {
             // 未知状态，重试此页
             $this->restore($ids);
         }
@@ -100,106 +101,31 @@ class QcAdv extends Api
 
 
     /**
-     * 获取千川账户下的抖音号，分割
-     * @return void
+     * 标记账户活跃状态，一天两次
      */
-    public function chunkAdvForGetAwemeList()
+    public function markAdvActiveStatus()
     {
-        $adv_list = Db::name('company')
-            ->where('adv_status', 1)
-            ->order('advertiser_id', 'desc')
-            ->column('advertiser_id');
-        $chunks = array_chunk($adv_list, 20);
-        foreach ($chunks as $chunk) {
-            $job_data = [
-                'adv_list' => $chunk,
-                'params' => ['page' => 1, 'page_size' => 100]
-            ];
-            \think\Queue::push('app\job\InsertAdvAweme', $job_data, "insertAdvAweme");
-        }
-        echo "分割完成";
-    }
-
-    /**
-     * 获取抖音号的可投商品
-     * @return void
-     * @throws DataNotFoundException
-     * @throws ModelNotFoundException
-     * @throws DbException
-     */
-    public function chunkAwemeForGetGoodsList()
-    {
-        $aweme_model = new AdvAweme();
-        $adv_list = $aweme_model
-            ->alias('aw')
-            ->join('company com', 'aw.adv_id=com.advertiser_id', 'left')
-            ->where(['aw.status' => "EFFECTIVE", 'com.adv_status' => 1])
-            ->field('aw.adv_id,aw.aweme_id')
-//            ->fetchSql(true)
-            ->select();
-
-        $chunks = array_chunk((array)$adv_list, 20);
-        foreach ($chunks as $chunk) {
-            $job_data = [];
-            foreach ($chunk as $item) {
-                $job_data[] = [
-                    'adv_id' => $item['adv_id'],
-                    'aweme_id' => $item['aweme_id'],
-                    'params' => [
-                        'filtering' => json_encode(['tab' => 'ALL']),
-                        'page' => 1,
-                        'page_size' => 100
-                    ]
-                ];
+        $res = Db::name('company')->alias('c')
+            ->distinct(true)
+            ->field('c.advertiser_id as adv_id')
+            ->join('qc_adv_day_cost d', 'c.advertiser_id = d.adv_id')
+            ->where('c.adv_status', 1)
+            ->where('d.type', 2)
+            ->where('d.cost', 0)
+            ->whereExp('d.cost_date', " >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 90 DAY), '%Y%m%d')")
+            ->column('adv_id');
+        try {
+            if ($res) {
+                Db::name('company')->whereIn('advertiser_id', $res)->update(['is_active' => 0]);
+                Db::name('company')->where(['adv_status' => 1])->whereNotIn('advertiser_id', $res)->update(['is_active' => 1]);
             }
-            \think\Queue::push('app\job\InsertAwemeGoods', $job_data, "insertAwemeGoods");
+        }catch (Exception $e){
+            echo "有问题";
+            dump($e->getMessage());
+            die;
         }
-        echo "分割完成";
-    }
 
-    public function chunkObjGoodsList($start_time = '', $end_time = '')
-    {
-        if (!$start_time && !$end_time) {
-            $start_time = date('Y-m-d', strtotime('-1 day'));
-            $end_time = date('Y-m-d');
-        }
-        $com_model = new Company();
-        $obj_model = new \app\admin\model\QcGlobalObj();
-        $adv_list = $com_model->where(['adv_status' => 1])->column('advertiser_id');
-        foreach ($adv_list as $item) {
-            $obj_list = $obj_model->where([
-                'is_handle' => 0,
-                'adv_id' => $item,
-                'marketing_goal'=>"VIDEO_PROM_GOODS",
-                "obj_create_time"=>['>=',"1740758400"]//2025-3月之后的创建的计划
-            ])->column('obj_status','obj_id');
-            if (!$obj_list) {
-                continue;
-            }
-            if (count($obj_list) > 30) {
-                $chunks = array_chunk($obj_list, 30,true);
-                foreach ($chunks as $chunk) {
-                    $job_data = [
-                        'adv_id' => $item,
-                        'obj_ids' => $chunk,
-                        'start_time' => $start_time,
-                        'end_time' => $end_time,
-                        "fields" => json_encode(['product_show_count_for_roi2'])
-                    ];
-                    \think\Queue::push('app\job\risk_job\InsertObjProduct', $job_data, "insertObjProduct");
-                }
-            } else {
-                $job_data = [
-                    'adv_id' => $item,
-                    'obj_ids' => $obj_list,
-                    'start_time' => $start_time,
-                    'end_time' => $end_time,
-                    "fields" => json_encode(['product_show_count_for_roi2'])
-                ];
-                \think\Queue::push('app\job\risk_job\InsertObjProduct', $job_data, "insertObjProduct");
-            }
-        }
-        echo "分割完成";
+        echo "处理账号活跃状态结束";
+        die;
     }
-
 }

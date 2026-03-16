@@ -31,7 +31,7 @@ class QcGlobal extends Controller
         $cacheKey = 'active_advertiser_list';
         $company = new Company();
         $adv_list = \think\Cache::remember($cacheKey, function () use ($company) {
-            return $company->where(['adv_status' => 1])
+            return $company->where(['adv_status' => 1,'is_active'=>1])
                 ->order('advertiser_id', 'desc')
                 ->column('advertiser_id');
         }, 300); // 缓存5分钟
@@ -102,6 +102,7 @@ class QcGlobal extends Controller
             ->where([
                 'm.stat_cost_for_roi2' => ['>', 0],
                 'c.adv_status' => 1,
+                'c.is_active' => 1,
                 'm.cost_date'=>['>',strtotime('-16 days')]
             ]);
 
@@ -269,7 +270,10 @@ class QcGlobal extends Controller
     {
         $adv_model = new Company();
         $page = Cache::get('test_task_page', 1);
-        $adv_list = $adv_model->where(['adv_status' => 1])->page($page)->limit(40)->order('advertiser_id desc')->column('advertiser_id');
+        $adv_list = $adv_model->where(['adv_status' => 1,'is_active'=>1])
+            ->page($page)->limit(40)
+            ->order('advertiser_id desc')
+            ->column('advertiser_id');
         if (!$adv_list) {
 //            Cache::rm('test_task_page');
             echo "全部处理完成了";

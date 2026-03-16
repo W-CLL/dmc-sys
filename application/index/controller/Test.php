@@ -46,5 +46,33 @@ class Test extends Frontend
     }
 
 
+    public function testGetAppToken()
+    {
+        $res = sendApiRes("https://open.oceanengine.com/open_api/oauth2/app_access_token/",
+            ['app_id'=>(int)1789116881642596,'secret'=>'6dddcbede9bbf6cdf4a82bc91ba697dc3b065e0c'],
+            "POST");
+        dump($res);
+        die;
+        //ab29b3c1605de5694bb66309406c23a856e9ddb1
+    }
+
+       public function testInactiveAdv()
+    {
+        $res = sendApiRes("https://api.oceanengine.com/open_api/v3.0/tools/inactive_advertiser/list/",
+            ['app_id'=>(int)1789116881642596,'cursor'=>0,'count'=>1000],
+            "GET",['App-Access-Token'=>"ab29b3c1605de5694bb66309406c23a856e9ddb1"]);
+        dump($res);
+        die;
+        //
+    }
+    public function testGlobal()
+    {
+        $res = sendApiRes("https://api.oceanengine.com/open_api/v1.0/qianchuan/report/custom/config/get/",
+            ['app_id'=>(int)1789116881642596,'cursor'=>0,'count'=>1000],
+            "GET",['App-Access-Token'=>"ab29b3c1605de5694bb66309406c23a856e9ddb1"]);
+        dump($res);
+        die;
+        //
+    }
 
 }

@@ -42,7 +42,7 @@ class QcAdvRisk extends Api
         $adv_list = $model
             ->alias('op')
             ->join('company com','op.adv_id=com.advertiser_id','left')
-            ->where(['com.adv_status'=>1])
+            ->where(['com.adv_status'=>1,'com.is_active'=>1])
             ->group('op.adv_id')
             ->column('op.adv_id');
         $chunks = array_chunk($adv_list,100);
