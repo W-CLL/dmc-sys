@@ -128,4 +128,49 @@ class QcAdv extends Api
         echo "处理账号活跃状态结束";
         die;
     }
+    public function chunkObjGoodsList($start_time = '', $end_time = '')
+    {
+        if (!$start_time && !$end_time) {
+            $start_time = date('Y-m-d', strtotime('-1 day'));
+            $end_time = date('Y-m-d');
+        }
+        $com_model = new Company();
+        $obj_model = new \app\admin\model\QcGlobalObj();
+        $adv_list = $com_model->where(['adv_status' => 1])->column('advertiser_id');
+        foreach ($adv_list as $item) {
+            $obj_list = $obj_model->where([
+                'is_handle' => 0,
+                'adv_id' => $item,
+                'marketing_goal'=>"VIDEO_PROM_GOODS",
+                "obj_create_time"=>['>=',"1740758400"]//2025-3月之后的创建的计划
+            ])->column('obj_status','obj_id');
+            if (!$obj_list) {
+                continue;
+            }
+            if (count($obj_list) > 30) {
+                $chunks = array_chunk($obj_list, 30,true);
+                foreach ($chunks as $chunk) {
+                    $job_data = [
+                        'adv_id' => $item,
+                        'obj_ids' => $chunk,
+                        'start_time' => $start_time,
+                        'end_time' => $end_time,
+                        "fields" => json_encode(['product_show_count_for_roi2'])
+                    ];
+                    \think\Queue::push('app\job\risk_job\InsertObjProduct', $job_data, "insertObjProduct");
+                }
+            } else {
+                $job_data = [
+                    'adv_id' => $item,
+                    'obj_ids' => $obj_list,
+                    'start_time' => $start_time,
+                    'end_time' => $end_time,
+                    "fields" => json_encode(['product_show_count_for_roi2'])
+                ];
+                \think\Queue::push('app\job\risk_job\InsertObjProduct', $job_data, "insertObjProduct");
+            }
+        }
+        echo "分割完成";
+    }
+
 }
