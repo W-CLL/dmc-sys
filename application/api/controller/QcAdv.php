@@ -136,7 +136,7 @@ class QcAdv extends Api
         }
         $com_model = new Company();
         $obj_model = new \app\admin\model\QcGlobalObj();
-        $adv_list = $com_model->where(['adv_status' => 1])->column('advertiser_id');
+        $adv_list = $com_model->where(['adv_status' => 1,'is_active'=>1])->column('advertiser_id');
         foreach ($adv_list as $item) {
             $obj_list = $obj_model->where([
                 'is_handle' => 0,
