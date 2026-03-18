@@ -105,21 +105,40 @@ class QcAdv extends Api
      */
     public function markAdvActiveStatus()
     {
+        // 1. 找出“不活跃”的广告主
         $res = Db::name('company')->alias('c')
-            ->distinct(true)
             ->field('c.advertiser_id as adv_id')
-            ->join('qc_adv_day_cost d', 'c.advertiser_id = d.adv_id')
+            ->join('qc_adv_day_cost d',
+                "c.advertiser_id = d.adv_id 
+            AND d.type = 2 
+            AND d.cost_date >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 90 DAY), '%Y%m%d')",
+                'LEFT'
+            )
             ->where('c.adv_status', 1)
-            ->where('d.type', 2)
-            ->where('d.cost', 0)
-            ->whereExp('d.cost_date', " >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 90 DAY), '%Y%m%d')")
+            ->group('c.advertiser_id')
+            ->having('SUM(d.cost) IS NULL OR SUM(d.cost) = 0')
             ->column('adv_id');
+
         try {
-            if ($res) {
-                Db::name('company')->whereIn('advertiser_id', $res)->update(['is_active' => 0]);
-                Db::name('company')->where(['adv_status' => 1])->whereNotIn('advertiser_id', $res)->update(['is_active' => 1]);
+            if (!empty($res)) {
+                // 2. 标记不活跃
+                Db::name('company')
+                    ->whereIn('advertiser_id', $res)
+                    ->update(['is_active' => 0]);
+
+                // 3. 标记活跃
+                Db::name('company')
+                    ->where('adv_status', 1)
+                    ->whereNotIn('advertiser_id', $res)
+                    ->update(['is_active' => 1]);
+            } else {
+                // 如果一个不活跃都没有，全部标活跃
+                Db::name('company')
+                    ->where('adv_status', 1)
+                    ->update(['is_active' => 1]);
             }
-        }catch (Exception $e){
+
+        } catch (\Exception $e) {
             echo "有问题";
             dump($e->getMessage());
             die;
