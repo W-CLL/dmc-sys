@@ -813,6 +813,18 @@ class FundManagement
     }
 
 
+    /**
+     * 获取素材预审结果
+     * @param $params
+     * @return array
+     */
+    public static function get_material_audit_result($params)
+    {
+        $access_token = Cache::get("qc_access_token");
+        $url = "https://api.oceanengine.com/open_api/v3.0/security/audit_results/";
+        return sendApiRes($url, $params, 'GET', ['Access-Token' => $access_token]);
+    }
+
 }
 
 
