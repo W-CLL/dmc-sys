@@ -109,6 +109,9 @@ class Prequalification
             throw new Exception("查询接口异常，状态码：". $res['code']);
         }
         if (empty($res['data']['list'])){
+            $a = Db::name("material_prequalification")->where(['material_id' => ['in',$data['material_ids']]])
+                ->update(['status' => 4,'update_time' => time()]);
+            var_dump($a);
             return true;
         }
         $info = $res['data']['list'];
