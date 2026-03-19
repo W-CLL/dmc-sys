@@ -9,6 +9,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                     add_url: 'subject/add',
                     edit_url: 'subject/edit',
                     del_url: 'subject/del',
+                    batch_add_url: 'subject/batch_add',
                     table: 'subject',
                 }
             });
@@ -39,11 +40,24 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
 
             // 为表格绑定事件
             Table.api.bindevent(table);
+
+            // 批量添加按钮
+            $(document).on('click', '.btn-batch-add', function () {
+                Fast.api.open('subject/batch_add', '批量添加主体', {
+                    area: ['600px', '800px'],
+                    callback: function () {
+                        table.bootstrapTable('refresh');
+                    }
+                });
+            });
         },
         add: function () {
             Controller.api.bindevent();
         },
         edit: function () {
+            Controller.api.bindevent();
+        },
+        batch_add: function () {
             Controller.api.bindevent();
         },
         api: {

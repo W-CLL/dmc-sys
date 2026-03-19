@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>批量添加主体</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/assets/css/fastadmin.min.css">
+    <style>
+        body { background: #f5f5f5; padding: 20px; }
+        .batch-add-panel { background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 30px; }
+        .batch-add-panel h3 { margin-top: 0; margin-bottom: 20px; color: #333; font-size: 18px; font-weight: 600; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+        .upload-area { border: 2px dashed #ddd; border-radius: 8px; padding: 40px; text-align: center; cursor: pointer; transition: all 0.3s; }
+        .upload-area:hover { border-color: #337ab7; background: #f8f9fa; }
+        .upload-area .upload-icon { font-size: 48px; color: #ccc; margin-bottom: 15px; }
+        .upload-area p { margin: 5px 0; color: #666; }
+        .upload-area .file-types { font-size: 12px; color: #999; }
+        .preview-area { margin-top: 20px; border: 1px solid #e5e5e5; border-radius: 6px; max-height: 250px; overflow-y: auto; background: #fafafa; }
+        .preview-area .preview-header { padding: 10px 15px; background: #f0f0f0; border-bottom: 1px solid #e5e5e5; font-weight: 600; color: #333; position: sticky; top: 0; }
+        .preview-area .preview-list { padding: 15px; }
+        .preview-area .preview-item { padding: 8px 12px; margin: 5px 0; background: #fff; border-radius: 4px; border: 1px solid #e8e8e8; font-size: 14px; }
+        .preview-area .preview-item:hover { background: #f5f5f5; }
+        .preview-area .preview-empty { text-align: center; padding: 40px; color: #999; }
+        .preview-area .preview-count { padding: 10px 15px; background: #d4edda; color: #155724; border-top: 1px solid #c3e6cb; font-weight: 600; position: sticky; bottom: 0; }
+        .btn-import { width: 120px; }
+        .format-tip { margin-top: 15px; padding: 15px; background: #e7f3ff; border-radius: 6px; border-left: 4px solid #337ab7; }
+        .format-tip h4 { margin: 0 0 10px 0; color: #333; font-size: 14px; font-weight: 600; }
+        .format-tip ul { margin: 0; padding-left: 20px; color: #666; font-size: 13px; }
+        .format-tip li { margin: 5px 0; }
+        .format-tip .example { margin-top: 10px; padding: 10px; background: #fff; border-radius: 4px; font-family: monospace; font-size: 12px; }
+    </style>
+</head>
+<body>
+<div class="batch-add-panel">
+    <h3><i class="fa fa-upload"></i> 批量添加主体</h3>
+    
+    <div class="form-horizontal" role="form">
+        <div class="form-group">
+            <label class="col-sm-3 control-label">选择文件</label>
+            <div class="col-sm-9">
+                <div class="upload-area" onclick="document.getElementById('excel-file').click()">
+                    <div class="upload-icon">📁</div>
+                    <p>点击选择文件或拖拽文件到此处</p>
+                    <p class="file-types">支持 .xlsx 和 .csv 格式</p>
+                    <input id="excel-file" type="file" style="display:none" accept=".xls,.xlsx,.csv">
+                </div>
+                <div class="format-tip">
+                    <h4><i class="fa fa-info-circle"></i> Excel格式说明</h4>
+                    <ul>
+                        <li>请在第一列（A列）中填写主体名称</li>
+                        <li>第一行（A1）为表头，会自动跳过</li>
+                        <li>每个主体名称占一行</li>
+                        <li>支持批量导入多个主体</li>
+                    </ul>
+                    <div class="example">
+                        示例：<br>
+                        A列<br>
+                        ├─ 主体名称（表头）<br>
+                        ├─ 主体公司A<br>
+                        ├─ 主体公司B<br>
+                        └─ 主体公司C
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label class="col-sm-3 control-label">数据预览</label>
+            <div class="col-sm-9">
+                <div class="preview-area" id="preview-area">
+                    <div class="preview-empty" id="preview-empty">
+                        <p>请选择文件查看预览数据</p>
+                    </div>
+                    <div class="preview-list" id="preview-list" style="display:none;"></div>
+                    <div class="preview-count" id="preview-count" style="display:none;"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <div class="col-sm-9 col-sm-offset-3">
+                <button type="button" id="import-btn" class="btn btn-success btn-import" disabled>
+                    <i class="fa fa-upload"></i> 开始导入
+                </button>
+                <button type="button" class="btn btn-default" onclick="Fast.api.close()" style="margin-left:10px;">
+                    取消
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.bootcdn.net/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+    var subjects = [];
+
+    // 监听文件选择
+    document.getElementById('excel-file').addEventListener('change', function(e) {
+        var file = e.target.files[0];
+        if (!file) return;
+
+        var fileName = file.name;
+        var fileSize = (file.size / 1024).toFixed(2);
+        
+        document.getElementById('preview-empty').innerHTML = '<p><i class="fa fa-spinner fa-spin"></i> 正在解析 ' + fileName + ' (' + fileSize + 'KB)</p>';
+
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                var data = new Uint8Array(e.target.result);
+                var workbook = XLSX.read(data, {type: 'array'});
+                
+                var firstSheet = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheet];
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1});
+                
+                subjects = [];
+                for (var i = 1; i < jsonData.length; i++) {
+                    var row = jsonData[i];
+                    if (row && row[0] && row[0].toString().trim()) {
+                        subjects.push(row[0].toString().trim());
+                    }
+                }
+
+                if (subjects.length === 0) {
+                    document.getElementById('preview-empty').innerHTML = '<p class="text-danger">未找到有效数据</p>';
+                    document.getElementById('preview-list').style.display = 'none';
+                    document.getElementById('preview-count').style.display = 'none';
+                    document.getElementById('import-btn').disabled = true;
+                } else {
+                    var html = '';
+                    subjects.slice(0, 100).forEach(function(item, index) {
+                        html += '<div class="preview-item">' + (index + 1) + '. ' + item + '</div>';
+                    });
+                    if (subjects.length > 100) {
+                        html += '<div class="preview-item text-muted">... 还有 ' + (subjects.length - 100) + ' 条未显示</div>';
+                    }
+                    
+                    document.getElementById('preview-empty').style.display = 'none';
+                    document.getElementById('preview-list').innerHTML = html;
+                    document.getElementById('preview-list').style.display = 'block';
+                    document.getElementById('preview-count').innerHTML = '<i class="fa fa-check-circle"></i> 共 ' + subjects.length + ' 条数据待导入';
+                    document.getElementById('preview-count').style.display = 'block';
+                    document.getElementById('import-btn').disabled = false;
+                }
+            } catch (err) {
+                document.getElementById('preview-empty').innerHTML = '<p class="text-danger">解析失败: ' + err.message + '</p>';
+                document.getElementById('import-btn').disabled = true;
+            }
+        };
+        reader.onerror = function() {
+            document.getElementById('preview-empty').innerHTML = '<p class="text-danger">文件读取失败</p>';
+            document.getElementById('import-btn').disabled = true;
+        };
+        reader.readAsArrayBuffer(file);
+    });
+
+    // 导入按钮
+    document.getElementById('import-btn').addEventListener('click', function() {
+        if (subjects.length === 0) {
+            Layer.msg('请先选择有效的文件', {icon: 0});
+            return;
+        }
+
+        var btn = document.getElementById('import-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> 导入中...';
+
+        $.post('{:url("subject/batch_add_post")}', {subjects: JSON.stringify(subjects)}, function(res) {
+            if (res.code === 1) {
+                Layer.msg(res.msg, {icon: 1});
+                setTimeout(function() {
+                    Fast.api.close();
+                }, 1500);
+            } else {
+                Layer.msg(res.msg || '导入失败', {icon: 2});
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa fa-upload"></i> 开始导入';
+            }
+        });
+    });
+</script>
+</body>
+</html>
