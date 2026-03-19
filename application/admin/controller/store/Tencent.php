@@ -86,7 +86,16 @@ class Tencent extends Backend
         
         if ($this->request->isPost()) {
             $params = $this->request->post("row/a");
+            
             if ($params) {
+                // 单独获取新增的临时字段（不存入数据库）
+                $publicCreditLimitToSpending = isset($params['public_credit_limit_to_spending']) ? $params['public_credit_limit_to_spending'] : null;
+                $privateCreditLimitToSpending = isset($params['private_credit_limit_to_spending']) ? $params['private_credit_limit_to_spending'] : null;
+                
+                // 从params中移除这些临时字段，避免存入数据库
+                unset($params['public_credit_limit_to_spending']);
+                unset($params['private_credit_limit_to_spending']);
+                
                 // 移除可能不存在的字段
                 unset($params['store_name']);
 
@@ -177,9 +186,77 @@ class Tencent extends Backend
                     unset($params['private_credit_limit_tencent_add']);
                 }
                 
+                // 新增功能：减少授信额度到已使用额度（不新增数据库字段）
+                // 公账处理
+                if (!empty($publicCreditLimitToSpending)) {
+                    $subValue = $publicCreditLimitToSpending;
+                    
+                    // 确保输入值为正数
+                    if (bccomp($subValue, '0', 2) <= 0) {
+                        $this->error("公账减少授信额度必须为正数");
+                    }
+                    
+                    // 检查授信额度是否足够减少
+                    if (bccomp($subValue, $row['public_credit_limit_tencent'], 2) > 0) {
+                        $this->error("公账授信额度不足，无法减少这么多");
+                    }
+                    
+                    // 计算新的授信额度 = 原授信额度 - 减少值
+                    $params['public_credit_limit_tencent'] = bcsub($row['public_credit_limit_tencent'], $subValue, 2);
+                    
+                    // 计算新的已使用额度 = 原已使用额度 + 减少值
+                    $params['public_spending_credit_limit_tencent'] = bcadd($row['public_spending_credit_limit_tencent'], $subValue, 2);
+                    
+                    // 标记已处理，避免被清账逻辑覆盖
+                    $publicCreditLimitProcessed = true;
+                    $publicSpendingProcessed = true;
+                    
+                    // 调试日志
+                    $logData = sprintf("减少到已用-公账: 原已用=%s, 减少值=%s, 新已用=%s", 
+                        $row['public_spending_credit_limit_tencent'], 
+                        $subValue, 
+                        $params['public_spending_credit_limit_tencent']);
+                    file_put_contents(ROOT_PATH . 'runtime' . DS . 'debug_log.txt', $logData . "\n", FILE_APPEND);
+                    
+                    // 移除临时字段，避免存入数据库
+                    unset($params['public_credit_limit_to_spending']);
+                }
+                
+                // 私账处理
+                if (!empty($privateCreditLimitToSpending)) {
+                    $subValue = $privateCreditLimitToSpending;
+                    
+                    // 确保输入值为正数
+                    if (bccomp($subValue, '0', 2) <= 0) {
+                        $this->error("私账减少授信额度必须为正数");
+                    }
+                    
+                    // 检查授信额度是否足够减少
+                    if (bccomp($subValue, $row['private_credit_limit_tencent'], 2) > 0) {
+                        $this->error("私账授信额度不足，无法减少这么多");
+                    }
+                    
+                    // 计算新的授信额度 = 原授信额度 - 减少值
+                    $params['private_credit_limit_tencent'] = bcsub($row['private_credit_limit_tencent'], $subValue, 2);
+                    
+                    // 计算新的已使用额度 = 原已使用额度 + 减少值
+                    $params['private_spending_credit_limit_tencent'] = bcadd($row['private_spending_credit_limit_tencent'], $subValue, 2);
+                    
+                    // 标记已处理，避免被清账逻辑覆盖
+                    $privateCreditLimitProcessed = true;
+                    $privateSpendingProcessed = true;
+                    
+                    // 调试日志
+                    $logData = sprintf("减少到已用-私账: 原已用=%s, 减少值=%s, 新已用=%s", 
+                        $row['private_spending_credit_limit_tencent'], 
+                        $subValue, 
+                        $params['private_spending_credit_limit_tencent']);
+                    file_put_contents(ROOT_PATH . 'runtime' . DS . 'debug_log.txt', $logData . "\n", FILE_APPEND);
+                }
+                
                 // 处理已使用授信额度影响授信额度余额的逻辑
                 // 公账处理
-                if (isset($params['public_spending_credit_limit_tencent_add'])) {
+                if (isset($params['public_spending_credit_limit_tencent_add']) && empty($publicSpendingProcessed)) {
                     // 获取用户输入的数值
                     $inputValue = $params['public_spending_credit_limit_tencent_add'];
                     
@@ -228,7 +305,7 @@ class Tencent extends Backend
                     }
                     
                     unset($params['public_spending_credit_limit_tencent_add']);
-                } else if (isset($params['public_spending_credit_limit_tencent'])) {
+                } else if (isset($params['public_spending_credit_limit_tencent']) && empty($publicCreditLimitProcessed) && empty($publicSpendingProcessed)) {
                     // 保持原有逻辑以兼容其他可能的调用方式
                     $spending = $params['public_spending_credit_limit_tencent'];
                     $credit_limit = isset($params['public_credit_limit_tencent']) ? $params['public_credit_limit_tencent'] : $row['public_credit_limit_tencent'];
@@ -245,7 +322,7 @@ class Tencent extends Backend
                 }
                 
                 // 私账处理
-                if (isset($params['private_spending_credit_limit_tencent_add'])) {
+                if (isset($params['private_spending_credit_limit_tencent_add']) && empty($privateSpendingProcessed)) {
                     // 获取用户输入的数值
                     $inputValue = $params['private_spending_credit_limit_tencent_add'];
                     
@@ -294,7 +371,7 @@ class Tencent extends Backend
                     }
                     
                     unset($params['private_spending_credit_limit_tencent_add']);
-                } else if (isset($params['private_spending_credit_limit_tencent'])) {
+                } else if (isset($params['private_spending_credit_limit_tencent']) && empty($privateCreditLimitProcessed) && empty($privateSpendingProcessed)) {
                     // 保持原有逻辑以兼容其他可能的调用方式
                     $spending = $params['private_spending_credit_limit_tencent'];
                     $credit_limit = isset($params['private_credit_limit_tencent']) ? $params['private_credit_limit_tencent'] : $row['private_credit_limit_tencent'];
@@ -311,6 +388,14 @@ class Tencent extends Backend
                 }
 
                 // 更新数据
+                // 移除可能不存在的临时字段，避免存入数据库
+                unset($params['public_spending_credit_limit_tencent_add']);
+                unset($params['private_spending_credit_limit_tencent_add']);
+                unset($params['public_credit_limit_to_spending']);
+                unset($params['private_credit_limit_to_spending']);
+                
+                // 调试日志
+                file_put_contents(ROOT_PATH . 'runtime' . DS . 'debug_log.txt', "保存前params: " . var_export($params, true) . "\n", FILE_APPEND);
                 $result = $row->save($params);
                 if ($result !== false) {
                     // 生成交易日志（传递图片路径和差值信息）
@@ -448,22 +533,44 @@ class Tencent extends Backend
                     'create_time' => time()
                 ];
             } else {
-                // 仅是已使用额度转移（总额度不变）
-                $logsToInsert[] = [
-                    'admin_id' => $adminId,
-                    'admin_username' => $adminUsername,
-                    'store_id' => $storeId,
-                    'money' => abs($spendingAmount),
-                    'explain' => ($spendingAmount > 0 ? '总后台增加公账已使用授信额度' : '总后台减少公账已使用授信额度') . '，授信总额度：' . $totalOld . '（可用额度：' . $oldData['public_credit_limit_tencent'] . '→' . $newData['public_credit_limit_tencent'] . '，已使用额度：' . $oldData['public_spending_credit_limit_tencent'] . '→' . $newData['public_spending_credit_limit_tencent'] . '），操作人：' . $adminUsername,
-                    'type' => 3,   // 清账
-                    'account_type' => 1, // 公账
-                    'before_money' => $oldData['public_credit_limit_tencent'], // 当前余额
-                    'today_money' => $newData['public_credit_limit_tencent'],  // 变动后余额
-                    'balance_surplus' => $newData['public_money_tencent'],
-                    'credit_limit_surplus' => $newData['public_credit_limit_tencent'],
-                    'create_time' => time(),
-                    'receipt_image' => $imagePath // 添加图片路径
-                ];
+                // 仅是已使用额度转移（总额度不变），判断是减少授信额度还是清账操作
+                $isReduceCreditToSpending = (bccomp($amount, '0', 2) < 0 && bccomp($spendingAmount, '0', 2) > 0);
+                
+                if ($isReduceCreditToSpending) {
+                    // 减少授信额度转移到已使用额度
+                    $logsToInsert[] = [
+                        'admin_id' => $adminId,
+                        'admin_username' => $adminUsername,
+                        'store_id' => $storeId,
+                        'money' => abs($amount),
+                        'explain' => '总后台减少公账授信额度并转移到已使用额度，授信总额度：' . $totalOld . '（可用额度：' . $oldData['public_credit_limit_tencent'] . '→' . $newData['public_credit_limit_tencent'] . '，已使用额度：' . $oldData['public_spending_credit_limit_tencent'] . '→' . $newData['public_spending_credit_limit_tencent'] . '），操作人：' . $adminUsername,
+                        'type' => 2,   // 减少额度
+                        'account_type' => 1, // 公账
+                        'before_money' => $oldData['public_credit_limit_tencent'], // 当前余额
+                        'today_money' => $newData['public_credit_limit_tencent'],  // 变动后余额
+                        'balance_surplus' => $newData['public_money_tencent'],
+                        'credit_limit_surplus' => $newData['public_credit_limit_tencent'],
+                        'create_time' => time(),
+                        'receipt_image' => $imagePath // 添加图片路径
+                    ];
+                } else {
+                    // 清账操作
+                    $logsToInsert[] = [
+                        'admin_id' => $adminId,
+                        'admin_username' => $adminUsername,
+                        'store_id' => $storeId,
+                        'money' => abs($spendingAmount),
+                        'explain' => ($spendingAmount > 0 ? '总后台增加公账已使用授信额度' : '总后台减少公账已使用授信额度') . '，授信总额度：' . $totalOld . '（可用额度：' . $oldData['public_credit_limit_tencent'] . '→' . $newData['public_credit_limit_tencent'] . '，已使用额度：' . $oldData['public_spending_credit_limit_tencent'] . '→' . $newData['public_spending_credit_limit_tencent'] . '），操作人：' . $adminUsername,
+                        'type' => 3,   // 清账
+                        'account_type' => 1, // 公账
+                        'before_money' => $oldData['public_credit_limit_tencent'], // 当前余额
+                        'today_money' => $newData['public_credit_limit_tencent'],  // 变动后余额
+                        'balance_surplus' => $newData['public_money_tencent'],
+                        'credit_limit_surplus' => $newData['public_credit_limit_tencent'],
+                        'create_time' => time(),
+                        'receipt_image' => $imagePath // 添加图片路径
+                    ];
+                }
             }
         }
         
@@ -495,22 +602,44 @@ class Tencent extends Backend
                     'create_time' => time()
                 ];
             } else {
-                // 仅是已使用额度转移（总额度不变）
-                $logsToInsert[] = [
-                    'admin_id' => $adminId,
-                    'admin_username' => $adminUsername,
-                    'store_id' => $storeId,
-                    'money' => abs($spendingAmount),
-                    'explain' => ($spendingAmount > 0 ? '总后台增加私账已使用授信额度' : '总后台减少私账已使用授信额度') . '，授信总额度：' . $totalOld . '（可用额度：' . $oldData['private_credit_limit_tencent'] . '→' . $newData['private_credit_limit_tencent'] . '，已使用额度：' . $oldData['private_spending_credit_limit_tencent'] . '→' . $newData['private_spending_credit_limit_tencent'] . '），操作人：' . $adminUsername,
-                    'type' => 3, // 3为充值类型
-                    'account_type' => 2, // 私账
-                    'before_money' => $oldData['private_credit_limit_tencent'], // 当前余额
-                    'today_money' => $newData['private_credit_limit_tencent'],  // 变动后余额
-                    'balance_surplus' => $newData['private_money_tencent'],
-                    'credit_limit_surplus' => $newData['private_credit_limit_tencent'],
-                    'create_time' => time(),
-                    'receipt_image' => $imagePath // 添加图片路径
-                ];
+                // 仅是已使用额度转移（总额度不变），判断是减少授信额度还是清账操作
+                $isReduceCreditToSpending = (bccomp($amount, '0', 2) < 0 && bccomp($spendingAmount, '0', 2) > 0);
+                
+                if ($isReduceCreditToSpending) {
+                    // 减少授信额度转移到已使用额度
+                    $logsToInsert[] = [
+                        'admin_id' => $adminId,
+                        'admin_username' => $adminUsername,
+                        'store_id' => $storeId,
+                        'money' => abs($amount),
+                        'explain' => '总后台减少私账授信额度并转移到已使用额度，授信总额度：' . $totalOld . '（可用额度：' . $oldData['private_credit_limit_tencent'] . '→' . $newData['private_credit_limit_tencent'] . '，已使用额度：' . $oldData['private_spending_credit_limit_tencent'] . '→' . $newData['private_spending_credit_limit_tencent'] . '），操作人：' . $adminUsername,
+                        'type' => 2,   // 减少额度
+                        'account_type' => 2, // 私账
+                        'before_money' => $oldData['private_credit_limit_tencent'], // 当前余额
+                        'today_money' => $newData['private_credit_limit_tencent'],  // 变动后余额
+                        'balance_surplus' => $newData['private_money_tencent'],
+                        'credit_limit_surplus' => $newData['private_credit_limit_tencent'],
+                        'create_time' => time(),
+                        'receipt_image' => $imagePath // 添加图片路径
+                    ];
+                } else {
+                    // 清账操作
+                    $logsToInsert[] = [
+                        'admin_id' => $adminId,
+                        'admin_username' => $adminUsername,
+                        'store_id' => $storeId,
+                        'money' => abs($spendingAmount),
+                        'explain' => ($spendingAmount > 0 ? '总后台增加私账已使用授信额度' : '总后台减少私账已使用授信额度') . '，授信总额度：' . $totalOld . '（可用额度：' . $oldData['private_credit_limit_tencent'] . '→' . $newData['private_credit_limit_tencent'] . '，已使用额度：' . $oldData['private_spending_credit_limit_tencent'] . '→' . $newData['private_spending_credit_limit_tencent'] . '），操作人：' . $adminUsername,
+                        'type' => 3, // 3为清账类型
+                        'account_type' => 2, // 私账
+                        'before_money' => $oldData['private_credit_limit_tencent'], // 当前余额
+                        'today_money' => $newData['private_credit_limit_tencent'],  // 变动后余额
+                        'balance_surplus' => $newData['private_money_tencent'],
+                        'credit_limit_surplus' => $newData['private_credit_limit_tencent'],
+                        'create_time' => time(),
+                        'receipt_image' => $imagePath // 添加图片路径
+                    ];
+                }
             }
         }
         
