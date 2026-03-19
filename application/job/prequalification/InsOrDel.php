@@ -2,6 +2,7 @@
 
 namespace app\job\prequalification;
 
+use think\Cache;
 use think\Db;
 use think\Exception;
 use think\queue\Job;
@@ -63,6 +64,12 @@ class InsOrDel
         }
         switch ($info['event']){
             case 'CREATE':
+                $subjectList = Cache::get('material_prequalification_subject_list', []);
+                $special = Db::name('company')->where(['company_name' => ['in',$subjectList]])->column('advertiser_id');
+                if (!in_array($info['account_id'],$special)){
+                    // 如果不是关注主体内的直接不存数据库
+                    return true;
+                }
                 $res = Db::name('material_prequalification')->where(['material_id' => ['in',$content['material_ids']]])
                     ->column('status,reason_text,object_id,video_id,filename','material_id');;
                 foreach ($content['material_ids'] as $v){

@@ -26,7 +26,8 @@ class MaterialPrequalification extends Model
             0 => '等待推送',
             1 => '预审中',
             2 => '通过',
-            3 => '驳回'
+            3 => '驳回',
+            4 => '无法推送'
         ];
         
         if ($status !== null) {

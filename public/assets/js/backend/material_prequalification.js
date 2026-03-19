@@ -27,10 +27,10 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         {
                             field: 'status', 
                             title: '状态', 
-                            searchList: {"0": "等待推送", "1": "预审中", "2": "通过", "3": "驳回"},
+                            searchList: {"0": "等待推送", "1": "预审中", "2": "通过", "3": "驳回", "4": "无法推送"},
                             formatter: function (value, row, index) {
-                                var statusClass = ['label-default', 'label-warning', 'label-success', 'label-danger'][value] || 'label-default';
-                                var statusText = ['等待推送', '预审中', '通过', '驳回'][value] || '';
+                                var statusClass = ['label-default', 'label-warning', 'label-success', 'label-danger', 'label-primary'][value] || 'label-default';
+                                var statusText = ['等待推送', '预审中', '通过', '驳回', '无法推送'][value] || '';
                                 return '<span class="label ' + statusClass + '">' + statusText + '</span>';
                             }
                         },

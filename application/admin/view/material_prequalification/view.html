@@ -28,8 +28,8 @@
                             <td><strong>状态</strong></td>
                             <td>
                                 <?php 
-                                    $statusList = [0 => '等待推送', 1 => '预审中', 2 => '通过', 3 => '驳回'];
-                                    $statusClass = ['label-default', 'label-warning', 'label-success', 'label-danger'];
+                                    $statusList = [0 => '等待推送', 1 => '预审中', 2 => '通过', 3 => '驳回', 4 => '无法推送'];
+                                    $statusClass = ['label-default', 'label-warning', 'label-success', 'label-danger', 'label-primary'];
                                     $status = isset($row['status']) ? $row['status'] : 0;
                                 ?>
                                 <span class="label <?php echo isset($statusClass[$status]) ? $statusClass[$status] : 'label-default'; ?>">
@@ -115,5 +115,8 @@
     }
     .label-default {
         background-color: #777;
+    }
+    .label-primary {
+        background-color: #337ab7;
     }
 </style>

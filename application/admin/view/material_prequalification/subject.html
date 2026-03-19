@@ -1,0 +1,119 @@
+<div class="modal-dialog">
+    <div class="modal-content">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+            <h4 class="modal-title">主体管理</h4>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <div class="input-group">
+                    <input type="text" id="new-subject" class="form-control" placeholder="请输入新主体名称">
+                    <span class="input-group-btn">
+                        <button class="btn btn-primary" type="button" id="add-subject">添加</button>
+                    </span>
+                </div>
+            </div>
+            <div class="table-scrollable">
+                <table class="table table-striped table-bordered table-hover" id="subject-table">
+                    <thead>
+                        <tr>
+                            <th>主体名称</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="subject-list">
+                        <!-- 主体列表 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    var subjectList = [];
+
+    // 加载主体列表
+    function loadSubjects() {
+        $.post('{:url("material_prequalification/getSubjectList")}', {}, function(res) {
+            if (res.code === 1) {
+                subjectList = res.data || [];
+                renderSubjects();
+            }
+        });
+    }
+
+    // 渲染主体列表
+    function renderSubjects() {
+        var html = '';
+        subjectList.forEach(function(item, index) {
+            html += '<tr>';
+            html += '<td><input type="text" class="form-control subject-input" data-index="'+index+'" value="'+item+'"></td>';
+            html += '<td><a href="javascript:;" class="btn btn-xs btn-danger" onclick="deleteSubject('+index+')"><i class="fa fa-trash"></i> 删除</a></td>';
+            html += '</tr>';
+        });
+        $('#subject-list').html(html);
+        
+        // 绑定修改事件
+        $('.subject-input').on('change', function() {
+            var index = $(this).data('index');
+            subjectList[index] = $(this).val();
+            saveSubjects();
+        });
+    }
+
+    // 保存主体列表
+    function saveSubjects() {
+        $.post('{:url("material_prequalification/setSubjectList")}', {subject_list: JSON.stringify(subjectList)}, function(res) {
+            if (res.code === 1) {
+                Layer.msg('保存成功', {icon: 1});
+            } else {
+                Layer.msg(res.msg || '保存失败', {icon: 2});
+            }
+        });
+    }
+
+    // 添加主体
+    $('#add-subject').on('click', function() {
+        var name = $('#new-subject').val();
+        if (!name) {
+            Layer.msg('请输入主体名称', {icon: 0});
+            return;
+        }
+        if (subjectList.indexOf(name) !== -1) {
+            Layer.msg('主体名称已存在', {icon: 0});
+            return;
+        }
+        subjectList.push(name);
+        saveSubjects();
+        $('#new-subject').val('');
+    });
+
+    // 删除主体
+    window.deleteSubject = function(index) {
+        Layer.confirm('确定要删除该主体吗？', function() {
+            subjectList.splice(index, 1);
+            saveSubjects();
+        });
+    };
+
+    // 页面加载完成后获取主体列表
+    $(function() {
+        loadSubjects();
+    });
+</script>
+
+<style>
+    .table {
+        margin-bottom: 0;
+    }
+    .table th, .table td {
+        vertical-align: middle;
+    }
+    .subject-input {
+        width: 200px;
+    }
+</style>
