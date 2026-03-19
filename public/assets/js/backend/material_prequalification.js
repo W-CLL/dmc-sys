@@ -39,8 +39,8 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         {field: 'object_id', title: '审核对象ID', operate: 'LIKE'},
                         {field: 'reason_text', title: '审核建议', operate: 'LIKE', formatter: function (value, row, index) {
                             if (!value) return '<span class="text-muted">-</span>';
-                            // 如果有审核建议，显示查看详情按钮
-                            return '<a href="javascript:;" class="btn btn-xs btn-primary btn-view-one" data-id="' + row.id + '" title="查看详情">查看</a>';
+                            var text = value.length > 20 ? value.substring(0, 20) + '...' : value;
+                            return '<span title="' + value + '" style="cursor:pointer;">' + text + '</span>';
                         }},
                         {
                             field: 'create_time', 
