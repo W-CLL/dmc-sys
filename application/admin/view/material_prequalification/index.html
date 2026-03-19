@@ -1,0 +1,32 @@
+<div class="panel panel-default panel-intro">
+    {:build_heading()}
+
+    <div class="panel-heading">
+        <ul class="nav nav-tabs" data-field="status">
+            <li class="active"><a href="#tab1" data-value="" data-toggle="tab">{:__('All')}</a></li>
+            <li><a href="#tab1" data-value="0" data-toggle="tab">等待推送</a></li>
+            <li><a href="#tab1" data-value="1" data-toggle="tab">预审中</a></li>
+            <li><a href="#tab1" data-value="2" data-toggle="tab">通过</a></li>
+            <li><a href="#tab1" data-value="3" data-toggle="tab">驳回</a></li>
+        </ul>
+    </div>
+
+    <div class="panel-body">
+        <div id="myTabContent" class="tab-content">
+            <div class="tab-pane fade active in" id="one">
+                <div class="widget-body no-padding">
+                    <div id="toolbar" class="toolbar">
+                        <a href="javascript:;" class="btn btn-primary btn-refresh" title="{:__('Refresh')}" >
+                            <i class="fa fa-refresh"></i> </a>
+                        <a href="javascript:;" class="btn btn-success btn-view {:$auth->check('material_prequalification/view')?'':'hide'}" title="查看详情" >
+                            <i class="fa fa-eye"></i> 查看详情</a>
+                    </div>
+                    <table id="table" class="table table-striped table-bordered table-hover table-nowrap"
+                           data-operate-view="{:$auth->check('material_prequalification/view')}"
+                           width="100%">
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
