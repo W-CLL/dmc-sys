@@ -13,7 +13,7 @@ QcPeerTransfer extends Base
 
     public function post()
     {
-        return $this->handleRequest(2, 'peerTransfer', "转账处理中，请等待处理结果\n（PS：转账处理结果返回最长等待时间为10分钟）");
+        return $this->handleRequest(2, 'peerTransfer', "转账处理中，请等待处理结果\n（PS：转账处理结果返回最长等待时间为10分钟，超出10分钟请联系工作人员）");
     }
 
     public function put()

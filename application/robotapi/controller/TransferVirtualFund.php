@@ -10,7 +10,7 @@ class TransferVirtualFund extends Base
     }
 
     public function post(){
-        return $this->handleRequest(2, 'transfer', '转账处理中...【结果最晚将于10分钟后返回】');
+        return $this->handleRequest(2, 'transfer', '转账处理中...【结果最晚将于10分钟后返回，超出10分钟请联系工作人员】');
     }
 
 
