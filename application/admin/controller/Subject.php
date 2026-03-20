@@ -42,16 +42,42 @@ class Subject extends Backend
             $subjectList = [];
         }
         
+        // 获取分页参数
+        $offset = $this->request->get('offset/d', 0);
+        $limit = $this->request->get('limit/d', 10);
+        if ($limit <= 0 || $limit > 100) {
+            $limit = 10;
+        }
+        
+        // 排序
+        $sort = $this->request->get('sort', 'id');
+        $order = $this->request->get('order', 'desc');
+        
+        // 排序处理
+        if ($sort == 'id') {
+            if ($order == 'asc') {
+                ksort($subjectList);
+            } else {
+                krsort($subjectList);
+            }
+        }
+        
         $data = [];
-        foreach ($subjectList as $index => $name) {
+        $subjectList = array_values($subjectList); // 重新索引
+        $total = count($subjectList);
+        
+        // 分页切片
+        $pageData = array_slice($subjectList, $offset, $limit);
+        
+        foreach ($pageData as $index => $name) {
             $data[] = [
-                'id' => $index + 1,
+                'id' => $offset + $index + 1,
                 'name' => $name,
                 'create_time' => date('Y-m-d H:i:s')
             ];
         }
         
-        return json(['total' => count($data), 'rows' => $data]);
+        return json(['total' => $total, 'rows' => $data]);
     }
 
     /**
