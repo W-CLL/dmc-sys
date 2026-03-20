@@ -80,7 +80,6 @@ class UpdateAdvScore
             ];
             \think\Queue::later(2, 'app\job\UpdateAdvScore', $job_data, "upAdvScore");
         }
-//        dump($insertData);
         if ($insertData) {
             return $this->saveAdvScore($insertData);
         }
@@ -163,17 +162,17 @@ class UpdateAdvScore
                 $resData = json_decode($response->getBody()->getContents(), true);
                 $requestInfo = $requests[$index]['params'];
                 $requestAdvId = $requestInfo['advertiser_id'];
-//                dump($resData);
-                if ($resData['code'] == 0 && !empty($resData['data']['score_info_list'])) {
-//                    echo "123";
+                if ($resData['code'] == 0 ) {
                     $one_score = 0;
                     $two_score = 0;
-                    foreach ($resData['data']['score_info_list'] as $item) {
-                        if($item['illegal_type'] == "ONECLASS" && $one_score ==0 ){
-                            $one_score = $item['score'];
-                        }
-                        if($item['illegal_type'] == "TWOTHREECLASS" && $two_score ==0){
-                            $two_score = $item['score'];
+                    if(!empty($resData['data']['score_info_list'])){
+                        foreach ($resData['data']['score_info_list'] as $item) {
+                            if($item['illegal_type'] == "ONECLASS" && $one_score ==0 ){
+                                $one_score = $item['score'];
+                            }
+                            if($item['illegal_type'] == "TWOTHREECLASS" && $two_score ==0){
+                                $two_score = $item['score'];
+                            }
                         }
                     }
                     $insertData[] = [
@@ -184,7 +183,6 @@ class UpdateAdvScore
                         'request_id' => $resData['request_id']
                     ];
                 } elseif ($resData['code'] != 0) {
-//                    echo "1234";
                     if (!skipIfContainsError($resData['message'])) {
                         $need_rebuild[] = $requestAdvId;
                     }
