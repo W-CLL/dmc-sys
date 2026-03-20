@@ -81,6 +81,7 @@ class RiskAdv extends Backend
             if ($advIdFilter !== null) {
                 $where['ra.adv_id'] = ['in', $advIdFilter];
             }
+            $where['s.year'] = date('Y');
             $base_field = [
                 'ra.adv_id' => 'adv_id',
                 'ra.id' => 'id',

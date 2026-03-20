@@ -39,7 +39,7 @@ class Index extends Backend
             $limit = input("limit", 10);
 
             $where = [];
-
+            $where['sco.year'] = date('Y');
             $adv_id = input('advertiser_id');
             $com_name = input('com_name');
             $kahuna = input('kahuna');
