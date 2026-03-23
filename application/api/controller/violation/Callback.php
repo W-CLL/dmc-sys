@@ -46,7 +46,7 @@ class Callback
         }
 
         // 获取签名密钥
-        $secret_key = Env::get('dmc_spi.material_result_api');
+        $secret_key = Env::get('dmc_spi.material_violation_api');
         if (!$secret_key) {
             \think\Log::error("千川spi密钥没设置");
             return $this->responseJson(400, "invalid signature");
