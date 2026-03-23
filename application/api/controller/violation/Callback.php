@@ -68,8 +68,8 @@ class Callback
 
         $data = json_decode($body, true);
         $info = json_decode($data['data'],true);
-        $content = json_decode($data['content'],true);
-//        \think\Log::write("违规积分回调参数：".json_encode($data), 'wgjf');
+        $content = json_decode($info['content'],true);
+        \think\Log::write("违规积分回调参数：".json_encode($data), 'wgjf');
         $insert = [
             "advertiser_id" => $content['advertiser_id'],
             "ad_id" => $content['ad_id'],
