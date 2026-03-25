@@ -1,6 +1,6 @@
 CREATE TABLE `fa_material_diagnosis` (
                                          `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-                                         `material_id` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+                                         `material_id` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
                                          `video_id` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
                                          `task_id` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
                                          `status` tinyint(1) NOT NULL DEFAULT '0' COMMENT '0:PENDING  1:SUCCESS   2:FAILED',
