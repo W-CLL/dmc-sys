@@ -63,7 +63,7 @@ class SubmitDiagnosis
             'advertiser_id' => (int)$data['advertiser_id'],
             'video_ids' => $data['video_ids'],
         ]);
-        var_dump($res);
+//        var_dump($res);
         if ($res['code'] == 40100 || $res['code'] == 40110){
             return false;
         }
