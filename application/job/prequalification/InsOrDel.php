@@ -84,12 +84,14 @@ class InsOrDel
                         $arr['object_id'] = $res[$v]['object_id'];
                         $arr['video_id'] = $res[$v]['video_id'];
                         $arr['filename'] = $res[$v]['filename'];
+                        $arr['to_diagnosis'] = $res[$v]['to_diagnosis'];
                     }else{
                         $arr['status'] = 0;
                         $arr['reason_text'] = NULL;
                         $arr['object_id'] = NULL;
                         $arr['video_id'] = NULL;
                         $arr['filename'] = NULL;
+                        $arr['to_diagnosis'] = 0;
                     }
                     $insert[] = $arr;
 

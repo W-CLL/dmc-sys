@@ -1,0 +1,225 @@
+<div class="panel panel-default panel-intro">
+    <div class="panel-heading">
+        <div class="panel-lead">
+            <em>素材诊断详情</em>
+        </div>
+    </div>
+
+    <div class="panel-body">
+        <div id="myTabContent" class="tab-content">
+            <div class="tab-pane fade active in" id="one">
+                <div class="widget-body no-padding">
+                    <table class="table table-striped table-bordered table-hover">
+                        <tr>
+                            <td width="150"><strong>ID</strong></td>
+                            <td>{$row.id}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>素材ID</strong></td>
+                            <td>{$row.material_id}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>视频ID</strong></td>
+                            <td>{$row.video_id|default='-'}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>任务ID</strong></td>
+                            <td>{$row.task_id|default='-'}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>状态</strong></td>
+                            <td>
+                                <?php 
+                                    $statusList = [0 => 'PENDING', 1 => 'SUCCESS', 2 => 'FAILED'];
+                                    $statusClass = ['label-warning', 'label-success', 'label-danger'];
+                                    $status = isset($row['status']) ? $row['status'] : 0;
+                                ?>
+                                <span class="label <?php echo isset($statusClass[$status]) ? $statusClass[$status] : 'label-default'; ?>">
+                                    <?php echo isset($statusList[$status]) ? $statusList[$status] : ''; ?>
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>是否获取详情</strong></td>
+                            <td>
+                                <?php 
+                                    $isGetList = [0 => '未获取详情', 1 => '已获取详情'];
+                                    $isGetClass = ['label-default', 'label-success'];
+                                    $isGet = isset($row['is_get']) ? $row['is_get'] : 0;
+                                ?>
+                                <span class="label <?php echo isset($isGetClass[$isGet]) ? $isGetClass[$isGet] : 'label-default'; ?>">
+                                    <?php echo isset($isGetList[$isGet]) ? $isGetList[$isGet] : ''; ?>
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>是否千川优质素材</strong></td>
+                            <td>
+                                <?php 
+                                    $isEcpList = [0 => 'UNKNOWN', 1 => 'YES', 2 => 'NO'];
+                                    $isEcpClass = ['label-default', 'label-success', 'label-danger'];
+                                    $isEcp = isset($row['is_ecp_high_quality_material']) ? $row['is_ecp_high_quality_material'] : 0;
+                                ?>
+                                <span class="label <?php echo isset($isEcpClass[$isEcp]) ? $isEcpClass[$isEcp] : 'label-default'; ?>">
+                                    <?php echo isset($isEcpList[$isEcp]) ? $isEcpList[$isEcp] : ''; ?>
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>是否低效素材</strong></td>
+                            <td>
+                                <?php 
+                                    $isInefficientList = [0 => 'UNKNOWN', 1 => 'YES', 2 => 'NO'];
+                                    $isInefficientClass = ['label-default', 'label-danger', 'label-success'];
+                                    $isInefficient = isset($row['is_inefficient_material']) ? $row['is_inefficient_material'] : 0;
+                                ?>
+                                <span class="label <?php echo isset($isInefficientClass[$isInefficient]) ? $isInefficientClass[$isInefficient] : 'label-default'; ?>">
+                                    <?php echo isset($isInefficientList[$isInefficient]) ? $isInefficientList[$isInefficient] : ''; ?>
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>是否首发素材</strong></td>
+                            <td>
+                                <?php 
+                                    $isFirstList = [0 => 'UNKNOWN', 1 => 'YES', 2 => 'NO'];
+                                    $isFirstClass = ['label-default', 'label-success', 'label-danger'];
+                                    $isFirst = isset($row['is_first_publish_material']) ? $row['is_first_publish_material'] : 0;
+                                ?>
+                                <span class="label <?php echo isset($isFirstClass[$isFirst]) ? $isFirstClass[$isFirst] : 'label-default'; ?>">
+                                    <?php echo isset($isFirstList[$isFirst]) ? $isFirstList[$isFirst] : ''; ?>
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>千川非优质原因</strong></td>
+                            <td><?php echo !empty($row['not_ecp_high_quality_reason']) ? nl2br($row['not_ecp_high_quality_reason']) : '-'; ?></td>
+                        </tr>
+                        <tr>
+                            <td><strong>创建时间</strong></td>
+                            <td>{$row.create_time ? date('Y-m-d H:i:s', $row.create_time) : '-'}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>更新时间</strong></td>
+                            <td>{$row.update_time ? date('Y-m-d H:i:s', $row.update_time) : '-'}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 使用该素材的广告主列表 -->
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <div class="panel-lead">
+            <em>使用该素材的广告主列表</em>
+        </div>
+    </div>
+    <div class="panel-body">
+        <div class="widget-body no-padding">
+            <table class="table table-striped table-bordered table-hover table-nowrap">
+                <thead>
+                    <tr>
+                        <th>广告主ID</th>
+                        <th>素材ID</th>
+                        <th>预审状态</th>
+                        <th>审核对象ID</th>
+                        <th>视频ID</th>
+                        <th>视频名称</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (count($advertiserList) > 0): ?>
+                        <?php foreach ($advertiserList as $item): ?>
+                        <tr>
+                            <td><?php echo $item['advertiser_id']; ?></td>
+                            <td><?php echo $item['material_id']; ?></td>
+                            <td>
+                                <?php 
+                                    $prequalStatusList = [0 => '等待推送', 1 => '预审中', 2 => '通过', 3 => '驳回', 4 => '无法推送'];
+                                    $prequalStatusClass = ['label-default', 'label-warning', 'label-success', 'label-danger', 'label-primary'];
+                                    $prequalStatus = isset($item['status']) ? $item['status'] : 0;
+                                ?>
+                                <span class="label <?php echo isset($prequalStatusClass[$prequalStatus]) ? $prequalStatusClass[$prequalStatus] : 'label-default'; ?>">
+                                    <?php echo isset($prequalStatusList[$prequalStatus]) ? $prequalStatusList[$prequalStatus] : ''; ?>
+                                </span>
+                            </td>
+                            <td><?php echo !empty($item['object_id']) ? $item['object_id'] : '-'; ?></td>
+                            <td><?php echo !empty($item['video_id']) ? $item['video_id'] : '-'; ?></td>
+                            <td><?php echo !empty($item['filename']) ? $item['filename'] : '-'; ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <tr>
+                            <td colspan="6" class="text-center text-muted">暂无数据</td>
+                        </tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+    .panel-intro .panel-heading {
+        padding: 0;
+    }
+    .panel-intro .panel-lead {
+        padding: 15px;
+        margin-bottom: 0;
+        background: #f8f9fa;
+        border-bottom: 1px solid #ddd;
+    }
+    .panel-intro .panel-body {
+        padding: 0;
+    }
+    .panel .panel-heading {
+        padding: 0;
+    }
+    .panel .panel-lead {
+        padding: 15px;
+        margin-bottom: 0;
+        background: #f8f9fa;
+        border-bottom: 1px solid #ddd;
+    }
+    .table {
+        margin-bottom: 0;
+    }
+    .table > tbody > tr > td {
+        padding: 12px 15px;
+        vertical-align: middle;
+        word-break: break-all;
+    }
+    .table > tbody > tr:nth-child(odd) {
+        background-color: #fafafa;
+    }
+    .label {
+        display: inline-block;
+        padding: 4px 10px;
+        font-size: 12px;
+        font-weight: 400;
+        line-height: 1;
+        color: #fff;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: baseline;
+        border-radius: 3px;
+    }
+    .label-success {
+        background-color: #5cb85c;
+    }
+    .label-warning {
+        background-color: #f0ad4e;
+    }
+    .label-danger {
+        background-color: #d9534f;
+    }
+    .label-default {
+        background-color: #777;
+    }
+    .label-primary {
+        background-color: #337ab7;
+    }
+</style>

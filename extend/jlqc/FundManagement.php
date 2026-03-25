@@ -822,7 +822,32 @@ class FundManagement
     {
         $access_token = Cache::get("qc_access_token");
         $url = "https://api.oceanengine.com/open_api/v3.0/security/audit_results/";
-        return sendApiRes($url, $params, 'GET', ['Access-Token' => $access_token]);
+        return sendApiRes($url, $params, 'GET', ['Access-Token' => $access_token])['data'];
+    }
+
+
+    /**
+     * 创建前测任务
+     * @param $params
+     * @return mixed
+     */
+    public static function create_diagnosis_task($params)
+    {
+        $access_token = Cache::get("qc_access_token");
+        $url = "https://api.oceanengine.com/open_api/2/diagnosis_task/agent/create/";
+        return sendApiRes($url, $params, 'POST', ['Access-Token' => $access_token])['data'];
+    }
+
+
+
+    /**
+     * 获取前测任务结果
+     */
+    public static function get_diagnosis_task($params)
+    {
+        $access_token = Cache::get("qc_access_token");
+        $url = "https://api.oceanengine.com/open_api/2/diagnosis_task/agent/get/";
+        return sendApiRes($url, $params, 'GET', ['Access-Token' => $access_token])['data'];
     }
 
 }

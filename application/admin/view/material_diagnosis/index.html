@@ -1,0 +1,95 @@
+<div class="panel panel-default panel-intro">
+    {:build_heading()}
+
+    <div class="panel-heading">
+        <ul class="nav nav-tabs" data-field="is_first_publish_material">
+            <li class="active"><a href="#tab1" data-value="" data-toggle="tab">全部</a></li>
+            <li><a href="#tab1" data-value="1" data-toggle="tab">首发素材</a></li>
+            <li><a href="#tab1" data-value="2" data-toggle="tab">优质</a></li>
+        </ul>
+    </div>
+
+    <div class="panel-body">
+        <div id="myTabContent" class="tab-content">
+            <div class="tab-pane fade active in" id="one">
+                <div class="widget-body no-padding">
+                    <!-- 搜索栏 -->
+                    <div class="search-bar" style="padding: 12px 20px; background: #f8f9fa; border-bottom: 1px solid #dee2e6;">
+                        <form id="search-form" class="form-inline" role="form" style="margin: 0;">
+                            <div class="row">
+                                <div class="col-xs-12 col-sm-6 col-lg-3">
+                                    <div class="form-group">
+                                        <label class="search-label">素材ID</label>
+                                        <input type="text" class="form-control" id="material_id" placeholder="请输入素材ID" />
+                                    </div>
+                                </div>
+                                <div class="col-xs-12 col-sm-6 col-lg-3">
+                                    <div class="form-group">
+                                        <label class="search-label">是否低效</label>
+                                        <select class="form-control" id="is_inefficient">
+                                            <option value="">全部</option>
+                                            <option value="1">是</option>
+                                            <option value="2">否</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-xs-12 col-sm-6 col-lg-3">
+                                    <div class="form-group">
+                                        <label class="search-label">&nbsp;</label>
+                                        <div>
+                                            <button type="button" class="btn btn-primary btn-search" title="搜索">
+                                                <i class="fa fa-search"></i> 搜索
+                                            </button>
+                                            <button type="button" class="btn btn-default btn-reset" title="重置">
+                                                <i class="fa fa-undo"></i> 重置
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <div id="toolbar" class="toolbar">
+                        <a href="javascript:;" class="btn btn-primary btn-refresh" title="{:__('Refresh')}" >
+                            <i class="fa fa-refresh"></i> </a>
+                        <a href="javascript:;" class="btn btn-success btn-view {:$auth->check('material_diagnosis/view')?'':'hide'}" title="查看详情" >
+                            <i class="fa fa-eye"></i> 查看详情</a>
+                    </div>
+                    <table id="table" class="table table-striped table-bordered table-hover table-nowrap"
+                           data-operate-view="{:$auth->check('material_diagnosis/view')}"
+                           width="100%">
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .search-bar .form-group {
+        margin-bottom: 0;
+    }
+    .search-bar .search-label {
+        display: block;
+        margin-bottom: 5px;
+        font-size: 12px;
+        font-weight: 500;
+        color: #666;
+    }
+    .search-bar .btn {
+        margin-right: 5px;
+    }
+    .search-bar .btn:last-child {
+        margin-right: 0;
+    }
+    .panel-heading {
+        padding: 0;
+    }
+    .panel-heading > .nav-tabs {
+        margin-bottom: 0;
+    }
+    .panel-heading > .nav-tabs > li {
+        margin-bottom: -1px;
+    }
+</style>

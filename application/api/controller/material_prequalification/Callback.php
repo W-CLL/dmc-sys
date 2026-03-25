@@ -92,7 +92,7 @@ class Callback
 
 
         $data = json_decode($body, true);
-        \think\Log::write("预审结果回调参数：".json_encode($data), 'ysjg');
+//        \think\Log::write("预审结果回调参数：".json_encode($data), 'ysjg');
         $data = json_decode($data['data'],true);
         $content = $data['content'] ?? '';
         if ($content) {

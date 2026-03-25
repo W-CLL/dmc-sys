@@ -1,0 +1,25 @@
+<?php
+
+return [
+    'Id' => 'ID',
+    'Advertiser_id' => '广告主ID',
+    'Ad_id' => '广告ID',
+    'Material_id' => '素材ID',
+    'Event_id' => '违规单ID',
+    'Violation_evidence_img' => '违规证据截图',
+    'Type' => '类型',
+    'Type 1' => '新增违规积分',
+    'Type 2' => '更新违规积分',
+    'Score' => '扣罚分值',
+    'Reject_reason' => '拒绝理由',
+    'Status' => '状态',
+    'Status 1' => '已申诉(失效)',
+    'Status 2' => '申诉失败',
+    'Status 3' => '申诉中',
+    'Status 4' => '生效',
+    'Illegal_type' => '违规类型',
+    'Illegal_type 1' => '一类违规',
+    'Illegal_type 2' => '二类违规',
+    'Create_time' => '创建时间',
+    'Update_time' => '更新时间',
+];
