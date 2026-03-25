@@ -67,6 +67,9 @@ class SubmitDiagnosis
         if ($res['code'] == 40100 || $res['code'] == 40110){
             return false;
         }
+        if ($res['code'] != 0 ){
+            throw new Exception($res['message']);
+        }
         $data = $res['data'];
         $ins = [];
         foreach ($data['task_ids'] as $task_id){
