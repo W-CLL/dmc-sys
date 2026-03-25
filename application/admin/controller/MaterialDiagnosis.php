@@ -3,7 +3,6 @@
 namespace app\admin\controller;
 
 use app\common\controller\Backend;
-use app\common\model\MaterialDiagnosis as MaterialDiagnosisModel;
 use think\Db;
 
 /**
@@ -15,17 +14,6 @@ use think\Db;
 class MaterialDiagnosis extends Backend
 {
     /**
-     * MaterialDiagnosis模型对象
-     * @var \app\common\model\MaterialDiagnosis
-     */
-    protected $model = null;
-
-    /**
-     * 数据限制字段
-     */
-    protected $dataLimitField = 'id';
-
-    /**
      * 无需鉴权的接口
      */
     protected $noNeedRight = ['view'];
@@ -33,13 +21,6 @@ class MaterialDiagnosis extends Backend
     public function _initialize()
     {
         parent::_initialize();
-        $this->model = new MaterialDiagnosisModel;
-
-        $this->view->assign("statusList", $this->model->getStatusList());
-        $this->view->assign("isGetList", $this->model->getIsGetList());
-        $this->view->assign("isEcpHighQualityList", $this->model->getIsEcpHighQualityList());
-        $this->view->assign("isInefficientList", $this->model->getIsInefficientList());
-        $this->view->assign("isFirstPublishList", $this->model->getIsFirstPublishList());
     }
 
     /**
@@ -47,8 +28,6 @@ class MaterialDiagnosis extends Backend
      */
     public function index()
     {
-        //当前是否为关联查询
-        $this->relationSearch = false;
         //设置过滤方法
         $this->request->filter(['strip_tags', 'trim']);
         if ($this->request->isAjax()) {
@@ -58,25 +37,33 @@ class MaterialDiagnosis extends Backend
             }
             
             // 获取搜索参数
-            $searchParams = $this->request->param();
-            $materialId = isset($searchParams['material_id']) ? trim($searchParams['material_id']) : '';
-            $isFirstPublish = isset($searchParams['is_first_publish_material']) ? $searchParams['is_first_publish_material'] : '';
-            $isEcpHighQuality = isset($searchParams['is_ecp_high_quality']) ? $searchParams['is_ecp_high_quality'] : '';
-            $isInefficient = isset($searchParams['is_inefficient']) ? $searchParams['is_inefficient'] : '';
+            $materialId = $this->request->get('material_id', '');
+            $isFirstPublishMaterial = $this->request->get('is_first_publish_material', '');
+            $isEcpHighQuality = $this->request->get('is_ecp_high_quality', '');
+            $isInefficient = $this->request->get('is_inefficient', '');
 
-            // 构建查询条件
-            $where = [];
+            // 构建查询条件 - 使用字符串方式
+            $where = "1=1";
+            $bind = [];
+            
             if (!empty($materialId)) {
-                $where[] = ['material_id', 'like', "%{$materialId}%"];
+                $where .= " AND material_id LIKE :material_id";
+                $bind['material_id'] = "%{$materialId}%";
             }
-            if ($isFirstPublish !== '') {
-                $where[] = ['is_first_publish_material', '=', $isFirstPublish];
+            // 首发素材筛选 (is_first_publish_material = 1)
+            if ($isFirstPublishMaterial !== '') {
+                $where .= " AND is_first_publish_material = :is_first_publish_material";
+                $bind['is_first_publish_material'] = $isFirstPublishMaterial;
             }
+            // 优质素材筛选 (is_ecp_high_quality_material = 1)
             if ($isEcpHighQuality !== '') {
-                $where[] = ['is_ecp_high_quality_material', '=', $isEcpHighQuality];
+                $where .= " AND is_ecp_high_quality_material = :is_ecp_high_quality";
+                $bind['is_ecp_high_quality'] = $isEcpHighQuality;
             }
+            // 低效素材筛选
             if ($isInefficient !== '') {
-                $where[] = ['is_inefficient_material', '=', $isInefficient];
+                $where .= " AND is_inefficient_material = :is_inefficient";
+                $bind['is_inefficient'] = $isInefficient;
             }
 
             // 获取排序参数
@@ -85,21 +72,22 @@ class MaterialDiagnosis extends Backend
             $offset = $this->request->get('offset', 0);
             $limit = $this->request->get('limit', 10);
 
-            $list = $this->model
+            // 直接使用Db查询
+            $list = Db::name('material_diagnosis')
                 ->where($where)
+                ->bind($bind)
                 ->order($sort, $order)
                 ->limit($offset, $limit)
                 ->select();
 
-            $statusList = $this->model->getStatusList();
-            $isGetList = $this->model->getIsGetList();
-            $isEcpHighQualityList = $this->model->getIsEcpHighQualityList();
-            $isInefficientList = $this->model->getIsInefficientList();
-            $isFirstPublishList = $this->model->getIsFirstPublishList();
+            $statusList = [0 => 'PENDING', 1 => 'SUCCESS', 2 => 'FAILED'];
+            $isGetList = [0 => '未获取详情', 1 => '已获取详情'];
+            $isEcpHighQualityList = [0 => 'UNKNOWN', 1 => 'YES', 2 => 'NO'];
+            $isInefficientList = [0 => 'UNKNOWN', 1 => 'YES', 2 => 'NO'];
+            $isFirstPublishList = [0 => 'UNKNOWN', 1 => 'YES', 2 => 'NO'];
             
             // 获取所有素材ID对应的广告主信息
-            $listData = is_array($list) ? $list : $list->toArray();
-            $materialIds = array_column($listData, 'material_id');
+            $materialIds = array_column($list, 'material_id');
             $advertiserMap = [];
             if (!empty($materialIds)) {
                 $prequalList = Db::name('material_prequalification')
@@ -118,9 +106,9 @@ class MaterialDiagnosis extends Backend
                 }
             }
             
-            // 直接修改数组数据而不是模型
+            // 处理列表数据
             $rows = [];
-            foreach ($listData as $row) {
+            foreach ($list as $row) {
                 $advertisers = isset($advertiserMap[$row['material_id']]) ? $advertiserMap[$row['material_id']] : [];
                 $row['advertiser_count'] = count($advertisers);
                 $row['advertisers'] = !empty($advertisers) ? implode('|', $advertisers) : '-';
@@ -128,7 +116,13 @@ class MaterialDiagnosis extends Backend
                 $rows[] = $row;
             }
 
-            $result = array("total" => $this->model->where($where)->count(), "rows" => $rows);
+            // 获取总数
+            $total = Db::name('material_diagnosis')
+                ->where($where)
+                ->bind($bind)
+                ->count();
+
+            $result = array("total" => $total, "rows" => $rows);
 
             return json($result);
         }
@@ -145,7 +139,7 @@ class MaterialDiagnosis extends Backend
     public function view()
     {
         $id = $this->request->param('id', 0, 'intval');
-        $row = $this->model->find($id);
+        $row = Db::name('material_diagnosis')->find($id);
         
         if (!$row) {
             $this->error('记录不存在');
@@ -157,11 +151,11 @@ class MaterialDiagnosis extends Backend
             ->field('material_id, advertiser_id, status, object_id, video_id, filename')
             ->select();
         
-        $statusList = $this->model->getStatusList();
-        $isGetList = $this->model->getIsGetList();
-        $isEcpHighQualityList = $this->model->getIsEcpHighQualityList();
-        $isInefficientList = $this->model->getIsInefficientList();
-        $isFirstPublishList = $this->model->getIsFirstPublishList();
+        $statusList = [0 => 'PENDING', 1 => 'SUCCESS', 2 => 'FAILED'];
+        $isGetList = [0 => '未获取详情', 1 => '已获取详情'];
+        $isEcpHighQualityList = [0 => 'UNKNOWN', 1 => 'YES', 2 => 'NO'];
+        $isInefficientList = [0 => 'UNKNOWN', 1 => 'YES', 2 => 'NO'];
+        $isFirstPublishList = [0 => 'UNKNOWN', 1 => 'YES', 2 => 'NO'];
         
         $this->view->assign('row', $row);
         $this->view->assign('statusList', $statusList);
