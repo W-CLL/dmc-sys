@@ -7,6 +7,10 @@ use think\Exception;
 
 class Api extends \app\common\controller\Api
 {
+
+    protected $noNeedLogin = '*';
+    protected $noNeedRight = '*';
+
     // 推送素材预审
     public function prequalification(){
         $fiveMinutesAgo = time() - 300;

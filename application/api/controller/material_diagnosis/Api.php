@@ -4,8 +4,11 @@ namespace app\api\controller\material_diagnosis;
 
 use think\Db;
 
-class api extends \app\common\controller\Api
+class Api extends \app\common\controller\Api
 {
+
+    protected $noNeedLogin = '*';
+    protected $noNeedRight = '*';
 
     // 推送前测
     public function submitDiagnosis(){
