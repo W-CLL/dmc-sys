@@ -71,7 +71,7 @@ class InsOrDel
                     return true;
                 }
                 $res = Db::name('material_prequalification')->where(['material_id' => ['in',$content['material_ids']]])
-                    ->column('status,reason_text,object_id,video_id,filename','material_id');;
+                    ->column('status,reason_text,object_id,video_id,filename,to_diagnosis','material_id');;
                 foreach ($content['material_ids'] as $v){
                     $arr = [
                         'material_id' => $v,
