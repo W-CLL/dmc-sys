@@ -84,7 +84,7 @@ class InsOrDel
                         $arr['object_id'] = $res[$v]['object_id'];
                         $arr['video_id'] = $res[$v]['video_id'];
                         $arr['filename'] = $res[$v]['filename'];
-                        $arr['to_diagnosis'] = $res[$v]['to_diagnosis'];
+                        $arr['to_diagnosis'] = isset($res[$v]['to_diagnosis']) ? $res[$v]['to_diagnosis'] : 0;
                     }else{
                         $arr['status'] = 0;
                         $arr['reason_text'] = NULL;
