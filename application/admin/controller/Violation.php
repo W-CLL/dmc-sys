@@ -60,9 +60,10 @@ class Violation extends Backend
             $advertiserId = isset($searchParams['advertiser_id']) ? trim($searchParams['advertiser_id']) : '';
             $adId = isset($searchParams['ad_id']) ? trim($searchParams['ad_id']) : '';
             $materialId = isset($searchParams['material_id']) ? trim($searchParams['material_id']) : '';
+            $status = isset($searchParams['status']) ? $searchParams['status'] : '';
 
             // 使用Db类构建查询条件
-            $where = function ($query) use ($advertiserId, $adId, $materialId) {
+            $where = function ($query) use ($advertiserId, $adId, $materialId, $status) {
                 if (!empty($advertiserId)) {
                     $query->where('advertiser_id', 'like', "%{$advertiserId}%");
                 }
@@ -71,6 +72,9 @@ class Violation extends Backend
                 }
                 if (!empty($materialId)) {
                     $query->where('material_id', 'like', "%{$materialId}%");
+                }
+                if ($status !== '') {
+                    $query->where('status', '=', $status);
                 }
             };
 

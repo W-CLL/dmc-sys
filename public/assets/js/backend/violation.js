@@ -48,8 +48,8 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                             title: '状态', 
                             searchList: {"1": "已申诉(失效)", "2": "申诉失败", "3": "申诉中", "4": "生效"},
                             formatter: function (value, row, index) {
-                                var statusClass = ['label-default', 'label-success', 'label-warning', 'label-primary'][value] || 'label-default';
-                                var statusText = ['已申诉(失效)', '申诉失败', '申诉中', '生效'][value] || '';
+                                var statusClass = {'1': 'label-default', '2': 'label-success', '3': 'label-warning', '4': 'label-primary'}[value] || 'label-default';
+                                var statusText = {'1': '已申诉(失效)', '2': '申诉失败', '3': '申诉中', '4': '生效'}[value] || '';
                                 return '<span class="label ' + statusClass + '">' + statusText + '</span>';
                             }
                         },
@@ -99,6 +99,35 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
 
             // 为表格绑定事件
             Table.api.bindevent(table);
+
+            // 标签页切换事件 - 状态筛选
+            $(document).on('click', '.nav-tabs li a', function () {
+                var value = $(this).data('value');
+                var field = $(this).closest('ul').data('field');
+                var params = {};
+                
+                // 获取其他筛选条件
+                var advertiser_id = $('#advertiser_id').val();
+                var ad_id = $('#ad_id').val();
+                var material_id = $('#material_id').val();
+                
+                if (advertiser_id) {
+                    params['advertiser_id'] = advertiser_id;
+                }
+                if (ad_id) {
+                    params['ad_id'] = ad_id;
+                }
+                if (material_id) {
+                    params['material_id'] = material_id;
+                }
+                
+                // 状态筛选
+                if (field === 'status' && value) {
+                    params['status'] = value;
+                }
+                
+                table.bootstrapTable('refresh', {query: params});
+            });
 
             // 搜索按钮事件
             $(document).on('click', '.btn-search', function () {

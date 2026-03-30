@@ -16,6 +16,7 @@ use MongoDB\BSON\Timestamp;
 use think\Cache;
 use think\cache\driver\Redis;
 use think\Db;
+use think\Env;
 
 class Index extends Frontend
 {
@@ -528,73 +529,49 @@ class Index extends Frontend
 //        $data = json_decode($da);
 //        var_dump($data);
 
-        $a = Db::name('material_prequalification')->where(['material_id' => ['in',[7618414619595620393,7618281107869368358]]])->column('status,reason_text,object_id,video_id,filename','material_id');
-var_dump($a);die;
-        //        $a = array (
-//       'message_id' => '17196815608066',
-//       'advertiser_ids' =>
-//       array (
-//       0 => 1855615082968076,
-//       ),
-//       'account_relation' => '{"core_user_ids":{"4128011118203595":[1855615082968076]}}',
-//       'service_label' => 'status.material.qianchuan.realtime',
-//       'data' => '{"event":"CREATE","user_id":1855615082968076,"advertiser_id":1855615082968076,"account_id":1855615082968076,"content":"{\\"material_ids\\":[7612580174530117675,7613378833170841638,7612846070578675739,7617324684761219114,7615211148842909738,7613342745615188006,7612594822666518555,7616664338243092522,7612535870111596582,7612675606267232265,7615511358936465458,7612872676987273257,7612676345446105114,7615551476170276891,7613338442060841014,7615835765172125722,7612840276797161522,7614848577895186495,7612921793846820927,7612613862177275955,7615959567571714094,7615207546460127286,7612874310706446379,7612558811447558170,7614848333798440966,7612593185803943979,7613306512715628594,7613018367206441001,7612676831491260470,7612581840793042970,7616199993997344811,7615823613795696690,7616947324016230419,7616301727901810697,7614848294884507675,7612872645675270171,7614895224872632374,7616301491637174291,7616615257742213126,7612901692228845610],\\"material_type\\":\\"video\\"}"}',
-//       'publish_time' => 1773714600,
-//       'timestamp' => 1773714616287,
-//       'nonce' => 8146473315805653225,
-//       'subscribe_task_id' => 1839492769685835,
-//       );
-//        $info = json_decode($a['data'],true);
-//        $content = json_decode($info['content'],true);
-//        $aa = FundManagement::get_material_audit_result([
-//            'account_id' => (int)1828282480857755,
-//            'object_id' => 7618439048214317110
-//        ]);
-//        var_dump($aa);
-//        die;
 
-//        $b = FundManagement::ces([
-//            'advertiser_id' => (int)1845652359954695,
-//            'filtering' => json_encode([
-//                'material_ids' => [7618405961505619994] // 40
-//            ]),
-//            'page_size' => 50
-//        ]);
-//        var_dump($b);die;
-
-        $b = FundManagement::open_material_audit([
-            'account_id' => (int)1855615082968076, //v02033g10000d6jvfgaljht5fofd0jl0
-            'business_type' => 'QIAN_CHUAN',
-            'type' => 'VIDEO',
-            'data' => 'v02033g10000d6jvfgaljht5fofd0jl0',
-            'msg_type' => 'SEND',
-//            'object_id' => 7618140094260561971,
+        $content = \think\Cache::store('redis')->handler()->lpop('sb');
+//        var_dump($content);
+        die;
+        $res = FundManagement::get_diagnosis_task([
+            'agent_id' => (int)Env::get('dmc_ad_config.advertiser_id'),
+            'task_ids' => json_encode([544964271618]),
         ]);
-        var_dump($b);
-
-//        $ar = array (
-//            'message_id' => '17086881470978',
-//            'advertiser_ids' =>
-//                array (
-//                    0 => 1854282144729104,
-//                ),
-//            'account_relation' => '{"core_user_ids":{"4128011118203595":[1854282144729104]}}',
-//            'service_label' => 'ad.audit.material_precheck_ecp',
-//            'data' => '{"user_id":1854282144729104,"advertiser_id":1854282144729104,"account_id":1854282144729104,"content":"{\\"data\\":\\"v0dc8eg10000d6t1sj7og65scf65ketg\\",\\"object_id\\":7618485598324918298,\\"reason_text\\":\\"\\",\\"status\\":\\"APPROVE\\"}"}',
-//            'publish_time' => 1773820620840,
-//            'timestamp' => 1773820620949,
-//            'nonce' => 2566140322669174088,
-//            'subscribe_task_id' => 1842030871377927,
-//        );
-//        $data = json_decode($ar['data'], true);
-//        $content = $data['content'] ?? '';
-//        if ($content){
-//            $redisKey = 'material_precheck_result';
-//            \think\Cache::store('redis')->handler()->rpush($redisKey, $content);
-//        }
-
-//        var_dump($content);die;
+        var_dump($res);die;
+        $a = Db::name('material_prequalification')->where(['status' => 2,'to_diagnosis' => 0])->field('id,advertiser_id,video_id')->limit(1000)->select();
+        foreach ($a  as $item){
+            $arr[$item['advertiser_id']][] = $item['video_id'];
+            $id[] = $item['id'];
+        }
+        $i = 1;
+        foreach ($arr as $key => $value){
+            var_dump($key);
+            var_dump($value);
+            $b = FundManagement::create_diagnosis_task([
+                'agent_id' => (int)Env::get('dmc_ad_config.advertiser_id'),
+                'advertiser_id' => (int)$key,
+                'video_ids' => $value,
+            ]);
+//            $chunk = array_chunk($value,100);
+//            foreach ($chunk as $v){
+//                // 确保material_ids中的值为int类型
+//                $v = array_map('intval', $v);
+////                \think\Queue::push('app\job\prequalification\Prequalification', ['advertiser_id' => $key, 'material_ids' => $v], 'prequalification');
+//            }
+        }
+        Db::name('material_prequalification')->where(['id' => ['in',$id]])->update(['to_diagnosis' => 1]);
+        var_dump($a);
+        die;
+//        $result = array_unique($a); // 值去重
+//        $arr = array_values($result);
+//var_dump($result);
+//        var_dump($arr);
+        die;
     }
+
+
+
+
 
 
 

@@ -135,12 +135,11 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                 }
                 
                 // 首发素材标签 (is_first_publish_material = 1)
-                if (field === 'is_first_publish_material' && value) {
-                    params['is_first_publish_material'] = value;
+                if (field === 'is_first_publish_material' && value == 1) {
+                    params['is_first_publish_material'] = 1;
                 }
                 // 优质标签 (is_ecp_high_quality_material = 1)
                 if (field === 'is_first_publish_material' && value == 2) {
-                    // 优质对应 is_ecp_high_quality_material = 1
                     params['is_ecp_high_quality'] = 1;
                 }
                 
