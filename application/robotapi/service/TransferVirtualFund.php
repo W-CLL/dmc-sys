@@ -162,7 +162,7 @@ class TransferVirtualFund extends Controller
         $agency = [];
         foreach ($wallet_info['tencent_account'] as $wallet) {
             $found_account_ids[] = $wallet['account_id'];
-            $agency = $wallet['agency'];
+            $agency[$wallet['agency']] = 1;
         }
 
         if (count($agency) != 1){
