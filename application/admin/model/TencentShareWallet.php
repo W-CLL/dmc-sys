@@ -18,8 +18,8 @@ class TencentShareWallet extends Model
     // 不隐藏任何字段
     protected $hidden = [];
     
-    // 明确指定可见字段，确保包含id和store关联字段
-    protected $visible = ['id', 'store_id', 'sub_wallet_id', 'sub_wallet_name', 'wallet_type', 'discount_percentage', 'store'];
+    // 明确指定可见字段确保包含id和store关联字段
+    protected $visible = ['id', 'store_id', 'sub_wallet_id', 'sub_wallet_name', 'wallet_type', 'discount_percentage', 'agency', 'store'];
     
     // 关联店铺模型
     public function store()

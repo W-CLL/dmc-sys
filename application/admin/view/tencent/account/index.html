@@ -58,11 +58,26 @@
                 <div class="col-xs-12 col-sm-6 col-md-3">
                     <div class="form-group">
                         <label class="control-label">账户状态</label>
+                        <input class="operate" type="hidden" data-name="status" value="="/>
                         <div>
                             <select data-rule="required" class="form-control selectpicker" name="status">
                                 <option value="">请选择</option>
                                 <option value="1">有效</option>
                                 <option value="4">封禁</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xs-12 col-sm-6 col-md-3">
+                    <div class="form-group">
+                        <label class="control-label">所属服务商</label>
+                        <input class="operate" type="hidden" data-name="agency" value="="/>
+                        <div>
+                            <select data-rule="required" class="form-control selectpicker" name="agency">
+                                <option value="">请选择</option>
+                                <option value="1">浣熊64568612</option>
+                                <option value="2">斑马74230866</option>
                             </select>
                         </div>
                     </div>

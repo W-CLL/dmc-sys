@@ -8,6 +8,7 @@ use app\common\model\txgg\TencentStore;
 use app\common\model\txgg\TencentRefund;
 use app\common\model\txgg\TencentWalletTransferLog;
 use app\common\model\txgg\TencentTransactionLog;
+use think\Env;
 use think\Exception;
 use txgg\Fund;
 
@@ -76,14 +77,14 @@ class TransferToWallet extends Store
             $this->error('尚未设置腾讯广告账户，请联系管理员设置');
         }
         $res = Fund::getWalletBasicInfo([
-            'account_id' => 64568612,
+            'account_id' => (int)Env::get('txgg.agency_'.$wallet['agency']),
             'wallet_id' => (int)$wallet['sub_wallet_id'],
         ])['data'];
         if ($res['code'] != 0){
             $this->error('腾讯广告接口异常，请稍后再试');
         }
         $agent_balance = Fund::getAgentFundInfo([
-            'account_id' => 64568612,
+            'account_id' => (int)Env::get('txgg.agency_'.$wallet['agency']),
         ])['data'];
         if ($agent_balance['code'] != 0){
             $this->error('腾讯广告接口异常，请稍后再试');
@@ -123,7 +124,7 @@ class TransferToWallet extends Store
                     throw new \Exception('转账失败');
                 }
                 $this->deductMoney($store_info,$ins);
-                $transfer_result = $this->initiateTransfer($post);
+                $transfer_result = $this->initiateTransfer($post,Env::get('txgg.agency_'.$wallet['agency']));
                 if ($transfer_result['code'] != 0){
                     \think\Log::write($transfer_result, 'errorInfo');
                     throw new Exception('发起转账失败');
@@ -240,6 +241,7 @@ class TransferToWallet extends Store
             'account_type' => $wallet_info['account_type'],
             'discount_percentage' => $wallet_info['wallet_discount'],
             'create_time' => time(),
+            'agency' => $wallet['agency']
         ];
         if ($post['transfer_direction'] == 'AGENCY_TO_WALLET'){
             $insert_data['transfer_direction'] = 1;
@@ -320,9 +322,9 @@ class TransferToWallet extends Store
 
 
 
-    private function initiateTransfer($post){
+    private function initiateTransfer($post,$account_id){
         return Fund::transferToShareWallet([
-            'account_id' => 64568612,
+            'account_id' => (int)$account_id,
             'to_account_id' => $post['wallet_id'],
             'fund_type' => $post['fund_type'],
             'amount' => $post['transfer_amount'] * 100,

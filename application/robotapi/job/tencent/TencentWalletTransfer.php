@@ -8,6 +8,7 @@ use app\robotapi\model\TencentStore;
 use app\robotapi\model\TencentWalletTransferLog;
 use app\robotapi\model\TransferFailure;
 use think\Db;
+use think\Env;
 use think\Exception;
 use txgg\Fund;
 
@@ -137,7 +138,7 @@ class TencentWalletTransfer extends TencentBaseJob
 
     private function initiateTransfer($data){
         return Fund::transferToShareWallet([
-            'account_id' => 64568612,
+            'account_id' => (int)Env::get('txgg.agency_'.$data['agency']),
             'to_account_id' => $data['sub_wallet_id'],
             'fund_type' => 'FUND_TYPE_CASH',
             'amount' => (int) ($data['money'] * 100),

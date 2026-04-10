@@ -159,8 +159,14 @@ class TransferVirtualFund extends Controller
         $wechat_group_model = new WechatGroup();
         $wallet_info = $wechat_group_model->getTencentAccountByStoreId($data['group_id'], [$data['account_id'], $data['to_account_id']]);
         $found_account_ids = [];
+        $agency = [];
         foreach ($wallet_info['tencent_account'] as $wallet) {
             $found_account_ids[] = $wallet['account_id'];
+            $agency = $wallet['agency'];
+        }
+
+        if (count($agency) != 1){
+            return '所属代理商不同，不允许转账';
         }
 
         // 检查发起方账户是否存在

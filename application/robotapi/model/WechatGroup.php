@@ -67,7 +67,7 @@ class WechatGroup extends Model
         return $this->with(['TencentAccount' => function($query) use ($account_id_list) {
             $query->whereIn('account_id', $account_id_list)
                 ->whereIn('status', [1,4])
-                ->field('id, account_id, store_id, account_type, discount_percentage');
+                ->field('id, account_id, store_id, account_type, discount_percentage, agency');
         }])->where('group_id', $group_id)->find();
     }
 
@@ -77,7 +77,7 @@ class WechatGroup extends Model
     {
         return $this->with(['TencentShareWallet' => function($query) use ($wallet_id_list) {
             $query->whereIn('sub_wallet_id', $wallet_id_list)
-                ->field('id, sub_wallet_id, store_id, wallet_type, discount_percentage');
+                ->field('id, sub_wallet_id, store_id, wallet_type, discount_percentage, agency');
         }])->where('group_id', $group_id)->find();
     }
 

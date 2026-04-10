@@ -9,6 +9,7 @@ use app\common\model\txgg\TencentRefund;
 use app\common\model\txgg\TencentTransferLog as TencentTransfer;
 use app\common\model\txgg\TencentTransactionLog;
 use Symfony\Component\Cache\Adapter\NullAdapter;
+use think\Env;
 use think\Exception;
 use txgg\Fund;
 use think\Db;
@@ -73,7 +74,7 @@ class Transfer extends Store
             $fund_info[$item['fund_type']] = ($item['balance'] - (isset($item['bill_deposit_amount'])? $item['bill_deposit_amount'] :0)) / 100;
         }
         $agent_balance = Fund::getAgentFundInfo([
-            'account_id' => 64568612,
+            'account_id' => (int)Env::get('txgg.agency_'.$account['agency']),
         ])['data'];
         if ($agent_balance['code'] != 0){
             $this->error('腾讯广告接口异常，请稍后再试');
@@ -219,6 +220,7 @@ class Transfer extends Store
             'account_type' => $wallet_info['account_type'],
             'discount_percentage' => $wallet_info['wallet_discount'],
             'create_time' => time(),
+            'agency' => $account['agency']
         ];
         if($post['transfer_direction'] == 'ADVERTISER_TO_AGENCY'){
             $insert_data['transfer_direction'] = 2;

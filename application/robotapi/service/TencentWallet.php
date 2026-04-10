@@ -8,6 +8,7 @@ use app\robotapi\model\TencentRefund;
 use app\robotapi\model\WechatGroup;
 
 use think\Db;
+use think\Env;
 use think\Exception;
 use think\controller;
 use txgg\Fund;
@@ -72,7 +73,8 @@ class TencentWallet extends Controller
                 "remark"                => $data['remark'] ?? '',
                 'discount_percentage'   => $discount_percentage,
                 'create_time'           => time(),
-                "from"                  => 2         // 机器人接口充值
+                "from"                  => 2,         // 机器人接口充值
+                'agency'                => $wallet['agency']
             ];
             switch ($data['transfer_type']){
                 case 1:
@@ -233,7 +235,7 @@ class TencentWallet extends Controller
                     $no_wallet_id = false;
                     do{
                         $res = Fund::getWalletBasicInfo([
-                            'account_id' => 64568612,
+                            'account_id' => (int)Env::get('txgg.agency_'.$wallet['agency']),
                             'wallet_id' => (int)$wallet['sub_wallet_id'],
                         ])['data'];
                         if ($res['code']  == 67001){
@@ -276,24 +278,30 @@ class TencentWallet extends Controller
 
     private function checkWalletDiscountAndFunds($data, $wallet_info)
     {
+        $hx = 0;
+        $bm = 0;
         if($data['amount'] < 5000){
             return '转账金额不能低于5000元';
         }
         if ($data['amount'] > 20000000){
             return '转账金额不能高于20,000,000元';
         }
-        $agent_balance = Fund::getAgentFundInfo([
-            'account_id' => 64568612,
+        $hx_agent_balance = Fund::getAgentFundInfo([
+            'account_id' => (int)Env::get('txgg.agency_1'),
         ])['data'];
-        if ($agent_balance['code'] != 0){
+        $bm_agent_balance = Fund::getAgentFundInfo([
+            'account_id' => (int)Env::get('txgg.agency_2'),
+        ])['data'];
+        if ($hx_agent_balance['code'] != 0 && $bm_agent_balance['code'] != 0){
             return "腾讯接口异常，请稍后再试";
         }
-        $agent_balance_info = [];
-        foreach ($agent_balance['data']['list'] as $item){
-            $agent_balance_info[$item['fund_type']] = $item['balance'] / 100;
+        $hx_agent_balance_info = [];
+        $bm_agent_balance_info = [];
+        foreach ($hx_agent_balance['data']['list'] as $item){
+            $hx_agent_balance_info[$item['fund_type']] = $item['balance'] / 100;
         }
-        if ($agent_balance_info['FUND_TYPE_CASH'] + $agent_balance_info['FUND_TYPE_GIFT'] < $data['amount'] * count($wallet_info['tencent_share_wallet'])){
-            return "转账金额大于备款余额，发起失败，请联系管理员进行备款处理";
+        foreach ($bm_agent_balance['data']['list'] as $item){
+            $bm_agent_balance_info[$item['fund_type']] = $item['balance'] / 100;
         }
         $wechat_group_model = new WechatGroup();
         $balance_info = $wechat_group_model->getDMCTencentBalance($data['group_id']);
@@ -303,6 +311,11 @@ class TencentWallet extends Controller
         $public_all = $balance_info['tencentStore']['public_money_tencent'] + $balance_info['tencentStore']['public_credit_limit_tencent'];
         $private_all = $balance_info['tencentStore']['private_money_tencent'] + $balance_info['tencentStore']['private_credit_limit_tencent'];
         foreach ($wallet_info['tencent_share_wallet'] as $wallet){
+            if ($wallet['agency'] == 1){
+                $hx++;
+            }elseif ($wallet['agency'] == 2){
+                $bm++;
+            }
             if ($wallet['wallet_type'] == '1'){
                 //对公
                 $discount_percentage = !empty(floatval($wallet['discount_percentage'])) ? $wallet['discount_percentage'] :$balance_info['tencentStore']['public_discount_percentage_tencent'];
@@ -328,6 +341,12 @@ class TencentWallet extends Controller
                 }
                 $private_all -= ($data['amount'] - $rebate);
             }
+        }
+        if ($hx_agent_balance_info['FUND_TYPE_CASH'] + $hx_agent_balance_info['FUND_TYPE_GIFT'] < $data['amount'] * $hx){
+            return "转账金额大于备款余额，发起失败，请联系管理员进行浣熊主体备款处理";
+        }
+        if ($bm_agent_balance_info['FUND_TYPE_CASH'] + $bm_agent_balance_info['FUND_TYPE_GIFT'] < $data['amount'] * $bm){
+            return "转账金额大于备款余额，发起失败，请联系管理员进行斑马主体备款处理";
         }
         return true;
     }

@@ -2,6 +2,7 @@
 
 namespace app\api\controller\txgg;
 
+use think\Env;
 use txgg\AdvInfo;
 use app\common\model\txgg\TencentAccount;
 
@@ -29,16 +30,17 @@ class Account
      * 获取腾讯广告子客账号
      * @return void
      */
-    public function getAccount()
+    public function getAccount($agency = 1)
     {
         $total = [];
         $cursor = ''; // 初始化游标
         $retryCount = 0;
         $maxRetries = 3;
         $model = new TencentAccount();
+        $agency_id = Env::get('txgg.agency_'.$agency);
         do {
             $res = AdvInfo::getAdvInfo(array (
-                'agency_id' => 64568612,
+                'agency_id' => (int)$agency_id,
                 'fields' => json_encode([
                     "account_id",
                     "mdm_name",
@@ -84,6 +86,7 @@ class Account
                         'agency_account_id' => $item['agency_account_id'],
                         'store_id' => $array[$item['mdm_name']]['store_id'] ?? 0,
                         'account_type' => $array[$item['mdm_name']]['account_type'] ?? 1,
+                        'agency' => $agency
                     ];
                 }
             }
@@ -94,6 +97,7 @@ class Account
                     'status' => $this->system_status[$item['system_status']],
                     'store_id' => $array[$item['mdm_name']]['store_id'] ?? $idBindAccount[$item['account_id']]['store_id'],
                     'account_type' => $array[$item['mdm_name']]['account_type'] ?? $idBindAccount[$item['account_id']]['account_type'],
+                    'agency' => $agency
                 ];
             }
         }

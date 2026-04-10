@@ -3,6 +3,7 @@
 namespace app\robotapi\job\tencent;
 
 use app\robotapi\model\QueueRobot;
+use think\Env;
 use think\Exception;
 use think\Db;
 use app\robotapi\model\TencentRefund;
@@ -131,7 +132,7 @@ class TencentTransfer extends TencentBaseJob
      */
     private function initiateTransfer($data){
         $agent_balance = Fund::getAgentFundInfo([
-            'account_id' => 64568612,
+            'account_id' => (int)Env::get('txgg.agency_'.$data['agency']),
         ])['data'];
         if ($agent_balance['code'] != 0){
             throw new Exception("腾讯广告接口异常");

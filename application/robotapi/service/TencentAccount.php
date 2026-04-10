@@ -7,6 +7,7 @@ use app\robotapi\model\WechatGroup;
 use app\robotapi\model\Store;
 use app\robotapi\model\TencentRefund;
 use think\Controller;
+use think\Env;
 use think\Log;
 use txgg\Fund;
 
@@ -73,7 +74,8 @@ class TencentAccount extends Controller
                 "discount_percentage"   => $discount_percentage,
                 "remark"                => $data['remark'] ?? '',
                 "create_time"           => time(),
-                "from"                  => 2         // 机器人接口充值
+                "from"                  => 2,         // 机器人接口充值
+                'agency'                => $account['agency']
             ];
             switch ($data['transfer_type']){
                 case 1:
@@ -225,24 +227,30 @@ class TencentAccount extends Controller
 
     private function checkAccountDiscountAndFunds($data, $account_info)
     {
+        $hx = 0;
+        $bm = 0;
         if($data['amount'] < 50){
             return '转账金额不能低于50元';
         }
         if ($data['amount'] > 20000000){
             return '转账金额不能高于20,000,000元';
         }
-        $agent_balance = Fund::getAgentFundInfo([
-            'account_id' => 64568612,
+        $hx_agent_balance = Fund::getAgentFundInfo([
+            'account_id' => (int)Env::get('txgg.agency_1'),
         ])['data'];
-        if ($agent_balance['code'] != 0){
+        $bm_agent_balance = Fund::getAgentFundInfo([
+            'account_id' => (int)Env::get('txgg.agency_2'),
+        ])['data'];
+        if ($hx_agent_balance['code'] != 0 && $bm_agent_balance['code'] != 0){
             return "腾讯接口异常，请稍后再试";
         }
-        $agent_balance_info = [];
-        foreach ($agent_balance['data']['list'] as $item){
-            $agent_balance_info[$item['fund_type']] = $item['balance'] / 100;
+        $hx_agent_balance_info = [];
+        $bm_agent_balance_info = [];
+        foreach ($hx_agent_balance['data']['list'] as $item){
+            $hx_agent_balance_info[$item['fund_type']] = $item['balance'] / 100;
         }
-        if ($agent_balance_info['FUND_TYPE_CASH'] + $agent_balance_info['FUND_TYPE_GIFT'] < $data['amount'] * count($account_info['tencent_account'])){
-            return "转账金额大于备款余额，发起失败，请联系管理员进行备款处理";
+        foreach ($bm_agent_balance['data']['list'] as $item){
+            $bm_agent_balance_info[$item['fund_type']] = $item['balance'] / 100;
         }
         $wechat_group_model = new WechatGroup();
         $balance_info = $wechat_group_model->getDMCTencentBalance($data['group_id']);
@@ -252,6 +260,11 @@ class TencentAccount extends Controller
         $public_all = $balance_info['tencentStore']['public_money_tencent'] + $balance_info['tencentStore']['public_credit_limit_tencent'];
         $private_all = $balance_info['tencentStore']['private_money_tencent'] + $balance_info['tencentStore']['private_credit_limit_tencent'];
         foreach ($account_info['tencent_account'] as $account){
+            if ($account['agency'] == 1){
+                $hx++;
+            }elseif ($account['agency'] == 2){
+                $bm++;
+            }
             if ($account['account_type'] == '1'){
                 //对公
                 $discount_percentage = !empty(floatval($account['discount_percentage'])) ? $account['discount_percentage'] :$balance_info['tencentStore']['public_discount_percentage_tencent'];
@@ -277,6 +290,12 @@ class TencentAccount extends Controller
                 }
                 $private_all -= ($data['amount'] - $rebate);
             }
+        }
+        if ($hx_agent_balance_info['FUND_TYPE_CASH'] + $hx_agent_balance_info['FUND_TYPE_GIFT'] < $data['amount'] * $hx){
+            return "转账金额大于备款余额，发起失败，请联系管理员进行浣熊主体备款处理";
+        }
+        if ($bm_agent_balance_info['FUND_TYPE_CASH'] + $bm_agent_balance_info['FUND_TYPE_GIFT'] < $data['amount'] * $bm){
+            return "转账金额大于备款余额，发起失败，请联系管理员进行斑马主体备款处理";
         }
         return true;
     }

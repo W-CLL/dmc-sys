@@ -7,6 +7,7 @@ use app\robotapi\model\TencentAccount;
 use app\robotapi\model\TencentShareWallet;
 use think\Cache;
 use think\Db;
+use think\Env;
 use think\Exception;
 use app\robotapi\model\TencentTransferLog;
 use app\robotapi\model\TencentStore;
@@ -304,10 +305,18 @@ class SubsequentOperations
             ];
             $prefix = '';
         }
-        $account_info = [
-            'name' => '广州浣熊数字信息科技有限公司',
-            'id' => 64568612,
-        ];
+        if ($info['agency'] == 1){
+            $account_info = [
+                'name' => '广州浣熊数字信息科技有限公司',
+                'id' => Env::get('txgg.agency_'.$info['agency']),
+            ];
+        }elseif($info['agency'] == 2){
+            $account_info = [
+                'name' => '广州斑马数字科技有限公司',
+                'id' => Env::get('txgg.agency_'.$info['agency']),
+            ];
+        }
+
         $money = number_format($transfer_records_data['money'], 2);
         if ($transfer_records_data['transfer_direction'] == 1) {
             $transfer_type = $prefix."加款";
@@ -385,10 +394,17 @@ class SubsequentOperations
                 $prefix = '';
             }
 
-            $account_info = [
-                'name' => '广州浣熊数字信息科技有限公司',
-                'id' => 64568612,
-            ];
+            if ($info['agency'] == 1){
+                $account_info = [
+                    'name' => '广州浣熊数字信息科技有限公司',
+                    'id' => Env::get('txgg.agency_'.$info['agency']),
+                ];
+            }elseif($info['agency'] == 2){
+                $account_info = [
+                    'name' => '广州斑马数字科技有限公司',
+                    'id' => Env::get('txgg.agency_'.$info['agency']),
+                ];
+            }
 
             $money = number_format($transfer_records_data['money'], 2);
             if ($transfer_records_data['transfer_direction'] == 1) {

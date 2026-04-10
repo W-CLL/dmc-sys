@@ -85,3 +85,8 @@ ALTER TABLE fa_store_money_log
 ALTER TABLE fa_store_money_log
     ADD COLUMN `credit_limit_surplus` decimal(10, 2) DEFAULT 0.00 COMMENT '变动后授信余额';
 
+--2026.04.10
+ALTER TABLE fa_tencent_account ADD COLUMN `agency` tinyint(1) NOT NULL DEFAULT '1' COMMENT '所属服务商（1：浣熊64568612 2：斑马74230866）';
+ALTER TABLE fa_tencent_share_wallet ADD COLUMN `agency` tinyint(1) NOT NULL DEFAULT '1' COMMENT '所属服务商（1：浣熊64568612 2：斑马74230866）';
+ALTER TABLE fa_tencent_transfer_log ADD COLUMN `agency` tinyint(1) NOT NULL DEFAULT '1' COMMENT '所属服务商（1：浣熊64568612 2：斑马74230866）';
+ALTER TABLE fa_tencent_wallet_transfer_log ADD COLUMN `agency` tinyint(1) NOT NULL DEFAULT '1' COMMENT '所属服务商（1：浣熊64568612 2：斑马74230866）';

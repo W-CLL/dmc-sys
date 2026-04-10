@@ -20,6 +20,11 @@ class Wallet extends Backend
         if ($this->request->isAjax()) {
             list($where, $sort, $order, $offset, $limit) = $this->buildparams();
             
+            $agency = $this->request->get("agency");
+            if ($agency) {
+                $where[] = ['agency', '=', $agency];
+            }
+            
             $model = new WalletModel();
             $list = $model
                 ->with('store')

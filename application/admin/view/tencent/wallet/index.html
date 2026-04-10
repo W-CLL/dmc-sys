@@ -1,3 +1,40 @@
+<meta charset="UTF-8">
+<script id="customformtpl" type="text/html">
+    <form action="" class="form-commonsearch">
+        <div style="border-radius:2px;margin-bottom:10px;background:#f5f5f5;padding:15px 20px;">
+            <div class="row">
+                <div class="col-xs-12 col-sm-6 col-md-3">
+                    <div class="form-group">
+                        <label class="control-label">所属服务商</label>
+                        <input class="operate" type="hidden" data-name="agency" value="="/>
+                        <div>
+                            <select data-rule="required" class="form-control selectpicker" name="agency">
+                                <option value="">请选择</option>
+                                <option value="1">浣熊64568612</option>
+                                <option value="2">斑马74230866</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xs-12 col-sm-6 col-md-3">
+                    <div class="form-group">
+                        <label class="control-label"></label>
+                        <div class="row">
+                            <div class="col-xs-6">
+                                <input type="submit" class="btn btn-success btn-block" value="提交"/>
+                            </div>
+                            <div class="col-xs-6">
+                                <input type="reset" class="btn btn-primary btn-block" value="重置"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</script>
+
 <div class="panel panel-default panel-intro">
     {:build_heading()}
 
@@ -20,8 +57,9 @@
                                 <th data-field="sub_wallet_id">子钱包ID</th>
                                 <th data-field="sub_wallet_name">子钱包名称</th>
                                 <th data-field="wallet_type">钱包类型</th>
-                                <th data-field="discount_percentage">折扣比例</th>
-                                <th data-field="operate" data-operate="true">操作</th>
+<th data-field="discount_percentage">折扣比例</th>
+                                 <th data-field="agency">所属服务商</th>
+                                 <th data-field="operate" data-operate="true">操作</th>
                             </tr>
                         </thead>
                     </table>

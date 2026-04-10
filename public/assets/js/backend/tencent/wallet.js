@@ -18,6 +18,8 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                 url: $.fn.bootstrapTable.defaults.extend.index_url,
                 pk: 'id',
                 sortName: 'id',
+                searchFormVisible: true,
+                searchFormTemplate: 'customformtpl',
                 columns: [
                     [
                         {checkbox: true},
@@ -39,6 +41,13 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                                 return '不适用';
                             }
                             return value + '%';
+                        }},
+                        {field: 'agency', title: __('所属服务商'), formatter: function(value, row, index) {
+                            switch(value) {
+                                case 1: return '浣熊64568612';
+                                case 2: return '斑马74230866';
+                                default: return '未知';
+                            }
                         }},
                         {field: 'operate', title: __('Operate'), table: table, events: Table.api.events.operate, formatter: Table.api.formatter.operate}
                     ]

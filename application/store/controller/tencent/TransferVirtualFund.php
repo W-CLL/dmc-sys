@@ -65,10 +65,13 @@ class TransferVirtualFund extends Store
             $this->error('发起账户余额不足，不能转账');
         }
 
-        $initiate_account = Db::name("tencent_account")->where(['account_id' => $account_id, "store_id" => $this->auth->id])->field('id,account_type')->find();
-        $target_account = Db::name("tencent_account")->where(['account_id' => $to_account_id, "store_id" => $this->auth->id])->field('id,account_type')->find();
+        $initiate_account = Db::name("tencent_account")->where(['account_id' => $account_id, "store_id" => $this->auth->id])->field('id,account_type,agency')->find();
+        $target_account = Db::name("tencent_account")->where(['account_id' => $to_account_id, "store_id" => $this->auth->id])->field('id,account_type,agency')->find();
         if ($initiate_account['id'] == $target_account['id'] || empty($initiate_account) || empty($target_account)) {
             $this->error("账户选择非法");
+        }
+        if ($initiate_account['agency'] != $target_account['agency']) {
+            $this->error("发起方与接收方所属服务商不一致，无法发起转账");
         }
         if (!is_numeric($money) || $money < 0) {
             $this->error("请输入正确金额");

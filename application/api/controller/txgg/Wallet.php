@@ -2,17 +2,19 @@
 
 namespace app\api\controller\txgg;
 
+use think\Env;
 use txgg\Fund;
 use app\common\model\txgg\TencentShareWallet;
 
 class Wallet
 {
-    public function getWallet(){
+    public function getWallet($agency = 1){
         $total = [];
         $update = [];
         $insert = [];
+        $account_id = Env::get('txgg.agency_'.$agency);
         $res = Fund::getShareWalletInfo([
-            'account_id' => 64568612,
+            'account_id' => (int)$account_id,
             'page' => 1,
             'page_size' => 100
         ])['data'];
@@ -21,7 +23,7 @@ class Wallet
             $total_page = $res['data']['page_info']['total_page'];
             for ($i = 2; $i <= $total_page; $i++){
                 $res = Fund::getShareWalletInfo([
-                    'account_id' => 64568612,
+                    'account_id' => (int)$account_id,
                     'page' => $i,
                     'page_size' => 100
                 ])['data'];
@@ -42,7 +44,8 @@ class Wallet
                 $insert[] = [
                     'sub_wallet_id' => $item['wallet_id'],
                     'sub_wallet_name' => $item['wallet_name'],
-                    'name' => $item['mdm_name']
+                    'name' => $item['mdm_name'],
+                    'agency' => $agency,
                 ];
             }
             // 处理需要更新的数据
@@ -50,7 +53,8 @@ class Wallet
                 $update[] = [
                     'id' => $db_wallet_info[$item['wallet_id']]['id'],
                     'sub_wallet_name' => $item['wallet_name'],
-                    'name' => $item['mdm_name']
+                    'name' => $item['mdm_name'],
+                    'agency' => $agency
                 ];
             }
         }
