@@ -38,8 +38,8 @@ class TransferVirtualFund extends TencentBaseJob
 
         
         $transfer_data = $data['data'];
-        $transfer_data['money'] = $data['amount'] ?? $recommend_amount / 100;
-        if ($recommend_amount < $transfer_data['money'] * 100) {
+        $transfer_data['money'] = $data['amount'] ?? round($recommend_amount / 100, 2);
+        if ($recommend_amount < round($transfer_data['money'] * 100, 2)) {
             $this->writeLog('ERROR', '可转出金额不足', ['recommend_amount' => $recommend_amount]);
             throw new Exception('可转出金额不足');
         }
