@@ -78,7 +78,7 @@ class TransferVirtualFund extends TencentBaseJob
                 'account_id' => (int)$data['account_id'],
                 'to_account_id' => (int)$data['to_account_id'],
                 'fund_type' => $data['fund_type'],
-                'amount' => (float)$transfer_data['money'] * 100,
+                'amount' => (int)($transfer_data['money'] * 100),
                 'external_bill_no' => uniqid('hx-'),
                 'pre_fetch_amount' => 0,
             ])['data'];
