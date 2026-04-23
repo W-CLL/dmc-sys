@@ -2,6 +2,22 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
 
     var Controller = {
         index: function () {
+            // 初始化当前标签页筛选条件（从URL参数）
+            window.currentTabFilter = {value: ''};
+            var urlParams = new URLSearchParams(location.search);
+            if (urlParams.has('is_first_publish_material') && urlParams.get('is_first_publish_material') == 1) {
+                if (urlParams.has('is_ecp_high_quality') && urlParams.get('is_ecp_high_quality') == 1) {
+                    // 同时有优质和首发 -> value=3
+                    window.currentTabFilter = {value: 3};
+                } else {
+                    // 只有首发 -> value=1
+                    window.currentTabFilter = {value: 1};
+                }
+            } else if (urlParams.has('is_ecp_high_quality') && urlParams.get('is_ecp_high_quality') == 1) {
+                // 只有优质 -> value=2
+                window.currentTabFilter = {value: 2};
+            }
+
             // 初始化表格参数配置
             Table.api.init({
                 extend: {
@@ -18,6 +34,37 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                 url: $.fn.bootstrapTable.defaults.extend.index_url,
                 pk: 'id',
                 sortName: 'id',
+                queryParams: function(params) {
+                    // 收集所有筛选条件
+                    var filters = {};
+                    var material_id = $('#material_id').val();
+                    var is_inefficient = $('#is_inefficient').val();
+
+                    if (material_id) {
+                        filters.material_id = material_id;
+                    }
+                    if (is_inefficient) {
+                        filters.is_inefficient = is_inefficient;
+                    }
+
+                    // 合并标签页筛选条件
+                    if (window.currentTabFilter && window.currentTabFilter.value !== '') {
+                        var value = window.currentTabFilter.value;
+                        // value=1 -> 首发, value=2 -> 优质, value=3 -> 优质且首发
+                        if (value == 1) {
+                            filters['is_first_publish_material'] = 1;
+                        } else if (value == 2) {
+                            filters['is_ecp_high_quality'] = 1;
+                        } else if (value == 3) {
+                            filters['is_first_publish_material'] = 1;
+                            filters['is_ecp_high_quality'] = 1;
+                        }
+                    }
+
+                    // 合并到 params 中
+                    $.extend(params, filters);
+                    return params;
+                },
                 columns: [
                     [
                         {checkbox: true},
@@ -120,30 +167,64 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
             // 标签页切换事件 - 首发/优质筛选
             $(document).on('click', '.nav-tabs li a', function () {
                 var value = $(this).data('value');
-                var field = $(this).closest('ul').data('field');
                 var params = {};
-                
+
+                // 记录当前标签页筛选条件
+                window.currentTabFilter = {value: value};
+
                 // 获取其他筛选条件
                 var material_id = $('#material_id').val();
                 var is_inefficient = $('#is_inefficient').val();
-                
+
                 if (material_id) {
                     params['material_id'] = material_id;
                 }
                 if (is_inefficient) {
                     params['is_inefficient'] = is_inefficient;
                 }
-                
-                // 首发素材标签 (is_first_publish_material = 1)
-                if (field === 'is_first_publish_material' && value == 1) {
+
+                // 根据标签value设置筛选参数
+                if (value == 1) {
                     params['is_first_publish_material'] = 1;
-                }
-                // 优质标签 (is_ecp_high_quality_material = 1)
-                if (field === 'is_first_publish_material' && value == 2) {
+                } else if (value == 2) {
+                    params['is_ecp_high_quality'] = 1;
+                } else if (value == 3) {
+                    params['is_first_publish_material'] = 1;
                     params['is_ecp_high_quality'] = 1;
                 }
-                
+
                 table.bootstrapTable('refresh', {query: params});
+            });
+
+            // 搜索按钮事件
+            $(document).on('click', '.btn-search', function () {
+                var params = {};
+                var material_id = $('#material_id').val();
+                var is_inefficient = $('#is_inefficient').val();
+
+                if (material_id) {
+                    params['material_id'] = material_id;
+                }
+                if (is_inefficient) {
+                    params['is_inefficient'] = is_inefficient;
+                }
+
+                table.bootstrapTable('refresh', {query: params});
+            });
+
+            // 重置按钮事件
+            $(document).on('click', '.btn-reset', function () {
+                $('#material_id').val('');
+                $('#is_inefficient').val('');
+                $('.nav-tabs li:first a').trigger('click');
+                table.bootstrapTable('refresh', {query: {}});
+            });
+
+            // 回车搜索
+            $(document).on('keypress', '#material_id', function (e) {
+                if (e.which === 13) {
+                    $('.btn-search').trigger('click');
+                }
             });
 
             // 搜索按钮事件
