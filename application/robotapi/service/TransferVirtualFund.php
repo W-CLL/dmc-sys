@@ -23,7 +23,7 @@ class TransferVirtualFund extends Controller
         ];
         $array['account_id'] = $data['account_id'];
         $array['to_account_id'] = $data['to_account_id'];
-        $array['fund_type'] = $data['type'] == "现金" ? 'FUND_TYPE_AD_RECHARGE' : 'FUND_TYPE_COMPENSATE_VIRTUAL';
+        $array['fund_type'] = $data['type'] == "现金" ? 'FUND_TYPE_AD_RECHARGE' : ($data['type'] == "测试虚拟金" ? 'FUND_TYPE_TEST_VIRTUAL' : 'FUND_TYPE_COMPENSATE_VIRTUAL');
         if ($data['amount'] != "全额"){
             $array['amount'] = $data['amount'];
         }
