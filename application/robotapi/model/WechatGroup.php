@@ -66,7 +66,7 @@ class WechatGroup extends Model
     {
         return $this->with(['TencentAccount' => function($query) use ($account_id_list) {
             $query->whereIn('account_id', $account_id_list)
-                ->whereIn('status', [1,4])
+                ->whereIn('status', [1,3,4])
                 ->field('id, account_id, store_id, account_type, discount_percentage, agency');
         }])->where('group_id', $group_id)->find();
     }
