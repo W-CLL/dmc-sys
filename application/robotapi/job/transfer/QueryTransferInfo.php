@@ -119,7 +119,7 @@ class QueryTransferInfo
                     );
                     Db::commit();
                     $prefix = $transfer_records_data['account_type'] == 1 ? "public_" : "private_";
-                    $msg = "{$operate}成功！\n充值ID:{$transfer_records_data['advertiser_id']}\n钱包余额{$type}：" . $money_log_data["balance_surplus"] . "\n授信余额{$type}：" . $money_log_data["credit_limit_surplus"] . "\n已使用授信额度{$type}：" . number_format((($store_info[$prefix."spending_credit_limit"] + $store_info[$prefix."credit_limit"]) - $money_log_data["credit_limit_surplus"]), 2);
+                    $msg = "{$operate}成功！\n千川ID：{$transfer_records_data['advertiser_id']}\n钱包余额{$type}：" . $money_log_data["balance_surplus"] . "\n授信余额{$type}：" . $money_log_data["credit_limit_surplus"] . "\n已使用授信额度{$type}：" . number_format((($store_info[$prefix."spending_credit_limit"] + $store_info[$prefix."credit_limit"]) - $money_log_data["credit_limit_surplus"]), 2);
                     break;
                 }catch (Exception $e){
                     Db::rollback();
