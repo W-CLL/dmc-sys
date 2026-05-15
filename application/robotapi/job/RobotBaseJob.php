@@ -10,6 +10,20 @@ use think\Log;
 
 class RobotBaseJob
 {
+    /**
+     * 写入本地日志（项目根目录 logs/ 下）
+     */
+    private function writeLog($msg)
+    {
+        $dir = ROOT_PATH . 'logs';
+        if (!is_dir($dir)) {
+            mkdir($dir, 0755, true);
+        }
+        $file = $dir . '/robot_job_' . date('Ymd') . '.log';
+        $line = '[' . date('Y-m-d H:i:s') . '] ' . $msg . PHP_EOL;
+        file_put_contents($file, $line, FILE_APPEND | LOCK_EX);
+    }
+
     public function fire(Job $job, $data)
     {
         $jobId = json_decode($job->getRawBody(), true)['id'] ?? null;
@@ -18,7 +32,9 @@ class RobotBaseJob
 
         // 防护：队列记录不存在时直接删除任务
         if (!$queueData) {
-            Log::error("RobotBaseJob: 队列记录不存在, job_id={$jobId}");
+            $msg = "队列记录不存在, job_id={$jobId}";
+            Log::error("RobotBaseJob: {$msg}");
+            $this->writeLog("RobotBaseJob: {$msg}");
             $job->delete();
             return '';
         }
@@ -26,7 +42,9 @@ class RobotBaseJob
         // 防护2：记录太久远（3天前）则不执行
         $threeDaysAgo = time() - (3 * 24 * 60 * 60);
         if ($queueData['create_time'] < $threeDaysAgo) {
-            Log::error("RobotBaseJob: 记录已超过3天不执行, job_id={$jobId}, create_time=" . date('Y-m-d H:i:s', $queueData['create_time']));
+            $msg = "记录已超过3天不执行, job_id={$jobId}, create_time=" . date('Y-m-d H:i:s', $queueData['create_time']);
+            Log::error("RobotBaseJob: {$msg}");
+            $this->writeLog("RobotBaseJob: {$msg}");
             $job->delete();
             return '';
         }
@@ -55,7 +73,9 @@ class RobotBaseJob
             $currentAttempts = $job->attempts();
             $jobName = $queueData['job_name'] ?? '';
 
-            Log::error("RobotBaseJob异常: job_id={$jobId}, attempts={$currentAttempts}, error=" . $e->getMessage());
+            $errMsg = "RobotBaseJob异常: job_id={$jobId}, attempts={$currentAttempts}, error=" . $e->getMessage();
+            Log::error($errMsg);
+            $this->writeLog($errMsg);
 
             // 特定任务的缓存标记
             if ($currentAttempts == $maxAttempts && in_array($jobName, ['共享钱包【查询转账信息】', '千川账户【查询转账信息】'])) {
