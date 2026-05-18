@@ -183,4 +183,22 @@ class QueueRobot extends Model
         ])->where('job_data', 'like', '%"msg_uuid":"' . $msg_uuid . '"%')
             ->count();
     }
+
+
+    public function qcGetRemaining($msg_uuid){
+        return $this->where([
+            'job_name' => '千川账户【查询转账信息】',
+            'status' => 0  // 未完成状态
+        ])->where('job_data', 'like', '%"msg_uuid":"' . $msg_uuid . '"%')
+            ->count();
+    }
+
+
+    public function qcWalletGetRemaining($msg_uuid){
+        return $this->where([
+            'job_name' => '共享钱包【查询转账信息】',
+            'status' => 0  // 未完成状态
+        ])->where('job_data', 'like', '%"msg_uuid":"' . $msg_uuid . '"%')
+            ->count();
+    }
 }

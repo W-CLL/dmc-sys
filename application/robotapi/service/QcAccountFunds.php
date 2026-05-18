@@ -45,23 +45,25 @@ class QcAccountFunds extends Controller
     }
 
     public function transfer($data){
-        $array = $this->calculateAndBuilding($data);
-        $array['job_class'] = '\app\robotapi\job\transfer\QcAccountFunds';
-        $array['callback_data'] = [
-            'url' => $data['callback_url'],
-            'group_id' => $data['group_id'],
-            'msg_uuid' => $data['callback_data']['msg_uuid'],
-            'sender_name' => $data['callback_data']['sender_name'],
-            'time' => $data['callback_data']['time'],
-        ];
         $queue = new QueueRobot();
-        $queue->addQueue('千川账户【转账】', 'app\robotapi\job\RobotBaseJob', 'robotBaseJob', $array);
+        foreach ($data['adv_id'] as $item){
+            $array = $this->calculateAndBuilding($data,$item);
+            $array['job_class'] = '\app\robotapi\job\transfer\QcAccountFunds';
+            $array['callback_data'] = [
+                'url' => $data['callback_url'],
+                'group_id' => $data['group_id'],
+                'msg_uuid' => $data['callback_data']['msg_uuid'],
+                'sender_name' => $data['callback_data']['sender_name'],
+                'time' => $data['callback_data']['time'],
+            ];
+            $queue->addQueue('千川账户【转账】', 'app\robotapi\job\RobotBaseJob', 'robotBaseJob', $array);
+        }
     }
 
 
-    private function calculateAndBuilding($data){
+    private function calculateAndBuilding($data,$adv_id){
         $wechat_group_model = new WechatGroup();
-        $company_info = $wechat_group_model->getCompanyByStoreId($data['group_id'], [$data['adv_id']]);
+        $company_info = $wechat_group_model->getCompanyByStoreId($data['group_id'], [$adv_id]);
         list($discount_percentage, $balance, $credit_limit, $rebate) = $this->getThisAdvDiscountAndFunds($data, $company_info);
         $transfer_records_data = [
             "store_id"              => $company_info['company'][0]['store_id'],
@@ -189,42 +191,50 @@ class QcAccountFunds extends Controller
 
     private function checkTransferParam($data){
         $wechat_group_model = new WechatGroup();
-        $company_info = $wechat_group_model->getCompanyByStoreId($data['group_id'], [$data['adv_id']]);
+        $company_info = $wechat_group_model->getCompanyByStoreId($data['group_id'], $data['adv_id']);
         if (empty($company_info) || empty($company_info['company'])){
             return '无权操作此千川账户';
         }
-        if(empty($company_info['company'][0]['agent_id'])){
-            return '此千川账户未绑定代理';
+        $no_agent = [];
+        foreach ($company_info['company'] as $item){
+            if(empty($item['agent_id'])) {
+                $no_agent[] = $item['advertiser_id'];
+            }
+        }
+        if (!empty($no_agent)){
+            $no_agent_str = implode(',',$no_agent);
+            $no_agent_str .= '代理未绑定';
+            return $no_agent_str;
         }
         switch ($data['transfer_type']){
             case 1:
-                list($discount_percentage, $balance, $credit_limit, $rebate) = $this->getThisAdvDiscountAndFunds($data, $company_info);
-                if(is_null($balance) && is_null($credit_limit) && is_null($discount_percentage) && is_null($rebate)){
-                    return '群聊未绑定商户，请先联系客服绑定商户';
-                }
-                if (($data['amount'] - $rebate) > ($balance + $credit_limit)){
-                    return '余额不足';
+                $res = $this->checkFunds($data, $company_info);
+                if ($res !== true){
+                    return $res;
                 }
                 return true;
             case 2:
-                $result = $this->getQcMoney($company_info['company'][0]);
-                if ($result === false){
-                    return '千川接口异常，请重试';
-                }
-                if ($data['amount'] > $result['money']) {
-                    return '千川账户余额不足';
-                }
                 $StoreRefund = new StoreRefund();
-                $last_transfer_info = $StoreRefund->getSingleItem([
-                    'account_type' => $company_info['company'][0]['account_type'],
-                    'store_id' => $company_info['company'][0]['store_id'],
-                    'advertiser_id' => $company_info['company'][0]['advertiser_id']
-                ],1);
-                if(!empty($last_transfer_info)){
-                    $maxTTO = $last_transfer_info['wallet'] + $last_transfer_info['credit'];
-                }
-                if(isset($maxTTO) && $data['amount'] > $maxTTO){
-                    return '本次转出的最大金额为: ' . $maxTTO;
+                foreach ($company_info['company'] as $item){
+                    $result = $this->getQcMoney($item);
+                    if ($result === false){
+                        return '千川接口异常，请重试';
+                    }
+                    if ($data['amount'] > $result['money']) {
+                        return '千川账户余额不足';
+                    }
+                    $last_transfer_info = $StoreRefund->getSingleItem([
+                        'account_type' => $item['account_type'],
+                        'store_id' => $item['store_id'],
+                        'advertiser_id' => $item['advertiser_id']
+                    ],1);
+                    if(!empty($last_transfer_info)){
+                        $maxTTO = $last_transfer_info['wallet'] + $last_transfer_info['credit'];
+                    }
+                    if(isset($maxTTO) && $data['amount'] > $maxTTO){
+                        return $item['advertiser_id'].'本次转出的最大金额为: ' . $maxTTO;
+                    }
+                    unset($maxTTO);
                 }
                 return true;
             default:
@@ -287,6 +297,55 @@ class QcAccountFunds extends Controller
             $rebate = 0;
         }
         return [$discount_percentage, $balance, $credit_limit, $rebate];
+    }
+
+
+    private function checkFunds($data, $company_info){
+        $wechat_group_model = new WechatGroup();
+        $balance_info = $wechat_group_model->getDMCBalance($data['group_id']);
+        if (empty($balance_info) || empty($balance_info['store'])){
+            return '群聊未绑定商户，请先联系客服绑定商户';
+        }
+        $public_balance = $balance_info['store']["public_money"];
+        $public_credit_limit = $balance_info['store']["public_credit_limit"];
+        $private_balance = $balance_info['store']["private_money"];
+        $private_credit_limit = $balance_info['store']["private_credit_limit"];
+        $total_rebate = [];
+        $total_rebate['public'] = 0;
+        $total_rebate['private'] = 0;
+        $total_funds = [];
+        $total_funds['public'] = 0;
+        $total_funds['private'] = 0;
+        // 是否设置特定折扣
+        foreach ($company_info['company'] as $item){
+            if ($item['account_type'] == '1'){
+                //对公
+                $discount_percentage = $balance_info['store']['public_discount_percentage'];
+                $key = 'public';
+            }else{
+                //对私
+                $discount_percentage = $balance_info['store']['private_discount_percentage'];
+                $key = 'private';
+            }
+            if(!empty(floatval($item['discount_percentage']))){
+                $discount_percentage = $item['discount_percentage'];
+            }
+            if(!empty(floatval($discount_percentage))){
+                $rebate = round($data['amount'] - ($data['amount'] * 100) / ($discount_percentage * 100), 2);
+            }else{
+                $rebate = 0;
+            }
+            $total_rebate[$key] += $rebate;
+            $total_funds[$key] += $data['amount'];
+        }
+        if (($total_funds['public'] - $total_rebate['public']) > ($public_balance + $public_credit_limit)){
+            return '私账余额不足';
+        }
+        elseif(($total_funds['private'] - $total_rebate['private']) > ($private_balance + $private_credit_limit)){
+            return '公账余额不足';
+        }
+
+        return true;
     }
 
 

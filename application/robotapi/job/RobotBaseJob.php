@@ -69,7 +69,7 @@ class RobotBaseJob
                 throw new Exception('任务执行返回失败');
             }
         } catch (Exception|\Exception $e) {
-            $maxAttempts = 5;
+            $maxAttempts = 3;
             $currentAttempts = $job->attempts();
             $jobName = $queueData['job_name'] ?? '';
 
