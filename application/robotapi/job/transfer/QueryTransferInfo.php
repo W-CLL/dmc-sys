@@ -74,9 +74,8 @@ class QueryTransferInfo
     private function QcAccountTransfer($transfer_records_data, $transfer_detail_data, $data)
     {
         $transfer_records_model = new TransferRecords();
-        $img_url = '';
+        $store_model = new Store();
         $operate = $transfer_records_data["transfer_direction"] == 1 ? "千川充值" : "千川退款";
-        $type = $transfer_records_data["account_type"] == 1 ? "（公）" : "（私）";
         switch ($transfer_detail_data['data']['transfer_status']){
             case 'TRANSFER_FAILED':
                 if(!$transfer_records_model->where(["id" => $data["transfer_records_id"]])->update(['status' => 2, 'explain' => $transfer_detail_data['data']['transfer_target_record_list'][0]['transfer_capital_record_list'][0]['fail_reason']])){
@@ -86,12 +85,11 @@ class QueryTransferInfo
                 if (!$this->refund($transfer_records_data)){
                     throw new Exception("退款失败");
                 }
-                $msg = "{$operate}失败！\n失败原因：" . $transfer_detail_data['data']['transfer_target_record_list'][0]['transfer_capital_record_list'][0]['fail_reason'];
+                $err_msg = "{$transfer_records_data['advertiser_id']}失败原因：" . $transfer_detail_data['data']['transfer_target_record_list'][0]['transfer_capital_record_list'][0]['fail_reason'];
                 break;
             case 'TRANSFER_SUCCESS':
                 Db::startTrans();
                 try {
-                    $store_model = new Store();
                     $store_money_log_model = new StoreMoneyLog();
                     $store_info = $store_model->where("id", $transfer_records_data["store_id"])
 //                        ->lock(true)
@@ -118,8 +116,7 @@ class QueryTransferInfo
                         "transfer_records"
                     );
                     Db::commit();
-                    $prefix = $transfer_records_data['account_type'] == 1 ? "public_" : "private_";
-                    $msg = "{$operate}成功！\n千川ID：{$transfer_records_data['advertiser_id']}\n钱包余额{$type}：" . $money_log_data["balance_surplus"] . "\n授信余额{$type}：" . $money_log_data["credit_limit_surplus"] . "\n已使用授信额度{$type}：" . number_format((($store_info[$prefix."spending_credit_limit"] + $store_info[$prefix."credit_limit"]) - $money_log_data["credit_limit_surplus"]), 2);
+                    $suc_msg = $transfer_records_data['advertiser_id'];
                     break;
                 }catch (Exception $e){
                     Db::rollback();
@@ -132,7 +129,58 @@ class QueryTransferInfo
                 return false;
         }
         // 发起回调，扔队列
-        $this->callBack($data["callback_data"], $msg, $img_url);
+        $bool = $this->checkRemaining($data["callback_data"]);
+
+        if ($bool) {
+            $store = $store_model->where("id", $transfer_records_data["store_id"])->find();
+            $count = Cache::get($data["callback_data"]["msg_uuid"]."count") ? Cache::get($data["callback_data"]["msg_uuid"]."count") : 0;
+            $total_money = Cache::get($data["callback_data"]["msg_uuid"]."total_money") ? Cache::get($data["callback_data"]["msg_uuid"]."total_money") : 0;
+            $cache_suc_id = Cache::get($data["callback_data"]["msg_uuid"]."suc_msg") ? Cache::get($data["callback_data"]["msg_uuid"]."suc_msg") : "";
+            $transfer_log_id = Cache::get($data["callback_data"]["msg_uuid"]."transfer_log_id") ? Cache::get($data["callback_data"]["msg_uuid"]."transfer_log_id") : "";
+            $cache_err_msg = Cache::get($data["callback_data"]["msg_uuid"]."err_msg") ? Cache::get($data["callback_data"]["msg_uuid"]."err_msg") : "";
+            if (isset($err_msg)){
+                $cache_err_msg .= $err_msg.'|';
+                $cache_err_msg = str_replace("|", "\n", $cache_err_msg);
+            }
+            if (isset($suc_msg)){
+                $transfer_log_id .= $data["transfer_records_id"];
+                $count++;
+                $cache_suc_id .= $suc_msg.'|';
+                $total_money += $transfer_records_data["actual_money"];
+            }
+            $msg = "{$operate}！\n总成功次数：{$count}\n操作总金额：{$total_money}\n";
+            $msg .= "执行成功的千川ID：{$cache_suc_id}\n";
+            $msg .= "钱包余额（公）：" . $store["public_money"] . "\n授信余额（公）：" . $store["public_credit_limit"] . "\n已用授信（公）：" . $store['public_spending_credit_limit'] ."\n";
+            $msg .= "钱包余额（私）：" . $store["private_money"] . "\n授信余额（私）：" . $store["private_credit_limit"] . "\n已用授信（私）：" . $store['private_spending_credit_limit'] ."\n";
+            $msg .= $cache_err_msg;
+            $merge_img_url = $this->createMergeImg($transfer_log_id);
+            $this->callBack($data["callback_data"], $msg, $merge_img_url);
+            Cache::rm($data["callback_data"]["msg_uuid"]."transfer_log_id");
+            Cache::rm($data["callback_data"]["msg_uuid"]."count");
+            Cache::rm($data["callback_data"]["msg_uuid"]."total_money");
+            Cache::rm($data["callback_data"]["msg_uuid"]."err_msg");
+            Cache::rm($data["callback_data"]["msg_uuid"]."suc_msg");
+        }else{
+            if (isset($err_msg)){
+                $cache_err_msg = Cache::get($data["callback_data"]["msg_uuid"]."err_msg") ? Cache::get($data["callback_data"]["msg_uuid"]."err_msg") : "";
+                $cache_err_msg .= $err_msg.'|';
+                Cache::set($data["callback_data"]["msg_uuid"]."err_msg", $cache_err_msg, 1800);  // 错误信息
+            }
+            if (isset($suc_msg)){
+                $count = Cache::get($data["callback_data"]["msg_uuid"]."count") ? Cache::get($data["callback_data"]["msg_uuid"]."count") : 0;
+                $count++;
+                Cache::set($data["callback_data"]["msg_uuid"]."count", $count, 1800);  // 统计次数
+                $total_money = Cache::get($data["callback_data"]["msg_uuid"]."total_money") ? Cache::get($data["callback_data"]["msg_uuid"]."total_money") : 0;
+                $total_money += $transfer_records_data["actual_money"];
+                Cache::set($data["callback_data"]["msg_uuid"]."total_money", $total_money, 1800);  // 统计金额
+                $transfer_log_id = Cache::get($data["callback_data"]["msg_uuid"]."transfer_log_id") ? Cache::get($data["callback_data"]["msg_uuid"]."transfer_log_id") : "";
+                $transfer_log_id .= $data["transfer_records_id"].',';
+                Cache::set($data["callback_data"]["msg_uuid"]."transfer_log_id", $transfer_log_id, 1800);  // 统计日志id
+                $cache_suc_msg = Cache::get($data["callback_data"]["msg_uuid"]."suc_msg") ? Cache::get($data["callback_data"]["msg_uuid"]."suc_msg") : "";
+                $cache_suc_msg .= $suc_msg.'|';
+                Cache::set($data["callback_data"]["msg_uuid"]."suc_msg", $cache_suc_msg, 1800);  // 成功id
+            }
+        }
         return true;
     }
 
@@ -294,6 +342,87 @@ class QueryTransferInfo
         }
     }
 
+    private function checkRemaining($data){
+        $queue = new QueueRobot();
+        $count = $queue->qcGetRemaining($data["msg_uuid"]);
+        if ($count > 1){  // 检查是不是最后一条
+            return false;
+        }else{
+            return true;
+        }
+    }
+
+
+
+    private function createMergeImg(string $transfer_id){
+        $transfer_id_list = explode(',', $transfer_id);
+        $model = new TransferRecords();
+        $transfer_records_list = $model->where(["id" => ["in", $transfer_id_list]])->select();
+        $combined_data = [];
+        $headers = [];
+
+        foreach ($transfer_records_list as $transfer_records_data) {
+            $model = new Company();
+            $info = $model->getByAdvId($transfer_records_data['advertiser_id']);
+            $array = [
+                'name' => $info['name'],
+                'id' => $info['advertiser_id'],
+            ];
+            $prefix = '';
+
+            if($info['agent_id'] == "1739518270441480"){
+                $account_info['name'] = "广州斑马数字科技有限公司";
+                $account_info['advertiser_id'] = $info['agent_id'];
+                $account_info['company_name'] = "广州斑马数字科技有限公司";
+            }elseif($info['agent_id'] == "1818673832986633"){
+                $account_info['name'] = "广州斑马数字科技有限公司-JDC";
+                $account_info['advertiser_id'] = $info['agent_id'];
+                $account_info['company_name'] = "广州斑马数字科技有限公司-JDC";
+            }
+
+            $money = number_format($transfer_records_data['money'], 2);
+            if ($transfer_records_data['transfer_direction'] == 1) {
+                $transfer_type = $prefix."加款";
+                $transfer_in = $array['name'] . "\n转入方ID：" . $array['id'];
+                $transfer_out = $account_info['name'] . "\n转出方ID：" . $account_info['advertiser_id'];
+            } else if ($transfer_records_data['transfer_direction'] == 2) {
+                $transfer_type = $prefix."退款";
+                $money = '-'.$money;
+                $transfer_in = $account_info['name'] . "\n转入方ID：" . $account_info['advertiser_id'];
+                $transfer_out = $array['name'] . "\n转出方ID：" . $array['id'];
+            }
+
+            $combined_data[] = [
+                date('Y-m-d H:i:s',$transfer_records_data['update_time']),
+                $transfer_out,
+                $transfer_in,
+                $transfer_type,
+                '通用',
+                $money,
+                '账户余额',
+                'OPENAPI'];
+            unset($array);
+        }
+
+        $day = date('Ymd');
+        $path = ROOT_PATH . 'public/transfer_images/' . $day . '/';
+        $file_name = (int)round(microtime(true) * 1000) . '.png';
+
+        if (!file_exists($path)) {
+            $created = mkdir($path, 0755, true);
+            if (!$created) {
+                throw new Exception("目录创建失败: {$path}");
+            }
+        }
+
+        $res = generateTransferImg($combined_data, $headers, $path, $file_name);
+
+        if ($res) {
+            return 'transfer_images/' . $day . '/' . $file_name;
+        } else {
+            throw new Exception($res);
+        }
+    }
 
 
     private function callback($data, $msg, $img_url = ''){

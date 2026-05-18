@@ -21,6 +21,7 @@ class QueryWalletTransferInfo
     public function doJob($data)
     {
         try {
+            $store_model = new StoreModel();
             $transfer_log_model = new TransferLogModel();
             $transfer_data = $transfer_log_model->where(["id" => $data["swtl_id"]])->find();
             $transfer_detail = FundManagement::check_transfer_detail(
@@ -34,13 +35,10 @@ class QueryWalletTransferInfo
                 throw new Exception("查询转账信息失败");
             }
             $operate = $transfer_data["transfer_direction"] == 1 ? "共享钱包充值" : "共享钱包退款";
-            $type = $transfer_data["account_type"] == 1 ? "（公）" : "（私）";
-            $img_url = '';
             Db::startTrans();
             try {
                 switch ($transfer_detail['data']['transfer_status']){
                     case "TRANSFER_SUCCESS":
-                        $store_model = new StoreModel();
                         $store_info = $store_model->where("id", $transfer_data["store_id"])
 //                            ->lock(true)
                             ->find();
@@ -74,8 +72,7 @@ class QueryWalletTransferInfo
                             "share_wallet_transfer_log"
                         );
                         Db::commit();
-                        $prefix = $transfer_data['account_type'] == 1 ? "public_" : "private_";
-                        $msg = "{$operate}成功！\n钱包ID：{$transfer_data['sub_wallet_id']}\n钱包余额{$type}：" . $store_money_log_data["balance_surplus"] . "\n授信余额{$type}：" . $store_money_log_data["credit_limit_surplus"] . "\n已使用授信额度{$type}：" . number_format((($store_info[$prefix."spending_credit_limit"] + $store_info[$prefix."credit_limit"]) - $store_money_log_data["credit_limit_surplus"]), 2);
+                        $suc_msg = $transfer_data['sub_wallet_id'];
                         break;
                     case "TRANSFER_FAILED":
                         if(!$transfer_log_model->where(["id" => $data["swtl_id"]])->update([
@@ -89,7 +86,7 @@ class QueryWalletTransferInfo
                             throw new Exception("退款失败");
                         }
                         Db::commit();
-                        $msg = "{$operate}失败\n失败原因：".$transfer_detail['data']['transfer_wallet_record_list'][0]['transfer_capital_record_list'][0]['fail_reason'];
+                        $err_msg = "{$transfer_data['sub_wallet_id']}失败原因：" . $transfer_detail['data']['transfer_wallet_record_list'][0]['transfer_capital_record_list'][0]['fail_reason'];
                         break;
                     default:
                         if(Cache::get("swtl_id".$data["swtl_id"])){
@@ -103,7 +100,58 @@ class QueryWalletTransferInfo
                 throw new Exception($e->getMessage()); // 重新抛出异常
             }
             // 发起回调，扔队列
-            $this->callBack($data, $msg, $img_url);
+            $bool = $this->checkRemaining($data["callback_data"]);
+
+            if ($bool) {
+                $store = $store_model->where("id", $transfer_data["store_id"])->find();
+                $count = Cache::get($data["callback_data"]["msg_uuid"]."count") ? Cache::get($data["callback_data"]["msg_uuid"]."count") : 0;
+                $total_money = Cache::get($data["callback_data"]["msg_uuid"]."total_money") ? Cache::get($data["callback_data"]["msg_uuid"]."total_money") : 0;
+                $cache_suc_id = Cache::get($data["callback_data"]["msg_uuid"]."suc_msg") ? Cache::get($data["callback_data"]["msg_uuid"]."suc_msg") : "";
+                $transfer_log_id = Cache::get($data["callback_data"]["msg_uuid"]."transfer_log_id") ? Cache::get($data["callback_data"]["msg_uuid"]."transfer_log_id") : "";
+                $cache_err_msg = Cache::get($data["callback_data"]["msg_uuid"]."err_msg") ? Cache::get($data["callback_data"]["msg_uuid"]."err_msg") : "";
+                if (isset($err_msg)){
+                    $cache_err_msg .= $err_msg.'|';
+                    $cache_err_msg = str_replace("|", "\n", $cache_err_msg);
+                }
+                if (isset($suc_msg)){
+                    $transfer_log_id .= $data["swtl_id"];
+                    $count++;
+                    $cache_suc_id .= $suc_msg.'|';
+                    $total_money += $transfer_data["actual_money"];
+                }
+                $msg = "{$operate}！\n总成功次数：{$count}\n操作总金额：{$total_money}\n";
+                $msg .= "执行成功的千川ID：{$cache_suc_id}\n";
+                $msg .= "钱包余额（公）：" . $store["public_money"] . "\n授信余额（公）：" . $store["public_credit_limit"] . "\n已用授信（公）：" . $store['public_spending_credit_limit'] ."\n";
+                $msg .= "钱包余额（私）：" . $store["private_money"] . "\n授信余额（私）：" . $store["private_credit_limit"] . "\n已用授信（私）：" . $store['private_spending_credit_limit'] ."\n";
+                $msg .= $cache_err_msg;
+                $merge_img_url = $this->createMergeImg($transfer_log_id);
+                $this->callBack($data, $msg, $merge_img_url);
+                Cache::rm($data["callback_data"]["msg_uuid"]."transfer_log_id");
+                Cache::rm($data["callback_data"]["msg_uuid"]."count");
+                Cache::rm($data["callback_data"]["msg_uuid"]."total_money");
+                Cache::rm($data["callback_data"]["msg_uuid"]."err_msg");
+                Cache::rm($data["callback_data"]["msg_uuid"]."suc_msg");
+            }else{
+                if (isset($err_msg)){
+                    $cache_err_msg = Cache::get($data["callback_data"]["msg_uuid"]."err_msg") ? Cache::get($data["callback_data"]["msg_uuid"]."err_msg") : "";
+                    $cache_err_msg .= $err_msg.'|';
+                    Cache::set($data["callback_data"]["msg_uuid"]."err_msg", $cache_err_msg, 1800);  // 错误信息
+                }
+                if (isset($suc_msg)){
+                    $count = Cache::get($data["callback_data"]["msg_uuid"]."count") ? Cache::get($data["callback_data"]["msg_uuid"]."count") : 0;
+                    $count++;
+                    Cache::set($data["callback_data"]["msg_uuid"]."count", $count, 1800);  // 统计次数
+                    $total_money = Cache::get($data["callback_data"]["msg_uuid"]."total_money") ? Cache::get($data["callback_data"]["msg_uuid"]."total_money") : 0;
+                    $total_money += $transfer_data["actual_money"];
+                    Cache::set($data["callback_data"]["msg_uuid"]."total_money", $total_money, 1800);  // 统计金额
+                    $transfer_log_id = Cache::get($data["callback_data"]["msg_uuid"]."transfer_log_id") ? Cache::get($data["callback_data"]["msg_uuid"]."transfer_log_id") : "";
+                    $transfer_log_id .= $data["swtl_id"].',';
+                    Cache::set($data["callback_data"]["msg_uuid"]."transfer_log_id", $transfer_log_id, 1800);  // 统计日志id
+                    $cache_suc_msg = Cache::get($data["callback_data"]["msg_uuid"]."suc_msg") ? Cache::get($data["callback_data"]["msg_uuid"]."suc_msg") : "";
+                    $cache_suc_msg .= $suc_msg.'|';
+                    Cache::set($data["callback_data"]["msg_uuid"]."suc_msg", $cache_suc_msg, 1800);  // 成功id
+                }
+            }
             return true;
         }catch (Exception $e){
 //            $this->callBack($data, "服务内部错误");
@@ -280,6 +328,96 @@ class QueryWalletTransferInfo
             return 'share_wallet_images/' . $day . '/' . $file_name;
         } else {
             throw new Exception($res);
+        }
+    }
+
+
+    private function createMergeImg(string $transfer_id){
+        $transfer_id_list = explode(',', $transfer_id);
+        $model = new TransferLogModel();
+        $transfer_records_list = $model->where(["id" => ["in", $transfer_id_list]])->select();
+        $result = array_column($transfer_records_list, 'sub_wallet_id');
+        // 确保每个元素都是整数
+        $result = array_map('intval', $result);
+        $res = FundManagement::get_wallet_info_list(
+            Cache::get("qc_access_token"),
+            Env::get('dmc_ad_config.advertiser_id'),
+            json_encode($result),
+            'AGENT')['data'];
+        foreach ($res["wallet_info"] as $item){
+            $wallet_info[$item['wallet_id']] = $item['common_wallet_info']['wallet_name'];
+        }
+        $combined_data = [];
+        $headers = [];
+
+        foreach ($transfer_records_list as $transfer_records_data) {
+            $model = new WalletModel();
+            $info = $model->getBySubWalletId($transfer_records_data['sub_wallet_id']);
+            $array = [
+                'name' => $wallet_info[$info['sub_wallet_id']],
+                'id' => $info['sub_wallet_id'],
+            ];
+            $prefix = '';
+
+            $main_wallet_info = [
+                'name' => "广州斑马数字科技有限公司共享钱包",
+                'wallet_id' => $transfer_records_data['main_wallet_id']
+            ];
+
+
+
+            $money = number_format($transfer_records_data['money'], 2);
+            if ($transfer_records_data['transfer_direction'] == 1) {
+                $transfer_type = $prefix."加款";
+                $transfer_in = $array['name'] . "\n转入方ID：" . $array['id'];
+                $transfer_out = $main_wallet_info['name'] . "\n转出方ID：" . $main_wallet_info['wallet_id'];
+            } else if ($transfer_records_data['transfer_direction'] == 2) {
+                $transfer_type = $prefix."退款";
+                $money = '-'.$money;
+                $transfer_in = $main_wallet_info['name'] . "\n转入方ID：" . $main_wallet_info['wallet_id'];
+                $transfer_out = $array['name'] . "\n转出方ID：" . $array['id'];
+            }
+
+            $combined_data[] = [
+                date('Y-m-d H:i:s',$transfer_records_data['update_time']),
+                $transfer_out,
+                $transfer_in,
+                $transfer_type,
+                '巨量广告/千川/本地推',
+                $money,
+                'OPENAPI'];
+            unset($array);
+        }
+
+        $day = date('Ymd');
+        $path = ROOT_PATH . 'public/share_wallet_images/' . $day . '/';
+        $file_name = (int)round(microtime(true) * 1000) . '.png';
+
+        if (!file_exists($path)) {
+            $created = mkdir($path, 0755, true);
+            if (!$created) {
+                throw new Exception("目录创建失败: {$path}");
+            }
+        }
+
+        $res = generateTransferImg($combined_data, $headers, $path, $file_name);
+
+        if ($res) {
+            return 'share_wallet_images/' . $day . '/' . $file_name;
+        } else {
+            throw new Exception($res);
+        }
+    }
+
+
+
+    private function checkRemaining($data){
+        $queue = new QueueRobot();
+        $count = $queue->qcWalletGetRemaining($data["msg_uuid"]);
+        if ($count > 1){  // 检查是不是最后一条
+            return false;
+        }else{
+            return true;
         }
     }
 

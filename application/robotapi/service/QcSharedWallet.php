@@ -52,23 +52,25 @@ class QcSharedWallet extends Controller
 
     public function walletTransfer($data)
     {
-        $array = $this->calculateAndBuilding($data);
-        $array['job_class'] = '\app\robotapi\job\transfer\QcSharedWallet';
-        $array['callback_data'] = [
-            'url' => $data['callback_url'],
-            'group_id' => $data['group_id'],
-            'msg_uuid' => $data['callback_data']['msg_uuid'],
-            'sender_name' => $data['callback_data']['sender_name'],
-            'time' => $data['callback_data']['time'],
-        ];
         $queue = new QueueRobot();
-        $queue->addQueue('共享钱包【转账】', 'app\robotapi\job\RobotBaseJob', 'robotBaseJob', $array);
+        foreach ($data['sub_wallet_id'] as $item){
+            $array = $this->calculateAndBuilding($data,$item);
+            $array['job_class'] = '\app\robotapi\job\transfer\QcSharedWallet';
+            $array['callback_data'] = [
+                'url' => $data['callback_url'],
+                'group_id' => $data['group_id'],
+                'msg_uuid' => $data['callback_data']['msg_uuid'],
+                'sender_name' => $data['callback_data']['sender_name'],
+                'time' => $data['callback_data']['time'],
+            ];
+            $queue->addQueue('共享钱包【转账】', 'app\robotapi\job\RobotBaseJob', 'robotBaseJob', $array);
+        }
     }
 
 
-    private function calculateAndBuilding($data){
+    private function calculateAndBuilding($data,$sub_wallet_id){
         $wechat_group_model = new WechatGroup();
-        $wallet_info = $wechat_group_model->getWalletByStoreId($data['group_id'], [$data['sub_wallet_id']]);
+        $wallet_info = $wechat_group_model->getWalletByStoreId($data['group_id'], [$sub_wallet_id]);
         list($discount_percentage, $balance, $credit_limit, $rebate) = $this->getThisSubWalletDiscountAndFunds($data, $wallet_info);
         $insert_data = [
             'store_id' => $wallet_info['wallet'][0]['bind_store_id'],
@@ -197,62 +199,78 @@ class QcSharedWallet extends Controller
     private function checkTransferParam($data)
     {
         $wechat_group_model = new WechatGroup();
-        $wallet_info = $wechat_group_model->getWalletByStoreId($data['group_id'], [$data['sub_wallet_id']]);
+        $wallet_info = $wechat_group_model->getWalletByStoreId($data['group_id'], $data['sub_wallet_id']);
         if (empty($wallet_info) || empty($wallet_info['wallet'])){
             return '无权操作此子钱包id';
         }
         switch ($data['transfer_type']){
             case 1:
+                foreach ($wallet_info['wallet'] as $item){
+                    $sub_id_list[] = (int)$item['sub_wallet_id'];
+                }
                 $in_result = FundManagement::get_max_transfer(
                     Cache::get("qc_access_token"),
                     Env::get('dmc_ad_config.advertiser_id'),
                     'AGENT',
                     generate_random_string(16),
-                    $wallet_info['wallet'][0]['main_wallet_id'],
-                    json_encode([(int)$wallet_info['wallet'][0]['sub_wallet_id']]),
+                    7351387989321335050,
+                    json_encode($sub_id_list),
                     'TRANSFER_IN');
                 if ($in_result['code'] != 0){
                     return '千川接口异常';
                 }
-                $min_transfer = $in_result['data']['can_transfer_detail_list'][0]['payee_transfer_amount_detail_list'][0]['non_brand_min_transfer_balance'] / 100;
-                if ($data['amount'] < $min_transfer){
-                    return '本次转账金额不得低于最低转账金额： ' . $min_transfer;
+                $msg = '';
+                foreach ($in_result['data']['can_transfer_detail_list'][0]['payee_transfer_amount_detail_list'] as $v){
+                    $min_transfer = $v['non_brand_min_transfer_balance'] / 100;
+                    if ($data['amount'] < $min_transfer){
+                        $msg .= $v['payee_wallet_id'].'本次转账金额不得低于最低转账金额： ' . $min_transfer;
+                    }
                 }
-                list($discount_percentage, $balance, $credit_limit, $rebate) = $this->getThisSubWalletDiscountAndFunds($data, $wallet_info);
-                if(is_null($balance) && is_null($credit_limit) && is_null($discount_percentage) && is_null($rebate)){
-                    return '群聊未绑定商户，请先联系客服绑定商户';
+                if ($msg != ''){
+                    return $msg;
                 }
-                if (($data['amount'] - $rebate) > ($balance + $credit_limit)){
-                    return '余额不足';
+                $res = $this->checkFunds($data, $wallet_info);
+                if ($res !== true){
+                    return $res;
                 }
                 return true;
             case 2:
                 $StoreRefund = new StoreRefund();
-                $last_transfer_info = $StoreRefund->getSingleItem([
-                    'account_type' => $wallet_info['wallet'][0]['sub_wallet_type'],
-                    'store_id' => $wallet_info['wallet'][0]['bind_store_id'],
-                    'sub_wallet_id' => $wallet_info['wallet'][0]['sub_wallet_id']
-                ],2);
-                if(!empty($last_transfer_info)){
-                    $maxTTO = $last_transfer_info['wallet'] + $last_transfer_info['credit'];
+                foreach ($wallet_info['wallet'] as $item){
+                    $last_transfer_info = $StoreRefund->getSingleItem([
+                        'account_type' => $item['sub_wallet_type'],
+                        'store_id' => $item['bind_store_id'],
+                        'sub_wallet_id' => $item['sub_wallet_id']
+                    ],2);
+                    if(!empty($last_transfer_info)){
+                        $maxTTO = $last_transfer_info['wallet'] + $last_transfer_info['credit'];
+                    }
+                    if(isset($maxTTO) && $data['amount'] > $maxTTO){
+                        return $item['sub_wallet_id'].'本次转出的最大金额为：' . $maxTTO;
+                    }
+                    $sub_id_list[] = (int)$item['sub_wallet_id'];
                 }
-                if(isset($maxTTO) && $data['amount'] > $maxTTO){
-                    return '本次转出的最大金额为：' . $maxTTO;
-                }
+
                 $out_result = FundManagement::get_max_transfer(
                     Cache::get("qc_access_token"),
                     Env::get('dmc_ad_config.advertiser_id'),
                     'AGENT',
                     generate_random_string(16),
-                    $wallet_info['wallet'][0]['main_wallet_id'],
-                    json_encode([(int)$wallet_info['wallet'][0]['sub_wallet_id']]),
+                    7351387989321335050,
+                    json_encode($sub_id_list),
                     'TRANSFER_OUT');
                 if ($out_result['code'] != 0){
                     return '千川接口异常';
                 }
-                $max_transfer_out = $out_result['data']['can_transfer_detail_list'][0]['non_brand_max_transfer_balance'] / 100;
-                if ($data['amount'] > $max_transfer_out){
-                    return '本次转出的最大金额为：' . $max_transfer_out;
+                $msg = '';
+                foreach ($out_result['data']['can_transfer_detail_list'] as $v){
+                    $max_transfer_out = $v['non_brand_max_transfer_balance'] / 100;
+                    if ($data['amount'] > $max_transfer_out){
+                        $msg .= $v['payee_wallet_id'].'本次转账金额不得低于最低转账金额： ' . $max_transfer_out;
+                    }
+                }
+                if ($msg != ''){
+                    return $msg;
                 }
                 return true;
             default:
@@ -299,6 +317,55 @@ class QcSharedWallet extends Controller
             $rebate = 0;
         }
         return [$discount_percentage, $balance, $credit_limit, $rebate];
+    }
+
+
+    private function checkFunds($data, $wallet_info){
+        $wechat_group_model = new WechatGroup();
+        $balance_info = $wechat_group_model->getDMCBalance($data['group_id']);
+        if (empty($balance_info) || empty($balance_info['store'])){
+            return '群聊未绑定商户，请先联系客服绑定商户';
+        }
+        $public_balance = $balance_info['store']["public_money"];
+        $public_credit_limit = $balance_info['store']["public_credit_limit"];
+        $private_balance = $balance_info['store']["private_money"];
+        $private_credit_limit = $balance_info['store']["private_credit_limit"];
+        $total_rebate = [];
+        $total_rebate['public'] = 0;
+        $total_rebate['private'] = 0;
+        $total_funds = [];
+        $total_funds['public'] = 0;
+        $total_funds['private'] = 0;
+        // 是否设置特定折扣
+        foreach ($wallet_info['wallet'] as $item){
+            if ($item['sub_wallet_type'] == '1'){
+                //对公
+                $discount_percentage = $balance_info['store']['public_discount_percentage'];
+                $key = 'public';
+            }else{
+                //对私
+                $discount_percentage = $balance_info['store']['private_discount_percentage'];
+                $key = 'private';
+            }
+            if(!empty(floatval($item['discount_percentage']))){
+                $discount_percentage = $item['discount_percentage'];
+            }
+            if(!empty(floatval($discount_percentage))){
+                $rebate = round($data['amount'] - ($data['amount'] * 100) / ($discount_percentage * 100), 2);
+            }else{
+                $rebate = 0;
+            }
+            $total_rebate[$key] += $rebate;
+            $total_funds[$key] += $data['amount'];
+        }
+        if (($total_funds['public'] - $total_rebate['public']) > ($public_balance + $public_credit_limit)){
+            return '私账余额不足';
+        }
+        elseif(($total_funds['private'] - $total_rebate['private']) > ($private_balance + $private_credit_limit)){
+            return '公账余额不足';
+        }
+
+        return true;
     }
 
 
