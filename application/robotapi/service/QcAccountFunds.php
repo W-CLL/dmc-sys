@@ -190,6 +190,9 @@ class QcAccountFunds extends Controller
     }
 
     private function checkTransferParam($data){
+        if (count($data['adv_id']) > 5){
+            return '一次最多只能转账5个账户';
+        }
         $wechat_group_model = new WechatGroup();
         $company_info = $wechat_group_model->getCompanyByStoreId($data['group_id'], $data['adv_id']);
         if (empty($company_info) || empty($company_info['company'])){
