@@ -198,6 +198,9 @@ class QcSharedWallet extends Controller
 
     private function checkTransferParam($data)
     {
+        if (count($data['sub_wallet_id']) > 5){
+            return '一次最多只能转账5个账户';
+        }
         $wechat_group_model = new WechatGroup();
         $wallet_info = $wechat_group_model->getWalletByStoreId($data['group_id'], $data['sub_wallet_id']);
         if (empty($wallet_info) || empty($wallet_info['wallet'])){
