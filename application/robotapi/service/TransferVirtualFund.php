@@ -165,8 +165,8 @@ class TransferVirtualFund extends Controller
             $agency[$wallet['agency']] = 1;
         }
 
-        if (count($agency) != 1){
-            return '所属代理商不同，不允许转账';
+        if (count($agency) != 1 && $data['type'] != '现金'){
+            return '跨代理转账类型仅支持现金';
         }
 
         // 检查发起方账户是否存在

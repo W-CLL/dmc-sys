@@ -54,7 +54,7 @@ class GroupList extends Backend
             // 过滤并确保权限值是有效的
             $valid_powers = [];
             foreach ($power as $p) {
-                if (in_array($p, ['1', '2', '3'])) {
+                if (in_array($p, ['1', '2', '3', '4'])) {
                     $valid_powers[] = $p;
                 }
             }
@@ -88,7 +88,8 @@ class GroupList extends Backend
         $power_options = [
             '1' => '千川助手权限',
             '2' => '腾讯助手权限',
-            '3' => '千川通知权限'
+            '3' => '千川通知权限',
+            '4' => '腾讯通知权限',
         ];
         $this->view->assign('power_options', $power_options);
         
