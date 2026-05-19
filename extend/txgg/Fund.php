@@ -4,7 +4,6 @@ namespace txgg;
 
 class Fund extends Base
 {
-    // 转账测试账号：67475647
 
     public static function getAgentFundInfo($params){
         self::initCommonParams();

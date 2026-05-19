@@ -145,7 +145,7 @@ class QueryTransferInfo
             if (isset($suc_msg)){
                 $transfer_log_id .= $data["transfer_records_id"];
                 $count++;
-                $cache_suc_id .= $suc_msg.'|';
+                $cache_suc_id .= $suc_msg.'  ';
                 $total_money += $transfer_records_data["actual_money"];
             }
             $msg = "{$operate}！\n总成功次数：{$count}\n操作总金额：{$total_money}\n";
