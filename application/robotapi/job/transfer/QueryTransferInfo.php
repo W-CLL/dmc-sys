@@ -153,7 +153,12 @@ class QueryTransferInfo
             $msg .= "钱包余额（公）：" . $store["public_money"] . "\n授信余额（公）：" . $store["public_credit_limit"] . "\n已用授信（公）：" . $store['public_spending_credit_limit'] ."\n";
             $msg .= "钱包余额（私）：" . $store["private_money"] . "\n授信余额（私）：" . $store["private_credit_limit"] . "\n已用授信（私）：" . $store['private_spending_credit_limit'] ."\n";
             $msg .= $cache_err_msg;
-            $merge_img_url = $this->createMergeImg($transfer_log_id);
+            if($count != 0){
+                $merge_img_url = $this->createMergeImg($transfer_log_id);
+            }else{
+                $merge_img_url = '';
+            }
+
             $this->callBack($data["callback_data"], $msg, $merge_img_url);
             Cache::rm($data["callback_data"]["msg_uuid"]."transfer_log_id");
             Cache::rm($data["callback_data"]["msg_uuid"]."count");
