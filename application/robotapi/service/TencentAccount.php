@@ -13,10 +13,44 @@ use txgg\Fund;
 
 class TencentAccount extends Controller
 {
+    /**
+     * 资金类型
+     */
+    private $fund_type = [
+        'FUND_TYPE_CASH'                => '现金',
+        'FUND_TYPE_COMPENSATE_VIRTUAL'  => '补偿虚拟金',
+        'FUND_TYPE_TEST_VIRTUAL'        => '测试虚拟金',
+    ];
 
     public function getBalance($data)
     {
-
+        $account_id_list = $data['account_id_list'];
+        $group_id = $data['group_id'];
+        $wechat_group_model = new WechatGroup();
+        $info = $wechat_group_model->getTencentAccountByStoreId($group_id, $account_id_list);
+        $account_ids = is_array($info['tencent_account'] ?? null)
+            ? array_map('intval', array_column($info['tencent_account'], 'account_id'))
+            : [];
+        if (empty($account_ids)){
+            return false;
+        }
+        $return_data = [];
+        foreach ($account_ids as $account_id){
+            $params = [
+                'account_id' => (int)$account_id,
+            ];
+            $res = Fund::getFundAccountInfo($params)['data'];
+            if ($res['code'] != 0){
+                continue;
+            }
+            foreach ($res['data']['list'] as $item){
+                if (isset($this->fund_type[$item['fund_type']])){
+                    $return_data[$account_id][$this->fund_type[$item['fund_type']]] = number_format($item['balance'] / 100, 2);
+                }
+            }
+        }
+        $return_data['group_id'] = $group_id;
+        return $return_data;
     }
 
 
@@ -313,7 +347,6 @@ class TencentAccount extends Controller
         }
         switch ($type) {
             case 1: // get
-                return [false, '暂未开放'];
                 if (!is_array($data)) {
                     return [false, '数据与预期不一致'];
                 }
@@ -324,6 +357,9 @@ class TencentAccount extends Controller
                 $result = $this->validate($data, $validate);
                 if ($result !== true) {
                     return [false, $result];
+                }
+                if (count($data['account_id_list']) > 5){
+                    return '同次最大查询数为5';
                 }
                 $wechat_group_model = new WechatGroup();
                 $account_info = $wechat_group_model->getTencentAccountByStoreId($data['group_id'], $data['account_id_list']);
