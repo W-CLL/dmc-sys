@@ -21,7 +21,7 @@ ALTER TABLE fa_company_name_log
 -- 2026.05.21触发器
 DELIMITER $$
 CREATE TRIGGER trg_company_name_change
-    BEFORE UPDATE
+    AFTER UPDATE
     ON fa_company
     FOR EACH ROW
 BEGIN
