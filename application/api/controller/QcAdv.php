@@ -4,6 +4,7 @@ namespace app\api\controller;
 
 use app\admin\model\Company;
 
+use app\admin\model\CompanyNameLog;
 use app\common\controller\Api;
 use app\common\model\AdvAweme;
 use jlqc\FundManagement;
@@ -192,4 +193,45 @@ class QcAdv extends Api
         echo "分割完成";
     }
 
+    public function companyNameNotice()
+    {
+        $now       = time();
+        $startTime = $now - 180; // 最近3分钟
+
+        $company = new CompanyNameLog();
+        $list = $company->where('is_notified', 0)
+            ->where('create_time', 'between', [$startTime, $now])
+            ->select();
+
+        if (empty($list)) {
+            echo "无未通知记录";
+            return;
+        }
+
+        // 组合通知文本
+        $lines = ["【公司名称变更通知】\n共 " . count($list) . " 条记录：\n"];
+        foreach ($list as $item) {
+            $lines[] = sprintf(
+                "广告主ID：%s\n旧名称：%s\n新名称：%s\n变更时间：%s\n",
+                $item['advertiser_id'],
+                $item['old_company_name'] ?: '(空)',
+                $item['new_company_name'] ?: '(空)',
+                date('Y-m-d H:i:s', $item['create_time'])
+            );
+        }
+        $msg = implode("----------\n", $lines);
+
+        // 发送企业微信通知
+        $notice = new WwNotice();
+        $notice->sendMsg("dmc-company-name-log", $msg,"WuZhongJie");
+
+        // 标记已通知
+        $ids = array_column($list->toArray(), 'id');
+        $company->whereIn('id', $ids)->update([
+            'is_notified'   => 1,
+            'notified_time' => $now,
+        ]);
+
+        echo "已通知 " . count($list) . " 条记录";
+    }
 }

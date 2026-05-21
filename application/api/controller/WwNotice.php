@@ -11,10 +11,10 @@ use think\Controller;
  */
 class WwNotice extends Controller
 {
-    public function sendAutoOrderMsg($auth, $msg = '测试不用管',$user="")
+    public function sendMsg($auth, $msg = '测试不用管',$user="")
     {
-        $base_user = "WuZhongTuan|PanHaoWei|WangChunLong";
-        if ($auth != "auto-order") {
+        $base_user = "WangChunLong";
+        if ($auth != "dmc-company-name-log") {
             $this->error('非法请求');
         }
         if($user){
