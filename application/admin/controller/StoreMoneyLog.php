@@ -116,6 +116,13 @@ Class StoreMoneyLog extends Backend{
                 if (isset($matches[1]) && $v['swtl_id']) {
                     $list[$k]['sub_id'] =$matches[1];
                 }
+//                if(!empty($list[$k]['sub_id'])){
+//                    $list[$k]['company_name'] = Db::name('fa_qc_share_wallet')->where(['sub_wallet_id'=>$list[$k]['sub_id']])->field('')
+//                }
+                $list[$k]['company_name'] = '';
+                if(!empty($list[$k]['advertiser_id'])){
+                    $list[$k]['company_name'] = Db::name('company')->where(['advertiser_id'=>$list[$k]['advertiser_id']])->value('company_name');
+                }
             }
             
             $count = Db::name("store_money_log")->where($where)->count();

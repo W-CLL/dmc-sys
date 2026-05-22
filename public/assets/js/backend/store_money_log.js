@@ -32,6 +32,7 @@ define(['jquery', 'bootstrap', 'company', 'table', 'form'], function ($, undefin
                         {field: 'advertiser_id', title: "千川id"},
                         {field: 'sub_id', title: "钱包id"},
                         {field: 'store_username', title: "账户名称"},
+                        {field: 'company_name', title: "主体"},
                         {field: 'money', title: "变更金额"},
                         {field: 'type', title: "类型", formatter: function(value,row,index) {
                             if (row.type == 1){
