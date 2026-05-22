@@ -208,15 +208,28 @@ class QcAdv extends Api
             return;
         }
 
-        // 组合通知文本
-        $lines = ["【公司名称变更通知】\n共 " . count($list) . " 条记录：\n"];
+        // 按【旧名称→新名称】合并同一主体变更的多个账户
+        $groups = [];
         foreach ($list as $item) {
+            $key = $item['old_company_name'] . '||' . $item['new_company_name'];
+            $groups[$key]['old']   = $item['old_company_name'] ?: '(空)';
+            $groups[$key]['new']   = $item['new_company_name'] ?: '(空)';
+            $groups[$key]['ids'][] = $item['advertiser_id'];
+            // 取最早的变更时间作为代表时间
+            if (!isset($groups[$key]['time']) || $item['create_time'] < $groups[$key]['time']) {
+                $groups[$key]['time'] = $item['create_time'];
+            }
+        }
+
+        // 组合通知文本
+        $lines = ["【公司名称变更通知】\n共 " . count($list) . " 个账户，" . count($groups) . " 组变更：\n"];
+        foreach ($groups as $group) {
             $lines[] = sprintf(
-                "广告主ID：%s\n旧名称：%s\n新名称：%s\n变更时间：%s\n",
-                $item['advertiser_id'],
-                $item['old_company_name'] ?: '(空)',
-                $item['new_company_name'] ?: '(空)',
-                date('Y-m-d H:i:s', $item['create_time'])
+                "旧名称：%s\n新名称：%s\n账户ID：%s\n变更时间：%s\n",
+                $group['old'],
+                $group['new'],
+                implode('、', $group['ids']),
+                date('Y-m-d H:i:s', $group['time'])
             );
         }
         $msg = implode("----------\n", $lines);
@@ -226,7 +239,7 @@ class QcAdv extends Api
         $notice->sendMsg("dmc-company-name-log", $msg,"WuZhongJie");
 
         // 标记已通知
-        $ids = array_column($list->toArray(), 'id');
+        $ids = array_column((array)$list, 'id');
         $company->whereIn('id', $ids)->update([
             'is_notified'   => 1,
             'notified_time' => $now,
