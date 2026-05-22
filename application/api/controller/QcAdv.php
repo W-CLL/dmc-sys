@@ -196,7 +196,7 @@ class QcAdv extends Api
     public function companyNameNotice()
     {
         $now       = time();
-        $startTime = $now - 180; // 最近3分钟
+        $startTime = $now - (24*60*60); // 最近3分钟
 
         $company = new CompanyNameLog();
         $list = $company->where('is_notified', 0)
