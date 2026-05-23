@@ -169,7 +169,7 @@ abstract class BaseUpdateObjStatusJob
 
                 if ($resData['code'] != 0) {
 //                    echo $resData['message'];
-                    if(!skipIfContainsError($resData['message'],['当前广告主状态已禁用'])){
+                    if(!skipIfContainsError($resData['message'],['当前广告主状态已禁用',"当前客户状态已禁用"])){
                         dump($resData['message']);
 //                        die;
                         $error['adv_id'] = $requestAdvId;
