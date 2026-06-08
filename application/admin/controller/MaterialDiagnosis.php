@@ -38,32 +38,52 @@ class MaterialDiagnosis extends Backend
             
             // 获取搜索参数
             $materialId = $this->request->get('material_id', '');
+            $advertiserId = $this->request->get('advertiser_id', '');
             $isFirstPublishMaterial = $this->request->get('is_first_publish_material', '');
             $isEcpHighQuality = $this->request->get('is_ecp_high_quality', '');
             $isInefficient = $this->request->get('is_inefficient', '');
 
-            // 构建查询条件 - 使用字符串方式
-            $where = "1=1";
-            $bind = [];
-            
+            // 广告主ID筛选 - 先获取匹配的素材ID列表
+            $materialIdsByAdvertiser = [];
+            if (!empty($advertiserId)) {
+                $materialIdsByAdvertiser = Db::name('material_prequalification')
+                    ->where('advertiser_id', $advertiserId)
+                    ->column('material_id');
+            }
+
+            // 构建查询条件 - 使用数组方式
+            $where = [];
+            // 素材ID筛选
             if (!empty($materialId)) {
-                $where .= " AND material_id LIKE :material_id";
-                $bind['material_id'] = "%{$materialId}%";
+                $where['material_id'] = ['like', "%{$materialId}%"];
+            }
+            // 广告主ID筛选 - 与素材ID筛选合并
+            if (!empty($materialIdsByAdvertiser)) {
+                if (isset($where['material_id'])) {
+                    // 两者都存在，计算交集
+                    $materialIdsLike = Db::name('material_diagnosis')->where('material_id', 'like', "%{$materialId}%")->column('material_id');
+                    $intersection = array_intersect($materialIdsLike, $materialIdsByAdvertiser);
+                    if (!empty($intersection)) {
+                        $where['material_id'] = ['in', array_values($intersection)];
+                    } else {
+                        $where['material_id'] = ['in', [-1]];
+                    }
+                } else {
+                    // 只广告主ID筛选
+                    $where['material_id'] = ['in', $materialIdsByAdvertiser];
+                }
             }
             // 首发素材筛选 (is_first_publish_material = 1)
             if ($isFirstPublishMaterial !== '') {
-                $where .= " AND is_first_publish_material = :is_first_publish_material";
-                $bind['is_first_publish_material'] = $isFirstPublishMaterial;
+                $where['is_first_publish_material'] = $isFirstPublishMaterial;
             }
             // 优质素材筛选 (is_ecp_high_quality_material = 1)
             if ($isEcpHighQuality !== '') {
-                $where .= " AND is_ecp_high_quality_material = :is_ecp_high_quality";
-                $bind['is_ecp_high_quality'] = $isEcpHighQuality;
+                $where['is_ecp_high_quality_material'] = $isEcpHighQuality;
             }
             // 低效素材筛选
             if ($isInefficient !== '') {
-                $where .= " AND is_inefficient_material = :is_inefficient";
-                $bind['is_inefficient'] = $isInefficient;
+                $where['is_inefficient_material'] = $isInefficient;
             }
 
             // 获取排序参数
@@ -75,7 +95,6 @@ class MaterialDiagnosis extends Backend
             // 直接使用Db查询
             $list = Db::name('material_diagnosis')
                 ->where($where)
-                ->bind($bind)
                 ->order($sort, $order)
                 ->limit($offset, $limit)
                 ->select();
@@ -119,7 +138,6 @@ class MaterialDiagnosis extends Backend
             // 获取总数
             $total = Db::name('material_diagnosis')
                 ->where($where)
-                ->bind($bind)
                 ->count();
 
             $result = array("total" => $total, "rows" => $rows);

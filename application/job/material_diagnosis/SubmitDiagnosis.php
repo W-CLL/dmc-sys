@@ -30,7 +30,7 @@ class SubmitDiagnosis
             } else {
                 if ($job->attempts() > 3) {
                     $job->delete();
-                    throw new Exception("重试未果");
+                    Db::name('material_diagnosis')->where(['video_id' => ['in',$data['video_ids']]])->update(['to_diagnosis']);
                 }
             }
         } catch (Exception $e) {
