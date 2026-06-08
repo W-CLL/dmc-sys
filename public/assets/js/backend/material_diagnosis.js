@@ -34,14 +34,19 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                 url: $.fn.bootstrapTable.defaults.extend.index_url,
                 pk: 'id',
                 sortName: 'id',
+                commonSearch:false,
                 queryParams: function(params) {
                     // 收集所有筛选条件
                     var filters = {};
                     var material_id = $('#material_id').val();
+                    var advertiser_id = $('#advertiser_id').val();
                     var is_inefficient = $('#is_inefficient').val();
 
                     if (material_id) {
                         filters.material_id = material_id;
+                    }
+                    if (advertiser_id) {
+                        filters.advertiser_id = advertiser_id;
                     }
                     if (is_inefficient) {
                         filters.is_inefficient = is_inefficient;
@@ -174,10 +179,14 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
 
                 // 获取其他筛选条件
                 var material_id = $('#material_id').val();
+                var advertiser_id = $('#advertiser_id').val();
                 var is_inefficient = $('#is_inefficient').val();
 
                 if (material_id) {
                     params['material_id'] = material_id;
+                }
+                if (advertiser_id) {
+                    params['advertiser_id'] = advertiser_id;
                 }
                 if (is_inefficient) {
                     params['is_inefficient'] = is_inefficient;
@@ -200,10 +209,14 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
             $(document).on('click', '.btn-search', function () {
                 var params = {};
                 var material_id = $('#material_id').val();
+                var advertiser_id = $('#advertiser_id').val();
                 var is_inefficient = $('#is_inefficient').val();
 
                 if (material_id) {
                     params['material_id'] = material_id;
+                }
+                if (advertiser_id) {
+                    params['advertiser_id'] = advertiser_id;
                 }
                 if (is_inefficient) {
                     params['is_inefficient'] = is_inefficient;
@@ -215,44 +228,14 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
             // 重置按钮事件
             $(document).on('click', '.btn-reset', function () {
                 $('#material_id').val('');
+                $('#advertiser_id').val('');
                 $('#is_inefficient').val('');
                 $('.nav-tabs li:first a').trigger('click');
                 table.bootstrapTable('refresh', {query: {}});
             });
 
             // 回车搜索
-            $(document).on('keypress', '#material_id', function (e) {
-                if (e.which === 13) {
-                    $('.btn-search').trigger('click');
-                }
-            });
-
-            // 搜索按钮事件
-            $(document).on('click', '.btn-search', function () {
-                var params = {};
-                var material_id = $('#material_id').val();
-                var is_inefficient = $('#is_inefficient').val();
-                
-                if (material_id) {
-                    params['material_id'] = material_id;
-                }
-                if (is_inefficient) {
-                    params['is_inefficient'] = is_inefficient;
-                }
-                
-                table.bootstrapTable('refresh', {query: params});
-            });
-
-            // 重置按钮事件
-            $(document).on('click', '.btn-reset', function () {
-                $('#material_id').val('');
-                $('#is_inefficient').val('');
-                $('.nav-tabs li:first a').trigger('click');
-                table.bootstrapTable('refresh', {query: {}});
-            });
-
-            // 回车搜索
-            $(document).on('keypress', '#material_id', function (e) {
+            $(document).on('keypress', '#material_id, #advertiser_id', function (e) {
                 if (e.which === 13) {
                     $('.btn-search').trigger('click');
                 }

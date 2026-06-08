@@ -30,7 +30,9 @@ class GetDiagnosisInfo
             } else {
                 if ($job->attempts() > 3) {
                     $job->delete();
-                    throw new Exception("重试未果");
+                    Db::name('material_diagnosis')->where(['task_id' => ['in',$data['task_ids']]])->update([
+                        'is_get' => 0
+                    ]);
                 }
             }
         } catch (Exception $e) {
