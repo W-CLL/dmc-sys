@@ -265,6 +265,8 @@ define(['jquery', 'bootstrap', 'company', 'table', 'form'], function ($, undefin
                     params.sub_wallet_id = document.getElementById('tencentSubWalletId').value;
                     params.store_id = document.getElementById('tencentStoreId').value;
                     params.money = document.getElementById('tencentMoney').value;
+                    params.type = document.getElementById('tencentType').value;
+                    params.agency = document.getElementById('tencentAgency').value;
                     return params;
                 }
             });
