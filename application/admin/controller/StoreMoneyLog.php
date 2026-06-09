@@ -297,8 +297,22 @@ Class StoreMoneyLog extends Backend{
             }
             
             $store_id = input('store_id');
-            if($store_id){
+            if($store_id && $store_id != '0'){
                 $where['store_id'] = $store_id;
+            }
+            
+            $type = input('type');
+            if($type == 4){
+                $where['type'] = ['in', [4, 5]];
+            } elseif($type == 8){
+                $where['type'] = ['in', [8, 9]];
+            }
+            
+            $agency = input('agency');
+            if($agency){
+                $accountIds = Db::table('fa_tencent_account')->where('agency', $agency)->column('account_id');
+                $walletIds = Db::table('fa_tencent_share_wallet')->where('agency', $agency)->column('sub_wallet_id');
+                $where['account_id|sub_wallet_id'] = ['in', array_merge($accountIds ?: [], $walletIds ?: [])];
             }
             
             if (is_array($store_ids) && !isset($where["store_id"])) {
@@ -307,7 +321,7 @@ Class StoreMoneyLog extends Backend{
                 }
                 $where["store_id"] = ["in", $store_ids];
             }
-
+            
             $list = Db::name("tencent_transaction_log")
                 ->where($where)
                 ->order($sort, $order)
@@ -324,7 +338,8 @@ Class StoreMoneyLog extends Backend{
                 }
             }
             
-            $count = Db::name("tencent_transaction_log")->where($where)->count();
+            $countWhere = $where;
+            $count = Db::name("tencent_transaction_log")->where($countWhere)->count();
             $result = array("total" => $count, "rows" => $list);
 
             return json($result);
