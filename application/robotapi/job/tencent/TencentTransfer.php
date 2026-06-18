@@ -151,137 +151,145 @@ class TencentTransfer extends TencentBaseJob
         foreach ($res['data']['list'] as $item){
             $fund_info[$item['fund_type']] = ($item['balance'] - (isset($item['bill_deposit_amount'])? $item['bill_deposit_amount'] :0)) / 100;
         }
-        $first_bool = true;
-        $second_bool = true;
+        $fundPriority = ['FUND_TYPE_GIFT', 'FUND_TYPE_CASH', 'FUND_TYPE_CASH_COST'];
         switch ($data['transfer_direction']) {
             case '1':
-                if ($agent_balance_info['FUND_TYPE_GIFT'] == 0){
-                    $transfer = $this->sendRequest($data, $data['money'],'FUND_TYPE_CASH');
-                    if ($transfer['code'] != 0){
-                        throw new Exception("发起转账失败，失败原因：".$this->formatErrorMessage($transfer));
-                    }
-                    $record = json_encode($transfer, JSON_UNESCAPED_UNICODE);
-                    $order_uid = $transfer['data']['external_bill_no'];
-                }
-                else if ($data['money'] > $agent_balance_info['FUND_TYPE_GIFT']){
-                    $maxRetry = 3;
-                    $retryCount = 0;
-                    do{
-                        if (++$retryCount > $maxRetry) {
-                            $this->writeLog('ERROR', '转入-分批转账重试次数超过限制', [
-                                'max_retry' => $maxRetry,
-                                'first_bool' => $first_bool,
-                                'second_bool' => $second_bool,
-                                'account_id' => $data['account_id']
-                            ]);
-                            throw new Exception("转账重试次数超过限制");
-                        }
-                        $this->writeLog('INFO', "转入-分批转账 (第{$retryCount}次)", [
-                            'first_pending' => $first_bool,
-                            'second_pending' => $second_bool
-                        ]);
-                        $remaining_amount = $data['money'] - $agent_balance_info['FUND_TYPE_GIFT'];
-                        if ($first_bool){
-                            $first = $this->sendRequest($data, $agent_balance_info['FUND_TYPE_GIFT'], 'FUND_TYPE_GIFT');
-                            if ($first['code'] == 0){
-                                $first_order_uid = $first['data']['external_bill_no'];
-                                $record1 = json_encode($first, JSON_UNESCAPED_UNICODE);
-                                $first_bool = false;
-                            } else {
-                                $this->writeLog('WARN', '转入-GIFT转账失败', ['code' => $first['code'], 'response' => $first]);
-                            }
-                        }
-                        if ($second_bool){
-                            $second = $this->sendRequest($data, $remaining_amount, 'FUND_TYPE_CASH');
-                            if ($second['code'] == 0){
-                                $second_order_uid = $second['data']['external_bill_no'];
-                                $record2 = json_encode($second, JSON_UNESCAPED_UNICODE);
-                                $second_bool = false;
-                            } else {
-                                $this->writeLog('WARN', '转入-CASH转账失败', ['code' => $second['code'], 'response' => $second]);
-                            }
-                        }
-                        if (!$first_bool && !$second_bool){
-                            $record = $record1 . ',' . $record2;
-                            $order_uid = $first_order_uid .'、'. $second_order_uid;
-                        }
-                    }while ($first_bool || $second_bool);
-                }elseif ($data['money'] <= $agent_balance_info['FUND_TYPE_GIFT']){
-                    $transfer = $this->sendRequest($data, $data['money'], 'FUND_TYPE_GIFT');
-                    if ($transfer['code'] != 0){
-                        $this->writeLog('WARN', '转入-GIFT转账失败', ['code' => $transfer['code'], 'response' => $transfer]);
-                        throw new Exception("发起转账失败，失败原因：".$this->formatErrorMessage($transfer));
-                    }
-                    $record = json_encode($transfer, JSON_UNESCAPED_UNICODE);
-                    $order_uid = $transfer['data']['external_bill_no'];
-                }
+                list($order_uid, $record) = $this->sendByFundPriority($data, $data['money'], $agent_balance_info, $fundPriority, '转入');
                 break;
             case '2':
-                if ($fund_info['FUND_TYPE_CASH'] == 0){
-                    $transfer = $this->sendRequest($data, $data['money'], 'FUND_TYPE_GIFT');
-                    if ($transfer['code'] != 0){
-                        $this->writeLog('WARN', '转出-GIFT转账失败', ['code' => $transfer['code'], 'response' => $transfer]);
-                        throw new Exception("发起转账失败，失败原因：".$this->formatErrorMessage($transfer));
-                    }
-                    $record = json_encode($transfer, JSON_UNESCAPED_UNICODE);
-                    $order_uid = $transfer['data']['external_bill_no'];
-                }
-                else if ($data['money'] <= $fund_info['FUND_TYPE_CASH']){
-                    $transfer = $this->sendRequest($data, $data['money'], 'FUND_TYPE_CASH');
-                    if ($transfer['code'] != 0){
-                        $this->writeLog('WARN', '转出-CASH转账失败', ['code' => $transfer['code'], 'response' => $transfer]);
-                        throw new Exception("发起转账失败，失败原因：".$this->formatErrorMessage($transfer));
-                    }
-                    $record = json_encode($transfer, JSON_UNESCAPED_UNICODE);
-                    $order_uid = $transfer['data']['external_bill_no'];
-                }
-                else if ($data['money'] > $fund_info['FUND_TYPE_CASH']){
-                    $maxRetry = 3;
-                    $retryCount = 0;
-                    do{
-                        if (++$retryCount > $maxRetry) {
-                            $this->writeLog('ERROR', '转出-分批转账重试次数超过限制', [
-                                'max_retry' => $maxRetry,
-                                'first_bool' => $first_bool,
-                                'second_bool' => $second_bool,
-                                'account_id' => $data['account_id']
-                            ]);
-                            throw new Exception("转账重试次数超过限制");
-                        }
-                        $this->writeLog('INFO', "转出-分批转账 (第{$retryCount}次)", [
-                            'first_pending' => $first_bool,
-                            'second_pending' => $second_bool
-                        ]);
-                        $remaining_amount = $data['money'] - $fund_info['FUND_TYPE_CASH'];
-                        if ($first_bool){
-                            $first = $this->sendRequest($data, $fund_info['FUND_TYPE_CASH'], 'FUND_TYPE_CASH');
-                            if ($first['code'] == 0){
-                                $first_order_uid = $first['data']['external_bill_no'];
-                                $record1 = json_encode($first, JSON_UNESCAPED_UNICODE);
-                                $first_bool = false;
-                            } else {
-                                $this->writeLog('WARN', '转出-CASH转账失败', ['code' => $first['code'], 'response' => $first]);
-                            }
-                        }
-                        if ($second_bool){
-                            $second = $this->sendRequest($data, $remaining_amount, 'FUND_TYPE_GIFT');
-                            if ($second['code'] == 0){
-                                $second_order_uid = $second['data']['external_bill_no'];
-                                $record2 = json_encode($second, JSON_UNESCAPED_UNICODE);
-                                $second_bool = false;
-                            } else {
-                                $this->writeLog('WARN', '转出-GIFT转账失败', ['code' => $second['code'], 'response' => $second]);
-                            }
-                        }
-                        if (!$first_bool && !$second_bool){
-                            $record = $record1 . ',' . $record2;
-                            $order_uid = $first_order_uid .'、'. $second_order_uid;
-                        }
-                    }while ($first_bool || $second_bool);
-                }
+                list($order_uid, $record) = $this->sendByFundPriority($data, $data['money'], $fund_info, $fundPriority, '转出');
                 break;
         }
         return [$order_uid,$record];
+    }
+
+    private function sendByFundPriority($data, $money, $fundInfo, $fundTypes, $directionLabel){
+        $minAmount = 5000;
+        $moneyCents = (int) round($money * 100);
+        if ($moneyCents < $minAmount) {
+            throw new Exception("转账金额不能低于50元");
+        }
+
+        $balanceCents = [];
+        foreach ($fundTypes as $fundType) {
+            $balanceCents[$fundType] = (int) round((float)($fundInfo[$fundType] ?? 0) * 100);
+        }
+
+        $plans = [];
+        $remaining = $moneyCents;
+        $fundTypeCount = count($fundTypes);
+        foreach ($fundTypes as $index => $fundType) {
+            if ($remaining <= 0) {
+                break;
+            }
+            $balance = $balanceCents[$fundType] ?? 0;
+            if ($balance < $minAmount) {
+                continue;
+            }
+            $laterBalances = [];
+            for ($i = $index + 1; $i < $fundTypeCount; $i++) {
+                $laterBalances[] = $balanceCents[$fundTypes[$i]] ?? 0;
+            }
+            $lowerBound = max(0, $remaining - $balance);
+            $remainder = $this->findMinimumRemainder($remaining, $lowerBound, $laterBalances, $minAmount);
+            if ($remainder === null) {
+                continue;
+            }
+            $amount = $remaining - $remainder;
+            if ($amount < $minAmount) {
+                continue;
+            }
+            $plans[] = [
+                'fund_type' => $fundType,
+                'money' => $amount / 100,
+            ];
+            $remaining = $remainder;
+        }
+        if ($remaining > 0) {
+            throw new Exception("余额不足或无法按50元起拆分");
+        }
+
+        $successes = [];
+        $maxRetry = 3;
+        $retryCount = 0;
+        do {
+            if (++$retryCount > $maxRetry) {
+                $this->writeLog('ERROR', "{$directionLabel}-分批转账重试次数超过限制", [
+                    'max_retry' => $maxRetry,
+                    'pending' => $plans,
+                    'account_id' => $data['account_id']
+                ]);
+                throw new Exception("转账重试次数超过限制");
+            }
+            $this->writeLog('INFO', "{$directionLabel}-分批转账 (第{$retryCount}次)", [
+                'pending' => $plans
+            ]);
+            foreach ($plans as $index => $plan) {
+                $transfer = $this->sendRequest($data, $plan['money'], $plan['fund_type']);
+                if ($transfer['code'] == 0) {
+                    $successes[$index] = [
+                        'order_uid' => $transfer['data']['external_bill_no'],
+                        'record' => json_encode($transfer, JSON_UNESCAPED_UNICODE),
+                    ];
+                } else {
+                    $this->writeLog('WARN', "{$directionLabel}-{$plan['fund_type']}转账失败", ['code' => $transfer['code'], 'response' => $transfer]);
+                }
+            }
+            foreach ($successes as $index => $success) {
+                unset($plans[$index]);
+            }
+        } while (!empty($plans));
+
+        ksort($successes);
+        return [
+            implode('、', array_column($successes, 'order_uid')),
+            implode(',', array_column($successes, 'record')),
+        ];
+    }
+
+    private function findMinimumRemainder($remainingCents, $lowerBound, $balanceCents, $minAmount){
+        if ($lowerBound <= 0 && $this->canSplitAmount(0, $balanceCents, $minAmount)) {
+            return 0;
+        }
+
+        $result = null;
+        $count = count($balanceCents);
+        $totalMasks = 1 << $count;
+        for ($mask = 1; $mask < $totalMasks; $mask++) {
+            $minTotal = 0;
+            $capacity = 0;
+            $valid = true;
+            for ($i = 0; $i < $count; $i++) {
+                if (($mask & (1 << $i)) == 0) {
+                    continue;
+                }
+                $balance = $balanceCents[$i] ?? 0;
+                if ($balance < $minAmount) {
+                    $valid = false;
+                    break;
+                }
+                $minTotal += $minAmount;
+                $capacity += $balance;
+            }
+            if (!$valid || $capacity < $lowerBound) {
+                continue;
+            }
+            $candidate = max($minTotal, $lowerBound);
+            if ($candidate <= $capacity && ($result === null || $candidate < $result)) {
+                $result = $candidate;
+            }
+        }
+        return $result;
+    }
+
+    private function canSplitAmount($remainingCents, $balanceCents, $minAmount){
+        if ($remainingCents == 0) {
+            return true;
+        }
+        if ($remainingCents < $minAmount) {
+            return false;
+        }
+        return $this->findMinimumRemainder($remainingCents, 0, $balanceCents, $minAmount) !== null;
     }
 
     private function sendRequest($data, $money,$fund_type){

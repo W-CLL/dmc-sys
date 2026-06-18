@@ -140,7 +140,7 @@ class TencentWalletTransfer extends TencentBaseJob
         return Fund::transferToShareWallet([
             'account_id' => (int)Env::get('txgg.agency_'.$data['agency']),
             'to_account_id' => $data['sub_wallet_id'],
-            'fund_type' => 'FUND_TYPE_CASH',
+            'fund_type' => 'FUND_TYPE_CASH_COST',
             'amount' => (int) ($data['money'] * 100),
             'transfer_type' => $data['transfer_direction'] == 1 ? 'AGENCY_TO_WALLET' : 'WALLET_TO_AGENCY',
             'external_bill_no' => uniqid('hxsz-gx-'),
