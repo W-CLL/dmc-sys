@@ -145,7 +145,8 @@ class Transfer extends Store
                 $this->error('转账异常');
             }
         }
-        $this->view->assign('totalFund',$fund_info['FUND_TYPE_CASH'] + $fund_info['FUND_TYPE_GIFT']);
+        $totalFund = ($fund_info['FUND_TYPE_CASH'] ?? 0) + ($fund_info['FUND_TYPE_GIFT'] ?? 0) + ($fund_info['FUND_TYPE_CASH_COST'] ?? 0);
+        $this->view->assign('totalFund',$totalFund);
         $this->view->assign('account', $account);
         $this->view->assign('storeInfo', $store_info);
         $this->view->assign('agentBalanceInfo', $agent_balance_info);
@@ -190,7 +191,10 @@ class Transfer extends Store
                 $this->error('转入余额超出上限');
             }
         }elseif ($post['transfer_direction'] == 'ADVERTISER_TO_AGENCY'){
-            if ($post['transfer_amount'] > $fund_info['FUND_TYPE_CASH'] + $fund_info['FUND_TYPE_GIFT']) {
+            if ($post['transfer_amount'] < 50) {
+                $this->error('最小转出金额为50');
+            }
+            if ($post['transfer_amount'] > (($fund_info['FUND_TYPE_CASH'] ?? 0) + ($fund_info['FUND_TYPE_GIFT'] ?? 0) + ($fund_info['FUND_TYPE_CASH_COST'] ?? 0))) {
                 $this->error('转出余额超出上限');
             }
         }else{
@@ -312,70 +316,126 @@ class Transfer extends Store
      * @return mixed
      */
     private function initiateTransfer($post, $agent_balance_info, $balance_info){
+        $fundPriority = ['FUND_TYPE_GIFT', 'FUND_TYPE_CASH', 'FUND_TYPE_CASH_COST'];
         switch ($post['transfer_direction']) {
             case 'AGENCY_TO_ADVERTISER':
-                if ($agent_balance_info['FUND_TYPE_GIFT'] == 0){
-                    $transfer = $this->sendRequest($post, $post['transfer_amount'], 'FUND_TYPE_CASH');
-                    if ($transfer['code'] != 0){
-                        return [false,[],NUll,Null];
-                    }
-                    $record = json_encode($transfer, JSON_UNESCAPED_UNICODE);
-                    $order_uid = $transfer['data']['external_bill_no'];
-                }
-                else if ($post['transfer_amount'] > $agent_balance_info['FUND_TYPE_GIFT']){
-                    $remaining_amount = $post['transfer_amount'] - $agent_balance_info['FUND_TYPE_GIFT'];
-                    $first = $this->sendRequest($post, $agent_balance_info['FUND_TYPE_GIFT'], 'FUND_TYPE_GIFT');
-                    if ($first['code'] != 0){
-                        return [false,[],NUll,Null];
-                    }
-                    $second = $this->sendRequest($post, $remaining_amount, 'FUND_TYPE_CASH');
-                    if ($second['code'] != 0){
-                        return [false, ['money' => $agent_balance_info['FUND_TYPE_GIFT'], 'transfer_type' => 1], NUll,Null];
-                    }
-                    $record = json_encode($first, JSON_UNESCAPED_UNICODE) . ',' . json_encode($second, JSON_UNESCAPED_UNICODE);
-                    $order_uid = $first['data']['external_bill_no'].'、'. $second['data']['external_bill_no'];
-                }elseif ($post['transfer_amount'] <= $agent_balance_info['FUND_TYPE_GIFT']){
-                    $transfer = $this->sendRequest($post, $post['transfer_amount'], 'FUND_TYPE_GIFT');
-                    if ($transfer['code'] != 0){
-                        return [false,[],NUll,Null];
-                    }
-                    $record = json_encode($transfer, JSON_UNESCAPED_UNICODE);
-                    $order_uid = $transfer['data']['external_bill_no'];
-                }
+                list($order_uid, $record) = $this->sendByFundPriority($post, $post['transfer_amount'], $agent_balance_info, $fundPriority, '转入');
                 break;
             case 'ADVERTISER_TO_AGENCY':
-                if ($balance_info['FUND_TYPE_CASH'] == 0){
-                    $transfer = $this->sendRequest($post, $post['transfer_amount'], 'FUND_TYPE_GIFT');
-                    if ($transfer['code'] != 0){
-                        return [false,[],NUll,Null];
-                    }
-                    $record = json_encode($transfer, JSON_UNESCAPED_UNICODE);
-                    $order_uid = $transfer['data']['external_bill_no'];
-                }
-                else if ($post['transfer_amount'] <= $balance_info['FUND_TYPE_CASH']){
-                    $transfer = $this->sendRequest($post, $post['transfer_amount'], 'FUND_TYPE_CASH');
-                    if ($transfer['code'] != 0){
-                        return [false,[],NUll,Null];
-                    }
-                    $record = json_encode($transfer, JSON_UNESCAPED_UNICODE);
-                    $order_uid = $transfer['data']['external_bill_no'];
-                }
-                elseif ($post['transfer_amount'] > $balance_info['FUND_TYPE_CASH']){
-                    $remaining_amount = $post['transfer_amount'] - $balance_info['FUND_TYPE_CASH'];
-                    $first = $this->sendRequest($post, $agent_balance_info['FUND_TYPE_CASH'], 'FUND_TYPE_CASH');
-                    if ($first['code'] != 0){
-                        return [false,[],NUll,Null];
-                    }
-                    $second = $this->sendRequest($post, $remaining_amount, 'FUND_TYPE_GIFT');
-                    if ($second['code'] != 0){
-                        return [false, ['money' => $agent_balance_info['FUND_TYPE_CASH'], 'transfer_type' => 2, 'account_id' => $post['account_id']], NUll,Null];
-                    }
-                    $record = json_encode($first, JSON_UNESCAPED_UNICODE) . ',' . json_encode($second, JSON_UNESCAPED_UNICODE);
-                    $order_uid = $first['data']['external_bill_no'].'、'. $second['data']['external_bill_no'];
-                }
+                list($order_uid, $record) = $this->sendByFundPriority($post, $post['transfer_amount'], $balance_info, $fundPriority, '转出');
                 break;
         }
         return [true,[],$order_uid,$record];
+    }
+
+    private function sendByFundPriority($post, $money, $fundInfo, $fundTypes, $directionLabel){
+        $minAmount = 5000;
+        $moneyCents = (int) round($money * 100);
+        if ($moneyCents < $minAmount) {
+            return [false, [], null, null];
+        }
+
+        $balanceCents = [];
+        foreach ($fundTypes as $fundType) {
+            $balanceCents[$fundType] = (int) round((float)($fundInfo[$fundType] ?? 0) * 100);
+        }
+
+        $plans = [];
+        $remaining = $moneyCents;
+        $fundTypeCount = count($fundTypes);
+        foreach ($fundTypes as $index => $fundType) {
+            if ($remaining <= 0) {
+                break;
+            }
+            $balance = $balanceCents[$fundType] ?? 0;
+            if ($balance < $minAmount) {
+                continue;
+            }
+            $laterBalances = [];
+            for ($i = $index + 1; $i < $fundTypeCount; $i++) {
+                $laterBalances[] = $balanceCents[$fundTypes[$i]] ?? 0;
+            }
+            $lowerBound = max(0, $remaining - $balance);
+            $remainder = $this->findMinimumRemainder($remaining, $lowerBound, $laterBalances, $minAmount);
+            if ($remainder === null) {
+                continue;
+            }
+            $amount = $remaining - $remainder;
+            if ($amount < $minAmount) {
+                continue;
+            }
+            $plans[] = [
+                'fund_type' => $fundType,
+                'money' => $amount / 100,
+            ];
+            $remaining = $remainder;
+        }
+        if ($remaining > 0) {
+            return [false, [], null, null];
+        }
+
+        $successes = [];
+        foreach ($plans as $index => $plan) {
+            $transfer = $this->sendRequest($post, $plan['money'], $plan['fund_type']);
+            if ($transfer['code'] != 0) {
+                return [false, [], null, null];
+            }
+            $successes[$index] = [
+                'order_uid' => $transfer['data']['external_bill_no'],
+                'record' => json_encode($transfer, JSON_UNESCAPED_UNICODE),
+            ];
+        }
+
+        ksort($successes);
+        return [
+            implode('、', array_column($successes, 'order_uid')),
+            implode(',', array_column($successes, 'record')),
+        ];
+    }
+
+    private function findMinimumRemainder($remainingCents, $lowerBound, $balanceCents, $minAmount){
+        if ($lowerBound <= 0 && $this->canSplitAmount(0, $balanceCents, $minAmount)) {
+            return 0;
+        }
+
+        $result = null;
+        $count = count($balanceCents);
+        $totalMasks = 1 << $count;
+        for ($mask = 1; $mask < $totalMasks; $mask++) {
+            $minTotal = 0;
+            $capacity = 0;
+            $valid = true;
+            for ($i = 0; $i < $count; $i++) {
+                if (($mask & (1 << $i)) == 0) {
+                    continue;
+                }
+                $balance = $balanceCents[$i] ?? 0;
+                if ($balance < $minAmount) {
+                    $valid = false;
+                    break;
+                }
+                $minTotal += $minAmount;
+                $capacity += $balance;
+            }
+            if (!$valid || $capacity < $lowerBound) {
+                continue;
+            }
+            $candidate = max($minTotal, $lowerBound);
+            if ($candidate <= $capacity && ($result === null || $candidate < $result)) {
+                $result = $candidate;
+            }
+        }
+        return $result;
+    }
+
+    private function canSplitAmount($remainingCents, $balanceCents, $minAmount){
+        if ($remainingCents == 0) {
+            return true;
+        }
+        if ($remainingCents < $minAmount) {
+            return false;
+        }
+        return $this->findMinimumRemainder($remainingCents, 0, $balanceCents, $minAmount) !== null;
     }
 
 

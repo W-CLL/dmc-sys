@@ -18,6 +18,7 @@ class TencentAccount extends Controller
      */
     private $fund_type = [
         'FUND_TYPE_CASH'                => '现金',
+        'FUND_TYPE_CASH_COST'           => '成本现金',
         'FUND_TYPE_COMPENSATE_VIRTUAL'  => '补偿虚拟金',
         'FUND_TYPE_TEST_VIRTUAL'        => '测试虚拟金',
     ];
@@ -211,6 +212,9 @@ class TencentAccount extends Controller
             case 1:
                 return $this->checkAccountDiscountAndFunds($data, $account_info);
             case 2:
+                if ($data['amount'] < 50) {
+                    return '转账金额不能低于50元';
+                }
                 $StoreRefund = new TencentRefund();
                 $str = '';
                 foreach ($account_info['tencent_account'] as $account){
@@ -232,8 +236,9 @@ class TencentAccount extends Controller
                     foreach ($res['data']['list'] as $item){
                         $fund_info[$item['fund_type']] = ($item['balance'] - (isset($item['bill_deposit_amount']) ? $item['bill_deposit_amount'] : 0)) / 100;
                     }
-                    if ($data['amount'] > ($fund_info['FUND_TYPE_CASH'] + $fund_info['FUND_TYPE_GIFT'])) {
-                        return '账户'.$account['account_id'].'，余额不足以转出'.$data['amount'].'，剩余金额为：'.($fund_info['FUND_TYPE_CASH'] + $fund_info['FUND_TYPE_GIFT']);
+                    $availableAmount = ($fund_info['FUND_TYPE_CASH'] ?? 0) + ($fund_info['FUND_TYPE_GIFT'] ?? 0) + ($fund_info['FUND_TYPE_CASH_COST'] ?? 0);
+                    if ($data['amount'] > $availableAmount) {
+                        return '账户'.$account['account_id'].'，余额不足以转出'.$data['amount'].'，剩余金额为：'.$availableAmount;
                     }
                     Log::write("tengxun_test_data_1,here is error".$data['amount']);
                     $last_transfer_info = $StoreRefund->getSingleItem([
@@ -325,10 +330,10 @@ class TencentAccount extends Controller
                 $private_all -= ($data['amount'] - $rebate);
             }
         }
-        if ($hx_agent_balance_info['FUND_TYPE_CASH'] + $hx_agent_balance_info['FUND_TYPE_GIFT'] < $data['amount'] * $hx){
+        if (($hx_agent_balance_info['FUND_TYPE_CASH'] ?? 0) + ($hx_agent_balance_info['FUND_TYPE_GIFT'] ?? 0) + ($hx_agent_balance_info['FUND_TYPE_CASH_COST'] ?? 0) < $data['amount'] * $hx){
             return "转账金额大于备款余额，发起失败，请联系管理员进行浣熊主体备款处理";
         }
-        if ($bm_agent_balance_info['FUND_TYPE_CASH'] + $bm_agent_balance_info['FUND_TYPE_GIFT'] < $data['amount'] * $bm){
+        if (($bm_agent_balance_info['FUND_TYPE_CASH'] ?? 0) + ($bm_agent_balance_info['FUND_TYPE_GIFT'] ?? 0) + ($bm_agent_balance_info['FUND_TYPE_CASH_COST'] ?? 0) < $data['amount'] * $bm){
             return "转账金额大于备款余额，发起失败，请联系管理员进行斑马主体备款处理";
         }
         return true;
