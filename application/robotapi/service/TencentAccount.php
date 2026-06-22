@@ -18,7 +18,7 @@ class TencentAccount extends Controller
      */
     private $fund_type = [
         'FUND_TYPE_CASH'                => '现金',
-        'FUND_TYPE_CASH_COST'           => '成本现金',
+        'FUND_TYPE_CASH_COST'           => '预存现金',
         'FUND_TYPE_COMPENSATE_VIRTUAL'  => '补偿虚拟金',
         'FUND_TYPE_TEST_VIRTUAL'        => '测试虚拟金',
     ];
