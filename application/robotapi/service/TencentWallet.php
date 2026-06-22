@@ -253,7 +253,7 @@ class TencentWallet extends Controller
                     foreach ($res['data']['wallet_info']['balance_info_list'] as $item){
                         $fund_info[$item['fund_type']] = $item['balance'] / 100;
                     }
-                    $availableAmount = ($fund_info['FUND_TYPE_CASH'] ?? 0) + ($fund_info['FUND_TYPE_GIFT'] ?? 0) + ($fund_info['FUND_TYPE_CASH_COST'] ?? 0);
+                    $availableAmount = ($fund_info['FUND_TYPE_CASH_COST'] ?? 0);
                     if ($data['amount'] > $availableAmount) {
                         return '转出余额超出上限，最大转出余额为：' . $availableAmount . '元';
                     }
@@ -346,10 +346,10 @@ class TencentWallet extends Controller
                 $private_all -= ($data['amount'] - $rebate);
             }
         }
-        if (($hx_agent_balance_info['FUND_TYPE_CASH'] ?? 0) + ($hx_agent_balance_info['FUND_TYPE_GIFT'] ?? 0) + ($hx_agent_balance_info['FUND_TYPE_CASH_COST'] ?? 0) < $data['amount'] * $hx){
+        if (($hx_agent_balance_info['FUND_TYPE_CASH_COST'] ?? 0) < $data['amount'] * $hx){
             return "转账金额大于备款余额，发起失败，请联系管理员进行浣熊主体备款处理";
         }
-        if (($bm_agent_balance_info['FUND_TYPE_CASH'] ?? 0) + ($bm_agent_balance_info['FUND_TYPE_GIFT'] ?? 0) + ($bm_agent_balance_info['FUND_TYPE_CASH_COST'] ?? 0) < $data['amount'] * $bm){
+        if (($bm_agent_balance_info['FUND_TYPE_CASH_COST'] ?? 0) < $data['amount'] * $bm){
             return "转账金额大于备款余额，发起失败，请联系管理员进行斑马主体备款处理";
         }
         return true;
