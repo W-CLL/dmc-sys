@@ -210,6 +210,7 @@ class TencentTransfer extends TencentBaseJob
         }
 
         $successes = [];
+        $lastFailureMessage = '';
         $maxRetry = 3;
         $retryCount = 0;
         do {
@@ -219,7 +220,7 @@ class TencentTransfer extends TencentBaseJob
                     'pending' => $plans,
                     'account_id' => $data['account_id']
                 ]);
-                throw new Exception("转账重试次数超过限制");
+                throw new Exception($lastFailureMessage ?: "转账重试次数超过限制");
             }
             $this->writeLog('INFO', "{$directionLabel}-分批转账 (第{$retryCount}次)", [
                 'pending' => $plans
@@ -232,6 +233,8 @@ class TencentTransfer extends TencentBaseJob
                         'record' => json_encode($transfer, JSON_UNESCAPED_UNICODE),
                     ];
                 } else {
+                    $lastFailureMessage = trim($transfer['message'] ?? '');
+                    $lastFailureMessage = preg_replace('/\s*traceId:\s*[a-zA-Z0-9]+/i', '', $lastFailureMessage);
                     $this->writeLog('WARN', "{$directionLabel}-{$plan['fund_type']}转账失败", ['code' => $transfer['code'], 'response' => $transfer]);
                 }
             }
