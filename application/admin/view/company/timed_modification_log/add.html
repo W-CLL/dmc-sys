@@ -1,0 +1,37 @@
+<form id="add-form" class="form-horizontal" role="form" data-toggle="validator" method="POST" action="">
+    {:token()}
+    <div class="form-group">
+        <label for="c-subject_name" class="control-label col-xs-12 col-sm-2">主体名:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-subject_name" data-rule="required" class="form-control" name="row[subject_name]" type="text" value="">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-discount_percentage" class="control-label col-xs-12 col-sm-2">折扣百分比:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-discount_percentage" data-rule="required;number" class="form-control" name="row[discount_percentage]" type="number" value="0" step="0.0001" placeholder="折扣百分比" />
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-subject_type" class="control-label col-xs-12 col-sm-2">主体类型:</label>
+        <div class="col-xs-12 col-sm-8">
+            <select id="c-subject_type" data-rule="required" class="form-control selectpicker" name="row[subject_type]">
+                <option value="0">公</option>
+                <option value="1">私</option>
+            </select>
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-effective_time" class="control-label col-xs-12 col-sm-2">生效时间:</label>
+        <div class="col-xs-12 col-sm-8">
+            <input id="c-effective_time" data-rule="required" class="form-control datetimepicker" data-date-format="YYYY-MM-DD HH:mm" data-use-current="true" name="row[effective_time]" type="text" value="">
+        </div>
+    </div>
+    <div class="form-group layer-footer">
+        <label class="control-label col-xs-12 col-sm-2"></label>
+        <div class="col-xs-12 col-sm-8">
+            <button type="submit" class="btn btn-primary btn-embossed disabled">{:__('OK')}</button>
+            <button type="reset" class="btn btn-default btn-embossed">{:__('Reset')}</button>
+        </div>
+    </div>
+</form>
