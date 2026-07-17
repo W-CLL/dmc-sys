@@ -132,8 +132,8 @@ class TimedModificationLog extends Backend
         $fail = 0;
 
         foreach ($list as $item) {
-            $company = Db::table("fa_company")->where('company_name', $item['subject_name'])->find();
-            if (!$company) {
+            $count = Db::table("fa_company")->where('company_name', $item['subject_name'])->count();
+            if ($count == 0) {
                 Db::table("fa_subject_percentage_change")->where('id', $item['id'])->update([
                     'status' => 2,
                     'msg' => '未找到对应主体',
@@ -145,20 +145,26 @@ class TimedModificationLog extends Backend
 
             $accountType = $item['subject_type'] == 1 ? 2 : 1;
 
-            $result = Db::table("fa_company")->where('id', $company['id'])->update([
-                'discount_percentage' => $item['discount_percentage'],
-                'account_type' => $accountType,
-                'update_time' => time()
-            ]);
+            try {
+                $result = Db::transaction(function () use ($item, $accountType) {
+                    return Db::table("fa_company")->where('company_name', $item['subject_name'])->update([
+                        'discount_percentage' => $item['discount_percentage'],
+                        'account_type' => $accountType,
+                        'update_time' => time()
+                    ]);
+                });
 
-            if ($result) {
-                Db::table("fa_subject_percentage_change")->where('id', $item['id'])->update([
-                    'status' => 1,
-                    'msg' => '修改成功',
-                    'update_time' => time()
-                ]);
-                $success++;
-            } else {
+                if ($result !== false) {
+                    Db::table("fa_subject_percentage_change")->where('id', $item['id'])->update([
+                        'status' => 1,
+                        'msg' => '修改成功',
+                        'update_time' => time()
+                    ]);
+                    $success++;
+                } else {
+                    throw new \Exception("更新失败");
+                }
+            } catch (\Exception $e) {
                 Db::table("fa_subject_percentage_change")->where('id', $item['id'])->update([
                     'status' => 2,
                     'msg' => '修改失败',
