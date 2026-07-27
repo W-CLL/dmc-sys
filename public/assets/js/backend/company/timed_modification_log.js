@@ -65,6 +65,8 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                     ]
                 ],
                 queryParams: function (params) {
+                    params.status = $("#status").val();
+                    params.subject_type = $("#subject_type").val();
                     return params;
                 }
             });

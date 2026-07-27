@@ -29,15 +29,18 @@ class TimedModificationLog extends Backend
             $where = [];
 
             if (!empty($filter_data)) {
-                if (isset($filter_data['subject_name'])) {
+                if (isset($filter_data['subject_name']) && $filter_data['subject_name'] !== '') {
                     $where['subject_name'] = ['like', "%" . $filter_data['subject_name'] . "%"];
                 }
-                if (isset($filter_data['status'])) {
-                    $where['status'] = $filter_data['status'];
-                }
-                if (isset($filter_data['subject_type'])) {
-                    $where['subject_type'] = $filter_data['subject_type'];
-                }
+            }
+
+            $status = input("status");
+            $subject_type = input("subject_type");
+            if ($status !== null && $status !== '') {
+                $where['status'] = $status;
+            }
+            if ($subject_type !== null && $subject_type !== '') {
+                $where['subject_type'] = $subject_type;
             }
 
             $list = Db::table("fa_subject_percentage_change")
