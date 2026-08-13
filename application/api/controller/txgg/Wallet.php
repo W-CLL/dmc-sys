@@ -95,7 +95,7 @@ class Wallet
             foreach ($list as $value){
                 if ($value['trade_type_ext'] == 'CHARGE'){
                     if (!Cache::get($value['external_bill_no'])){
-                        $msg = "服务商ID：".$account_id.'充值到账：'.($value['amount'] / 100)."元";
+                        $msg = "服务商ID：".$account_id.'。充值到账：'.($value['amount'] / 100)."元。到账时间：".date('Y-m-d H:i:s', $value['time']);
                         Cache::set($value['external_bill_no'],1,(new DateTime())->modify('+1 day'));
                         Api::send_application_messages('WuZhongTuan|WuZhongJie', $msg);
                     }
