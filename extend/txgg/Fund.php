@@ -65,6 +65,16 @@ class Fund extends Base
 
 
 
+    public static function getMoneyDetailedInfo($params){
+        self::initCommonParams();
+        $commonParams = is_array(self::$common_params) ? self::$common_params : [];
+        $params = array_merge($commonParams, $params);
+        $url = self::$url . 'fund_statements_detailed/get';
+        return sendApiRes($url, $params);
+    }
+
+
+
 
 
 }
