@@ -2,6 +2,9 @@
 
 namespace app\api\controller\txgg;
 
+use DateTime;
+use qywx\Api;
+use think\Cache;
 use think\Env;
 use txgg\Fund;
 use app\common\model\txgg\TencentShareWallet;
@@ -70,6 +73,36 @@ class Wallet
             echo '处理完成！';
         }catch (\Exception $e){
             echo $e->getMessage();
+        }
+    }
+
+
+    public function getAccountMoney($agency = 1){
+        $account_id = Env::get('txgg.agency_'.$agency);
+        $res = Fund::getMoneyDetailedInfo([
+            'account_id' => (int)$account_id,
+            'fund_type' => 'FUND_TYPE_CASH_COST',
+            'date_range' => json_encode([
+//                'start_date' => date('Y-m-d'),
+//                'end_date' => date('Y-m-d'),
+                'start_date' => '2026-08-12',
+                'end_date' => '2026-08-12',
+            ]),
+            'page' => 1,
+            'page_size' => 100
+        ])['data'];
+
+        if ($res['code'] === 0){
+            $list = $res['data']['list'];
+            foreach ($list as $value){
+                if ($value['trade_type_ext'] == 'CHARGE'){
+                    if (!Cache::get($value['external_bill_no'])){
+                        $msg = $account_id.'充值到账：'.($value['amount'] / 100)."元";
+                        Cache::set($value['external_bill_no'],1,(new DateTime())->modify('+1 day'));
+                        Api::send_application_messages('MaYuTian|WuZhongTuan|WuZhongJie', $msg);
+                    }
+                }
+            }
         }
     }
 }
