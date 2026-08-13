@@ -83,10 +83,8 @@ class Wallet
             'account_id' => (int)$account_id,
             'fund_type' => 'FUND_TYPE_CASH_COST',
             'date_range' => json_encode([
-//                'start_date' => date('Y-m-d'),
-//                'end_date' => date('Y-m-d'),
-                'start_date' => '2026-08-12',
-                'end_date' => '2026-08-12',
+                'start_date' => date('Y-m-d'),
+                'end_date' => date('Y-m-d'),
             ]),
             'page' => 1,
             'page_size' => 100
@@ -97,9 +95,9 @@ class Wallet
             foreach ($list as $value){
                 if ($value['trade_type_ext'] == 'CHARGE'){
                     if (!Cache::get($value['external_bill_no'])){
-                        $msg = $account_id.'充值到账：'.($value['amount'] / 100)."元";
+                        $msg = "服务商ID：".$account_id.'充值到账：'.($value['amount'] / 100)."元";
                         Cache::set($value['external_bill_no'],1,(new DateTime())->modify('+1 day'));
-                        Api::send_application_messages('MaYuTian|WuZhongTuan|WuZhongJie', $msg);
+                        Api::send_application_messages('WuZhongTuan|WuZhongJie', $msg);
                     }
                 }
             }
