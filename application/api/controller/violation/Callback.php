@@ -3,6 +3,8 @@
 namespace app\api\controller\violation;
 
 use app\api\controller\fission\AuthTokenUtil;
+use qywx\Api;
+use think\Cache;
 use think\Db;
 use think\Env;
 use think\response\Json;
@@ -84,6 +86,11 @@ class Callback
             "create_time" => time()
         ];
         Db::name('violation')->insert($insert);
+        if (in_array($insert['status'],[1,4])){
+            $prefix = $insert['status'] == 1 ? '扣分' : '回调';
+            $msg = "千川ID：".$insert['advertiser_id'].'。积分变动('.$prefix.')：'.$insert['score']."。";
+            Api::send_application_messages('WuZhongTuan|WuZhongJie|TanHuiTing', $msg);
+        }
 
         return $this->responseJson(200, "ok");
     }
