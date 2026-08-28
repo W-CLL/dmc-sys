@@ -92,6 +92,7 @@ class Callback
             Api::send_application_messages('WuZhongTuan|WuZhongJie|TanHuiTing', $msg);
         }
 
+
         return $this->responseJson(200, "ok");
     }
 
