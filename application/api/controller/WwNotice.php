@@ -13,14 +13,16 @@ class WwNotice extends Controller
 {
     public function sendMsg($auth, $msg = '测试不用管',$user="")
     {
-        $base_user = "WangChunLong";
+//        $base_user = "WangChunLong";
         if ($auth != "dmc-company-name-log") {
             $this->error('非法请求');
         }
         if($user){
-            $touser = $base_user.'|'.$user;
+//            $touser = $base_user.'|'.$user;
+            $touser = $user;
         }else{
-            $touser = $base_user;
+//            $touser = $base_user;
+            $touser = $user;
         }
 
         \qywx\Api::send_application_messages($touser, $msg);
