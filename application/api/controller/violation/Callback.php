@@ -89,7 +89,7 @@ class Callback
         if (in_array($insert['status'],[1,4])){
             $prefix = $insert['status'] == 1 ? '扣分' : '回调';
             $msg = "千川ID：".$insert['advertiser_id'].'。积分变动('.$prefix.')：'.$insert['score']."。";
-            Api::send_application_messages('WuZhongTuan|WuZhongJie|TanHuiTing', $msg);
+            Api::send_application_messages('WuZhongJie|TanHuiTing', $msg);
         }
 
 
