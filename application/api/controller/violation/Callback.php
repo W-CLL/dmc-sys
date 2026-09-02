@@ -88,7 +88,7 @@ class Callback
         ];
         Db::name('violation')->insert($insert);
         if (in_array($insert['status'],[1,4])){
-            $prefix = $insert['status'] == 1 ? '扣分' : '回调';
+            $prefix = $insert['status'] == 4 ? '扣分' : '回调';
             $subject_name = Db::name('company')->where(['advertiser_id'=>$insert['advertiser_id']])->value('company_name');
             $type = $insert['illegal_type'] == 1 ? '一类违规' : '二类违规';
             $msg = "主体名称：".$subject_name."\n
