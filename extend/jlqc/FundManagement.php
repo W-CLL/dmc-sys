@@ -850,6 +850,18 @@ class FundManagement
         return sendApiRes($url, $params, 'GET', ['Access-Token' => $access_token])['data'];
     }
 
+
+
+    /**
+     * 获取账户累计积分
+     */
+    public static function get_score_total($params)
+    {
+        $access_token = Cache::get("qc_access_token");
+        $url = "https://api.oceanengine.com/open_api/v3.0/security/score_total/get/";
+        return sendApiRes($url, $params, 'GET', ['Access-Token' => $access_token])['data'];
+    }
+
 }
 
 
