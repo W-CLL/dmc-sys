@@ -93,10 +93,7 @@ class Callback
                 $prefix = $insert['status'] == 4 ? '扣分' : '撤销';
                 $subject_name = Db::name('company')->where(['advertiser_id'=>$insert['advertiser_id']])->value('company_name');
                 $type = $insert['illegal_type'] == 1 ? '一类违规' : '二类违规';
-                $msg = "主体名称：".$subject_name."\n
-            千川ID：".$insert['advertiser_id']."\n
-            积分变动('.$prefix.')：".$insert['score']."\n
-            违规类型：".$type;
+                $msg = "主体名称：".$subject_name."\n千川ID：".$insert['advertiser_id']."\n积分变动($prefix)：".$insert['score']."\n违规类型：".$type;
                 $res = FundManagement::get_score_total([
                     'advertiser_id' => $insert['advertiser_id'],
                     'business_line' => 'QIANCHUAN'
