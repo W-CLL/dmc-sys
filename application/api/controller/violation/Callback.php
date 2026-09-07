@@ -8,6 +8,7 @@ use qywx\Api;
 use think\Cache;
 use think\Db;
 use think\Env;
+use think\Exception;
 use think\response\Json;
 
 class Callback
@@ -87,32 +88,37 @@ class Callback
             "create_time" => time()
         ];
         Db::name('violation')->insert($insert);
-        if (in_array($insert['status'],[1,4])){
-            $prefix = $insert['status'] == 4 ? '扣分' : '回调';
-            $subject_name = Db::name('company')->where(['advertiser_id'=>$insert['advertiser_id']])->value('company_name');
-            $type = $insert['illegal_type'] == 1 ? '一类违规' : '二类违规';
-            $msg = "主体名称：".$subject_name."\n
+        try {
+            if (in_array($insert['status'],[1,4])){
+                $prefix = $insert['status'] == 4 ? '扣分' : '回调';
+                $subject_name = Db::name('company')->where(['advertiser_id'=>$insert['advertiser_id']])->value('company_name');
+                $type = $insert['illegal_type'] == 1 ? '一类违规' : '二类违规';
+                $msg = "主体名称：".$subject_name."\n
             千川ID：".$insert['advertiser_id']."\n
             积分变动('.$prefix.')：".$insert['score']."\n
             违规类型：".$type;
-            $res = FundManagement::get_score_total([
-                'advertiser_id' => $insert['advertiser_id'],
-                'business_line' => 'QIANCHUAN'
-            ]);
-            if ($res['code'] === 0){
-                $one_class = 0;
-                $two_three_class = 0;
-                foreach ($res['data']['illegal_type'] as $key){
-                    if ($key['illegal_type'] == 'ONECLASS'){
-                        $one_class += $key['score'];
-                    }else{
-                        $two_three_class += $key['score'];
+                $res = FundManagement::get_score_total([
+                    'advertiser_id' => $insert['advertiser_id'],
+                    'business_line' => 'QIANCHUAN'
+                ]);
+                if ($res['code'] === 0){
+                    $one_class = 0;
+                    $two_three_class = 0;
+                    foreach ($res['data']['illegal_type'] as $key){
+                        if ($key['illegal_type'] == 'ONECLASS'){
+                            $one_class += $key['score'];
+                        }else{
+                            $two_three_class += $key['score'];
+                        }
                     }
+                    $msg .= "\n一类违规累计：".$one_class."分\n二类违规累计：".$two_three_class."分";
                 }
-                $msg .= "\n一类违规累计：".$one_class."分\n二类违规累计：".$two_three_class."分";
+                Api::send_application_messages('WuZhongJie|WuLiQiong01', $msg);
             }
-            Api::send_application_messages('WuZhongJie|WuLiQiong01', $msg);
+        }catch (Exception $e){
+            \think\Log::error("违规积分消息推送异常: " . $e->getMessage());
         }
+
 
 
         return $this->responseJson(200, "ok");
