@@ -236,7 +236,7 @@ class QcAdv extends Api
 
         // 发送企业微信通知
         $notice = new WwNotice();
-        $notice->sendMsg("dmc-company-name-log", $msg,"WuZhongJie");
+        $notice->sendMsg("dmc-company-name-log", $msg,"WuZhongJie|WuLiQiong01");
 
         // 标记已通知
         $ids = array_column((array)$list, 'id');
