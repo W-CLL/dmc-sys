@@ -96,7 +96,7 @@ class Callback
             积分变动('.$prefix.')：".$insert['score']."\n
             违规类型：".$type;
             $res = FundManagement::get_score_total([
-                'advertiser_id' => 1865780376679500,
+                'advertiser_id' => $insert['advertiser_id'],
                 'business_line' => 'QIANCHUAN'
             ]);
             if ($res['code'] === 0){
