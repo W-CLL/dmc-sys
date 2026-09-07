@@ -90,7 +90,7 @@ class Callback
         Db::name('violation')->insert($insert);
         try {
             if (in_array($insert['status'],[1,4])){
-                $prefix = $insert['status'] == 4 ? '扣分' : '回调';
+                $prefix = $insert['status'] == 4 ? '扣分' : '撤销';
                 $subject_name = Db::name('company')->where(['advertiser_id'=>$insert['advertiser_id']])->value('company_name');
                 $type = $insert['illegal_type'] == 1 ? '一类违规' : '二类违规';
                 $msg = "主体名称：".$subject_name."\n
@@ -104,7 +104,7 @@ class Callback
                 if ($res['code'] === 0){
                     $one_class = 0;
                     $two_three_class = 0;
-                    foreach ($res['data']['illegal_type'] as $key){
+                    foreach ($res['data']['score_info_list'] as $key){
                         if ($key['illegal_type'] == 'ONECLASS'){
                             $one_class += $key['score'];
                         }else{
