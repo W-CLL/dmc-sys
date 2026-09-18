@@ -102,6 +102,9 @@ class Callback
                     $one_class = 0;
                     $two_three_class = 0;
                     foreach ($res['data']['score_info_list'] as $key){
+                        if ($key['year'] != date('Y')){
+                            continue;
+                        }
                         if ($key['illegal_type'] == 'ONECLASS'){
                             $one_class += $key['score'];
                         }else{
