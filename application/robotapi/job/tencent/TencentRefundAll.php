@@ -16,7 +16,7 @@ class TencentRefundAll
     public function doJob($data)
     {
         // 执行全额转出
-        $res = $this->sendRequest($data,'FUND_TYPE_CASH', 1);
+        $res = $this->sendRequest($data,'FUND_TYPE_CASH_COST', 1);
         if ($res['code'] != 0){
             $message_cn = $res['message_cn'];
             if (strpos($message_cn, 'traceId:') !== false) {
@@ -108,7 +108,7 @@ class TencentRefundAll
                 $transfer_records_id_list[] = $transfer_log->insertGetId($transfer_records_data);
             }while($bool);
             // 执行全额转出
-            $result = $this->sendRequest($data,'FUND_TYPE_CASH');
+            $result = $this->sendRequest($data,'FUND_TYPE_CASH_COST');
             if ($result['code'] != 0){
                 $message_cn = $res['message_cn'];
                 if (strpos($message_cn, 'traceId:') !== false) {

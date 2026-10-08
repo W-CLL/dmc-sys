@@ -111,7 +111,7 @@ class TencentRefundAll extends Controller
         foreach ($account_info['tencent_account'] as $account){
             $res = Fund::transfer([
                 'account_id' => (int)$account['account_id'],
-                'fund_type' => 'FUND_TYPE_CASH',
+                'fund_type' => 'FUND_TYPE_CASH_COST',
                 'transfer_type' => 'ADVERTISER_TO_AGENCY',
                 'pre_fetch_amount' => 1,  // 是否查询余额 0 否，直接转账 1 是，不转账
             ])['data'];
