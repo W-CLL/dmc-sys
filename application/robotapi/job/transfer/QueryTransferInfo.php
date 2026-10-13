@@ -297,21 +297,30 @@ class QueryTransferInfo
         $company_model = new Company();
         $target_account_info = $company_model->where(['advertiser_id' => $transfer_info['target_account_id']])->find();
         $account_info = $company_model->where(['advertiser_id' => $transfer_info['account_id']])->find();
-        if($transfer_info['account_id'] == "1739518270441480"){
-            $account_info['name'] = "广州斑马数字科技有限公司";
-            $account_info['advertiser_id'] = $transfer_info['account_id'];
-            $account_info['company_name'] = "广州斑马数字科技有限公司";
-        }elseif($transfer_info['account_id'] == "1818673832986633"){
-            $account_info['name'] = "广州斑马数字科技有限公司-JDC";
-            $account_info['advertiser_id'] = $transfer_info['account_id'];
-            $account_info['company_name'] = "广州斑马数字科技有限公司-JDC";
-        }
         $money = number_format($transfer_records_data['money'], 2);
         if ($transfer_records_data['transfer_direction'] == 1) {
+            if($transfer_info['account_id'] == "1739518270441480"){
+                $account_info['name'] = "广州斑马数字科技有限公司";
+                $account_info['advertiser_id'] = $transfer_info['account_id'];
+                $account_info['company_name'] = "广州斑马数字科技有限公司";
+            }elseif($transfer_info['account_id'] == "1818673832986633"){
+                $account_info['name'] = "广州斑马数字科技有限公司-JDC";
+                $account_info['advertiser_id'] = $transfer_info['account_id'];
+                $account_info['company_name'] = "广州斑马数字科技有限公司-JDC";
+            }
             $transfer_type = "加款";
             $transfer_in = $target_account_info['name'] . "\n转入方ID：" . $target_account_info['advertiser_id'];
             $transfer_out = $account_info['name'] . "\n转出方ID：" . $account_info['advertiser_id'];
         } else if ($transfer_records_data['transfer_direction'] == 2) {
+            if($transfer_info['target_account_id'] == "1739518270441480"){
+                $target_account_info['name'] = "广州斑马数字科技有限公司";
+                $target_account_info['advertiser_id'] = $transfer_info['account_id'];
+                $target_account_info['company_name'] = "广州斑马数字科技有限公司";
+            }elseif($transfer_info['target_account_id'] == "1818673832986633"){
+                $target_account_info['name'] = "广州斑马数字科技有限公司-JDC";
+                $target_account_info['advertiser_id'] = $transfer_info['account_id'];
+                $target_account_info['company_name'] = "广州斑马数字科技有限公司-JDC";
+            }
             $transfer_type = "退款";
             $money = '-'.$money;
             $transfer_in = $account_info['name'] . "\n转入方ID：" . $account_info['advertiser_id'];
