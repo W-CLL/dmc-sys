@@ -75,14 +75,14 @@ class checkTencentFund
                             $balance += $item['balance'];
                         }
                         if($balance <= $warning_value){
-                            $is_send = Cache::get('send_warning_msg_'.$wallet_id);
-                            if(!$is_send){
+                            $last_send = Cache::get('send_warning_msg_'.$wallet_id);
+                            if(!$last_send || $last_send <= $warning_value * 100 - 300000){
                                 if (!isset($msg)){
                                     $msg = "⚠ 注 意 ⚠：\n 下列【腾讯钱包】余额💰不足，请及时充值！\n 🔔". $wallet_id . "，💰总余额：" . $balance . "元";
                                 }else{
                                     $msg .= "\n 🔔". $wallet_id . "，💰总余额：" . $balance . "元";
                                 }
-                                Cache::set('send_warning_msg_'.$wallet_id,1,1);
+                                Cache::set('send_warning_msg_'.$wallet_id,$balance,new DateTime(date('Y-m-d', strtotime('tomorrow'))));
                             }
                         }
                     }
