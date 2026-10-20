@@ -9,6 +9,7 @@ use think\Db;
 use think\Exception;
 use think\queue\Job;
 use Requests;
+use DateTime;
 use function fast\e;
 
 class checkTencentFund
@@ -48,14 +49,14 @@ class checkTencentFund
                         }
 
                         if($balance <= $warning_value * 100){
-                            $is_send = Cache::get('send_warning_msg_'.$account_id);
-                            if(!$is_send){
+                            $last_send = Cache::get('send_warning_msg_'.$account_id);
+                            if(!$last_send || $balance < $last_send - 300000){
                                 if (!isset($msg)){
                                     $msg = "⚠ 注 意 ⚠：\n 下列【子客账户】余额💰不足，请及时充值！\n 🔔". $account_id . "，💰总余额：" . number_format($balance / 100, 2) . "元";
                                 }else{
                                     $msg .= "\n 🔔". $account_id . "，💰总余额：" . number_format($balance / 100, 2) . "元";
                                 }
-                                Cache::set('send_warning_msg_'.$account_id,1,1);
+                                Cache::set('send_warning_msg_'.$account_id,$balance,new DateTime(date('Y-m-d', strtotime('tomorrow'))));
                             }
                         }
                     }
