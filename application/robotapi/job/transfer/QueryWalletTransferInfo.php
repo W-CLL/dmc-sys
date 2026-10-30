@@ -126,6 +126,7 @@ class QueryWalletTransferInfo
                 $msg .= $cache_err_msg;
                 if($count != 0){
                     $merge_img_url = $this->createMergeImg($transfer_log_id);
+                    $msg .= "\n到账截图：https://dmc.zebranumber.cn/". $merge_img_url;
                 }else{
                     $merge_img_url = '';
                 }

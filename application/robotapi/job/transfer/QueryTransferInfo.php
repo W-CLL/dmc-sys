@@ -61,6 +61,7 @@ class QueryTransferInfo
                 $img_url = $this->createTransferImg($transfer_records_data,$transfer_detail_data);
                 $transfer_records_model->where(["id" => $data["transfer_records_id"]])->update(['status' => 1, 'image' => $img_url]);
                 $msg = "同级互转成功";
+                $msg .= "\n到账截图：https://dmc.zebranumber.cn/". $img_url;
                 break;
             default :
                 return false;
@@ -155,10 +156,10 @@ class QueryTransferInfo
             $msg .= $cache_err_msg;
             if($count != 0){
                 $merge_img_url = $this->createMergeImg($transfer_log_id);
+                $msg .= "\n到账截图：https://dmc.zebranumber.cn/". $merge_img_url;
             }else{
                 $merge_img_url = '';
             }
-
             $this->callBack($data["callback_data"], $msg, $merge_img_url);
             Cache::rm($data["callback_data"]["msg_uuid"]."transfer_log_id");
             Cache::rm($data["callback_data"]["msg_uuid"]."count");

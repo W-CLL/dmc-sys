@@ -165,7 +165,7 @@ class QcAccountFunds extends Controller
                 }
                 $validate = [
                     ['group_id', 'require|max:50', 'group_id 的格式不正确'],
-                    ['adv_id', 'require', 'adv_id 的格式不正确'],
+                    ['adv_id', 'require|array', 'adv_id 的格式不正确'],
                     ['amount', 'require|min:0.01', '该金额是必需的，并且必须以最低 0.01 输入。'],
                     ['transfer_type', 'require|in:1,2', 'transfer_type格式不正确'],
                     ['callback_url', 'require', 'callback_url是必需的'],

@@ -226,7 +226,7 @@ class QcSharedWallet extends Controller
                 foreach ($in_result['data']['can_transfer_detail_list'][0]['payee_transfer_amount_detail_list'] as $v){
                     $min_transfer = $v['non_brand_min_transfer_balance'] / 100;
                     if ($data['amount'] < $min_transfer){
-                        $msg .= $v['payee_wallet_id'].'本次转账金额不得低于最低转账金额： ' . $min_transfer;
+                        $msg .= $v['remitter_wallet_id'].'本次转账金额不得低于最低转账金额： ' . $min_transfer;
                     }
                 }
                 if ($msg != ''){
@@ -269,7 +269,7 @@ class QcSharedWallet extends Controller
                 foreach ($out_result['data']['can_transfer_detail_list'] as $v){
                     $max_transfer_out = $v['non_brand_max_transfer_balance'] / 100;
                     if ($data['amount'] > $max_transfer_out){
-                        $msg .= $v['payee_wallet_id'].'本次转账金额不得低于最低转账金额： ' . $max_transfer_out;
+                        $msg .= $v['remitter_wallet_id'].'本次转账金额不得低于最低转账金额： ' . $max_transfer_out;
                     }
                 }
                 if ($msg != ''){
