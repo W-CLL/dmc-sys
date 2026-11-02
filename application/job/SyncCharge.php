@@ -67,7 +67,7 @@ class SyncCharge
                     return '';
                 }
             }
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             if($queueData){
                 $queueData->save(['id' => $queueData['id'], 'status' => 2, 'msg' => $e->getMessage()]);
             }else{
