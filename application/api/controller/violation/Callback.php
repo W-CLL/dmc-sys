@@ -113,7 +113,7 @@ class Callback
                     }
                     $msg .= "\n一类违规累计：".$one_class."分\n二类违规累计：".$two_three_class."分";
                 }
-                Api::send_application_messages('WuZhongJie|WuLiQiong01', $msg);
+                Api::send_application_messages('WuZhongJie|wzj|duanli|TanHuiTing', $msg);
             }
         }catch (Exception $e){
             \think\Log::error("违规积分消息推送异常: " . $e->getMessage());
