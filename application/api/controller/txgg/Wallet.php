@@ -97,7 +97,7 @@ class Wallet
                     if (!Cache::get($value['external_bill_no'])){
                         $msg = "服务商ID：".$account_id.'。充值到账：'.($value['amount'] / 100)."元。到账时间：".date('Y-m-d H:i:s', $value['time']);
                         Cache::set($value['external_bill_no'],1,(new DateTime())->modify('+1 day'));
-                        Api::send_application_messages('WuZhongJie|wzj|wzt|duanli', $msg);
+                        Api::send_application_messages('WuZhongJie|wzj|wzt|duanli|songyujiao|weiliping|zhangshufang|HuangNa01', $msg);
                     }
                 }
             }
